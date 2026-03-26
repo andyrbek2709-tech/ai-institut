@@ -1,12 +1,86 @@
+Вот пример простой HTML страницы с встроенными стилями CSS:
+
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Пример страницы</title>
+    <title>Красивая HTML страница</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        nav {
+            margin: 20px 0;
+        }
+        nav a {
+            margin: 0 15px;
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        .content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            background: #4CAF50;
+            color: white;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-    <h1>Добро пожаловать!</h1>
-    <p>Это пример простой HTML страницы.</p>
+
+<header>
+    <h1>Добро пожаловать на мою страницу</h1>
+</header>
+
+<nav>
+    <a href="#">Главная</a>
+    <a href="#">О нас</a>
+    <a href="#">Услуги</a>
+    <a href="#">Контакты</a>
+</nav>
+
+<div class="container">
+    <div class="content">
+        <h2>Заголовок секции</h2>
+        <p>Это пример текста на моей странице. Здесь можно написать что угодно, например, о своих увлечениях или планах.</p>
+        <p>Также вы можете добавить свои фотографии, ссылки на социальные сети и многое другое!</p>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2023 Моя страница. Все права защищены.</p>
+</footer>
+
 </body>
 </html>
+```
+
+Скопируйте этот код в текстовый файл с расширением `.html` и откройте его в вашем веб-браузере.
