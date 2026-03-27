@@ -1,4 +1,4 @@
-Конечно! Вот пример простого HTML-кода для зеленого сайта с кнопкой "Продать".
+Вот пример HTML и CSS кода, который создает зеленый сайт с красной кнопкой с текстом "Стоп! Не продавать":
 
 ```html
 <!DOCTYPE html>
@@ -9,15 +9,18 @@
     <title>Зеленый сайт</title>
     <style>
         body {
-            background-color: #4CAF50; /* Зеленый фон */
-            color: white; /* Белый текст */
+            background-color: green;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
             font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 50px;
         }
-        .sell-button {
-            background-color: #fff; /* Белый фон для кнопки */
-            color: #4CAF50; /* Зеленый текст */
+        .button {
+            background-color: red;
+            color: white;
             border: none;
             padding: 15px 30px;
             font-size: 20px;
@@ -25,26 +28,15 @@
             border-radius: 5px;
             transition: background-color 0.3s;
         }
-        .sell-button:hover {
-            background-color: #e0e0e0; /* Цвет при наведении */
+        .button:hover {
+            background-color: darkred;
         }
     </style>
 </head>
 <body>
-
-    <h1>Добро пожаловать на наш сайт!</h1>
-    <p>Здесь вы можете продать свои товары.</p>
-    <button class="sell-button">Продать</button>
-
+    <button class="button">Стоп! Не продавать</button>
 </body>
 </html>
 ```
 
-### Как использовать:
-
-1. Скопируйте код.
-2. Вставьте его в текстовый редактор (например, Notepad++).
-3. Сохраните файл с расширением `.html` (например, `index.html`).
-4. Откройте файл в веб-браузере.
-
-Теперь у вас есть простой зеленый сайт с кнопкой "Продать"!
+Скопируй этот код в файл с расширением `.html`, открой его в браузере, и ты увидишь зеленый фон и красную кнопку с нужным текстом!
