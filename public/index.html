@@ -1,46 +1,51 @@
-Создать простой зеленый сайт с кнопкой "Продать" можно с использованием HTML и CSS. Вот пример кода:
+Создание зеленого сайта с кнопкой "Продать" можно описать следующим образом:
 
+### HTML код
 ```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Зеленый сайт с кнопкой "Продать"</title>
+    <title>Зеленый сайт с кнопкой Продать</title>
     <style>
         body {
-            background-color: #4CAF50; /* Зеленый фон */
-            color: white; /* Белый текст */
-            font-family: Arial, sans-serif; /* Шрифт */
-            text-align: center; /* Центрирование текста */
+            background-color: #4CAF50; /* Зеленый цвет фона */
+            color: white; /* Белый цвет текста */
+            font-family: Arial, sans-serif;
+            text-align: center;
             padding: 50px;
         }
-        button {
-            background-color: #fff; /* Белый фон кнопки */
-            color: #4CAF50; /* Зеленый текст кнопки */
+        .button {
+            background-color: #FFC107; /* Желтый цвет кнопки */
             border: none;
+            color: black;
             padding: 15px 30px;
-            font-size: 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 20px 2px;
             cursor: pointer;
-            border-radius: 5px; /* Скругленные углы */
+            border-radius: 5px;
             transition: background-color 0.3s;
         }
-        button:hover {
-            background-color: #e7e7e7; /* Светло-серый при наведении */
+        .button:hover {
+            background-color: #FF9800; /* Оранжевый цвет при наведении */
         }
     </style>
 </head>
 <body>
     <h1>Добро пожаловать на наш сайт!</h1>
-    <p>Нажмите кнопку ниже, чтобы продать ваш товар.</p>
-    <button onclick="alert('Продажа началась!')">Продать</button>
+    <p>Здесь вы можете продать свои товары.</p>
+    <button class="button" onclick="alert('Вы нажали кнопку Продать!')">Продать</button>
 </body>
 </html>
 ```
 
-### Как использовать
-1. Скопируйте код в текстовый редактор (например, Notepad или VSCode).
-2. Сохраните файл с расширением `.html`, например, `index.html`.
-3. Откройте файл в веб-браузере.
+### Описание кода:
+1. **HTML**: Основная структура включает заголовок, текст и кнопку.
+2. **CSS**: Создает зелёный фон, белый текст и стиль для кнопки.
+3. **Кнопка "Продать"**: При нажатии кнопка вызывает всплывающее окно с сообщением.
 
-Вы увидите зеленый сайт с кнопкой "Продать". При нажатии на кнопку появится сообщение.
+Вы можете сохранить этот код в файл с расширением `.html` и открыть его в браузере, чтобы увидеть результат. Если потребуется добавить дополнительные функции или элементы, дайте знать!
