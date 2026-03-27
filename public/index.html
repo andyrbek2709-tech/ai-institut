@@ -4,42 +4,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тёмный Лендинг</title>
+    <title>Тёмный лендинг</title>
     <style>
         body {
             background-color: #121212;
             color: #ffffff;
             font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 100px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
         }
         h1 {
-            font-size: 3em;
             margin-bottom: 20px;
         }
-        p {
-            font-size: 1.2em;
-            margin-bottom: 50px;
-        }
-        .buy-button {
+        .button {
             background-color: #ff4081;
-            color: white;
+            color: #ffffff;
             padding: 15px 30px;
             border: none;
             border-radius: 5px;
-            font-size: 1.5em;
             cursor: pointer;
+            font-size: 16px;
             transition: background-color 0.3s;
         }
-        .buy-button:hover {
+        .button:hover {
             background-color: #e91e63;
         }
     </style>
 </head>
 <body>
-    <h1>Добро пожаловать на наш лендинг</h1>
-    <p>Купите свой продукт прямо сейчас!</p>
-    <button class="buy-button">Купить</button>
+    <h1>Добро пожаловать на наш лендинг!</h1>
+    <button class="button">Купить</button>
 </body>
 </html>
 ```
