@@ -1,48 +1,56 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой сайт</title>
+    <title>Простой сайт</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             background-color: #f4f4f4;
         }
         header {
-            background: #007BFF;
-            color: white;
+            background: #333;
+            color: #fff;
             padding: 10px 0;
             text-align: center;
         }
+        nav {
+            margin: 20px 0;
+        }
+        nav a {
+            margin: 0 15px;
+            color: #333;
+            text-decoration: none;
+        }
         main {
+            background: #fff;
             padding: 20px;
+            border-radius: 5px;
         }
         footer {
             text-align: center;
-            padding: 10px 0;
-            background: #007BFF;
-            color: white;
-            position: fixed;
-            width: 100%;
-            bottom: 0;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Добро пожаловать на мой сайт!</h1>
+        <h1>Заголовок</h1>
     </header>
+    <nav>
+        <a href="#">Домой</a>
+        <a href="#">Услуги</a>
+        <a href="#">Контакты</a>
+    </nav>
     <main>
-        <h2>О нас</h2>
-        <p>Это пример простого HTML сайта. Здесь вы можете найти информацию о наших услугах и проектах.</p>
+        <h2>Главный контент</h2>
+        <p>Содержимое страницы...</p>
     </main>
     <footer>
-        <p>&copy; 2023 Мой сайт. Все права защищены.</p>
+        <p>&copy; 2023 Все права защищены.</p>
     </footer>
 </body>
 </html>
-```
