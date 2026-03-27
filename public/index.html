@@ -1,97 +1,107 @@
-Вот пример полноценного HTML сайта с добавленными фотографиями. В данном примере добавлены три изображения с подписью под каждым. Вы можете заменить ссылки на изображения своими.
+Понял, вы хотите полноценный HTML-сайт, который по каким-то данным выполнит "анализ". В вашем сообщении в поле data пустая строка, поэтому сделаю простой пример сайта с формой, куда пользователь может ввести текст, а при нажатии на кнопку "Проанализировать" будет выполнен базовый анализ — подсчет количества слов, символов и предложений.
+
+Вот пример полноценного HTML сайта, где реализован такой базовый анализ:
 
 ```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Сайт с фотографиями</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-        header {
-            background-color: #4a90e2;
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-        }
-        main {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 15px;
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-        .gallery {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
-        .photo {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            overflow: hidden;
-            width: 300px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            transition: box-shadow 0.3s ease;
-        }
-        .photo:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        .photo img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        .caption {
-            padding: 10px 15px;
-            text-align: center;
-            font-size: 1rem;
-            color: #555;
-        }
-        footer {
-            text-align: center;
-            padding: 20px 0;
-            background-color: #f1f1f1;
-            color: #777;
-            margin-top: 40px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Анализ текста</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      font-size: 16px;
+      padding: 10px;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #2980b9;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3498db;
+    }
+    .result {
+      margin-top: 25px;
+      background: #ecf0f1;
+      padding: 15px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>Галерея фотографий</h1>
-    </header>
-    <main>
-        <div class="gallery">
-            <div class="photo">
-                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Пейзаж гор" />
-                <div class="caption">Пейзаж гор</div>
-            </div>
-            <div class="photo">
-                <img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Лесная дорога" />
-                <div class="caption">Лесная дорога</div>
-            </div>
-            <div class="photo">
-                <img src="https://images.unsplash.com/photo-1500534623283-312aade485b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Закат на море" />
-                <div class="caption">Закат на море</div>
-            </div>
-        </div>
-    </main>
-    <footer>
-        &copy; 2024 Мой сайт с фотографиями
-    </footer>
+  <h1>Анализ текста</h1>
+  <p>Введите текст для анализа:</p>
+  <textarea id="inputText" placeholder="Введите текст здесь..."></textarea>
+  <button id="analyzeBtn">Проанализировать</button>
+
+  <div class="result" id="result" style="display: none;">
+    <h2>Результаты анализа</h2>
+    <p id="wordCount"></p>
+    <p id="charCount"></p>
+    <p id="sentenceCount"></p>
+  </div>
+
+  <script>
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const inputText = document.getElementById('inputText');
+    const resultDiv = document.getElementById('result');
+    const wordCountP = document.getElementById('wordCount');
+    const charCountP = document.getElementById('charCount');
+    const sentenceCountP = document.getElementById('sentenceCount');
+
+    analyzeBtn.addEventListener('click', () => {
+      const text = inputText.value.trim();
+
+      if (!text) {
+        alert('Пожалуйста, введите текст для анализа.');
+        return;
+      }
+
+      // Подсчет слов (слова разделяются пробелами, переносами и т.п.)
+      const words = text.match(/\b\w+\b/g) || [];
+      const wordCount = words.length;
+
+      // Подсчет символов без пробелов
+      const charCount = text.replace(/\s/g, '').length;
+
+      // Подсчет предложений (упрощенно считаем по точкам, восклицателным и вопросительным знакам)
+      const sentences = text.match(/[^.!?]+[.!?]/g) || [];
+      const sentenceCount = sentences.length;
+
+      // Вывод результатов
+      wordCountP.textContent = `Количество слов: ${wordCount}`;
+      charCountP.textContent = `Количество символов (без пробелов): ${charCount}`;
+      sentenceCountP.textContent = `Количество предложений: ${sentenceCount}`;
+
+      resultDiv.style.display = 'block';
+    });
+  </script>
 </body>
 </html>
 ```
 
-Если хотите, могу добавить больше фотографий или сделать галерею интерактивной.
+---
+
+Если нужно что-то другое — уточните, что именно должен делать сайт с действием action=analysis и данными.
