@@ -1,78 +1,487 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Экологический сайт</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        header {
-            background: #4CAF50;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        section {
-            padding: 20px;
-            margin: 10px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h2 {
-            color: #4CAF50;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        footer {
-            text-align: center;
-            padding: 10px;
-            background: #333;
-            color: white;
-        }
-    </style>
+  <meta charset="utf-8">
+  <title>Загрузка сайта...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    :root{
+      --bg:#0f1221;
+      --surface:#171a2b;
+      --text:#e9ecf1;
+      --muted:#a8b0c2;
+      --primary:#6c5ce7;
+      --accent:#22d3ee;
+      --success:#10b981;
+      --radius:14px;
+      --shadow:0 8px 30px rgba(0,0,0,.25);
+      --ring:0 0 0 4px color-mix(in oklab, var(--primary) 25%, transparent);
+      --container:1100px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg, #0d0f1b 0%, #10142a 60%, #0b0f24 100%);color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:var(--container);margin:0 auto;padding:0 20px}
+    .pill{display:inline-flex;gap:10px;align-items:center;background:color-mix(in oklab, var(--primary) 12%, #ffffff0e);border:1px solid #ffffff18;color:#dfe5ff;padding:8px 14px;border-radius:999px;font-size:13px;backdrop-filter:blur(6px)}
+    .btn{display:inline-flex;align-items:center;gap:10px;border:0;border-radius:12px;padding:14px 18px;font-weight:700;cursor:pointer;transition:.2s transform,.2s box-shadow,.2s background;box-shadow:var(--shadow);white-space:nowrap}
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn-primary{background:linear-gradient(135deg, color-mix(in oklab, var(--primary) 15%, #fff0) 0%, var(--primary) 100%);color:white}
+    .btn-primary:hover{box-shadow:0 10px 30px color-mix(in oklab, var(--primary) 30%, transparent)}
+    .btn-ghost{background:transparent;border:1px solid #ffffff2a;color:#e7ebff}
+    .badge{font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px;background:color-mix(in oklab, var(--accent) 18%, #fff0);color:#cffaff;border:1px solid #ffffff22}
+    header.site-header{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, #0e1121cc 0%, #0e112100 100%);backdrop-filter:blur(8px);border-bottom:1px solid #ffffff10}
+    .nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, var(--accent), var(--primary));display:grid;place-items:center;color:#02121a;font-weight:900}
+    .brand-title{font-weight:800;letter-spacing:.2px}
+    .nav a{color:var(--muted);font-weight:600}
+    .nav-links{display:flex;gap:18px;align-items:center}
+    .hero{padding:60px 0 30px}
+    .hero-inner{display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:center}
+    .hero-card{background:radial-gradient(1200px 400px at 0% 0%, color-mix(in oklab, var(--accent) 13%, #fff0), #ffffff05 40%), linear-gradient(180deg, #ffffff0c 0%, #ffffff08 100%);border:1px solid #ffffff1a;border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+    h1{margin:10px 0 12px;font-size:42px;line-height:1.15;letter-spacing:.2px}
+    .lead{font-size:18px;color:var(--muted);margin:0 0 22px}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+    .stat{display:flex;gap:14px;align-items:center;color:#e8f7ff}
+    .stat .n{font-weight:900;font-size:20px;color:#b6f0ff}
+    .glow{position:absolute;inset:auto -80px -80px auto;filter:blur(60px);opacity:.7;pointer-events:none}
+    .services{padding:10px 0 50px}
+    .section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:10px 0 18px}
+    .section-head h2{margin:0;font-size:28px}
+    .grid{display:grid;gap:16px}
+    @media(min-width:720px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(min-width:1040px){.grid{grid-template-columns:repeat(3,1fr)}}
+    .card{position:relative;background:linear-gradient(180deg,#ffffff0f,#ffffff07);border:1px solid #ffffff18;border-radius:16px;padding:18px;transition:transform .15s, box-shadow .15s}
+    .card:hover{transform:translateY(-2px);box-shadow:0 14px 40px #00000045}
+    .svc-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg, color-mix(in oklab, var(--accent) 25%, #fff0), #ffffff10);border:1px solid #ffffff1f;color:#dffbff;font-size:20px;overflow:hidden}
+    .svc-icon img{width:100%;height:100%;object-fit:cover;border-radius:12px}
+    .svc-title{margin:12px 0 6px;font-size:18px}
+    .svc-desc{color:var(--muted);margin:0 0 12px}
+    .svc-meta{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .price{font-weight:800;color:#d3e6ff}
+    .contacts{padding:20px 0 70px}
+    .contact-wrap{display:grid;gap:18px}
+    @media(min-width:900px){.contact-wrap{grid-template-columns:1fr .9fr}}
+    .contact-card{background:linear-gradient(180deg,#ffffff0f,#ffffff07);border:1px solid #ffffff18;border-radius:16px;padding:18px}
+    .list{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+    .item{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid #ffffff16;border-radius:12px;background:#ffffff08}
+    .item svg{width:18px;height:18px;opacity:.9}
+    footer{border-top:1px solid #ffffff15;padding:18px 0 40px;color:#aeb6c9}
+    .divider{height:1px;background:linear-gradient(90deg, transparent, #ffffff18, transparent);margin:18px 0}
+    .hidden{display:none !important}
+    .notice{display:flex;gap:10px;align-items:center;color:#b2bbd3;background:#ffffff10;border:1px dashed #ffffff2c;padding:12px 14px;border-radius:12px}
+    .map-embed{overflow:hidden;border-radius:16px;border:1px solid #ffffff18;min-height:260px;background:#0a0d1b}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
 </head>
 <body>
+  <a class="sr-only" href="#main">К основному содержанию</a>
 
-<header>
-    <h1>Защита окружающей среды</h1>
-</header>
+  <header class="site-header">
+    <div class="container nav">
+      <div class="brand">
+        <div id="brand-logo" class="brand-logo" aria-hidden="true">★</div>
+        <div>
+          <div id="brand-title" class="brand-title">Заголовок</div>
+          <div id="brand-sub" style="font-size:12px;color:var(--muted)">Тема сайта</div>
+        </div>
+      </div>
+      <nav class="nav-links" aria-label="Главное меню">
+        <a href="#services">Услуги</a>
+        <a href="#contacts">Контакты</a>
+        <button class="btn btn-primary" onclick="scrollToId('contacts')">Связаться</button>
+      </nav>
+    </div>
+  </header>
 
-<section>
-    <h2>Почему это важно?</h2>
-    <p>Охрана окружающей среды – это задача, стоящая перед каждым из нас. Забота о природе помогает сохранить наш дом на Земле для будущих поколений.</p>
-</section>
+  <main id="main">
+    <section class="hero">
+      <div class="container hero-inner">
+        <div class="hero-card">
+          <span id="theme-pill" class="pill hidden"></span>
+          <h1 id="site-title">Ваш заголовок здесь</h1>
+          <p id="site-description" class="lead">Описание появится после загрузки JSON данных.</p>
+          <div class="hero-actions">
+            <button id="hero-cta" class="btn btn-primary" onclick="scrollToId('services')">Посмотреть услуги</button>
+            <button class="btn btn-ghost" onclick="scrollToId('contacts')">Контакты</button>
+          </div>
+          <div class="divider"></div>
+          <div class="stat"><span class="n" id="svc-count">0</span> услуг доступно</div>
+        </div>
+        <div class="hero-card">
+          <div class="notice" id="data-notice">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" opacity=".3"/><path d="M12 8v5m0 3h.01" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span>Загрузите JSON с данными сайта, чтобы заполнить разделы автоматически.</span>
+          </div>
+          <div class="divider"></div>
+          <div class="notice" style="gap:12px">
+            <button class="btn btn-ghost" onclick="openFile()">Загрузить JSON</button>
+            <button class="btn btn-primary" onclick="promptPaste()">Вставить JSON</button>
+            <input id="file" class="hidden" type="file" accept="application/json" />
+          </div>
+          <img class="glow" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><defs><radialGradient id='g' cx='50%'><stop offset='0%' stop-color='%2322d3ee'/><stop offset='100%' stop-color='transparent'/></radialGradient></defs><circle cx='160' cy='160' r='160' fill='url(%23g)'/></svg>" alt="">
+        </div>
+      </div>
+    </section>
 
-<section>
-    <h2>Как мы можем помочь?</h2>
-    <p>Каждый из нас может внести свой вклад: сокращение использования пластика, сортировка мусора, участие в акциях по уборке и многое другое.</p>
-    <button>Узнать больше</button>
-</section>
+    <section id="services" class="services">
+      <div class="container">
+        <div class="section-head">
+          <h2>Услуги</h2>
+          <span class="badge" id="badge-theme" aria-hidden="true">Готово к настройке</span>
+        </div>
+        <div id="services-list" class="grid"></div>
+        <div id="services-empty" class="notice" style="margin-top:10px">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path opacity=".5" d="M12 3L2 9l10 6 10-6-10-6z"/><path d="M2 15l10 6 10-6"/></svg>
+          <span>Раздел услуг заполнится после загрузки JSON.</span>
+        </div>
+      </div>
+    </section>
 
-<section>
-    <h2>Присоединяйтесь к нам!</h2>
-    <p>Станьте частью нашего движения. Вместе мы можем сделать мир чище и лучше.</p>
-    <button>Записаться на мероприятие</button>
-</section>
+    <section id="contacts" class="contacts">
+      <div class="container">
+        <div class="section-head">
+          <h2>Контакты</h2>
+          <span class="badge">Свяжитесь с нами</span>
+        </div>
+        <div class="contact-wrap">
+          <div class="contact-card">
+            <ul id="contacts-list" class="list"></ul>
+          </div>
+          <div id="map" class="map-embed"></div>
+        </div>
+      </div>
+    </section>
+  </main>
 
-<footer>
-    <p>© 2023 Защита окружающей среды. Все права защищены.</p>
-</footer>
+  <footer>
+    <div class="container">
+      <div id="copyright">© <span id="year"></span> <span id="footer-brand">Ваша компания</span>. Все права защищены.</div>
+    </div>
+  </footer>
 
+  <script id="site-data" type="application/json">{}</script>
+  <script>
+    const $ = (q, el=document)=>el.querySelector(q);
+    const $$ = (q, el=document)=>Array.from(el.querySelectorAll(q));
+    const setText = (id, val, emptyHide=false)=>{
+      const el = typeof id==='string'? document.getElementById(id): id;
+      if(!el) return;
+      if(val && String(val).trim()){
+        el.textContent = val;
+        if(emptyHide) el.classList.remove('hidden');
+      } else {
+        if(emptyHide) el.classList.add('hidden');
+      }
+    };
+    function scrollToId(id){
+      const el = document.getElementById(id);
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    function openFile(){ $('#file').click(); }
+    function promptPaste(){
+      const raw = prompt('Вставьте JSON данные сайта:');
+      if(!raw) return;
+      try{
+        const data = JSON.parse(raw);
+        renderSite(data);
+      }catch(e){ alert('Не удалось распарсить JSON. Проверьте формат.'); }
+    }
+    $('#file').addEventListener('change', async (e)=>{
+      const f = e.target.files?.[0];
+      if(!f) return;
+      try{
+        const text = await f.text();
+        const data = JSON.parse(text);
+        renderSite(data);
+      }catch(err){ alert('Ошибка чтения/парсинга JSON файла.'); }
+    });
+
+    function sanitizeURL(u){
+      try{
+        const url = new URL(u, location.href);
+        return url.href;
+      }catch(e){ return null; }
+    }
+
+    function setColors(brand={}){
+      const r = document.documentElement;
+      if(brand.primaryColor) r.style.setProperty('--primary', brand.primaryColor);
+      if(brand.accentColor)  r.style.setProperty('--accent', brand.accentColor);
+      if(brand.bgColor)      r.style.setProperty('--bg', brand.bgColor);
+      if(brand.textColor)    r.style.setProperty('--text', brand.textColor);
+    }
+
+    function iconSVG(name){
+      const m = {
+        phone:'<path d="M4 5a2 2 0 0 1 2-2h2l2 4-2 1c.7 1.6 1.8 2.9 3.4 3.8l1.1-2.1 4 2v2a2 2 0 0 1-2 2h-1C7.9 16.7 4.3 13.1 4 8V5z"/>',
+        mail:'<path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"/><path fill="#0000" stroke="currentColor" stroke-width="1.5" d="m4 7 8 6 8-6"/>',
+        map:'<path d="M9 2 3 5v15l6-3 6 3 6-3V2l-6 3-6-3z"/><circle cx="15" cy="10" r="2" fill="#0000" stroke="currentColor" stroke-width="1.5"/>',
+        web:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 3.8 6 3.8 9S14.5 18 12 21M12 3c-2.5 3-3.8 6-3.8 9S9.5 18 12 21" stroke="#0000"/>',
+        tg:'<path d="M21.5 4.5 3.8 11.1c-1.3.5-1.2 2.4.1 2.7l3.9 1 1.5 4.6c.4 1.2 1.9 1.4 2.6.3l2.4-3.8 4.3 3.2c1 .7 2.3.2 2.6-1l2.7-12.4c.3-1.2-.8-2.3-2-1.8z"/>',
+        wa:'<path d="M20 4.7A9.9 9.9 0 0 0 12 2C6.5 2 2 6.4 2 11.9c0 1.9.5 3.7 1.4 5.2L2 22l4.9-1.3a10 10 0 0 0 5.1 1.3c5.5 0 10-4.5 10-10 0-2.6-1-5.1-3-7.3z"/><path d="M16.6 13.8c-.2.6-1 1-1.6 1.1-.4.1-.9.1-2-.3-3.5-1.2-5.8-5-6-5.2-.2-.3-1.4-1.8-1.4-3.4 0-1.6.8-2.3 1.1-2.7.2-.2.6-.4 1-.4h.7c.2 0 .5.1.7.5.3.7.9 1.9 1 2-.1.2-.2.5-.4.7l-.4.6c-.2.2-.4.5-.1 1 .2.6.9 1.7 1.9 2.7 1.3 1.2 2.3 1.6 2.9 1.9.4.2.8.2 1.1-.1l.6-.7c.1-.1.3-.3.6-.2.3 0 1.8.9 2.1 1.1.3.2.5.3.6.5.1.2.1.6 0 .9z"/>',
+        vk:'<path d="M21.5 7.3c.2-.5 0-.9-.7-.9h-2.3c-.6 0-.9.3-1 .7 0 0-1 2.5-2.4 4.1-.5.5-.7.7-1 .7s-.2-.3-.2-.8V7.3c0-.7-.2-.9-.7-.9H9.6c-.4 0-.7.3-.7.6 0 .7 1 .8 1.1 2.7v4c0 .9-.1 1-.5 1-.9 0-3-2.5-4.3-5.4-.3-.7-.6-1-1.2-1H1.8c-.8 0-1 .4-1 .7 0 .8 1 3 3.7 6.3 2 2.3 4.7 3.5 7.2 3.5 1.5 0 1.7-.4 1.7-1v-2.3c0-.7.2-.8.6-.8.3 0 .9.2 2.2 1.6 1.5 1.5 1.7 2.1 2.5 2.1h2.3c.8 0 1.2-.4 1-.9-.3-.8-1.4-2-2.8-3.4-.8-.8-2-1.7-2.1-2.1-.2-.4 0-.7.6-1.7 0 0 1.7-2.3 1.8-3.1z"/>',
+        ig:'<path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5z"/><circle cx="12" cy="12" r="3.5"/><circle cx="18" cy="6" r="1.2"/>'
+      };
+      const p = m[name] || '<circle cx="12" cy="12" r="10"/>';
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${p}</svg>`;
+    }
+
+    function renderServices(services=[]){
+      const list = $('#services-list');
+      list.innerHTML = '';
+      if(!Array.isArray(services) || services.length===0){
+        $('#services-empty').classList.remove('hidden');
+        $('#svc-count').textContent = '0';
+        return;
+      }
+      $('#services-empty').classList.add('hidden');
+      $('#svc-count').textContent = String(services.length);
+      services.forEach(s=>{
+        const card = document.createElement('div');
+        card.className='card';
+        const icon = document.createElement('div');
+        icon.className='svc-icon';
+        if(s.icon && typeof s.icon === 'string'){
+          const url = sanitizeURL(s.icon);
+          if(url && (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:'))){
+            const img = document.createElement('img');
+            img.alt = s.name ? `Иконка: ${s.name}` : 'Иконка';
+            img.src = url;
+            icon.appendChild(img);
+          }else{
+            icon.textContent = s.icon;
+          }
+        }else{
+          icon.innerHTML = iconSVG('web');
+        }
+
+        const title = document.createElement('div');
+        title.className='svc-title';
+        title.textContent = s.name || 'Услуга';
+
+        const desc = document.createElement('div');
+        desc.className='svc-desc';
+        desc.textContent = s.description || '';
+
+        const meta = document.createElement('div');
+        meta.className='svc-meta';
+
+        const price = document.createElement('div');
+        price.className='price';
+        price.textContent = s.price ? String(s.price) : '';
+
+        const btn = document.createElement('button');
+        btn.className='btn btn-primary';
+        btn.textContent = (s.cta && String(s.cta).trim()) || 'Заказать';
+        btn.addEventListener('click', ()=>{
+          if(s.link){
+            const href = sanitizeURL(s.link);
+            if(href) window.open(href, '_blank', 'noopener');
+            else scrollToId('contacts');
+          }else{
+            scrollToId('contacts');
+          }
+        });
+
+        meta.append(price, btn);
+        card.append(icon, title, desc, meta);
+        list.appendChild(card);
+      });
+    }
+
+    function renderContacts(c={}){
+      const list = $('#contacts-list');
+      list.innerHTML = '';
+      const items = [];
+
+      if(c.phone){
+        const v = Array.isArray(c.phone)? c.phone : [c.phone];
+        v.forEach(p=>{
+          const li = document.createElement('li'); li.className='item';
+          li.innerHTML = iconSVG('phone') + `<a href="tel:${p.replace(/\s|\(|\)|-/g,'')}">${p}</a>`;
+          items.push(li);
+        });
+      }
+      if(c.email){
+        const v = Array.isArray(c.email)? c.email : [c.email];
+        v.forEach(e=>{
+          const li = document.createElement('li'); li.className='item';
+          li.innerHTML = iconSVG('mail') + `<a href="mailto:${e}">${e}</a>`;
+          items.push(li);
+        });
+      }
+      if(c.website){
+        const v = Array.isArray(c.website)? c.website : [c.website];
+        v.forEach(w=>{
+          const href = sanitizeURL(w) || '#';
+          const li = document.createElement('li'); li.className='item';
+          li.innerHTML = iconSVG('web') + `<a target="_blank" rel="noopener" href="${href}">${w}</a>`;
+          items.push(li);
+        });
+      }
+      if(c.address){
+        const li = document.createElement('li'); li.className='item';
+        li.innerHTML = iconSVG('map') + `<span>${c.address}</span>`;
+        items.push(li);
+      }
+      // messengers / socials
+      const socials = [
+        ['telegram','tg'], ['whatsapp','wa'], ['vk','vk'], ['instagram','ig']
+      ];
+      socials.forEach(([k,ico])=>{
+        if(c[k]){
+          const v = Array.isArray(c[k])? c[k] : [c[k]];
+          v.forEach(link=>{
+            const href = sanitizeURL(link) || link;
+            const li = document.createElement('li'); li.className='item';
+            const a = document.createElement('a');
+            a.target = '_blank'; a.rel='noopener';
+            a.href = href.startsWith('http') || href.startsWith('tg:') || href.startsWith('https:') ? href : '#';
+            a.innerText = link;
+            li.innerHTML = iconSVG(ico);
+            li.appendChild(a);
+            items.push(li);
+          });
+        }
+      });
+
+      if(items.length===0){
+        const li = document.createElement('li'); li.className='item';
+        li.innerHTML = iconSVG('mail') + '<span>Контакты появятся после загрузки данных.</span>';
+        items.push(li);
+      }
+      items.forEach(i=>list.appendChild(i));
+
+      const map = document.getElementById('map');
+      map.innerHTML = '';
+      if(c.mapEmbed){
+        // Trusted content from JSON owner; still inject as string
+        map.innerHTML = c.mapEmbed;
+      }else if(c.mapUrl){
+        const url = sanitizeURL(c.mapUrl);
+        if(url){
+          const iframe = document.createElement('iframe');
+          iframe.src = url;
+          iframe.loading = 'lazy';
+          iframe.referrerPolicy = 'no-referrer-when-downgrade';
+          iframe.style.width='100%'; iframe.style.height='100%'; iframe.frameBorder='0';
+          map.appendChild(iframe);
+        }
+      }else{
+        const placeholder = document.createElement('div');
+        placeholder.className='notice';
+        placeholder.innerHTML = iconSVG('map') + '<span>Добавьте карту в JSON (mapEmbed или mapUrl), чтобы показать расположение.</span>';
+        map.appendChild(placeholder);
+      }
+    }
+
+    function setBrand(brand={}, titleFallback){
+      const title = brand.name || titleFallback || 'Сайт';
+      setText('brand-title', title);
+      setText('footer-brand', title);
+      setText('brand-sub', brand.tagline || '');
+      document.title = title;
+
+      const logoEl = $('#brand-logo');
+      if(brand.logo){
+        const url = sanitizeURL(brand.logo);
+        if(url){
+          logoEl.style.background='none';
+          logoEl.innerHTML='';
+          const img = document.createElement('img');
+          img.src = url; img.alt='Логотип'; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover'; img.style.borderRadius='10px';
+          logoEl.appendChild(img);
+        }
+      }
+      if(brand.theme){
+        const pill = $('#theme-pill');
+        pill.textContent = brand.theme;
+        pill.classList.remove('hidden');
+        $('#badge-theme').textContent = brand.theme;
+      }
+      if(brand.ctaText){
+        $('#hero-cta').textContent = brand.ctaText;
+      }
+    }
+
+    function applyThemeTheme(data){
+      if(data.theme && !data.brand?.theme){
+        const pill = $('#theme-pill');
+        pill.textContent = data.theme;
+        pill.classList.remove('hidden');
+        $('#badge-theme').textContent = data.theme;
+      }
+    }
+
+    function renderSite(data){
+      // Colors and brand
+      setColors(data.brand || {});
+      setBrand(data.brand || {}, data.title);
+
+      // Title / description
+      setText('site-title', data.title || data.brand?.name || 'Сайт');
+      if(data.description){
+        $('#site-description').textContent = data.description;
+      }
+
+      // Services
+      renderServices(data.services || []);
+
+      // Contacts
+      renderContacts(data.contacts || {});
+
+      // Footer year
+      $('#year').textContent = new Date().getFullYear();
+
+      // Hide helper notice
+      $('#data-notice').classList.add('hidden');
+
+      // Theme label from root if provided
+      applyThemeTheme(data);
+    }
+
+    // Load JSON from embedded script, window.siteData, or URL param ?data=
+    (function init(){
+      const y = new Date().getFullYear(); $('#year').textContent = y;
+      let data = null;
+
+      // 1) Embedded <script type="application/json" id="site-data">
+      try{
+        const el = document.getElementById('site-data');
+        if(el && el.textContent.trim()){
+          const raw = el.textContent.trim();
+          const parsed = JSON.parse(raw);
+          if(Object.keys(parsed).length) data = parsed;
+        }
+      }catch(e){}
+
+      // 2) window.siteData global
+      if(!data && window.siteData && typeof window.siteData==='object'){
+        data = window.siteData;
+      }
+
+      // 3) URL param ?data=<encoded JSON>
+      if(!data){
+        const params = new URLSearchParams(location.search);
+        const p = params.get('data');
+        if(p){
+          try{
+            // try decodeURIComponent, then base64
+            let raw = decodeURIComponent(p);
+            if(!raw.trim().startsWith('{')){
+              try{ raw = atob(p);}catch(e){}
+            }
+            const parsed = JSON.parse(raw);
+            data = parsed;
+          }catch(e){}
+        }
+      }
+
+      if(data){ renderSite(data); }
+    })();
+  </script>
 </body>
 </html>
