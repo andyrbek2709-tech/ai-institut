@@ -3,64 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой сайт</title>
+    <title>ЭкоМир - Защитим природу вместе!</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
         }
         header {
             background: #4CAF50;
             color: white;
-            padding: 10px 20px;
+            padding: 15px 0;
             text-align: center;
         }
         nav {
-            margin: 10px 0;
+            margin: 20px 0;
         }
         nav a {
-            margin: 0 15px;
-            color: white;
+            color: #4CAF50;
             text-decoration: none;
+            padding: 10px 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            margin: 0 10px;
+            transition: background 0.3s, color 0.3s;
+        }
+        nav a:hover {
+            background: #4CAF50;
+            color: white;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
         }
         section {
+            background: white;
             padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         footer {
-            background: #333;
+            background: #4CAF50;
             color: white;
             text-align: center;
             padding: 10px 0;
-            position: absolute;
+            position: relative;
             bottom: 0;
             width: 100%;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Добро пожаловать на мой сайт</h1>
-        <nav>
-            <a href="#about">О нас</a>
-            <a href="#services">Услуги</a>
-            <a href="#contact">Контакты</a>
-        </nav>
-    </header>
-    <section id="about">
-        <h2>О нас</h2>
-        <p>Здесь будет информация о нас.</p>
+
+<header>
+    <h1>ЭкоМир</h1>
+    <p>Защитим природу вместе!</p>
+</header>
+
+<nav>
+    <a href="#mission">Наша миссия</a>
+    <a href="#projects">Проекты</a>
+    <a href="#contact">Контакты</a>
+</nav>
+
+<div class="container">
+
+    <section id="mission">
+        <h2>Наша миссия</h2>
+        <p>Мы стремимся сохранить природу для будущих поколений, улучшая экологическую ситуацию и уменьшая воздействие человека на окружающую среду.</p>
     </section>
-    <section id="services">
-        <h2>Услуги</h2>
-        <p>Здесь будет информация о наших услугах.</p>
+
+    <section id="projects">
+        <h2>Наши проекты</h2>
+        <p>Мы реализуем различные проекты, направленные на защиту природы, включая очистку водоемов, высадку деревьев и экологическое просвещение.</p>
+        <button>Узнать больше</button>
     </section>
+
     <section id="contact">
-        <h2>Контакты</h2>
-        <p>Здесь будет информация о том, как с нами связаться.</p>
+        <h2>Связаться с нами</h2>
+        <p>Если у вас есть вопросы или предложения, пишите нам!</p>
+        <button>Написать</button>
     </section>
-    <footer>
-        <p>&copy; 2023 Мой сайт</p>
-    </footer>
+    
+</div>
+
+<footer>
+    <p>© 2023 ЭкоМир. Все права защищены.</p>
+</footer>
+
 </body>
 </html>
