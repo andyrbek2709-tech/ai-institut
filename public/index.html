@@ -1,196 +1,230 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ресторан Актау</title>
-  <style>
-    :root {
-      --primary-color: #bf6f4f;
-      --secondary-color: #3a3a3a;
-      --light-color: #f9f7f1;
-      --dark-color: #222;
-      --accent-color: #e27d60;
-      --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      margin: 0;
-      font-family: var(--font-family);
-      background-color: var(--light-color);
-      color: var(--secondary-color);
-      line-height: 1.6;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Современный Лендинг</title>
+<style>
+  :root {
+    --primary-color: #4a90e2;
+    --secondary-color: #f5a623;
+    --bg-color: #f9fafa;
+    --text-color: #333;
+    --header-height: 60px;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; 
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+  }
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--header-height);
+    background: #fff;
+    box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    z-index: 1000;
+  }
+  header .logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    flex-grow: 1;
+  }
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+  }
+  nav a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+  nav a:hover,
+  nav a:focus {
+    color: var(--primary-color);
+    outline: none;
+  }
+  main {
+    padding-top: calc(var(--header-height) + 2rem);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  section {
+    padding: 4rem 2rem;
+    background: #fff;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.05);
+  }
+  section:nth-child(even) {
+    background: #f0f5fb;
+  }
+  h1, h2 {
+    margin-top: 0;
+    color: var(--primary-color);
+  }
+  h1 {
+    font-size: 2.75rem;
+    margin-bottom: 1rem;
+  }
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  .intro {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: center;
+    justify-content: center;
+  }
+  .intro img {
+    border-radius: 12px;
+    max-width: 100%;
+    height: auto;
+    flex: 1 1 400px;
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.15);
+  }
+  .intro .text {
+    flex: 1 1 400px;
+  }
+  button.cta {
+    background-color: var(--secondary-color);
+    border: none;
+    padding: 1rem 2rem;
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: white;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 1.5rem;
+  }
+  button.cta:hover,
+  button.cta:focus {
+    background-color: #d67e11;
+    outline: none;
+  }
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+    gap: 2rem;
+  }
+  .feature {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.08);
+    text-align: center;
+  }
+  .feature img {
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.1);
+  }
+  footer {
+    background: var(--primary-color);
+    color: white;
+    padding: 1.5rem 2rem;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+  @media (max-width: 600px) {
     header {
-      background-color: var(--primary-color);
-      color: var(--light-color);
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    header h1 {
-      margin: 0;
-      font-weight: 700;
-      font-size: 1.8rem;
-      letter-spacing: 1.5px;
-    }
-    nav ul {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      display: flex;
-      gap: 1.8rem;
-    }
-    nav a {
-      color: var(--light-color);
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 1rem;
-      transition: color 0.3s ease;
-    }
-    nav a:hover, nav a:focus {
-      color: var(--accent-color);
-      outline: none;
-    }
-    .hero {
-      background: url('https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=1200') center/cover no-repeat;
-      height: 60vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--light-color);
-      text-shadow: 0 0 10px rgba(0,0,0,0.7);
-      text-align: center;
       padding: 0 1rem;
     }
-    .hero h2 {
-      font-size: 3rem;
-      max-width: 700px;
-      margin: 0;
-      font-weight: 700;
-      background: rgba(191,111,79,0.8);
-      padding: 1rem 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    .intro {
+      flex-direction: column;
     }
-    main {
-      padding: 2rem 3rem;
-      max-width: 1200px;
-      margin: auto;
-    }
-    section {
-      margin-bottom: 4rem;
-    }
-    section h3 {
-      font-size: 2.2rem;
-      color: var(--primary-color);
-      border-bottom: 3px solid var(--accent-color);
-      display: inline-block;
-      margin-bottom: 1.5rem;
-    }
-    .about-text {
-      font-size: 1.1rem;
-      max-width: 800px;
-      margin-bottom: 2rem;
-    }
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-      gap: 1.5rem;
-    }
-    .gallery img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      cursor: pointer;
-    }
-    .gallery img:hover,
-    .gallery img:focus {
-      transform: scale(1.05);
-      box-shadow: 0 8px 25px rgba(190,109,79,0.6);
-      outline: none;
-    }
-    footer {
-      background-color: var(--dark-color);
-      color: var(--light-color);
-      text-align: center;
-      padding: 1.2rem 1rem;
-      font-size: 0.9rem;
-      letter-spacing: 0.05em;
-      margin-top: 2rem;
-    }
-    @media(max-width: 600px) {
-      header {
-        flex-direction: column;
-        gap: 0.8rem;
-      }
-      .hero h2 {
-        font-size: 2rem;
-      }
-      main {
-        padding: 1rem 1.5rem;
-      }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
-  <header>
-    <h1>Актау Ресторан</h1>
-    <nav>
-      <ul>
-        <li><a href="#about">О нас</a></li>
-        <li><a href="#menu">Меню</a></li>
-        <li><a href="#gallery">Галерея</a></li>
-        <li><a href="#contacts">Контакты</a></li>
-      </ul>
-    </nav>
-  </header>
-  <section class="hero" role="banner" aria-label="Главный баннер ресторана">
-    <h2>Изысканная кухня в сердце Актау</h2>
+<header>
+  <div class="logo">YourBrand</div>
+  <nav role="navigation" aria-label="Основное меню">
+    <ul>
+      <li><a href="#home">Главная</a></li>
+      <li><a href="#features">Особенности</a></li>
+      <li><a href="#about">О нас</a></li>
+      <li><a href="#contact">Контакты</a></li>
+    </ul>
+  </nav>
+</header>
+<main>
+  <section id="home" tabindex="-1">
+    <div class="intro">
+      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный фон с технологией" />
+      <div class="text">
+        <h1>Добро пожаловать в YourBrand</h1>
+        <p>Мы создаём инновационные решения, которые помогают бизнесу расти и процветать в цифровую эпоху. Узнайте, как наши продукты могут изменить вашу компанию к лучшему.</p>
+        <button class="cta" type="button">Узнать больше</button>
+      </div>
+    </div>
   </section>
-  <main>
-    <section id="about" tabindex="-1">
-      <h3>О нас</h3>
-      <p class="about-text">Добро пожаловать в наш ресторан в Актау! Мы гордимся сочетанием традиционных казахских блюд и современных гастрономических тенденций. Уютная атмосфера, свежие ингредиенты и безупречное обслуживание — все для вашего незабываемого вечера.</p>
-    </section>
-    <section id="menu" tabindex="-1">
-      <h3>Меню</h3>
-      <p class="about-text">Насладитесь разнообразием блюд, от аппетитных закусок и супов до изысканных горячих блюд и десертов, которые подчеркнут вкус и колорит нашего региона.</p>
-      <div class="gallery" aria-label="Фотографии блюд из меню">
-        <img src="https://images.unsplash.com/photo-1562967916-eb82221dfb3b?w=800" alt="Тарелка с мясным ассорти и гарниром" tabindex="0" />
-        <img src="https://images.unsplash.com/photo-1604908177593-8a46075d6d92?w=800" alt="Свежий салат с овощами и зеленью" tabindex="0" />
-        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" alt="Суп с зеленью и домашним хлебом" tabindex="0" />
-        <img src="https://images.unsplash.com/photo-1543352634-243166b2c55d?w=800" alt="Стейк с овощами гриль" tabindex="0" />
-        <img src="https://images.unsplash.com/photo-1617191510045-b578f778307c?w=800" alt="Тарелка с традиционным казахским блюдом" tabindex="0" />
-        <img src="https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800" alt="Красивый десерт с шоколадом и ягодами" tabindex="0" />
-      </div>
-    </section>
-    <section id="gallery" tabindex="-1">
-      <h3>Галерея</h3>
-      <div class="gallery" aria-label="Фотографии интерьера и атмосферы ресторана">
-        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Интерьер ресторана с деревянной мебелью и теплыми светильниками" tabindex="0" />
-        <img src="https://images.unsplash.com/photo-1432139509613-5c4255815697?w=800" alt="Гости наслаждаются ужином в ресторане Актау" tabindex="0" />
-        <img src="https://images.unsplash.com/photo-1541544181211-62a2f1a9333a?w=800" alt="Подача блюд в элегантной обстановке" tabindex="0" />
-        <img src="https://images.unsplash.com/photo-1506089676908-3592f7389d4d?w=800" alt="Барная стойка с выбором напитков" tabindex="0" />
-      </div>
-    </section>
-    <section id="contacts" tabindex="-1">
-      <h3>Контакты</h3>
-      <p class="about-text">Адрес: г. Актау, ул. Абая 23<br />Телефон: +7 (7292) 123-456<br />Email: info@aktau-restaurant.kz<br />Время работы: с 10:00 до 23:00 ежедневно</p>
-    </section>
-  </main>
-  <footer>
-    &copy; 2024 Ресторан Актау. Все права защищены.
-  </footer>
+
+  <section id="features" tabindex="-1">
+    <h2>Наши особенности</h2>
+    <div class="features">
+      <article class="feature">
+        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=800" alt="Инновационный дизайн" />
+        <h3>Инновационный дизайн</h3>
+        <p>Современный и эргономичный дизайн для максимального удобства и эффективности.</p>
+      </article>
+      <article class="feature">
+        <img src="https://images.unsplash.com/photo-1527689368864-3a821dbccc34?w=800" alt="Надёжность и безопасность" />
+        <h3>Надёжность и безопасность</h3>
+        <p>Высокий уровень защиты данных и стабильность работы наших решений.</p>
+      </article>
+      <article class="feature">
+        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800" alt="Техническая поддержка 24/7" />
+        <h3>Техническая поддержка 24/7</h3>
+        <p>Квалифицированная помощь в любое время, чтобы вы всегда были на связи.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="about" tabindex="-1">
+    <h2>О компании</h2>
+    <p>YourBrand — это команда профессионалов, объединённых идеей создавать цифровые продукты, которые меняют жизнь и бизнес. Мы опираемся на современные технологии и лучшие практики, чтобы предвосхищать ожидания наших клиентов.</p>
+    <img src="https://images.unsplash.com/photo-1556761175-129418cb2dfe?w=800" alt="Команда компании YourBrand" style="margin-top:2rem; border-radius:12px; max-width:100%; box-shadow: 0 8px 20px rgb(0 0 0 / 0.15);" />
+  </section>
+
+  <section id="contact" tabindex="-1">
+    <h2>Свяжитесь с нами</h2>
+    <p>Оставьте свои данные, и мы свяжемся с вами в ближайшее время:</p>
+    <form style="max-width: 400px; margin-top: 1rem;">
+      <label for="name" style="display:block; margin-bottom:0.5rem; font-weight:600;">Имя</label>
+      <input type="text" id="name" name="name" required style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc; margin-bottom:1rem;" />
+      
+      <label for="email" style="display:block; margin-bottom:0.5rem; font-weight:600;">Email</label>
+      <input type="email" id="email" name="email" required style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc; margin-bottom:1rem;" />
+      
+      <label for="message" style="display:block; margin-bottom:0.5rem; font-weight:600;">Сообщение</label>
+      <textarea id="message" name="message" rows="4" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc; margin-bottom:1rem;"></textarea>
+      
+      <button type="submit" class="cta">Отправить</button>
+    </form>
+  </section>
+</main>
+<footer>
+  &copy; 2024 YourBrand. Все права защищены.
+</footer>
 </body>
 </html>
