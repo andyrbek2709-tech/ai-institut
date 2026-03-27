@@ -1,4 +1,4 @@
-Конечно! Вот пример простого, но стильного лендинга для собачки, который можно использовать как шаблон. В него включены основные секции: приветствие, особенности, галерея и форма обратной связи.
+Конечно! Вот пример полноценного HTML сайта — лендинга для рекламного агентства **VFORMATE**. Включены основные блоки: шапка с навигацией, главный баннер, услуги, портфолио, отзывы клиентов и футер.
 
 ```html
 <!DOCTYPE html>
@@ -6,190 +6,360 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Лендинг для собачки</title>
+  <title>VFORMATE — Рекламное агентство</title>
   <style>
-    * {
+    /* Сброс некоторых стилей */
+    *, *::before, *::after {
       box-sizing: border-box;
     }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
-      background: #f9f9f9;
-      color: #333;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       line-height: 1.6;
+      color: #333;
+      background-color: #fafafa;
     }
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* Шапка */
     header {
-      background: #6c63ff;
+      background-color: #222;
       color: white;
-      padding: 2rem 1rem;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    header h1 {
-      margin: 0 0 0.5rem;
-      font-size: 2.5rem;
-    }
-    header p {
-      font-size: 1.2rem;
-      font-weight: 300;
-    }
-    section {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    .features {
+      padding: 20px 40px;
       display: flex;
-      justify-content: space-around;
-      gap: 1.5rem;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    header .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 30px;
+      margin: 0;
+      padding: 0;
+    }
+    nav ul li a {
+      color: white;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    nav ul li a:hover {
+      color: #ff6f61;
+    }
+
+    /* Главный баннер */
+    .hero {
+      background: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1470&q=80') center/cover no-repeat;
+      color: white;
+      height: 80vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 0 40px;
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+    }
+    .hero h1 {
+      font-size: 3.5rem;
+      margin-bottom: 20px;
+    }
+    .hero p {
+      font-size: 1.3rem;
+      margin-bottom: 30px;
+      max-width: 600px;
+    }
+    .btn-primary {
+      background-color: #ff6f61;
+      color: white;
+      padding: 15px 30px;
+      font-weight: 700;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 5px 15px rgba(255,111,97,0.4);
+    }
+    .btn-primary:hover {
+      background-color: #e85c50;
+    }
+
+    /* Блок услуг */
+    section.services {
+      background-color: white;
+      padding: 60px 40px;
+      text-align: center;
+    }
+    section.services h2 {
+      font-size: 2.8rem;
+      margin-bottom: 40px;
+      color: #222;
+    }
+    .services-list {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
       flex-wrap: wrap;
     }
-    .feature {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 10px;
-      flex: 1 1 250px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    .feature h3 {
-      margin-top: 0;
-      color: #6c63ff;
-    }
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
-      gap: 1rem;
-    }
-    .gallery img {
-      width: 100%;
-      border-radius: 10px;
-      object-fit: cover;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    .service-item {
+      background-color: #f7f7f7;
+      padding: 30px 20px;
+      border-radius: 12px;
+      width: 280px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
       transition: transform 0.3s ease;
     }
-    .gallery img:hover {
-      transform: scale(1.05);
-      cursor: pointer;
+    .service-item:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
-    form {
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      max-width: 500px;
-      margin: 0 auto 3rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    .service-item h3 {
+      margin-bottom: 15px;
+      color: #ff6f61;
     }
-    form h2 {
-      margin-top: 0;
-      color: #6c63ff;
-      text-align: center;
-    }
-    form label {
-      display: block;
-      margin-top: 1rem;
-      font-weight: 600;
-    }
-    form input, form textarea {
-      width: 100%;
-      padding: 0.7rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin-top: 0.3rem;
+    .service-item p {
       font-size: 1rem;
-      font-family: inherit;
-      transition: border-color 0.3s ease;
+      color: #555;
     }
-    form input:focus, form textarea:focus {
-      border-color: #6c63ff;
-      outline: none;
+
+    /* Портфолио */
+    section.portfolio {
+      padding: 60px 40px;
+      background-color: #fafafa;
     }
-    form button {
-      display: block;
-      width: 100%;
-      background: #6c63ff;
-      color: white;
-      border: none;
-      padding: 1rem;
-      margin-top: 1.5rem;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    form button:hover {
-      background: #5750d6;
-    }
-    footer {
-      background: #333;
-      color: #eee;
+    section.portfolio h2 {
       text-align: center;
-      padding: 1rem;
+      margin-bottom: 50px;
+      font-size: 2.8rem;
+      color: #222;
+    }
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+      gap: 30px;
+    }
+    .portfolio-item {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      background-color: white;
+    }
+    .portfolio-item img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .portfolio-item:hover img {
+      transform: scale(1.05);
+    }
+    .portfolio-item .caption {
+      padding: 15px 20px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #333;
+    }
+
+    /* Отзывы */
+    section.testimonials {
+      background-color: #222;
+      color: white;
+      padding: 60px 40px;
+      text-align: center;
+    }
+    section.testimonials h2 {
+      font-size: 2.8rem;
+      margin-bottom: 50px;
+    }
+    .testimonial-list {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .testimonial {
+      background-color: #333;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 320px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      font-style: italic;
+      position: relative;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .testimonial::before {
+      content: "“";
+      font-size: 4rem;
+      color: #ff6f61;
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      opacity: 0.3;
+    }
+    .testimonial p {
+      margin-bottom: 20px;
+    }
+    .testimonial .client {
+      font-style: normal;
+      font-weight: 700;
+      text-align: right;
+      color: #ff6f61;
+    }
+
+    /* Футер */
+    footer {
+      background-color: #111;
+      color: #aaa;
+      text-align: center;
+      padding: 30px 20px;
       font-size: 0.9rem;
     }
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 2rem;
-      }
-      .features {
+    footer a {
+      color: #ff6f61;
+      text-decoration: underline;
+    }
+
+    /* Адаптив */
+    @media(max-width: 768px) {
+      header {
         flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+      nav ul {
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+      .hero {
+        height: 60vh;
+        padding: 0 20px;
+      }
+      .hero h1 {
+        font-size: 2.4rem;
+      }
+      .hero p {
+        font-size: 1.1rem;
+        max-width: 100%;
+      }
+      section.services .services-list,
+      section.testimonials .testimonial-list {
+        flex-direction: column;
+        align-items: center;
       }
     }
+
   </style>
 </head>
 <body>
 
 <header>
-  <h1>Добро пожаловать в мир собак!</h1>
-  <p>Лучший друг человека — любящий собачка</p>
+  <div class="logo">VFORMATE</div>
+  <nav>
+    <ul>
+      <li><a href="#hero">Главная</a></li>
+      <li><a href="#services">Услуги</a></li>
+      <li><a href="#portfolio">Портфолио</a></li>
+      <li><a href="#testimonials">Отзывы</a></li>
+      <li><a href="#contact">Контакты</a></li>
+    </ul>
+  </nav>
 </header>
 
-<section id="about">
-  <h2>Почему стоит завести собаку?</h2>
-  <div class="features">
-    <div class="feature">
-      <h3>Верность и любовь</h3>
-      <p>Собаки подарят вам безусловную любовь и всегда будут рядом, когда вы в них нуждаетесь.</p>
+<section class="hero" id="hero">
+  <h1>Рекламное агентство VFORMATE</h1>
+  <p>Создаём эффективные рекламные кампании, которые увеличивают ваши продажи и укрепляют бренд.</p>
+  <button class="btn-primary" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Связаться с нами</button>
+</section>
+
+<section class="services" id="services">
+  <h2>Наши услуги</h2>
+  <div class="services-list">
+    <div class="service-item">
+      <h3>Контекстная реклама</h3>
+      <p>Настройка и оптимизация рекламных кампаний в Google Ads и Яндекс.Директ.</p>
     </div>
-    <div class="feature">
-      <h3>Здоровье и активность</h3>
-      <p>Прогулки с собакой помогают поддерживать форму и улучшать настроение.</p>
+    <div class="service-item">
+      <h3>Социальные сети</h3>
+      <p>Ведение и продвижение в Instagram, Facebook, ВКонтакте и других платформах.</p>
     </div>
-    <div class="feature">
-      <h3>Защита и надежность</h3>
-      <p>Собака - ваш надежный защитник, который оповестит о любой опасности.</p>
+    <div class="service-item">
+      <h3>Разработка бренда</h3>
+      <p>Создание фирменного стиля и уникального позиционирования вашего бизнеса.</p>
+    </div>
+    <div class="service-item">
+      <h3>Аналитика и отчетность</h3>
+      <p>Подробный анализ эффективности рекламы и рекомендации по росту.</p>
     </div>
   </div>
 </section>
 
-<section id="gallery">
-  <h2>Галерея милых собачек</h2>
-  <div class="gallery">
-    <img src="https://images.unsplash.com/photo-1558788353-f76d92427f16?auto=format&fit=crop&w=400&q=80" alt="Собачка 1" />
-    <img src="https://images.unsplash.com/photo-1517423440428-a5a00ad493e8?auto=format&fit=crop&w=400&q=80" alt="Собачка 2" />
-    <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=400&q=80" alt="Собачка 3" />
-    <img src="https://images.unsplash.com/photo-1525253086316-d0c936c814f8?auto=format&fit=crop&w=400&q=80" alt="Собачка 4" />
+<section class="portfolio" id="portfolio">
+  <h2>Наши работы</h2>
+  <div class="portfolio-grid">
+    <div class="portfolio-item" title="Кампания для магазина электроники">
+      <img src="https://images.unsplash.com/photo-1518773553398-650c184e0bb3?auto=format&fit=crop&w=600&q=80" alt="Проект 1" />
+      <div class="caption">Кампания для магазина электроники</div>
+    </div>
+    <div class="portfolio-item" title="Продвижение кафе 'Vegan Delights'">
+      <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80" alt="Проект 2" />
+      <div class="caption">Продвижение кафе 'Vegan Delights'</div>
+    </div>
+    <div class="portfolio-item" title="Ребрендинг спортивного клуба">
+      <img src="https://images.unsplash.com/photo-1526403228777-e799ed5dea6c?auto=format&fit=crop&w=600&q=80" alt="Проект 3" />
+      <div class="caption">Ребрендинг спортивного клуба</div>
+    </div>
+    <div class="portfolio-item" title="Соцсети для турагентства">
+      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="Проект 4" />
+      <div class="caption">Соцсети для турагентства</div>
+    </div>
   </div>
 </section>
 
-<section id="contact">
-  <form>
-    <h2>Связаться с нами</h2>
-    <label for="name">Имя</label>
-    <input type="text" id="name" name="name" placeholder="Ваше имя" required />
+<section class="testimonials" id="testimonials">
+  <h2>Отзывы клиентов</h2>
+  <div class="testimonial-list">
+    <div class="testimonial">
+      <p>Команда VFORMATE помогла нам увеличить продажи в два раза за полгода. Профессионалы своего дела!</p>
+      <div class="client">— Анна Смирнова, CEO</div>
+    </div>
+    <div class="testimonial">
+      <p>Очень доволен сотрудничеством. Все задачи решают быстро и качественно, всегда на связи.</p>
+      <div class="client">— Михаил Ковалёв, маркетолог</div>
+    </div>
+    <div class="testimonial">
+      <p>Рекламное агентство VFORMATE — надежный партнер, который действительно заботится о результатах.</p>
+      <div class="client">— Ольга Петрова, владелец кафе</div>
+    </div>
+  </div>
+</section>
 
-    <label for="email">Email</label>
-    <input type="email" id="email" name="email" placeholder="example@mail.com" required />
-
-    <label for="message">Сообщение</label>
-    <textarea id="message" name="message" rows="4" placeholder="Ваше сообщение" required></textarea>
-
-    <button type="submit">Отправить</button>
+<section id="contact" style="background:#fff; padding:60px 40px;">
+  <h2 style="text-align:center; margin-bottom:40px; color:#222;">Свяжитесь с нами</h2>
+  <form action="#" method="POST" style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+    <input type="text" name="name" placeholder="Ваше имя" required style="padding: 15px; font-size: 1rem; border: 1px solid #ccc; border-radius: 8px;" />
+    <input type="email" name="email" placeholder="Ваш Email" required style="padding: 15px; font-size: 1rem; border: 1px solid #ccc; border-radius: 8px;" />
+    <textarea name="message" rows="5" placeholder="Сообщение" required style="padding: 15px; font-size: 1rem; border: 1px solid #ccc; border-radius: 8px;"></textarea>
+    <button type="submit" class="btn-primary" style="align-self: center; width: 200px;">Отправить</button>
   </form>
 </section>
 
 <footer>
-  <p>© 2024 Все права защищены. Лендинг для собачки.</p>
+  &copy; 2024 VFORMATE. Все права защищены. | <a href="mailto:info@vformate.ru">info@vformate.ru</a>
 </footer>
 
 </body>
@@ -198,9 +368,10 @@
 
 ---
 
-### Как использовать:
-- Сохраните этот код в файле с расширением `.html`, например, `index.html`.
-- Откройте файл в любом современном браузере.
-- Можно добавить свои изображения или изменить тексты по желанию.
+### Особенности:
+- Минималистичный дизайн с акцентом фирменным цветом (#ff6f61).
+- Адаптивность для мобильных устройств.
+- Основные разделы для лендинга рекламного агентства.
+- Простая форма обратной связи (без backend, требует доработки для реальной отправки).
 
-Если нужно, могу помочь дополнить или улучшить сайт – дайте знать!
+Если нужно добавить анимации, интеграцию с CRM или дополнительный функционал — дай знать!
