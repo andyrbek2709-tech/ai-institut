@@ -1,343 +1,255 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Кофейня Aroma</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display&display=swap');
-  * {
-    box-sizing: border-box;
-  }
-  body {
-    margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    background: #fdf6f0;
-    color: #3c2f2f;
-    line-height: 1.6;
-  }
-  a {
-    color: #6f4e37;
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-  a:hover {
-    color: #bd8b67;
-  }
-  header {
-    background: #6f4e37;
-    color: #f4eee3;
-    padding: 1rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  }
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  nav .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.8rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-  }
-  nav ul {
-    list-style: none;
-    display: flex;
-    gap: 1.6rem;
-    margin: 0;
-    padding: 0;
-  }
-  nav ul li {
-    font-weight: 600;
-  }
-  nav ul li a {
-    font-size: 1rem;
-  }
-
-  .hero {
-    background: url('https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1200') center center/cover no-repeat;
-    height: 90vh;
-    color: #f4eee3;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 0 2rem;
-    text-shadow: 1px 1px 5px rgba(0,0,0,0.7);
-  }
-  .hero h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 4rem;
-    margin-bottom: 0.3rem;
-  }
-  .hero p {
-    font-size: 1.4rem;
-    max-width: 500px;
-    margin-bottom: 1.5rem;
-  }
-  .btn-primary {
-    background: #6f4e37;
-    color: #f4eee3;
-    padding: 0.9rem 2rem;
-    font-weight: 700;
-    border: none;
-    border-radius: 40px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    transition: background-color 0.3s ease;
-  }
-  .btn-primary:hover {
-    background: #bd8b67;
-  }
-
-  section {
-    padding: 4rem 2rem;
-  }
-  h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: 2.8rem;
-    margin-bottom: 1rem;
-    color: #6f4e37;
-    text-align: center;
-  }
-  .divider {
-    width: 80px;
-    height: 4px;
-    background: #bd8b67;
-    margin: 0 auto 3rem auto;
-    border-radius: 2px;
-  }
-  .about-content {
-    max-width: 900px;
-    margin: 0 auto;
-    font-size: 1.1rem;
-    color: #5a4435;
-    text-align: center;
-    line-height: 1.8;
-  }
-  .menu-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(260px,1fr));
-    gap: 2rem;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-  .menu-item {
-    box-shadow: 0 4px 10px rgba(111, 78, 55, 0.15);
-    border-radius: 12px;
-    background: #fff8f3;
-    overflow: hidden;
-    transition: transform 0.3s ease;
-  }
-  .menu-item:hover {
-    transform: translateY(-6px);
-  }
-  .menu-item img {
-    width: 100%;
-    height: 170px;
-    object-fit: cover;
-  }
-  .menu-info {
-    padding: 1rem 1.5rem 2rem 1.5rem;
-  }
-  .menu-info h3 {
-    margin: 1rem 0 0.5rem 0;
-    font-family: 'Playfair Display', serif;
-    font-size: 1.4rem;
-    color: #5a4435;
-  }
-  .menu-info p {
-    font-size: 1rem;
-    color: #7a6655;
-  }
-  .menu-info .price {
-    font-weight: 700;
-    color: #6f4e37;
-    margin-top: 0.7rem;
-    font-size: 1.1rem;
-  }
-
-  .gallery {
-    max-width: 1100px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-    gap: 1.5rem;
-  }
-  .gallery img {
-    width: 100%;
-    display: block;
-    border-radius: 10px;
-    box-shadow: 0 3px 8px rgba(111, 78, 55, 0.3);
-    transition: transform 0.4s ease;
-    cursor: pointer;
-  }
-  .gallery img:hover {
-    transform: scale(1.05);
-  }
-
-  .contact-container {
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-  }
-  input, textarea {
-    padding: 0.8rem 1rem;
-    border: 1.5px solid #c0a389;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
-    font-family: 'Montserrat', sans-serif;
-  }
-  input:focus, textarea:focus {
-    outline: none;
-    border-color: #6f4e37;
-  }
-  textarea {
-    resize: vertical;
-    min-height: 120px;
-  }
-  .btn-submit {
-    background: #6f4e37;
-    color: #f4eee3;
-    padding: 0.9rem 2rem;
-    font-weight: 700;
-    border: none;
-    border-radius: 40px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    align-self: flex-start;
-    transition: background-color 0.3s ease;
-  }
-  .btn-submit:hover {
-    background: #bd8b67;
-  }
-
-  footer {
-    background: #3c2f2f;
-    color: #d4cfc8;
-    text-align: center;
-    padding: 2rem 1rem;
-    font-size: 0.9rem;
-  }
-
-  @media(max-width: 480px) {
-    .hero h1 {
-      font-size: 2.6rem;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Кофейня Актау</title>
+  <style>
+    * {
+      box-sizing: border-box;
     }
-    nav ul {
-      gap: 1rem;
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #4b3f2f;
+      background: #f3f1ec;
+      line-height: 1.6;
     }
-  }
-</style>
+    header {
+      background: #6f4e37;
+      padding: 15px 30px;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    header h1 {
+      margin: 0;
+      font-weight: 700;
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      margin-left: 25px;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: color 0.3s ease;
+    }
+    nav a:hover {
+      color: #d9b382;
+    }
+    .hero {
+      background-image: url('https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800');
+      background-size: cover;
+      background-position: center;
+      height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #faefdc;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-align: center;
+      padding: 0 20px;
+    }
+    section {
+      max-width: 1100px;
+      margin: 50px auto;
+      padding: 0 20px;
+    }
+    h2 {
+      text-align: center;
+      font-weight: 700;
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      color: #543b21;
+      letter-spacing: 1.5px;
+    }
+    .about {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      align-items: center;
+      justify-content: center;
+    }
+    .about img {
+      max-width: 100%;
+      border-radius: 15px;
+      box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+      flex: 1 1 400px;
+      object-fit: cover;
+      height: 300px;
+    }
+    .about-text {
+      flex: 1 1 400px;
+      font-size: 1.1rem;
+      color: #5e4a32;
+    }
+    .locations {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+      gap: 25px;
+    }
+    .location-card {
+      background: #fff7ef;
+      border-radius: 15px;
+      box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .location-card:hover {
+      transform: translateY(-8px);
+    }
+    .location-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+    .location-info {
+      padding: 20px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .location-info h3 {
+      margin: 0 0 10px 0;
+      color: #6f4e37;
+    }
+    .location-info p {
+      margin: 5px 0;
+      font-size: 1rem;
+      color: #7a6650;
+    }
+    footer {
+      background: #6f4e37;
+      color: #d9b382;
+      text-align: center;
+      padding: 18px 20px;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      margin-top: 50px;
+    }
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      nav {
+        margin-top: 10px;
+      }
+      nav a {
+        margin-left: 0;
+        margin-right: 15px;
+      }
+      .about {
+        flex-direction: column;
+      }
+      .about img,
+      .about-text {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-<header>
-  <div class="container">
+  <header>
+    <h1>Кофейня Актау</h1>
     <nav>
-      <div class="logo">Aroma Coffee</div>
-      <ul>
-        <li><a href="#about">О нас</a></li>
-        <li><a href="#menu">Меню</a></li>
-        <li><a href="#gallery">Галерея</a></li>
-        <li><a href="#contact">Контакты</a></li>
-      </ul>
+      <a href="#about">О нас</a>
+      <a href="#locations">Наши локации</a>
+      <a href="#contacts">Контакты</a>
     </nav>
-  </div>
-</header>
+  </header>
 
-<section class="hero" aria-label="Главный баннер">
-  <h1>Добро пожаловать в Aroma Coffee</h1>
-  <p>Наслаждайтесь лучшим кофе, приготовленным с любовью и мастерством</p>
-  <a class="btn-primary" href="#menu">Посмотреть меню</a>
-</section>
+  <section class="hero" aria-label="Главный экран">
+    Лучший кофе в Актау – вдохновляйтесь ароматом!
+  </section>
 
-<section id="about" aria-label="О кофейне">
-  <h2>О нашей кофейне</h2>
-  <div class="divider"></div>
-  <p class="about-content">Aroma Coffee — это место, где гармонично сочетаются уютная атмосфера и настоящее качество кофе. Мы используем свежие обжаренные зерна со всего мира и особые рецепты, чтобы каждый глоток радовал вас с первого до последнего вздоха.</p>
-</section>
-
-<section id="menu" aria-label="Меню кофейни">
-  <h2>Наше меню</h2>
-  <div class="divider"></div>
-  <div class="menu-grid">
-    <article class="menu-item" tabindex="0">
-      <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800" alt="Эспрессо в кофейной чашке" />
-      <div class="menu-info">
-        <h3>Эспрессо</h3>
-        <p>Концентрированный крепкий кофе с насыщенным вкусом и ароматом.</p>
-        <div class="price">120 ₽</div>
+  <section id="about">
+    <h2>О нашей кофейне</h2>
+    <div class="about">
+      <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800" alt="Кофе в стаканчике и зерна кофе" />
+      <div class="about-text">
+        <p>Добро пожаловать в Кофейню Актау – место, где каждое зерно выбирается с любовью и обжаривается до совершенства. Наши бариста создают напитки, в которых сочетаются традиции и современные тренды кофейного искусства.</p>
+        <p>Уютная атмосфера, дружелюбный сервис и только свежие натуральные ингредиенты делают наш кофе любимым местом для жителей и гостей города.</p>
       </div>
-    </article>
-    <article class="menu-item" tabindex="0">
-      <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800" alt="Капучино с пеной и шоколадом" />
-      <div class="menu-info">
-        <h3>Капучино</h3>
-        <p>Классический итальянский кофе с нежной молочной пеной.</p>
-        <div class="price">180 ₽</div>
-      </div>
-    </article>
-    <article class="menu-item" tabindex="0">
-      <img src="https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=800" alt="Латте с рисунком на пене" />
-      <div class="menu-info">
-        <h3>Латте</h3>
-        <p>Мягкий кофе с большим количеством молока и бархатистой пеной.</p>
-        <div class="price">190 ₽</div>
-      </div>
-    </article>
-    <article class="menu-item" tabindex="0">
-      <img src="https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800" alt="Фильтр кофе в стеклянной кружке" />
-      <div class="menu-info">
-        <h3>Фильтр кофе</h3>
-        <p>Ароматный напиток с мягким вкусом, приготовленный методом фильтрации.</p>
-        <div class="price">150 ₽</div>
-      </div>
-    </article>
-  </div>
-</section>
+    </div>
+  </section>
 
-<section id="gallery" aria-label="Галерея кофейни">
-  <h2>Галерея</h2>
-  <div class="divider"></div>
-  <div class="gallery">
-    <img src="https://images.unsplash.com/photo-1510626176961-4b1b9f9c14e5?w=800" alt="Бариста готовит кофе" />
-    <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800" alt="Современный интерьер кофейни" />
-    <img src="https://images.unsplash.com/photo-1521334884684-d80222895322?w=800" alt="Кофейные зерна с мешком" />
-    <img src="https://images.unsplash.com/photo-1466979939565-13168545a52d?w=800" alt="Чашка кофе и десерт" />
-    <img src="https://images.unsplash.com/photo-1445077100181-193f07b4ca6f?w=800" alt="Кофейное оборудование и зерна" />
-    <img src="https://images.unsplash.com/photo-1476041800959-2f6bb412c8ce?w=800" alt="Пара кофе на столе в кафе" />
-  </div>
-</section>
+  <section id="locations">
+    <h2>Наши локации в Актау</h2>
+    <div class="locations">
+      <article class="location-card">
+        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800" alt="Кофейня на проспекте Мангистауская" class="location-img" />
+        <div class="location-info">
+          <h3>Проспект Мангистауская, 15</h3>
+          <p>Работаем: 08:00 - 22:00</p>
+          <p>Телефон: +7 (701) 123-45-67</p>
+          <p>E-mail: mangistau@coffeeaktau.kz</p>
+        </div>
+      </article>
 
-<section id="contact" aria-label="Контакты кофейни">
-  <h2>Свяжитесь с нами</h2>
-  <div class="divider"></div>
-  <div class="contact-container">
-    <form action="#" method="post" aria-label="Форма для связи с кофейней">
-      <input type="text" name="name" placeholder="Ваше имя" required aria-required="true" />
-      <input type="email" name="email" placeholder="Ваш e-mail" required aria-required="true" />
-      <textarea name="message" placeholder="Ваше сообщение" required aria-required="true"></textarea>
-      <button class="btn-submit" type="submit">Отправить</button>
-    </form>
-  </div>
-</section>
+      <article class="location-card">
+        <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800" alt="Интерьер кофейни в торговом центре" class="location-img" />
+        <div class="location-info">
+          <h3>ТЦ «Актау Plaza», 2 этаж</h3>
+          <p>Работаем: 10:00 - 23:00</p>
+          <p>Телефон: +7 (701) 234-56-78</p>
+          <p>E-mail: plaza@coffeeaktau.kz</p>
+        </div>
+      </article>
 
-<footer>
-  <p>&copy; 2024 Aroma Coffee. Все права защищены.</p>
-  <p>Адрес: г. Москва, ул. Кофейная, д. 15 | Телефон: +7 (123) 456-78-90</p>
-</footer>
+      <article class="location-card">
+        <img src="https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800" alt="Уютная кофейня с зеленью" class="location-img" />
+        <div class="location-info">
+          <h3>Улица Абая, 99</h3>
+          <p>Работаем: 07:30 - 21:30</p>
+          <p>Телефон: +7 (701) 345-67-89</p>
+          <p>E-mail: abay@coffeeaktau.kz</p>
+        </div>
+      </article>
+
+      <article class="location-card">
+        <img src="https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800" alt="Кофейня с открытой террасой" class="location-img" />
+        <div class="location-info">
+          <h3>Набережная, д. 7</h3>
+          <p>Работаем: 08:30 - 22:00</p>
+          <p>Телефон: +7 (701) 456-78-90</p>
+          <p>E-mail: embankment@coffeeaktau.kz</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="contacts">
+    <h2>Контакты</h2>
+    <div style="max-width: 600px; margin: 0 auto; font-size: 1.1rem; color: #5e4a32;">
+      <p><strong>Общая информация:</strong></p>
+      <p>Телефон: +7 (701) 000-00-00</p>
+      <p>Email: info@coffeeaktau.kz</p>
+      <p>Адрес офиса: г. Актау, пр. Мангистауская 1</p>
+      <p style="margin-top: 25px;"><strong>Следите за нами в соцсетях:</strong></p>
+      <p>
+        <a href="https://instagram.com/coffeeaktau" target="_blank" rel="noopener" style="color:#6f4e37; text-decoration:none;">Instagram</a> | 
+        <a href="https://facebook.com/coffeeaktau" target="_blank" rel="noopener" style="color:#6f4e37; text-decoration:none;">Facebook</a> | 
+        <a href="https://vk.com/coffeeaktau" target="_blank" rel="noopener" style="color:#6f4e37; text-decoration:none;">ВКонтакте</a>
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    &copy; 2024 Кофейня Актау. Все права защищены.
+  </footer>
 </body>
 </html>
