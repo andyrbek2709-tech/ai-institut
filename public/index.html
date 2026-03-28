@@ -3,133 +3,193 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>План дизайна - Современный стиль</title>
+<title>Bella Pizza - Пиццерия</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
   body {
     margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    background: #f9f9f9;
-    color: #222;
-    line-height: 1.6;
+    font-family: "Arial", sans-serif;
+    background: #fff8f0;
+    color: #4b2e0e;
   }
   header {
-    background: linear-gradient(90deg, #4a90e2 0%, #50e3c2 100%);
-    color: white;
-    padding: 1rem 2rem;
+    background-color: #d94f00;
+    padding: 20px 40px;
+    color: #fff;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    justify-content: space-between;
   }
   header h1 {
     margin: 0;
-    font-weight: 700;
-    font-size: 1.5rem;
-    letter-spacing: 1.5px;
+    font-family: 'Georgia', serif;
+    font-weight: normal;
   }
   nav a {
-    color: white;
+    color: #fff;
     text-decoration: none;
-    margin-left: 2rem;
+    margin-left: 25px;
+    font-size: 18px;
     font-weight: 600;
-    transition: color 0.3s;
+    transition: color 0.3s ease;
   }
   nav a:hover {
-    color: #ffd700;
+    color: #ffe7c4;
+  }
+  .hero {
+    position: relative;
+    text-align: center;
+    color: white;
+  }
+  .hero img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    filter: brightness(70%);
+  }
+  .hero-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Georgia', serif;
+    font-size: 3em;
+    font-weight: normal;
+    text-shadow: 2px 2px 6px #5c1f00;
   }
   main {
-    max-width: 1200px;
-    margin: 2rem auto 5rem;
-    padding: 0 1.5rem;
-  }
-  section {
-    margin-bottom: 3rem;
+    max-width: 960px;
+    margin: 40px auto;
+    padding: 0 20px;
   }
   h2 {
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 1rem;
-    border-bottom: 3px solid #4a90e2;
-    display: inline-block;
-    padding-bottom: 0.3rem;
+    font-family: 'Georgia', serif;
+    font-weight: normal;
+    font-size: 2.4em;
+    margin-bottom: 20px;
+    border-bottom: 3px solid #d94f00;
+    padding-bottom: 5px;
   }
-  p {
-    font-size: 1.1rem;
-    color: #555;
-  }
-  .image-container {
+  .menu {
     display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
     justify-content: center;
-    margin-top: 2rem;
   }
-  .image-container img {
-    max-width: 100%;
-    height: auto;
+  .pizza-card {
+    background: #fff3e1;
     border-radius: 10px;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+    box-shadow: 0 3px 6px rgba(217,79,0,0.3);
+    width: 280px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+  .pizza-card:hover {
+    transform: scale(1.05);
+  }
+  .pizza-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+  .pizza-info {
+    padding: 15px 20px;
+  }
+  .pizza-info h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.5em;
+    color: #a83800;
+  }
+  .price {
+    font-weight: 700;
+    font-size: 1.2em;
+    color: #d94f00;
   }
   footer {
-    background: #222;
-    color: #ccc;
+    background-color: #d94f00;
+    color: #fff;
     text-align: center;
-    padding: 1.5rem 1rem;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    font-size: 0.9rem;
+    padding: 15px 10px;
+    font-size: 14px;
+    margin-top: 60px;
   }
   @media (max-width: 600px) {
-    nav a {
-      margin-left: 1rem;
-      font-size: 0.9rem;
+    .menu {
+      flex-direction: column;
+      align-items: center;
     }
     header {
-      flex-direction: column;
-      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+    nav a {
+      margin-left: 10px;
+      font-size: 16px;
+    }
+    .hero-text {
+      font-size: 2em;
+      padding: 0 10px;
     }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>План дизайна</h1>
+  <h1>Bella Pizza</h1>
   <nav>
-    <a href="#concept">Концепция</a>
-    <a href="#elements">Элементы</a>
-    <a href="#inspiration">Вдохновение</a>
+    <a href="#menu">Меню</a>
+    <a href="#about">О нас</a>
+    <a href="#contact">Контакты</a>
   </nav>
 </header>
+<section class="hero">
+  <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1470&q=80" alt="Пицца Bella Pizza" />
+  <div class="hero-text">Настоящая Итальянская Пицца в Алматы</div>
+</section>
 <main>
-  <section id="concept">
-    <h2>Концепция современного стиля</h2>
-    <p>Современный стиль в дизайне характеризуется легкостью, минимализмом и функциональностью. В нем используются чистые линии, просторные пространства, холодные оттенки с акцентами ярких цветов и качественные материалы. Важна гармония между формой и функцией, а также четкая структура контента.</p>
-    <div class="image-container">
-      <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1200&q=80" alt="Современный интерьер" />
+  <section id="menu">
+    <h2>Меню</h2>
+    <div class="menu">
+      <article class="pizza-card">
+        <img src="https://images.unsplash.com/photo-1548365328-6e7f1e2c5273?auto=format&fit=crop&w=600&q=80" alt="Пицца Маргарита" />
+        <div class="pizza-info">
+          <h3>Маргарита</h3>
+          <p>Классическая пицца с томатным соусом, моцареллой и базиликом.</p>
+          <div class="price">2 000 ₸</div>
+        </div>
+      </article>
+      <article class="pizza-card">
+        <img src="https://images.unsplash.com/photo-1601924582973-84b59f647f9c?auto=format&fit=crop&w=600&q=80" alt="Пицца Пепперони" />
+        <div class="pizza-info">
+          <h3>Пепперони</h3>
+          <p>Пикантная пепперони на тонком тесте с томатным соусом и сыром.</p>
+          <div class="price">2 500 ₸</div>
+        </div>
+      </article>
+      <article class="pizza-card">
+        <img src="https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&w=600&q=80" alt="Пицца Четыре сыра" />
+        <div class="pizza-info">
+          <h3>Четыре сыра</h3>
+          <p>Сырный микс: моцарелла, пармезан, дорблю и гауда.</p>
+          <div class="price">3 000 ₸</div>
+        </div>
+      </article>
     </div>
   </section>
-  <section id="elements">
-    <h2>Основные элементы</h2>
-    <p>Современный дизайн использует:</p>
-    <ul>
-      <li>Простые геометрические формы</li>
-      <li>Нейтральную цветовую палитру с акцентами</li>
-      <li>Минимализм в декоре</li>
-      <li>Четкую типографику, предпочтение шрифтам без засечек</li>
-      <li>Урбанистические и природные текстуры</li>
-      <li>Технологичные материалы: стекло, металл, бетон</li>
-    </ul>
-    <div class="image-container">
-      <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80" alt="Современный дизайн элементов" />
-    </div>
+  <section id="about" style="margin-top: 60px;">
+    <h2>О нас</h2>
+    <p>«Bella Pizza» — любимая пиццерия Алматы, предлагающая аутентичные итальянские рецепты с использованием свежих ингредиентов и традиционных технологий. У нас уютная атмосфера и быстрая доставка. Насладитесь вкусом настоящей итальянской пиццы по доступным ценам!</p>
   </section>
-  <section id="inspiration">
-    <h2>Вдохновение</h2>
-    <p>Для создания современного стиля вдохновляйтесь работами мировых дизайнеров, архитектурными шедеврами, молодежной культурой и природными контрастами. Современный стиль постоянно развивается, сочетая инновации и классику.</p>
+  <section id="contact" style="margin-top: 60px; margin-bottom: 40px;">
+    <h2>Контакты</h2>
+    <p><strong>Адрес:</strong> г. Алматы, пр. Достык, 123</p>
+    <p><strong>Телефон:</strong> +7 (727) 123-45-67</p>
+    <p><strong>Email:</strong> info@bellapizza.kz</p>
+    <p><strong>Время работы:</strong> Ежедневно 10:00 - 22:00</p>
   </section>
 </main>
 <footer>
-  © 2024 План дизайна — Современный стиль
+  &copy; 2024 Bella Pizza — Вкус Италии у вас дома
 </footer>
 </body>
 </html>
