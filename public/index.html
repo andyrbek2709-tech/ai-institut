@@ -1,142 +1,267 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Современный сайт</title>
-<style>
-  * {
-    box-sizing: border-box;
-  }
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f9f9f9;
-    color: #333;
-  }
-  header {
-    background: #004aad;
-    color: white;
-    padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-  }
-  header nav a {
-    color: white;
-    text-decoration: none;
-    margin-left: 1.5rem;
-    font-weight: 600;
-    transition: color 0.3s ease;
-  }
-  header nav a:hover {
-    color: #fdd835;
-  }
-  .logo {
-    font-size: 1.5rem;
-    font-weight: 700;
-  }
-  main {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-  }
-  .hero {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .hero-text {
-    flex: 1 1 300px;
-  }
-  .hero-text h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    color: #004aad;
-  }
-  .hero-text p {
-    font-size: 1.1rem;
-    line-height: 1.5;
-    margin-bottom: 1.5rem;
-  }
-  .hero-text button {
-    background-color: #fdd835;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 700;
-    border-radius: 4px;
-    cursor: pointer;
-    color: #333;
-    transition: background-color 0.3s ease;
-  }
-  .hero-text button:hover {
-    background-color: #ffeb3b;
-  }
-  .hero-image {
-    flex: 1 1 300px;
-  }
-  .hero-image img {
-    max-width: 100%;
-    border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  }
-  footer {
-    background: #222;
-    color: #bbb;
-    text-align: center;
-    padding: 1.5rem 1rem;
-    margin-top: 3rem;
-    font-size: 0.9rem;
-  }
-  @media (max-width: 600px) {
-    header {
-      flex-direction: column;
-      align-items: flex-start;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Кофейня Aroma</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #3e2c1c;
     }
-    header nav {
-      margin-top: 0.5rem;
+    body {
+      background: #fef9f4;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: #6f4e37;
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 {
+      font-family: 'Georgia', serif;
+      font-weight: 700;
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+      cursor: default;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+    }
+    nav a {
+      color: #f3e4d7;
+      text-decoration: none;
+      font-weight: 600;
+      padding-bottom: 3px;
+      transition: border-bottom-color 0.3s ease;
+      border-bottom: 3px solid transparent;
+      font-size: 1rem;
+    }
+    nav a:hover,
+    nav a:focus {
+      border-bottom-color: #d2b48c;
+      outline: none;
+    }
+
+    main {
+      flex-grow: 1;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
     }
     .hero {
-      flex-direction: column;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+      background: #fff8f0;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(111, 78, 55, 0.15);
+      padding: 2rem;
+    }
+    .hero img {
+      width: 100%;
+      max-width: 500px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(111, 78, 55, 0.3);
+    }
+    .hero-text {
+      flex: 1 1 300px;
+    }
+    .hero-text h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      font-family: 'Georgia', serif;
+      color: #5a3e1b;
+    }
+    .hero-text p {
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+      color: #6f4e37;
+    }
+    .btn-primary {
+      display: inline-block;
+      background-color: #6f4e37;
+      color: #fff;
+      padding: 0.75rem 1.6rem;
+      border-radius: 40px;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(111, 78, 55, 0.3);
+      transition: background-color 0.3s ease;
+    }
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background-color: #5a3e1b;
+      outline: none;
+      box-shadow: 0 6px 15px rgba(111, 78, 55, 0.5);
+    }
+
+    section.menu {
+      margin-bottom: 3rem;
+    }
+    section.menu h3 {
+      font-family: 'Georgia', serif;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      color: #5a3e1b;
       text-align: center;
     }
-    .hero-text, .hero-image {
-      flex: none;
-      width: 100%;
+    .menu-items {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+      gap: 2rem;
     }
-  }
-</style>
+    .menu-item {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(111, 78, 55, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    .menu-item:hover,
+    .menu-item:focus-within {
+      transform: translateY(-8px);
+      box-shadow: 0 10px 25px rgba(111, 78, 55, 0.25);
+    }
+    .menu-item img {
+      width: 100%;
+      max-width: 220px;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      object-fit: cover;
+      box-shadow: 0 4px 15px rgba(111, 78, 55, 0.15);
+      user-select: none;
+    }
+    .menu-item h4 {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+      color: #6f4e37;
+    }
+    .menu-item p {
+      font-size: 1rem;
+      color: #7a5a39;
+      margin-bottom: 0.75rem;
+    }
+    .menu-item .price {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #5a3e1b;
+    }
+
+    footer {
+      background: #6f4e37;
+      color: #f3e4d7;
+      text-align: center;
+      padding: 1.5rem 1rem;
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: #d2b48c;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    footer a:hover,
+    footer a:focus {
+      text-decoration: underline;
+      outline: none;
+    }
+  </style>
 </head>
 <body>
-<header>
-  <div class="logo">MyModernSite</div>
-  <nav>
-    <a href="#home">Главная</a>
-    <a href="#about">О нас</a>
-    <a href="#services">Услуги</a>
-    <a href="#contact">Контакты</a>
-  </nav>
-</header>
-<main>
-  <section class="hero" id="home">
-    <div class="hero-text">
-      <h1>Добро пожаловать на современный сайт</h1>
-      <p>Мы создаем красивые и удобные решения для веба, используя передовые технологии и лучшие практики дизайна.</p>
-      <button>Узнать больше</button>
-    </div>
-    <div class="hero-image">
-      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный дизайн" />
-    </div>
-  </section>
-</main>
-<footer>
-  &copy; 2024 MyModernSite. Все права защищены.
-</footer>
+  <header>
+    <h1>Aroma</h1>
+    <nav aria-label="Главное меню">
+      <ul>
+        <li><a href="#about">О нас</a></li>
+        <li><a href="#menu">Меню</a></li>
+        <li><a href="#contact">Контакты</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <section class="hero" id="about">
+      <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800" alt="Чашка кофе на деревянном столе"/>
+      <div class="hero-text">
+        <h2>Добро пожаловать в кофейню Aroma</h2>
+        <p>Уютное место для ценителей настоящего кофе. Свежие обжаренные зерна, авторские рецепты и атмосферная обстановка.</p>
+        <a href="#menu" class="btn-primary">Посмотреть меню</a>
+      </div>
+    </section>
+
+    <section class="menu" id="menu" tabindex="0" aria-label="Меню кофейни">
+      <h3>Наше меню</h3>
+      <div class="menu-items">
+        <article class="menu-item" tabindex="0">
+          <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800" alt="Эспрессо в чашке" />
+          <h4>Эспрессо</h4>
+          <p>Классический крепкий кофе с насыщенным вкусом.</p>
+          <p class="price">150 ₽</p>
+        </article>
+        <article class="menu-item" tabindex="0">
+          <img src="https://images.unsplash.com/photo-1508898578281-774ac4893a18?w=800" alt="Капучино с узором из молочной пены" />
+          <h4>Капучино</h4>
+          <p>Отличное сочетание эспрессо, молочной пены и молока.</p>
+          <p class="price">220 ₽</p>
+        </article>
+        <article class="menu-item" tabindex="0">
+          <img src="https://images.unsplash.com/photo-1510626176961-4b3acb3cdd8b?w=800" alt="Чашка латте с красивым рисунком из молока" />
+          <h4>Латте</h4>
+          <p>Мягкий кофе с большим количеством молока и нежной пеной.</p>
+          <p class="price">250 ₽</p>
+        </article>
+        <article class="menu-item" tabindex="0">
+          <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800" alt="Фильтр-кофе в стакане" />
+          <h4>Фильтр-кофе</h4>
+          <p>Чистый и яркий вкус, приготовленный на медленном заваривании.</p>
+          <p class="price">200 ₽</p>
+        </article>
+        <article class="menu-item" tabindex="0">
+          <img src="https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=800" alt="Мокко — чашка кофе с шоколадом" />
+          <h4>Мокко</h4>
+          <p>Кофе с шоколадом и взбитыми сливками, сладкое наслаждение.</p>
+          <p class="price">280 ₽</p>
+        </article>
+        <article class="menu-item" tabindex="0">
+          <img src="https://images.unsplash.com/photo-1528804322798-fb04b6a511f6?w=800" alt="Свежая выпечка на деревянной доске" />
+          <h4>Выпечка</h4>
+          <p>Свежие круассаны, маффины и печенье для идеального сочетания с кофе.</p>
+          <p class="price">от 120 ₽</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="contact" style="max-width: 600px; margin: 0 auto 3rem; text-align: center;">
+      <h3 style="font-family: 'Georgia', serif; font-size: 2rem; margin-bottom: 1rem; color: #5a3e1b;">Контакты</h3>
+      <p style="margin-bottom: 0.5rem;">Адрес: ул. Пушкина, д. 10, Москва</p>
+      <p style="margin-bottom: 0.5rem;">Телефон: <a href="tel:+74951234567" style="color:#6f4e37; text-decoration:none;">+7 495 123-45-67</a></p>
+      <p>Email: <a href="mailto:info@aroma-coffee.ru" style="color:#6f4e37; text-decoration:none;">info@aroma-coffee.ru</a></p>
+      <p style="margin-top: 1rem; font-size: 0.9rem; color: #7a5a39;">Будем рады видеть вас у нас!</p>
+    </section>
+  </main>
+
+  <footer>
+    © 2024 Кофейня Aroma. Все права защищены. | <a href="mailto:info@aroma-coffee.ru">Связаться с нами</a>
+  </footer>
 </body>
 </html>
