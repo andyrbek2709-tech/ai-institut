@@ -1,193 +1,155 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Современный Сайт</title>
-  <style>
-    :root {
-      --primary-color: #1e3a8a;
-      --secondary-color: #2563eb;
-      --background-color: #f9fafb;
-      --text-color: #111827;
-      --footer-bg: #1f2937;
-      --footer-text: #d1d5db;
-      --nav-bg: #2563eb;
-      --nav-text: #fff;
-      --nav-hover-bg: #1e40af;
-    }
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      background-color: var(--background-color);
-      color: var(--text-color);
-      line-height: 1.6;
-    }
-    header {
-      background-color: var(--nav-bg);
-      padding: 1rem 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    nav .logo {
-      font-weight: 700;
-      color: var(--nav-text);
-      font-size: 1.5rem;
-      text-decoration: none;
-    }
-    nav ul {
-      display: flex;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-    nav ul li {
-      margin-left: 2rem;
-    }
-    nav ul li a {
-      color: var(--nav-text);
-      text-decoration: none;
-      font-weight: 600;
-      transition: background-color 0.3s ease;
-      padding: .5rem 1rem;
-      border-radius: 4px;
-      display: inline-block;
-    }
-    nav ul li a:hover,
-    nav ul li a:focus {
-      background-color: var(--nav-hover-bg);
-      outline: none;
-    }
-
-    main {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    .hero {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 1.5rem;
-      margin-bottom: 3rem;
-    }
-    .hero img {
-      width: 100%;
-      max-width: 800px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
-    }
-    .hero h1 {
-      font-size: 2.75rem;
-      color: var(--primary-color);
-      margin: 0;
-    }
-    .hero p {
-      font-size: 1.125rem;
-      max-width: 700px;
-      color: #374151;
-    }
-
-    section.features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      margin-bottom: 3rem;
-    }
-    .feature-card {
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgb(0 0 0 / 0.1);
-      padding: 2rem;
-      text-align: center;
-      transition: transform 0.3s ease;
-    }
-    .feature-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 12px 24px rgb(37 99 235 / 0.25);
-    }
-    .feature-card h3 {
-      margin-top: 0;
-      color: var(--secondary-color);
-      margin-bottom: 1rem;
-    }
-    .feature-card p {
-      color: #4b5563;
-    }
-
-    footer {
-      background-color: var(--footer-bg);
-      color: var(--footer-text);
-      padding: 2rem 1rem;
-      text-align: center;
-      font-size: 0.9rem;
-    }
-    footer a {
-      color: #60a5fa;
-      text-decoration: none;
-    }
-    footer a:hover,
-    footer a:focus {
-      text-decoration: underline;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Задача [object Object]</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        header {
+            background: linear-gradient(90deg, #007cf0 0%, #00dfd8 100%);
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+        nav ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+        nav ul li {
+            margin-left: 25px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: color 0.3s ease;
+        }
+        nav ul li a:hover,
+        nav ul li a:focus {
+            color: #ffe600;
+            outline: none;
+        }
+        main {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        main h2 {
+            margin-bottom: 20px;
+            font-size: 2.4rem;
+            color: #007cf0;
+            text-align: center;
+        }
+        .image-container {
+            max-width: 800px;
+            margin: 20px auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        .image-container img {
+            width: 100%;
+            display: block;
+            object-fit: cover;
+            height: 450px;
+            transition: transform 0.5s ease;
+        }
+        .image-container img:hover {
+            transform: scale(1.05);
+        }
+        footer {
+            background-color: #007cf0;
+            color: white;
+            text-align: center;
+            padding: 20px 40px;
+            margin-top: 80px;
+        }
+        footer p {
+            margin: 0;
+            font-size: 1rem;
+        }
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            nav ul {
+                flex-direction: column;
+                margin-top: 15px;
+            }
+            nav ul li {
+                margin: 10px 0 0 0;
+            }
+            .image-container img {
+                height: 300px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <nav role="navigation" aria-label="Главное меню">
-      <a href="#" class="logo">МойСайт</a>
-      <ul>
-        <li><a href="#home" tabindex="0">Главная</a></li>
-        <li><a href="#features" tabindex="0">Особенности</a></li>
-        <li><a href="#about" tabindex="0">О нас</a></li>
-        <li><a href="#contact" tabindex="0">Контакты</a></li>
-      </ul>
-    </nav>
-  </header>
-  <main>
-    <section class="hero" id="home" aria-label="Главный раздел сайта">
-      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный городской пейзаж" />
-      <h1>Добро пожаловать на современный красивый сайт</h1>
-      <p>Мы создаем потрясающие веб-приложения с вниманием к деталям и современным дизайном.</p>
-    </section>
-    <section class="features" id="features" aria-label="Особенности сайта">
-      <article class="feature-card" tabindex="0">
-        <h3>Адаптивный дизайн</h3>
-        <p>Наш сайт выглядит великолепно на любых устройствах — от мобильных телефонов до больших экранов.</p>
-      </article>
-      <article class="feature-card" tabindex="0">
-        <h3>Высокая производительность</h3>
-        <p>Оптимизированный код и быстрая загрузка страниц для лучшего пользовательского опыта.</p>
-      </article>
-      <article class="feature-card" tabindex="0">
-        <h3>Современные технологии</h3>
-        <p>Используем последние достижения в веб-разработке для создания функциональных и надёжных решений.</p>
-      </article>
-    </section>
-    <section id="about" aria-label="О нас">
-      <h2>О нашей компании</h2>
-      <p>Мы — команда профессиональных разработчиков, увлечённая созданием инновационных и красивых сайтов. Опыт и креативность позволяют нам превращать идеи в реальность.</p>
-    </section>
-    <section id="contact" aria-label="Контактная информация" style="margin-top:2rem;">
-      <h2>Связаться с нами</h2>
-      <p>Есть вопросы или предложения? Напишите нам на <a href="mailto:info@mysite.ru">info@mysite.ru</a>.</p>
-    </section>
-  </main>
-  <footer>
-    <p>© 2024 МойСайт. Все права защищены.</p>
-    <p><a href="#home">Вернуться к началу</a></p>
-  </footer>
+    <header>
+        <h1>Модерн Сайт</h1>
+        <nav>
+            <ul>
+                <li><a href="#home" tabindex="1">Главная</a></li>
+                <li><a href="#about" tabindex="2">О нас</a></li>
+                <li><a href="#gallery" tabindex="3">Галерея</a></li>
+                <li><a href="#contact" tabindex="4">Контакты</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section id="home">
+            <h2>Добро пожаловать</h2>
+            <p style="max-width: 700px; margin: 0 auto; text-align: center;">
+                Это современный красивый сайт с удобной навигацией и футером. Здесь вы можете разместить любую информацию о вашем проекте или компании. Используйте удобное меню для перехода по разделам.
+            </p>
+        </section>
+        <section id="about" style="margin-top: 60px;">
+            <h2>О нас</h2>
+            <p style="max-width: 700px; margin: 0 auto; text-align: center;">
+                Мы профессиональные веб-разработчики, создающие современные и адаптивные сайты. Наша цель — сделать ваш веб-проект красивым и функциональным.
+            </p>
+        </section>
+        <section id="gallery" style="margin-top: 60px;">
+            <h2>Галерея</h2>
+            <div class="image-container" aria-label="Изображение с Unsplash">
+                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Прекрасный пейзаж природы" />
+            </div>
+        </section>
+        <section id="contact" style="margin-top: 60px; margin-bottom: 40px;">
+            <h2>Контакты</h2>
+            <p style="max-width: 700px; margin: 0 auto; text-align: center;">
+                Свяжитесь с нами по электронной почте: <a href="mailto:info@modernsite.ru" style="color:#007cf0; text-decoration: underline;">info@modernsite.ru</a> или по телефону: <a href="tel:+79001234567" style="color:#007cf0; text-decoration: underline;">+7 (900) 123-45-67</a>.
+            </p>
+        </section>
+    </main>
+    <footer>
+        <p>© 2024 Modern Site. Все права защищены.</p>
+    </footer>
 </body>
 </html>
