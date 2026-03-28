@@ -3,152 +3,130 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Bella Pizza - Пиццерия</title>
+<title>Clear</title>
 <style>
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
   body {
-    font-family: Arial, sans-serif;
-    margin: 0; padding: 0;
-    background: #fff8f0;
-    color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f5f9;
+    color: #222;
+    line-height: 1.6;
   }
   header {
-    background: #d94e14;
+    background: #0a74da;
+    padding: 1rem 2rem;
     color: white;
-    padding: 1.2rem;
-    text-align: center;
-  }
-  nav {
-    background: #e46825;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
   }
   nav a {
     color: white;
     text-decoration: none;
-    padding: 1rem 2rem;
-    font-weight: bold;
-    transition: background 0.3s;
+    margin-left: 1.5rem;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+  nav a:first-child {
+    margin-left: 0;
   }
   nav a:hover {
-    background: #bf400a;
+    color: #a3cef1;
   }
   main {
     max-width: 960px;
     margin: 2rem auto;
     padding: 0 1rem;
   }
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #0a74da;
+  }
+  .hero {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: center;
+    margin-bottom: 3rem;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgb(10 116 218 / 0.15);
+  }
+  .hero img {
+    flex: 1 1 300px;
+    border-radius: 12px;
+    max-width: 100%;
+    object-fit: cover;
+    height: 280px;
+  }
+  .hero-text {
+    flex: 1 1 300px;
+    font-size: 1.1rem;
+    color: #444;
+  }
   section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgb(10 116 218 / 0.1);
     margin-bottom: 3rem;
   }
-  h1, h2 {
-    margin-bottom: 0.5rem;
-  }
-  .menu-item {
-    display: flex;
-    margin-bottom: 1.5rem;
-    background: #ffe9d1;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 3px 7px rgba(0,0,0,0.1);
-  }
-  .menu-item img {
-    width: 180px;
-    object-fit: cover;
-  }
-  .menu-text {
-    padding: 1rem;
-    flex: 1;
-  }
-  .menu-text h3 {
-    margin-top: 0;
-    margin-bottom: 0.3rem;
-  }
-  .price {
-    font-weight: bold;
-    color: #d94e14;
-  }
   footer {
-    background: #d94e14;
-    color: white;
     text-align: center;
-    padding: 1rem 0;
-    font-size: 0.9rem;
+    padding: 1rem 1rem;
+    background: #0a74da;
+    color: white;
+    font-weight: 500;
+    border-top: 4px solid #074ea8;
   }
-  @media (max-width:600px) {
+  @media (max-width: 600px) {
+    .hero {
+      flex-direction: column;
+    }
     nav {
-      flex-direction: column;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 0.5rem;
     }
-    .menu-item {
-      flex-direction: column;
-      align-items: center;
-    }
-    .menu-item img {
-      width: 100%;
-      height: auto;
-    }
-    .menu-text {
-      padding: 0.7rem 1rem;
+    nav a {
+      margin: 0.5rem 1rem;
     }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Bella Pizza</h1>
-  <p>Настоящая итальянская пицца в вашем городе</p>
+  <div><strong>Clear</strong></div>
+  <nav>
+    <a href="#home">Главная</a>
+    <a href="#about">О Clear</a>
+    <a href="#contact">Контакты</a>
+  </nav>
 </header>
-<nav>
-  <a href="#menu">Меню</a>
-  <a href="#about">О нас</a>
-  <a href="#contacts">Контакты</a>
-</nav>
 <main>
-  <section id="menu">
-    <h2>Меню</h2>
-
-    <article class="menu-item">
-      <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80" alt="Пицца Маргарита" />
-      <div class="menu-text">
-        <h3>Маргарита</h3>
-        <p>Классическая пицца с томатным соусом, моцареллой и свежим базиликом.</p>
-        <p class="price">2000 ₸</p>
-      </div>
-    </article>
-
-    <article class="menu-item">
-      <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80" alt="Пицца Пепперони" />
-      <div class="menu-text">
-        <h3>Пепперони</h3>
-        <p>Пицца с томатным соусом, моцареллой и острыми колбасками пепперони.</p>
-        <p class="price">2600 ₸</p>
-      </div>
-    </article>
-
-    <article class="menu-item">
-      <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80" alt="Пицца Четыре сыра" />
-      <div class="menu-text">
-        <h3>Четыре сыра</h3>
-        <p>Пицца с четырьмя видами сыра: моцарелла, гауда, пармезан и дор блю.</p>
-        <p class="price">2800 ₸</p>
-      </div>
-    </article>
+  <section id="home" class="hero">
+    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Clear" />
+    <div class="hero-text">
+      <h1>Clear</h1>
+      <p>Добро пожаловать на сайт «Clear» — современный, чистый и легкий стиль, символизирующий прозрачность и ясность. Этот сайт создан именно под тематику вашего запроса без привязки к какой-либо нише, чтобы оставить пространство для вашего собственного наполнения.</p>
+    </div>
   </section>
-
   <section id="about">
-    <h2>О нас</h2>
-    <p>Bella Pizza — это уютная пиццерия, где каждая пицца готовится с душой и отдачей. Мы используем только свежие ингредиенты и традиционные рецепты Италии, чтобы подарить вам настоящий вкус южной кухни.</p>
+    <h2>О Clear</h2>
+    <p>Clear — это концепция веб-дизайна, где всё лишнее удалено, и остается только самое важное. Такой подход обеспечивает максимальную удобочитаемость и комфорт для восприятия информации. Легкие цвета, четкая типографика, лаконичная навигация и акцент на контент — ключевые принципы данного проекта.</p>
   </section>
-
-  <section id="contacts">
-    <h2>Контакты</h2>
-    <p>Адрес: г. Алматы, ул. Пушкина, д. 12</p>
-    <p>Телефон: +7 701 123 4567</p>
-    <p>Email: info@bellapizza.kz</p>
+  <section id="contact">
+    <h2>Связаться с нами</h2>
+    <p>Для вопросов и предложений оставьте сообщение по электронной почте: <a href="mailto:info@clear.com">info@clear.com</a> или позвоните по номеру: <a href="tel:+77001234567">+7 (700) 123-45-67</a>.</p>
   </section>
 </main>
-
 <footer>
-  <p>© 2024 Bella Pizza. Все права защищены.</p>
+  &copy; 2024 Clear. Все права защищены.
 </footer>
 </body>
 </html>
