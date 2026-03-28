@@ -3,1336 +3,1409 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Сантехника в Актау</title>
+<title>Автомобили в Актау — Маркетплейс</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter&family=Montserrat:wght@700&family=Rubik:wght@700&display=swap');
-  :root {
-    --clr-main-purple: #6A4C9C;
-    --clr-accent-purple: #7E57C2;
-    --clr-light-bg: #F3EFFF;
-    --clr-light-alt-bg: #EDE7FF;
-    --clr-dark-text: #2F2B3A;
-    --clr-cta: #5A2D82;
-    --clr-neutral-gray: #9B95A6;
-    --transition: 0.3s ease;
-  }
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
-  body {
-    margin: 0;
-    font-family: 'Inter', sans-serif;
-    font-size: 16px;
-    color: var(--clr-dark-text);
-    background: white;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  a {
-    color: var(--clr-cta);
-    text-decoration: none;
-  }
-  a:hover, button:hover {
-    color: var(--clr-accent-purple);
-  }
-  img {
-    max-width: 100%;
-    display: block;
-  }
-  button {
-    cursor: pointer;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    border: none;
-    border-radius: 4px;
-    transition: background-color var(--transition), box-shadow var(--transition);
-  }
-  h1, h2, h3 {
-    margin: 0 0 12px 0;
-    color: var(--clr-dark-text);
-  }
-  h1 {
-    font-family: 'Rubik', 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: clamp(36px, 4vw, 44px);
-    line-height: 1.1;
-  }
-  h2 {
-    font-family: 'Rubik', 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: clamp(28px, 3vw, 32px);
-  }
-  h3 {
-    font-family: 'Rubik', 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: clamp(20px, 2vw, 24px);
-  }
-  p {
-    margin: 0 0 1em 0;
-    color: var(--clr-neutral-gray);
-  }
-  .container {
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0 20px;
-  }
-  /* HEADER */
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--clr-main-purple);
-    color: white;
-    padding: 14px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-  }
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .logo {
-    font-family: 'Rubik', 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 24px;
-    color: white;
-    user-select: none;
-    letter-spacing: 0.05em;
-  }
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-  }
-  .contact-info {
-    font-size: 14px;
-    color: white;
-    line-height: 1.3;
-    text-align: right;
-  }
-  .contact-info span {
-    display: block;
-  }
-  nav.desktop-nav {
-    display: flex;
-    gap: 20px;
-  }
-  nav.desktop-nav a {
-    font-weight: 600;
-    font-size: 14px;
-    color: white;
-    padding: 6px 0;
-    position: relative;
-  }
-  nav.desktop-nav a::after {
-    content: "";
-    position: absolute;
-    height: 2px;
-    background: var(--clr-cta);
-    bottom: 0;
-    left: 0;
-    right: 0;
-    opacity: 0;
-    transition: opacity var(--transition);
-    border-radius: 1px;
-  }
-  nav.desktop-nav a:hover::after,
-  nav.desktop-nav a:focus::after {
-    opacity: 1;
-  }
-  button.cta-btn {
-    background-color: var(--clr-cta);
-    color: white;
-    font-weight: 700;
-    font-size: 14px;
-    padding: 10px 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 8px var(--clr-cta);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    border: none;
-  }
-  button.cta-btn:hover,
-  button.cta-btn:focus {
-    background: linear-gradient(45deg, var(--clr-accent-purple), var(--clr-cta));
-    box-shadow: 0 0 14px var(--clr-cta);
-    outline: none;
-  }
-  /* MOBILE HEADER */
-  .mobile-header {
-    display: none;
-    background: var(--clr-main-purple);
-    color: white;
-    padding: 12px 20px;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 1001;
-  }
-  .mobile-header .logo {
-    font-size: 20px;
-  }
-  .mobile-header button.menu-toggle {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    line-height: 1;
-  }
-  .mobile-cta-fixed {
-    display: none;
-    position: fixed;
-    bottom: 16px;
-    right: 16px;
-    gap: 12px;
-    z-index: 1100;
-  }
-  .mobile-cta-fixed button {
-    background-color: var(--clr-cta);
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    box-shadow: 0 0 8px var(--clr-cta);
-    border: none;
-    color: white;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .mobile-cta-fixed button:hover,
-  .mobile-cta-fixed button:focus {
-    background: linear-gradient(45deg, var(--clr-accent-purple), var(--clr-cta));
-    box-shadow: 0 0 14px var(--clr-cta);
-    outline: none;
-  }
-  /* NAV MOBILE */
-  .mobile-nav {
-    display: none;
-    background: var(--clr-main-purple);
-    position: fixed;
-    top: 56px;
-    left: 0;
-    right: 0;
-    z-index: 1050;
-    padding: 20px;
-    border-top: 1px solid var(--clr-cta);
-  }
-  .mobile-nav a {
-    display: block;
-    color: white;
-    font-weight: 600;
-    font-size: 16px;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255 255 255 / 0.15);
-  }
-  .mobile-nav a:last-child {
-    border-bottom: none;
-  }
-  /* HERO */
-  #hero {
-    position: relative;
-    color: white;
-    min-height: 480px;
-    background: 
-      linear-gradient(180deg,
-        rgba(106, 76, 156, 0.7),
-        rgba(126, 87, 194, 0.5)
-      ),
-      url("https://images.unsplash.com/photo-1618229312663-3be18ee6307a?auto=format&fit=crop&w=1920&q=80") center/cover no-repeat;
-    display: flex;
-    align-items: center;
-    padding: 40px 20px;
-  }
-  #hero .container {
-    max-width: 900px;
-  }
-  #hero h1 {
-    color: white;
-    line-height: 1.1;
-    margin-bottom: 12px;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-  }
-  #hero p.lead {
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    font-size: 18px;
-    max-width: 450px;
-    margin-bottom: 30px;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
-    color: #DDD;
-  }
-  #hero .btn-group {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  #hero .btn-primary {
-    background-color: var(--clr-cta);
-    color: white;
-    padding: 14px 30px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 16px;
-    box-shadow: 0 0 12px var(--clr-cta);
-    border: none;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    flex-grow: 0;
-  }
-  #hero .btn-primary:hover,
-  #hero .btn-primary:focus {
-    background: linear-gradient(45deg, var(--clr-accent-purple), var(--clr-cta));
-    box-shadow: 0 0 20px var(--clr-cta);
-    outline: none;
-  }
-  #hero .btn-secondary {
-    background: transparent;
-    border: 2px solid white;
-    border-radius: 6px;
-    color: white;
-    font-weight: 600;
-    font-size: 16px;
-    padding: 12px 26px;
-    transition: background 0.3s ease, color 0.3s ease;
-  }
-  #hero .btn-secondary:hover,
-  #hero .btn-secondary:focus {
-    background: rgba(255 255 255 / 0.2);
-    color: var(--clr-cta);
-    border-color: var(--clr-cta);
-    outline: none;
-  }
-  #hero .contact-short {
-    margin-top: 30px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #EEE;
-    line-height: 1.3;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
-  }
-  #hero .contact-short span {
-    display: inline-block;
-    margin-right: 16px;
-  }
-  /* CATEGORIES */
-  #categories {
-    background-color: var(--clr-light-bg);
-    padding: 40px 20px;
-  }
-  #categories .container {
-    max-width: 1150px;
-  }
-  #categories h2 {
-    color: var(--clr-dark-text);
-    margin-bottom: 28px;
-  }
-  .categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(160px,1fr));
-    gap: 24px;
-  }
-  .category-card {
-    background-color: var(--clr-light-alt-bg);
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Roboto:wght@400;500&display=swap');
+:root {
+  --green-sea: #0F9D58;
+  --lime-green: #66BB6A;
+  --dark-emerald: #1B5E20;
+  --light-green-bg: #E8F5E9;
+  --dark-gray: #2E2E2E;
+  --white: #FFFFFF;
+  --border-radius: 10px;
+  --transition-speed: 250ms;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: 'Roboto', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--dark-gray);
+  background-color: var(--light-green-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+h1 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 42px;
+  line-height: 1.3;
+  letter-spacing: 0.4px;
+  margin: 0 0 1rem 0;
+  color: var(--dark-emerald);
+}
+h2 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.4;
+  letter-spacing: 0.3px;
+  margin: 0 0 0.8rem 0;
+  color: var(--dark-emerald);
+}
+h3 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
+  margin: 0 0 0.6rem 0;
+  color: var(--dark-emerald);
+}
+p, label {
+  font-weight: 400;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+  line-height: 1.4;
+  color: var(--dark-gray);
+  margin: 0 0 1rem 0;
+}
+.caption {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--dark-gray);
+  letter-spacing: 0.15px;
+  font-weight: 500;
+}
+a {
+  color: var(--green-sea);
+  text-decoration: none;
+}
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--lime-green);
+  outline-offset: 2px;
+}
+button {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--white);
+  background-color: var(--green-sea);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+  min-height: 44px;
+  min-width: 88px;
+  user-select: none;
+}
+button.secondary {
+  background-color: transparent;
+  color: var(--green-sea);
+  border: 2px solid var(--green-sea);
+  transition:
+    background-color var(--transition-speed),
+    color var(--transition-speed);
+}
+button:hover:not(:disabled) {
+  background-color: var(--dark-emerald);
+}
+button.secondary:hover:not(:disabled) {
+  background-color: var(--green-sea);
+  color: var(--white);
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+img {
+  max-width: 100%;
+  display: block;
+  border-radius: var(--border-radius);
+  transition: border-color var(--transition-speed);
+  user-select: none;
+  pointer-events: none;
+}
+.container {
+  width: 90%;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+/* Header */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--white);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+  z-index: 1000;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+  padding: 0 1rem;
+}
+.logo {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--dark-emerald);
+  user-select: none;
+}
+nav {
+  display: flex;
+  gap: 24px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+}
+nav a {
+  color: var(--dark-gray);
+  padding: 8px 4px;
+  border-radius: 8px;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+nav a:hover,
+nav a:focus-visible {
+  background-color: var(--lime-green);
+  color: var(--white);
+  outline: none;
+}
+.header-contacts {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.phone {
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--dark-gray);
+  user-select: text;
+}
+.cta-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+.cta-buttons button {
+  min-width: 110px;
+}
+/* Hero */
+.hero {
+  margin-top: 64px;
+  position: relative;
+  color: var(--white);
+  user-select: none;
+}
+.hero__image {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  filter: brightness(0.7) sepia(0) saturate(80%) hue-rotate(80deg) opacity(0.85);
+  /* green tinted filter approx. 10-20% overlay */
+  -webkit-filter: brightness(0.7) sepia(0) saturate(80%) hue-rotate(80deg) opacity(0.85);
+}
+.hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(15,157,88,0.8) 0%, rgba(102,187,106,0.65) 100%);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  border-radius: 0 0 24px 24px;
+}
+.hero__content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 95%;
+  max-width: 1100px;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.hero__title {
+  font-weight: 800;
+  font-family: 'Inter', sans-serif;
+  font-size: 46px;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  user-select: text;
+  text-shadow: 0 0 8px rgba(0,0,0,0.5);
+}
+.search-panel {
+  background: var(--white);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  max-width: 100%;
+  box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.search-panel label {
+  flex: 1 1 120px;
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+  color: var(--dark-emerald);
+  font-size: 14px;
+  user-select:none;
+}
+.search-panel select,
+.search-panel input {
+  margin-top: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--lime-green);
+  color: var(--dark-gray);
+  font-family: 'Roboto', Arial, sans-serif;
+}
+.search-panel select:focus,
+.search-panel input:focus {
+  outline: 2.5px solid var(--green-sea);
+  border-color: var(--green-sea);
+}
+.search-panel button {
+  flex: 0 0 110px;
+  height: 44px;
+  margin-top: 24px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+}
+/* Featured Slider */
+.featured {
+  background: var(--white);
+  border-radius: var(--border-radius);
+  margin: 3rem auto 4rem auto;
+  padding: 1rem 0.75rem;
+  max-width: 1140px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.07);
+}
+.featured h2 {
+  margin-left: 1rem;
+}
+.featured-list {
+  display: flex;
+  overflow-x: auto;
+  gap: 1rem;
+  padding: 1rem 1rem 0 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--green-sea) transparent;
+}
+.featured-list::-webkit-scrollbar {
+  height: 8px;
+}
+.featured-list::-webkit-scrollbar-thumb {
+  background-color: var(--green-sea);
+  border-radius: 8px;
+}
+.featured-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.featured-card {
+  flex: 0 0 280px;
+  background: var(--light-green-bg);
+  border-radius: var(--border-radius);
+  box-shadow: 0 3px 6px rgb(0 0 0 / 0.1);
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow var(--transition-speed);
+  cursor: pointer;
+}
+.featured-card:hover,
+.featured-card:focus-within {
+  box-shadow: 0 6px 16px var(--green-sea);
+  outline: none;
+}
+.featured-card img {
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  pointer-events: none;
+  user-select: none;
+  height: 180px;
+  object-fit: cover;
+  filter: brightness(0.9) sepia(0) saturate(80%) hue-rotate(80deg) opacity(0.85);
+  transition: filter var(--transition-speed);
+}
+.featured-card:hover img {
+  filter: brightness(1) sepia(0) saturate(120%) hue-rotate(80deg) opacity(1);
+}
+.featured-info {
+  padding: 0.8rem 1rem 1rem 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.featured-info h3 {
+  font-weight: 700;
+  color: var(--dark-emerald);
+  margin: 0 0 0.4rem 0;
+}
+.featured-params {
+  font-size: 14px;
+  color: var(--dark-gray);
+  margin-bottom: 0.6rem;
+}
+.featured-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+.featured-buttons button {
+  flex: 1 1 50%;
+  font-size: 14px;
+  padding: 10px 0;
+  min-width: auto;
+  border-radius: 8px;
+  user-select:none;
+}
+.featured-buttons button.secondary {
+  background-color: var(--white);
+  border: 2px solid var(--green-sea);
+  color: var(--green-sea);
+}
+.featured-buttons button.secondary:hover {
+  background-color: var(--green-sea);
+  color: var(--white);
+}
+/* Catalog Section */
+.catalog {
+  max-width: 1140px;
+  margin: 0 auto 3rem auto;
+  display: flex;
+  gap: 2rem;
+  padding: 0 1rem;
+}
+.filters {
+  flex: 0 0 230px;
+  background: var(--white);
+  border-radius: var(--border-radius);
+  padding: 1rem 1rem 1.5rem 1rem;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.07);
+  height: fit-content;
+  user-select:none;
+}
+.filters h2 {
+  margin-bottom: 1rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  color: var(--dark-emerald);
+}
+.filter-group {
+  margin-bottom: 1.25rem;
+}
+.filter-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: var(--dark-emerald);
+  font-size: 14px;
+}
+.filter-group select,
+.filter-group input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--lime-green);
+  color: var(--dark-gray);
+  font-family: 'Roboto', Arial, sans-serif;
+}
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: 2.5px solid var(--green-sea);
+  border-color: var(--green-sea);
+}
+.filter-clear {
+  background: none;
+  border: none;
+  color: var(--green-sea);
+  cursor: pointer;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  padding: 0;
+}
+.filter-clear:hover,
+.filter-clear:focus-visible {
+  text-decoration: underline;
+  outline-offset: 2px;
+}
+.catalog-list {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width:1024px) {
+  .catalog {
     flex-direction: column;
-    align-items: center;
-    box-shadow: 0 0 8px rgba(106,76,156,0.1);
-    transition: box-shadow var(--transition);
   }
-  .category-card:hover,
-  .category-card:focus-within {
-    box-shadow: 0 0 16px var(--clr-accent-purple);
-  }
-  .category-card img.category-icon {
-    width: 64px;
-    height: 64px;
-    margin-bottom: 12px;
-    object-fit: contain;
-  }
-  .category-card h3 {
-    font-size: 20px;
-    color: var(--clr-dark-text);
-    margin-bottom: 12px;
-    text-align: center;
-  }
-  .category-card button {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--clr-cta);
-    background: none;
-    border: 2px solid var(--clr-cta);
-    border-radius: 6px;
-    padding: 6px 18px;
+  .filters {
     width: 100%;
-    max-width: 140px;
-    transition: background-color var(--transition), color var(--transition);
+    order: 2;
   }
-  .category-card button:hover,
-  .category-card button:focus {
-    background-color: var(--clr-accent-purple);
-    color: white;
-    border-color: var(--clr-accent-purple);
-    outline: none;
+  .catalog-list {
+    grid-template-columns: repeat(2, 1fr);
   }
-  /* POPULAR PRODUCTS */
-  #popular-products {
-    background-color: white;
-    padding: 40px 20px;
+}
+@media (max-width: 768px) {
+  .catalog-list {
+    grid-template-columns: 1fr;
   }
-  #popular-products .container {
-    max-width: 1150px;
+  .filters {
+    order: 2;
   }
-  #popular-products h2 {
-    margin-bottom: 32px;
-    color: var(--clr-dark-text);
+}
+/* Catalog Card */
+.catalog-card {
+  background: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow var(--transition-speed);
+  cursor: pointer;
+}
+.catalog-card:hover,
+.catalog-card:focus-within {
+  box-shadow: 0 6px 16px var(--green-sea);
+  outline: none;
+}
+.catalog-card img {
+  object-fit: cover;
+  height: 180px;
+  width: 100%;
+  filter: brightness(0.9) sepia(0) saturate(80%) hue-rotate(80deg) opacity(0.85);
+  transition: filter var(--transition-speed);
+  pointer-events: none;
+  user-select:none;
+}
+.catalog-card:hover img {
+  filter: brightness(1) sepia(0) saturate(120%) hue-rotate(80deg) opacity(1);
+}
+.card-content {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-grow: 1;
+}
+.card-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--dark-emerald);
+  margin: 0;
+  user-select: text;
+}
+.card-info {
+  font-size: 14px;
+  color: var(--dark-gray);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+.icon-status {
+  background-color: var(--lime-green);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  user-select:none;
+  white-space: nowrap;
+}
+.seller-rating {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--dark-emerald);
+  font-weight: 600;
+  user-select:none;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.seller-rating svg {
+  fill: var(--lime-green);
+  width: 16px;
+  height: 16px;
+}
+.card-buttons {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: auto;
+}
+.card-buttons button {
+  flex: 1 1 50%;
+  font-size: 14px;
+  padding: 10px 0;
+  min-width: auto;
+  border-radius: 8px;
+  user-select:none;
+}
+.card-buttons button.secondary {
+  background-color: var(--white);
+  border: 2px solid var(--green-sea);
+  color: var(--green-sea);
+}
+.card-buttons button.secondary:hover {
+  background-color: var(--green-sea);
+  color: var(--white);
+}
+/* Vehicle Detail */
+.vehicle-detail {
+  max-width: 1140px;
+  margin: 0 auto 4rem auto;
+  background: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: 0 3px 12px rgb(0 0 0 / 0.08);
+  padding: 1.5rem 1rem 2rem 1rem;
+}
+.vehicle-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  user-select:none;
+}
+.gallery {
+  flex: 1 1 480px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.1);
+  background: var(--light-green-bg);
+  display: flex;
+  flex-direction: column;
+}
+.gallery-main {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+}
+.gallery-main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.9) sepia(0) saturate(80%) hue-rotate(80deg) opacity(0.85);
+  transition: filter var(--transition-speed);
+}
+.gallery-main:hover img {
+  filter: brightness(1) sepia(0) saturate(120%) hue-rotate(80deg) opacity(1);
+}
+.gallery-thumbs {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--green-sea) transparent;
+}
+.gallery-thumbs::-webkit-scrollbar {
+  height: 6px;
+}
+.gallery-thumbs::-webkit-scrollbar-thumb {
+  background-color: var(--green-sea);
+  border-radius: 6px;
+}
+.gallery-thumbs::-webkit-scrollbar-track {
+  background: transparent;
+}
+.gallery-thumbs button {
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  flex: 0 0 80px;
+  height: 60px;
+}
+.gallery-thumbs button img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.8) saturate(80%) hue-rotate(80deg) opacity(0.8);
+  transition: filter var(--transition-speed);
+  user-select:none;
+  pointer-events:none;
+}
+.gallery-thumbs button:focus-visible img,
+.gallery-thumbs button.active img,
+.gallery-thumbs button:hover img {
+  filter: brightness(1) saturate(120%) hue-rotate(80deg) opacity(1);
+}
+.vehicle-info {
+  flex: 1 1 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.vehicle-info h2 {
+  font-weight: 800;
+  font-family: 'Inter', sans-serif;
+  margin-top: 0;
+}
+.detail-section {
+  background: var(--light-green-bg);
+  border-radius: var(--border-radius);
+  padding: 1rem 1rem 1rem 1rem;
+  box-shadow: inset 0 0 0 1px var(--lime-green);
+}
+.detail-section h3 {
+  font-weight: 700;
+  color: var(--dark-emerald);
+  margin-top: 0;
+}
+.detail-list {
+  margin: 0;
+  padding-left: 1rem;
+  list-style: disc;
+  color: var(--dark-gray);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.contact-buttons {
+  margin-top: auto;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.contact-buttons button {
+  flex: 1 1 128px;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: var(--border-radius);
+  user-select:none;
+}
+.contact-buttons button.phone {
+  background-color: var(--green-sea);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+.contact-buttons button.msg {
+  background-color: var(--lime-green);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+.contact-buttons button.testdrive {
+  background-color: transparent;
+  color: var(--green-sea);
+  border: 2px solid var(--green-sea);
+}
+.contact-buttons button.testdrive:hover,
+.contact-buttons button.testdrive:focus-visible {
+  background-color: var(--green-sea);
+  color: var(--white);
+}
+/* Map & Dealers Section */
+.map-dealers {
+  background: var(--white);
+  border-radius: var(--border-radius);
+  max-width: 1140px;
+  margin: 0 auto 4rem auto;
+  padding: 1rem;
+  box-shadow: 0 3px 12px rgb(0 0 0 / 0.08);
+  user-select:none;
+}
+.map-dealers h2 {
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  color: var(--dark-emerald);
+  margin-bottom: 1rem;
+}
+.map-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.map-filters select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--lime-green);
+  font-family: 'Roboto', Arial, sans-serif;
+  font-size: 14px;
+  color: var(--dark-gray);
+}
+.map-filters select:focus {
+  outline: 2.5px solid var(--green-sea);
+  border-color: var(--green-sea);
+}
+.map-container {
+  height: 360px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.15);
+  margin-bottom: 1rem;
+}
+.dealer-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+.dealer-item {
+  background: var(--light-green-bg);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.75rem;
+  box-shadow: inset 0 0 0 1.5px var(--lime-green);
+}
+.dealer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  color: var(--dark-emerald);
+}
+.dealer-contact {
+  font-size: 14px;
+  color: var(--dark-gray);
+  margin-top: 0.25rem;
+}
+.dealer-rating {
+  color: var(--green-sea);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+.dealer-rating svg {
+  fill: var(--lime-green);
+  width: 16px;
+  height: 16px;
+}
+/* SEO / Content section */
+.seo-content {
+  max-width: 1140px;
+  margin: 0 auto 6rem auto;
+  background: var(--white);
+  border-radius: var(--border-radius);
+  padding: 2rem 2rem 2rem 2rem;
+  box-shadow: 0 3px 12px rgb(0 0 0 / 0.1);
+  font-size: 16px;
+  color: var(--dark-gray);
+  line-height: 1.5;
+  user-select:none;
+}
+.seo-content h2 {
+  font-weight: 800;
+  color: var(--dark-emerald);
+  margin-bottom: 1.5rem;
+  user-select:text;
+}
+.advantages, .faq, .news {
+  margin-bottom: 2rem;
+}
+.adv-list {
+  list-style: disc;
+  margin-left: 1rem;
+  color: var(--dark-gray);
+  font-weight: 500;
+}
+.faq-item {
+  margin-bottom: 1rem;
+}
+.faq-item summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  color: var(--dark-emerald);
+  outline-offset: 2px;
+}
+.faq-item summary:hover,
+.faq-item summary:focus-visible {
+  color: var(--green-sea);
+}
+.faq-item p {
+  margin: 0.5rem 0 0 1rem;
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--dark-gray);
+}
+.news-item {
+  margin-bottom: 1rem;
+}
+.news-item a {
+  font-weight: 500;
+  color: var(--green-sea);
+  font-size: 15px;
+  user-select: text;
+}
+.news-item a:hover,
+.news-item a:focus-visible {
+  text-decoration: underline;
+}
+
+/* Footer */
+footer {
+  background: var(--dark-emerald);
+  color: var(--light-green-bg);
+  font-size: 14px;
+  user-select:none;
+  padding: 2rem 1rem;
+  margin-top: 4rem;
+}
+.footer-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: space-between;
+}
+.footer-section {
+  flex: 1 1 180px;
+  min-width: 180px;
+}
+.footer-section h3 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  margin-bottom: 1rem;
+  color: var(--lime-green);
+  user-select:text;
+}
+.footer-contact p {
+  margin: 0.25rem 0;
+}
+.social-links {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+.social-links a {
+  color: var(--light-green-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--lime-green);
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+.social-links a:hover,
+.social-links a:focus-visible {
+  background-color: var(--lime-green);
+  color: var(--dark-emerald);
+  outline: none;
+}
+.newsletter {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.newsletter input[type="email"] {
+  flex-grow: 1;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: 'Roboto', Arial, sans-serif;
+  color: var(--dark-gray);
+}
+.newsletter input[type="email"]:focus {
+  outline: 3px solid var(--green-sea);
+}
+.newsletter button {
+  background-color: var(--lime-green);
+  color: var(--white);
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  border-radius: var(--border-radius);
+  border: none;
+  min-width: 88px;
+  min-height: 44px;
+  padding: 0 14px;
+  user-select:none;
+}
+.newsletter button:hover,
+.newsletter button:focus-visible {
+  background-color: var(--green-sea);
+  outline: none;
+}
+.footer-legal {
+  margin-top: 2rem;
+  font-size: 12px;
+  color: var(--lime-green);
+  user-select:text;
+}
+/* Accessibility & UX Adjustments */
+a, button {
+  outline-offset: 3px;
+}
+input, select, button {
+  min-height: 44px;
+}
+
+/* Responsive and Mobile Header */
+@media (max-width: 768px){
+  .header-inner {
+    height: 56px;
+    padding: 0 1rem;
   }
-  .products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(260px,1fr));
-    gap: 28px;
-  }
-  .product-card {
-    background: var(--clr-light-bg);
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 0 6px rgba(106,76,156,0.1);
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-  }
-  .product-card:hover,
-  .product-card:focus-within {
-    box-shadow: 0 0 14px var(--clr-accent-purple);
-  }
-  .product-card img {
-    border-radius: 12px;
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-    user-select: none;
-  }
-  .product-card:hover img,
-  .product-card:focus-within img {
-    transform: scale(1.07);
-  }
-  .product-info {
-    margin-top: 14px;
-    flex-grow: 1;
-  }
-  .product-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--clr-dark-text);
-    margin-bottom: 6px;
-  }
-  .product-price {
-    font-weight: 700;
-    color: var(--clr-cta);
-    margin-bottom: 6px;
-    font-size: 18px;
-  }
-  .rating {
-    margin-bottom: 12px;
-  }
-  .stars {
-    color: #FFC107; /* gold stars */
-    font-size: 16px;
-    user-select: none;
-  }
-  .product-buttons {
-    display: flex;
-    gap: 10px;
-  }
-  .product-buttons button {
-    flex-grow: 1;
-    background-color: var(--clr-cta);
-    color: white;
-    font-weight: 700;
-    padding: 10px 0;
-    border-radius: 6px;
-    border: none;
-    font-size: 14px;
-    box-shadow: 0 0 8px var(--clr-cta);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  .product-buttons button:hover,
-  .product-buttons button:focus {
-    background: linear-gradient(45deg, var(--clr-accent-purple), var(--clr-cta));
-    box-shadow: 0 0 14px var(--clr-cta);
-    outline: none;
-  }
-  .product-buttons button.details-btn {
-    background-color: transparent;
-    color: var(--clr-cta);
-    box-shadow: none;
-    border: 2px solid var(--clr-cta);
-  }
-  .product-buttons button.details-btn:hover,
-  .product-buttons button.details-btn:focus {
-    background-color: var(--clr-accent-purple);
-    color: white;
-    border-color: var(--clr-accent-purple);
-    outline: none;
-  }
-  /* QUICK VIEW DETAILS on hover */
-  .quick-view {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(90, 45, 130, 0.9);
-    color: white;
-    font-size: 14px;
-    opacity: 0;
-    pointer-events: none;
-    padding: 12px 16px;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    line-height: 1.3;
-    transition: opacity 0.3s ease;
-  }
-  .product-card:hover .quick-view,
-  .product-card:focus-within .quick-view {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  /* ADVANTAGES */
-  #advantages {
-    background-color: var(--clr-light-alt-bg);
-    padding: 40px 20px;
-  }
-  #advantages .container {
-    max-width: 1150px;
-  }
-  #advantages .advantages-list {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 28px;
-  }
-  .advantage-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 160px;
-    text-align: center;
-    color: var(--clr-dark-text);
-  }
-  .advantage-item svg {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 12px;
-    fill: var(--clr-cta);
-  }
-  .advantage-item p {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0;
-  }
-  /* PROMO BANNERS */
-  #promos {
-    background: white;
-    padding: 40px 20px;
-  }
-  #promos .container {
-    max-width: 1150px;
-  }
-  .promo-banner {
-    position: relative;
-    background-color: var(--clr-light-bg);
-    border-radius: 14px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    margin-bottom: 28px;
-    box-shadow: 0 0 8px rgba(106,76,156,0.1);
-  }
-  .promo-banner img {
-    width: 320px;
-    height: 180px;
-    object-fit: cover;
-    border-radius: 14px 0 0 14px;
-    user-select: none;
-  }
-  .promo-content {
-    padding: 24px 28px;
-    flex: 1;
-    position: relative;
-  }
-  .promo-discount {
-    font-size: 40px;
-    font-weight: 900;
-    color: var(--clr-accent-purple);
-    user-select: none;
-    margin: 0;
-    position: absolute;
-    top: 20px;
-    right: 24px;
-    background-color: rgba(126,87,194,0.15);
-    border-radius: 12px;
-    width: 84px;
-    height: 84px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .promo-title {
-    font-family: 'Rubik', 'Montserrat', sans-serif;
-    font-size: 24px;
-    color: var(--clr-dark-text);
-    margin-bottom: 12px;
-  }
-  .promo-description {
-    font-size: 16px;
-    color: var(--clr-neutral-gray);
-  }
-  /* GALLERY */
-  #gallery {
-    background-color: var(--clr-light-alt-bg);
-    padding: 40px 20px;
-  }
-  #gallery .container {
-    max-width: 1150px;
-  }
-  #gallery h2 {
-    margin-bottom: 32px;
-    color: var(--clr-dark-text);
-  }
-  .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(180px,1fr));
-    gap: 18px;
-  }
-  .gallery-grid img {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-    border-radius: 12px;
-    box-shadow: 0 0 6px rgba(106,76,156,0.15);
-    user-select: none;
-    transition: box-shadow 0.3s ease;
-  }
-  .gallery-grid img:hover,
-  .gallery-grid img:focus {
-    box-shadow: 0 0 14px var(--clr-accent-purple);
-    outline: none;
-  }
-  /* MODAL PRODUCT */
-  #product-modal {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background-color: rgba(0,0,0,0.75);
+  nav {
     display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    z-index: 1200;
-    overflow-y: auto;
   }
-  #product-modal.active {
-    display: flex;
+  .header-contacts {
+    gap: 0.5rem;
   }
-  #product-modal .modal-content {
-    background-color: white;
-    border-radius: 12px;
-    max-width: 900px;
-    width: 100%;
-    padding: 28px 36px;
-    box-shadow: 0 0 20px rgba(106,76,156,0.3);
-    position: relative;
+  .header-contacts .phone {
+    display: none;
   }
-  #product-modal .close-btn {
-    position: absolute;
-    top: 18px;
-    right: 18px;
-    background: none;
-    border: none;
+  .cta-buttons button {
+    min-width: 96px;
+    font-size: 14px;
+    padding: 8px 14px;
+  }
+  .hero__content {
+    font-size: 14px;
+  }
+  .hero__title {
     font-size: 28px;
-    color: var(--clr-dark-text);
-    cursor: pointer;
   }
-  #product-modal .close-btn:hover,
-  #product-modal .close-btn:focus {
-    color: var(--clr-cta);
-    outline: none;
-  }
-  .modal-gallery {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    overflow-x: auto;
-    margin-bottom: 24px;
-  }
-  .modal-gallery img {
-    width: 120px;
-    height: 90px;
-    object-fit: cover;
-    border-radius: 10px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    user-select: none;
-    flex-shrink: 0;
-    transition: border-color 0.3s ease;
-  }
-  .modal-gallery img.selected {
-    border-color: var(--clr-cta);
-  }
-  .modal-info h3 {
-    font-family: 'Rubik', 'Montserrat', sans-serif;
-    font-size: 28px;
-    color: var(--clr-dark-text);
-    margin-bottom: 10px;
-  }
-  .modal-info p {
-    font-size: 16px;
-    color: var(--clr-neutral-gray);
-    margin-bottom: 18px;
-  }
-  .modal-price {
-    font-weight: 700;
-    font-size: 24px;
-    color: var(--clr-cta);
-    margin-bottom: 10px;
-  }
-  .modal-availability {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 24px;
-  }
-  .modal-buttons {
-    display: flex;
-    gap: 18px;
-    margin-bottom: 28px;
-  }
-  .modal-buttons button {
-    flex: 1;
-    font-weight: 700;
-    font-size: 16px;
-    padding: 14px 0;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  .modal-buttons button.buy-btn {
-    background-color: var(--clr-cta);
-    color: white;
-    box-shadow: 0 0 15px var(--clr-cta);
-  }
-  .modal-buttons button.buy-btn:hover,
-  .modal-buttons button.buy-btn:focus {
-    background: linear-gradient(45deg, var(--clr-accent-purple), var(--clr-cta));
-    box-shadow: 0 0 25px var(--clr-cta);
-    outline: none;
-  }
-  .modal-buttons button.install-btn {
-    background-color: var(--clr-light-alt-bg);
-    color: var(--clr-cta);
-    box-shadow: none;
-    border: 2px solid var(--clr-cta);
-  }
-  .modal-buttons button.install-btn:hover,
-  .modal-buttons button.install-btn:focus {
-    background-color: var(--clr-accent-purple);
-    color: white;
-    border-color: var(--clr-accent-purple);
-    outline: none;
-  }
-  /* REVIEWS */
-  .reviews-section {
-    border-top: 1px solid #DDD;
-    padding-top: 24px;
-    margin-bottom: 32px;
-  }
-  .reviews-section h4 {
-    font-family: 'Rubik', 'Montserrat', sans-serif;
-    font-size: 22px;
-    color: var(--clr-dark-text);
-    margin-bottom: 16px;
-  }
-  .review {
-    margin-bottom: 16px;
-    font-size: 14px;
-    color: var(--clr-neutral-gray);
-  }
-  .review strong {
-    color: var(--clr-dark-text);
-  }
-  /* RELATED PRODUCTS */
-  .related-products {
-    border-top: 1px solid #DDD;
-    padding-top: 18px;
-  }
-  .related-products h4 {
-    font-family: 'Rubik', 'Montserrat', sans-serif;
-    font-size: 22px;
-    color: var(--clr-dark-text);
-    margin-bottom: 16px;
-  }
-  .related-grid {
-    display: flex;
-    gap: 16px;
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-  .related-product-card {
-    background-color: var(--clr-light-bg);
-    border-radius: 12px;
-    width: 140px;
-    flex-shrink: 0;
-    box-shadow: 0 0 6px rgba(106,76,156,0.1);
-    cursor: pointer;
-  }
-  .related-product-card img {
-    border-radius: 12px 12px 0 0;
-    width: 100%;
-    height: 100px;
-    object-fit: cover;
-  }
-  .related-product-card p {
-    font-size: 14px;
-    font-weight: 600;
-    text-align: center;
-    padding: 6px 4px 12px 4px;
-    color: var(--clr-dark-text);
-    margin: 0;
-  }
-  .related-product-card:hover {
-    box-shadow: 0 0 14px var(--clr-accent-purple);
-  }
-  /* FOOTER */
-  footer {
-    background-color: var(--clr-main-purple);
-    color: white;
-    padding: 40px 20px;
-  }
-  footer .container {
-    max-width: 1150px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 30px;
-  }
-  .footer-block {
-    flex: 1 1 220px;
-    min-width: 220px;
-  }
-  .footer-block h3 {
-    font-family: 'Rubik', 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 24px;
-    margin-bottom: 18px;
-  }
-  .footer-contact p,
-  .footer-info p {
-    font-size: 14px;
-    margin: 8px 0;
-    line-height: 1.3;
-  }
-  .footer-links a {
-    display: block;
-    font-size: 14px;
-    margin-bottom: 8px;
-    color: white;
-    font-weight: 600;
-  }
-  .footer-links a:hover,
-  .footer-links a:focus {
-    color: var(--clr-cta);
-    outline: none;
-  }
-  .footer-socials {
-    display: flex;
-    gap: 18px;
-    margin-top: 10px;
-  }
-  .footer-socials a svg {
-    fill: white;
-    width: 28px;
-    height: 28px;
-    transition: fill 0.3s ease;
-  }
-  .footer-socials a:hover svg,
-  .footer-socials a:focus svg {
-    fill: var(--clr-cta);
-    outline: none;
-  }
-  /* MAP */
-  .map-container {
-    margin-top: 12px;
-    border-radius: 12px;
-    overflow: hidden;
-    height: 180px;
-    max-width: 100%;
-  }
-  .map-container iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-  }
-  /* RESPONSIVE */
-  @media (max-width: 1200px) {
-    .container {
-      max-width: 940px;
-    }
-  }
-  @media (max-width: 992px) {
-    #advantages .advantages-list {
-      gap: 16px;
-      justify-content: center;
-    }
-    #advantages .advantage-item {
-      max-width: 120px;
-    }
-    #popular-products .products-grid {
-      grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-    }
-  }
-  @media (max-width: 768px) {
-    header {
-      display: none;
-    }
-    .mobile-header {
-      display: flex;
-    }
-    #categories .categories-grid {
-      grid-template-columns: repeat(auto-fill,minmax(140px,1fr));
-      gap: 16px;
-    }
-    #promos .promo-banner {
-      flex-wrap: wrap;
-    }
-    #promos .promo-banner img {
-      width: 100%;
-      height: 180px;
-      border-radius: 12px 12px 0 0;
-    }
-    #promos .promo-content {
-      padding: 20px;
-      position: relative;
-      flex: none;
-    }
-    .promo-discount {
-      position: relative;
-      top: auto;
-      right: auto;
-      margin-top: 12px;
-      width: auto;
-      height: auto;
-      background: none;
-      color: var(--clr-accent-purple);
-      font-size: 36px;
-      font-weight: 700;
-      text-align: left;
-    }
-    #popular-products .products-grid {
-      grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
-      gap: 20px;
-    }
-  }
-  @media (max-width: 480px) {
-    #hero h1 {
-      font-size: 28px;
-    }
-    #hero p.lead {
-      font-size: 16px;
-      max-width: 100%;
-    }
-    #hero .btn-group {
-      flex-direction: column;
-      gap: 14px;
-    }
-    #categories .categories-grid {
-      grid-template-columns: repeat(auto-fill,minmax(120px,1fr));
-    }
-    .category-card button {
-      max-width: 100%;
-      width: 100%;
-    }
-    .mobile-cta-fixed {
-      display: flex;
-    }
-    /* Reduce modal padding for small */
-    #product-modal .modal-content {
-      padding: 24px 20px;
-      max-width: 90vw;
-    }
-  }
+}
 </style>
 </head>
 <body>
-<!-- MOBILE HEADER -->
-<header class="mobile-header" role="banner" aria-label="Основная навигация на мобильных">
-  <div class="logo" aria-label="Логотип сайта">Сантехника Актау</div>
-  <button class="menu-toggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Открыть меню">&#9776;</button>
-</header>
-<nav id="mobile-nav" class="mobile-nav" aria-label="Мобильное меню">
-  <a href="#categories">Каталог</a>
-  <a href="#popular-products">Популярное</a>
-  <a href="#promos">Акции</a>
-  <a href="#footer">Доставка</a>
-  <a href="#footer">Контакты</a>
-</nav>
-<div class="mobile-cta-fixed" aria-label="Мобильные кнопки действий">
-  <button aria-label="Позвонить" onclick="location.href='tel:+77005553322'">
-    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.11-.21 12.36 12.36 0 004 1.18 1 1 0 01.91 1v3.18a1 1 0 01-1 1A17 17 0 013 6a1 1 0 011-1h3.18a1 1 0 011 .91 12.36 12.36 0 001.18 4 1 1 0 01-.21 1.11l-2.2 2.2z"/></svg>
-  </button>
-  <button aria-label="Корзина">
-    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><path d="M7 18c-1.104 0-2 .896-2 2s.896 2 2 2a2 2 0 100-4zm10 0c-1.104 0-2 .896-2 2s.896 2 2 2a2 2 0 100-4zm-11.618-3l-1.382-6h16l-2.22 7H6.93a1 1 0 01-.548-.0zM10 6h6v2h-6z"/></svg>
-  </button>
-</div>
-
-<!-- DESKTOP HEADER -->
-<header role="banner" aria-label="Основная навигация" style="display:flex;">
-  <div class="header-left container" style="gap:12px;">
-    <div class="logo" aria-label="Логотип сайта">Сантехника Актау</div>
-  </div>
-  <nav class="desktop-nav" role="navigation" aria-label="Главное меню">
-    <a href="#categories">Каталог</a>
-    <a href="#popular-products">Популярное</a>
-    <a href="#promos">Акции</a>
-    <a href="#footer">Доставка</a>
-    <a href="#footer">Контакты</a>
-  </nav>
-  <div class="header-right container" style="gap:20px;">
-    <div class="contact-info" aria-label="Контактный телефон и адрес">
-      <span>Телефон: +7 (700) 555-33-22</span>
-      <span>Адрес: Актау, ул. Транспортная 10</span>
+<header role="banner">
+  <div class="container header-inner">
+    <a href="#" aria-label="Главная" class="logo" tabindex="0">AutoAktau</a>
+    <nav role="navigation" aria-label="Основная навигация">
+      <a href="#catalog" tabindex="0">Каталог</a>
+      <a href="#news" tabindex="0">Новости</a>
+      <a href="#dealers" tabindex="0">О дилерах</a>
+      <a href="#valuation" tabindex="0">Оценка авто</a>
+      <a href="#contacts" tabindex="0">Контакты</a>
+    </nav>
+    <div class="header-contacts">
+      <a href="tel:+77233112233" class="phone" aria-label="Телефон для связи +7 7233 11 22 33" tabindex="0">+7 (7233) 11-22-33</a>
+      <div class="cta-buttons" role="group" aria-label="Действия">
+        <button type="button" tabindex="0" aria-label="Продать авто">Продать авто</button>
+        <button type="button" class="secondary" tabindex="0" aria-label="Подобрать авто">Подобрать авто</button>
+      </div>
     </div>
-    <button class="cta-btn" aria-label="Заказать звонок">Заказать звонок</button>
   </div>
 </header>
+<section class="hero" role="region" aria-label="Главный баннер и поиск автомобилей">
+  <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1440&q=80" alt="Набережная и море в Актау" class="hero__image" loading="lazy" />
+  <div class="hero__overlay"></div>
+  <div class="hero__content container">
+    <h1 class="hero__title">Автомобили в Актау</h1>
+    <form class="search-panel" role="search" aria-label="Форма поиска автомобилей" onsubmit="event.preventDefault();">
+      <label for="brand-select">Марка
+        <select id="brand-select" name="brand" aria-describedby="brand-desc">
+          <option value="">Любая</option>
+          <option value="toyota">Toyota</option>
+          <option value="kia">Kia</option>
+          <option value="bmw">BMW</option>
+          <option value="lexus">Lexus</option>
+          <option value="nissan">Nissan</option>
+        </select>
+      </label>
+      <label for="model-select">Модель
+        <select id="model-select" name="model" aria-describedby="model-desc">
+          <option value="">Любая</option>
+          <option value="camry">Camry</option>
+          <option value="sportage">Sportage</option>
+          <option value="x5">X5</option>
+          <option value="rx350">RX 350</option>
+          <option value="qashqai">Qashqai</option>
+        </select>
+      </label>
+      <label for="price-min">Цена от, ₸
+        <input type="number" id="price-min" name="price-min" min="0" placeholder="₸0" aria-describedby="price-desc" />
+      </label>
+      <label for="price-max">Цена до, ₸
+        <input type="number" id="price-max" name="price-max" min="0" placeholder="₸10,000,000" aria-describedby="price-desc" />
+      </label>
+      <label for="body-type">Тип кузова
+        <select id="body-type" name="body-type" aria-describedby="body-desc">
+          <option value="">Любой</option>
+          <option value="sedan">Седан</option>
+          <option value="suv">Внедорожник</option>
+          <option value="hatchback">Хэтчбек</option>
+          <option value="truck">Пикап</option>
+        </select>
+      </label>
+      <button type="submit" aria-label="Поиск автомобилей">Поиск</button>
+    </form>
+  </div>
+</section>
+<section class="featured" aria-label="Избранные автомобили" tabindex="0">
+  <h2>Избранные авто</h2>
+  <div class="featured-list" role="list">
+    <article class="featured-card" role="listitem" tabindex="0" aria-label="Автомобиль Toyota Camry 2018 года, цена 3 000 000 тенге, пробег 55,000 км">
+      <img src="https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=400&q=70" alt="Toyota Camry 2018" loading="lazy" width="280" height="180" />
+      <div class="featured-info">
+        <h3>Toyota Camry</h3>
+        <div class="featured-params">3 000 000 ₸ &nbsp;•&nbsp; 55,000 км &nbsp;•&nbsp; 2018</div>
+        <div class="featured-buttons">
+          <button type="button" aria-label="Купить Toyota Camry">Купить</button>
+          <button type="button" class="secondary" aria-label="Подробнее Toyota Camry">Подробнее</button>
+        </div>
+      </div>
+    </article>
+    <article class="featured-card" role="listitem" tabindex="0" aria-label="Автомобиль Kia Sportage 2019 года, цена 2 500 000 тенге, пробег 48,000 км">
+      <img src="https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=400&q=70" alt="Kia Sportage 2019" loading="lazy" width="280" height="180" />
+      <div class="featured-info">
+        <h3>Kia Sportage</h3>
+        <div class="featured-params">2 500 000 ₸ &nbsp;•&nbsp; 48,000 км &nbsp;•&nbsp; 2019</div>
+        <div class="featured-buttons">
+          <button type="button" aria-label="Купить Kia Sportage">Купить</button>
+          <button type="button" class="secondary" aria-label="Подробнее Kia Sportage">Подробнее</button>
+        </div>
+      </div>
+    </article>
+    <article class="featured-card" role="listitem" tabindex="0" aria-label="Автомобиль BMW X5 2017 года, цена 7 800 000 тенге, пробег 70,000 км">
+      <img src="https://images.unsplash.com/photo-1519643381401-22c77e60520e?auto=format&fit=crop&w=400&q=70" alt="BMW X5 2017" loading="lazy" width="280" height="180" />
+      <div class="featured-info">
+        <h3>BMW X5</h3>
+        <div class="featured-params">7 800 000 ₸ &nbsp;•&nbsp; 70,000 км &nbsp;•&nbsp; 2017</div>
+        <div class="featured-buttons">
+          <button type="button" aria-label="Купить BMW X5">Купить</button>
+          <button type="button" class="secondary" aria-label="Подробнее BMW X5">Подробнее</button>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+<section class="catalog" id="catalog" aria-label="Каталог автомобилей">
+  <aside class="filters" aria-label="Фильтры по автомобилям">
+    <h2>Фильтры</h2>
+    <form onsubmit="event.preventDefault();">
+      <div class="filter-group">
+        <label for="filter-brand">Марка</label>
+        <select id="filter-brand" name="filter-brand">
+          <option value="">Любая</option>
+          <option value="toyota">Toyota</option>
+          <option value="kia">Kia</option>
+          <option value="bmw">BMW</option>
+          <option value="lexus">Lexus</option>
+          <option value="nissan">Nissan</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-model">Модель</label>
+        <select id="filter-model" name="filter-model">
+          <option value="">Любая</option>
+          <option value="camry">Camry</option>
+          <option value="sportage">Sportage</option>
+          <option value="x5">X5</option>
+          <option value="rx350">RX 350</option>
+          <option value="qashqai">Qashqai</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-price-min">Цена от, ₸</label>
+        <input type="number" id="filter-price-min" name="filter-price-min" min="0" placeholder="₸0" />
+      </div>
+      <div class="filter-group">
+        <label for="filter-price-max">Цена до, ₸</label>
+        <input type="number" id="filter-price-max" name="filter-price-max" min="0" placeholder="₸10,000,000" />
+      </div>
+      <div class="filter-group">
+        <label for="filter-year-min">Год от</label>
+        <input type="number" id="filter-year-min" name="filter-year-min" min="1990" max="2024" placeholder="1990" />
+      </div>
+      <div class="filter-group">
+        <label for="filter-year-max">Год до</label>
+        <input type="number" id="filter-year-max" name="filter-year-max" min="1990" max="2024" placeholder="2024" />
+      </div>
+      <div class="filter-group">
+        <label for="filter-mileage">Пробег до, км</label>
+        <input type="number" id="filter-mileage" name="filter-mileage" min="0" placeholder="100,000" />
+      </div>
+      <div class="filter-group">
+        <label for="filter-fuel">Тип топлива</label>
+        <select id="filter-fuel" name="filter-fuel">
+          <option value="">Любой</option>
+          <option value="gasoline">Бензин</option>
+          <option value="diesel">Дизель</option>
+          <option value="electric">Электро</option>
+          <option value="hybrid">Гибрид</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-condition">Состояние</label>
+        <select id="filter-condition" name="filter-condition">
+          <option value="">Любое</option>
+          <option value="new">Новое</option>
+          <option value="used">Б/у</option>
+          <option value="certified">Сертифицированное</option>
+        </select>
+      </div>
+      <button type="submit" aria-label="Применить фильтры">Применить</button>
+    </form>
+  </aside>
+  <main class="catalog-list" role="list" aria-live="polite" aria-relevant="additions removals" tabindex="0">
+    <article class="catalog-card" role="listitem" tabindex="0" aria-label="Автомобиль Lexus RX 350 2020 года. Продается. Цена 8 500 000 тенге. Пробег 25,000 км.">
+      <img src="https://images.unsplash.com/photo-1601167861977-5ca52952cb9a?auto=format&fit=crop&w=400&q=70" alt="Lexus RX 350 2020" loading="lazy" width="400" height="180" />
+      <div class="card-content">
+        <h3 class="card-title">Lexus RX 350</h3>
+        <div class="card-info">
+          <span>8 500 000 ₸</span>
+          <span>25,000 км</span>
+          <span>2020</span>
+          <span class="icon-status" aria-label="Сертифицированное состояние">Сертифицированное</span>
+        </div>
+        <div class="card-info" aria-label="Рейтинг продавца">
+          <span class="seller-rating" aria-label="Рейтинг продавца 4.8 из 5 звезд">
+            &#9733;&#9733;&#9733;&#9733;&#9734;
+          </span>
+        </div>
+        <div class="card-buttons">
+          <button type="button" aria-label="Купить Lexus RX 350">Купить</button>
+          <button type="button" class="secondary" aria-label="Подробнее Lexus RX 350">Подробнее</button>
+        </div>
+      </div>
+    </article>
+    <article class="catalog-card" role="listitem" tabindex="0" aria-label="Автомобиль Nissan Qashqai 2016 года. Продается. Цена 2 400 000 тенге. Пробег 68,000 км.">
+      <img src="https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=400&q=70" alt="Nissan Qashqai 2016" loading="lazy" width="400" height="180" />
+      <div class="card-content">
+        <h3 class="card-title">Nissan Qashqai</h3>
+        <div class="card-info">
+          <span>2 400 000 ₸</span>
+          <span>68,000 км</span>
+          <span>2016</span>
+          <span class="icon-status" aria-label="Б/у состояние">Б/у</span>
+        </div>
+        <div class="card-info" aria-label="Рейтинг продавца">
+          <span class="seller-rating" aria-label="Рейтинг продавца 4.5 из 5 звезд">
+            &#9733;&#9733;&#9733;&#9733;&#9734;
+          </span>
+        </div>
+        <div class="card-buttons">
+          <button type="button" aria-label="Купить Nissan Qashqai">Купить</button>
+          <button type="button" class="secondary" aria-label="Подробнее Nissan Qashqai">Подробнее</button>
+        </div>
+      </div>
+    </article>
+    <article class="catalog-card" role="listitem" tabindex="0" aria-label="Автомобиль Toyota Camry 2015 года. Продается. Цена 2 200 000 тенге. Пробег 85,000 км.">
+      <img src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=400&q=70" alt="Toyota Camry 2015" loading="lazy" width="400" height="180" />
+      <div class="card-content">
+        <h3 class="card-title">Toyota Camry</h3>
+        <div class="card-info">
+          <span>2 200 000 ₸</span>
+          <span>85,000 км</span>
+          <span>2015</span>
+          <span class="icon-status" aria-label="Б/у состояние">Б/у</span>
+        </div>
+        <div class="card-info" aria-label="Рейтинг продавца">
+          <span class="seller-rating" aria-label="Рейтинг продавца 4.7 из 5 звезд">
+            &#9733;&#9733;&#9733;&#9733;&#9734;
+          </span>
+        </div>
+        <div class="card-buttons">
+          <button type="button" aria-label="Купить Toyota Camry">Купить</button>
+          <button type="button" class="secondary" aria-label="Подробнее Toyota Camry">Подробнее</button>
+        </div>
+      </div>
+    </article>
+  </main>
+</section>
 
-<!-- HERO -->
-<section id="hero" role="region" aria-label="Главный экран">
-  <div class="container">
-    <h1>Сантехника в Актау — большой выбор и быстрая доставка</h1>
-    <p class="lead">Гарантия качества, профессиональная установка и сервис полного цикла</p>
-    <div class="btn-group" role="group" aria-label="Кнопки действий в главном экране">
-      <a href="#categories" class="btn-primary" role="button">Купить сейчас</a>
-      <a href="#categories" class="btn-secondary" role="button">Каталог товаров</a>
-    </div>
-    <div class="contact-short" aria-live="polite">
-      <span>Телефон: +7 (700) 555-33-22</span>
-      <span>Рабочее время: Пн–Пт 9:00–18:00</span>
-    </div>
+<section class="vehicle-detail" aria-label="Детальная информация автомобиля" tabindex="0" id="valuation">
+  <h2>Детали автомобиля: Toyota Camry 2018</h2>
+  <div class="vehicle-main">
+    <section class="gallery" aria-label="Галерея фотографий авто">
+      <div class="gallery-main" role="img" aria-label="Главное фото автомобиля Toyota Camry 2018">
+        <img src="https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=900&q=70" alt="Toyota Camry 2018" loading="lazy" />
+      </div>
+      <div class="gallery-thumbs" role="list" aria-label="Миниатюры фотографий">
+        <button class="active" aria-label="Фото 1" tabindex="0">
+          <img src="https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=160&q=70" alt="Миниатюра фото 1: Toyota Camry передок" loading="lazy" />
+        </button>
+        <button aria-label="Фото 2" tabindex="0">
+          <img src="https://images.unsplash.com/photo-1583267740601-7409a62d7e3c?auto=format&fit=crop&w=160&q=70" alt="Миниатюра фото 2: Toyota Camry бок" loading="lazy" />
+        </button>
+        <button aria-label="Фото 3" tabindex="0">
+          <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=160&q=70" alt="Миниатюра фото 3: Toyota Camry салон" loading="lazy" />
+        </button>
+        <button aria-label="Фото 4" tabindex="0">
+          <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=160&q=70" alt="Миниатюра фото 4: Toyota Camry двигатель" loading="lazy" />
+        </button>
+      </div>
+    </section>
+    <section class="vehicle-info">
+      <div class="detail-section" aria-label="Основные характеристики автомобиля">
+        <h3>Основные характеристики</h3>
+        <ul class="detail-list">
+          <li>Марка: Toyota</li>
+          <li>Модель: Camry</li>
+          <li>Год выпуска: 2018</li>
+          <li>Пробег: 55,000 км</li>
+          <li>Цена: 3 000 000 ₸</li>
+          <li>Кузов: Седан</li>
+          <li>Тип топлива: Бензин</li>
+          <li>Состояние: Б/у, сертифицированное</li>
+        </ul>
+      </div>
+      <div class="detail-section" aria-label="Комплектации и история обслуживания">
+        <h3>Комплектации и обслуживание</h3>
+        <ul class="detail-list">
+          <li>Комплектация: Comfort</li>
+          <li>Проведено техническое обслуживание в официальном сервисе Актау</li>
+          <li>История без ДТП</li>
+          <li>Проверена на юридическую чистоту</li>
+        </ul>
+      </div>
+      <div class="detail-section" aria-label="Расположение автомобиля">
+        <h3>Расположение в Актау</h3>
+        <div class="map-container" role="region" aria-label="Карта расположения автомобиля в Актау">
+          <iframe src="https://maps.google.com/maps?q=Актау,%20Казахстан&t=&z=13&ie=UTF8&iwloc=&output=embed" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Карта расположения автомобиля"></iframe>
+        </div>
+      </div>
+      <div class="contact-buttons">
+        <button type="button" class="phone" aria-label="Позвонить продавцу">
+          &#128222; Позвонить
+        </button>
+        <button type="button" class="msg" aria-label="Написать продавцу в мессенджер">
+          &#9993; Мессенджер
+        </button>
+        <button type="button" class="testdrive" aria-label="Записаться на тест-драйв">
+          Тест-драйв
+        </button>
+      </div>
+    </section>
   </div>
 </section>
 
-<!-- CATEGORIES -->
-<section id="categories" role="region" aria-label="Категории товаров">
-  <div class="container">
-    <h2>Категории</h2>
-    <div class="categories-grid">
-      <article class="category-card" tabindex="0" aria-label="Категория смесители">
-        <img class="category-icon" src="https://images.unsplash.com/photo-1581574184166-ff699704f08d?auto=format&fit=crop&w=64&q=80" alt="Иконка смесителя" loading="lazy" />
-        <h3>Смесители</h3>
-        <button type="button" aria-label="Смотреть смесители">Смотреть</button>
-      </article>
-      <article class="category-card" tabindex="0" aria-label="Категория умывальники">
-        <img class="category-icon" src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=64&q=80" alt="Иконка умывальника" loading="lazy" />
-        <h3>Умывальники</h3>
-        <button type="button" aria-label="Смотреть умывальники">Смотреть</button>
-      </article>
-      <article class="category-card" tabindex="0" aria-label="Категория ванны">
-        <img class="category-icon" src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=64&q=80" alt="Иконка ванны" loading="lazy" />
-        <h3>Ванны</h3>
-        <button type="button" aria-label="Смотреть ванны">Смотреть</button>
-      </article>
-      <article class="category-card" tabindex="0" aria-label="Категория душевые кабины">
-        <img class="category-icon" src="https://images.unsplash.com/photo-1560185127-22e50d63e3a5?auto=format&fit=crop&w=64&q=80" alt="Иконка душевой кабины" loading="lazy" />
-        <h3>Душевые кабины</h3>
-        <button type="button" aria-label="Смотреть душевые кабины">Смотреть</button>
-      </article>
-      <article class="category-card" tabindex="0" aria-label="Категория унитазы">
-        <img class="category-icon" src="https://images.unsplash.com/photo-1589350579604-c8954f8752ca?auto=format&fit=crop&w=64&q=80" alt="Иконка унитаза" loading="lazy" />
-        <h3>Унитазы</h3>
-        <button type="button" aria-label="Смотреть унитазы">Смотреть</button>
-      </article>
-      <article class="category-card" tabindex="0" aria-label="Категория водонагреватели">
-        <img class="category-icon" src="https://images.unsplash.com/photo-1601038538372-43c596f3397d?auto=format&fit=crop&w=64&q=80" alt="Иконка водонагревателя" loading="lazy" />
-        <h3>Водонагреватели</h3>
-        <button type="button" aria-label="Смотреть водонагреватели">Смотреть</button>
-      </article>
-    </div>
+<section class="map-dealers" id="dealers" aria-label="Карта и список дилеров в Актау" tabindex="0">
+  <h2>Дилеры в Актау</h2>
+  <form class="map-filters" aria-label="Фильтры дилеров по районам">
+    <label for="district-filter" class="visually-hidden">Фильтр по районам</label>
+    <select id="district-filter" aria-describedby="district-desc">
+      <option value="">Все районы</option>
+      <option value="central">Центральный</option>
+      <option value="microdistrict1">Микрорайон 1</option>
+      <option value="microdistrict2">Микрорайон 2</option>
+    </select>
+  </form>
+  <div class="map-container" id="map" role="region" aria-label="Интерактивная карта с дилерами Актау">
+    <iframe src="https://maps.google.com/maps?q=Актау&t=&z=12&ie=UTF8&iwloc=&output=embed" width="100%" height="360" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Карта дилеров Актау"></iframe>
+  </div>
+  <ul class="dealer-list" aria-label="Список дилеров">
+    <li class="dealer-item" tabindex="0">
+      <div class="dealer-header">Компания Актау Авто</div>
+      <div class="dealer-contact">ул. Назарбаева, 12, Тел: <a href="tel:+77233123456" style="color: var(--green-sea);">+7 (7233) 12-34-56</a></div>
+      <div class="dealer-rating" aria-label="Рейтинг дилера 4.7 из 5">
+        &#9733;&#9733;&#9733;&#9733;&#9734;
+      </div>
+    </li>
+    <li class="dealer-item" tabindex="0">
+      <div class="dealer-header">Автоцентр Запад</div>
+      <div class="dealer-contact">пр. Тауке хана, 24, Тел: <a href="tel:+77233778899" style="color: var(--green-sea);">+7 (7233) 77-88-99</a></div>
+      <div class="dealer-rating" aria-label="Рейтинг дилера 4.5 из 5">
+        &#9733;&#9733;&#9733;&#9733;&#9734;
+      </div>
+    </li>
+    <li class="dealer-item" tabindex="0">
+      <div class="dealer-header">Авто Дом Актау</div>
+      <div class="dealer-contact">ул. Космонавтов, 85, Тел: <a href="tel:+77233119900" style="color: var(--green-sea);">+7 (7233) 11-99-00</a></div>
+      <div class="dealer-rating" aria-label="Рейтинг дилера 4.6 из 5">
+        &#9733;&#9733;&#9733;&#9733;&#9734;
+      </div>
+    </li>
+  </ul>
+</section>
+
+<section class="seo-content" aria-label="Преимущества, FAQ, новости и статьи" tabindex="0">
+  <h2>Преимущества покупки авто в Актау</h2>
+  <div class="advantages">
+    <ul class="adv-list">
+      <li>Локальные предложения с гарантией прозрачности сделки</li>
+      <li>Выбор сертифицированных дилеров и проверенных продавцов</li>
+      <li>Доступные цены без посредников</li>
+      <li>Быстрая оценка автомобиля онлайн и при личном осмотре</li>
+      <li>Поддержка и консультации от экспертов с опытом работы в регионе</li>
+    </ul>
+  </div>
+
+  <div class="faq" aria-label="Часто задаваемые вопросы">
+    <h2>FAQ</h2>
+    <details class="faq-item">
+      <summary>Как проверить юридическую чистоту автомобиля в Актау?</summary>
+      <p>Вы можете заказать проверку через наш сервис, а также получить консультацию от дилеров и экспертов в регионе.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Какие документы нужны для продажи автомобиля в Актау?</summary>
+      <p>Паспорт собственника, ПТС, договор купли-продажи и справка об оценке транспортного средства.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Можно ли оформить тест-драйв онлайн?</summary>
+      <p>Да, через кнопку «Тест-драйв» в карточке авто вы можете записаться на удобное время и место.</p>
+    </details>
+  </div>
+  
+  <div class="news" id="news" aria-label="Локальные новости и статьи">
+    <h2>Новости и статьи Актау</h2>
+    <article class="news-item">
+      <a href="#" tabindex="0">Обновления в законах купли-продажи автомобилей в Казахстане</a>
+    </article>
+    <article class="news-item">
+      <a href="#" tabindex="0">Топ 5 популярных моделей авто в Актау в 2024 году</a>
+    </article>
+    <article class="news-item">
+      <a href="#" tabindex="0">Советы по выгодной продаже вашего автомобиля в Актау</a>
+    </article>
   </div>
 </section>
 
-<!-- POPULAR PRODUCTS -->
-<section id="popular-products" role="region" aria-label="Популярные товары">
-  <div class="container">
-    <h2>Популярные товары</h2>
-    <div class="products-grid" role="list" aria-label="Список популярных товаров">
-      <article class="product-card" role="listitem" tabindex="0" aria-label="Товар: Смеситель Modern, цена 8500 тенге, рейтинг 4 звезды">
-        <img src="https://images.unsplash.com/photo-1578894382359-2aff997aaebd?auto=format&fit=crop&w=400&q=80" alt="Современный смеситель, Актау faucet_modern_01" loading="lazy" width="400" height="160" />
-        <div class="quick-view" aria-hidden="true">Легкая установка, экономит воду, стильный дизайн.</div>
-        <div class="product-info">
-          <h3 class="product-title">Смеситель Modern</h3>
-          <div class="product-price">8 500 ₸</div>
-          <div class="rating" aria-label="Рейтинг 4 из 5 звезд">
-            <span class="stars" aria-hidden="true">★★★★☆</span>
-          </div>
-        </div>
-        <div class="product-buttons">
-          <button type="button" class="buy-btn" aria-label="Купить Смеситель Modern">Купить</button>
-          <button type="button" class="details-btn" aria-label="Подробнее о Смеситель Modern">Подробнее</button>
-        </div>
-      </article>
-      <article class="product-card" role="listitem" tabindex="0" aria-label="Товар: Умывальник Classic, цена 12 300 тенге, рейтинг 5 звезд">
-        <img src="https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=400&q=80" alt="Умывальник классический, Актау washbasin_classic_02" loading="lazy" width="400" height="160" />
-        <div class="quick-view" aria-hidden="true">Прочная керамика, элегантный дизайн, удобный размер.</div>
-        <div class="product-info">
-          <h3 class="product-title">Умывальник Classic</h3>
-          <div class="product-price">12 300 ₸</div>
-          <div class="rating" aria-label="Рейтинг 5 из 5 звезд">
-            <span class="stars" aria-hidden="true">★★★★★</span>
-          </div>
-        </div>
-        <div class="product-buttons">
-          <button type="button" class="buy-btn" aria-label="Купить Умывальник Classic">Купить</button>
-          <button type="button" class="details-btn" aria-label="Подробнее об Умывальник Classic">Подробнее</button>
-        </div>
-      </article>
-      <article class="product-card" role="listitem" tabindex="0" aria-label="Товар: Ванна Comfort Plus, цена 58 900 тенге, рейтинг 4 звезды">
-        <img src="https://images.unsplash.com/photo-1506719040630-373222d72b15?auto=format&fit=crop&w=400&q=80" alt="Ванна Comfort Plus, Актау bathtub_comfort_03" loading="lazy" width="400" height="160" />
-        <div class="quick-view" aria-hidden="true">Удобная глубина, антискользящее покрытие, долговечность.</div>
-        <div class="product-info">
-          <h3 class="product-title">Ванна Comfort Plus</h3>
-          <div class="product-price">58 900 ₸</div>
-          <div class="rating" aria-label="Рейтинг 4 из 5 звезд">
-            <span class="stars" aria-hidden="true">★★★★☆</span>
-          </div>
-        </div>
-        <div class="product-buttons">
-          <button type="button" class="buy-btn" aria-label="Купить Ванна Comfort Plus">Купить</button>
-          <button type="button" class="details-btn" aria-label="Подробнее о Ванна Comfort Plus">Подробнее</button>
-        </div>
-      </article>
-      <article class="product-card" role="listitem" tabindex="0" aria-label="Товар: Душевая кабина Aqua, цена 37 500 тенге, рейтинг 5 звезд">
-        <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c50?auto=format&fit=crop&w=400&q=80" alt="Душевая кабина Aqua, Актау shower_aqua_04" loading="lazy" width="400" height="160" />
-        <div class="quick-view" aria-hidden="true">Современный дизайн, экономия пространства, легкая установка.</div>
-        <div class="product-info">
-          <h3 class="product-title">Душевая кабина Aqua</h3>
-          <div class="product-price">37 500 ₸</div>
-          <div class="rating" aria-label="Рейтинг 5 из 5 звезд">
-            <span class="stars" aria-hidden="true">★★★★★</span>
-          </div>
-        </div>
-        <div class="product-buttons">
-          <button type="button" class="buy-btn" aria-label="Купить Душевая кабина Aqua">Купить</button>
-          <button type="button" class="details-btn" aria-label="Подробнее о Душевая кабина Aqua">Подробнее</button>
-        </div>
-      </article>
-    </div>
-  </div>
-</section>
-
-<!-- ADVANTAGES -->
-<section id="advantages" role="region" aria-label="Преимущества">
-  <div class="container">
-    <div class="advantages-list">
-      <div class="advantage-item" tabindex="0">
-        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M21 8v10a2 2 0 01-2 2H7a2 2 0 01-2-2v-6H3V8h2.5l1-2H17V8h4zm-8.5 5V18h2v-5h-2zm-2-7l.5-1 2-.28V3h3v1.7l2 .28.5 1H10.5z"/></svg>
-        <p>Доставка по Актау</p>
-      </div>
-      <div class="advantage-item" tabindex="0">
-        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M13 3h-2v7H7v2h4v7h2v-7h4v-2h-4z"/></svg>
-        <p>Профессиональная установка</p>
-      </div>
-      <div class="advantage-item" tabindex="0">
-        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 4a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 110 12 6 6 0 010-12zm1 4v4l3 1-1 1-3-1V10h1z"/></svg>
-        <p>Гарантия качества</p>
-      </div>
-      <div class="advantage-item" tabindex="0">
-        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M19 4h-4v2h-2V4H5a1 1 0 00-1 1v16a1 1 0 001 1h14a1 1 0 001-1V5a1 1 0 00-1-1zm-4 14h-2v-6h2v6z"/></svg>
-        <p>Всегда в наличии на складе</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- PROMO BANNERS -->
-<section id="promos" role="region" aria-label="Акционные предложения">
-  <div class="container">
-    <div class="promo-banner" tabindex="0" aria-label="Скидка 20% на смеситель Modern">
-      <img src="https://images.unsplash.com/photo-1578894382359-2aff997aaebd?auto=format&fit=crop&w=320&q=80" alt="Смеситель Modern - акционное фото, Актау faucet_modern_01" loading="lazy" width="320" height="180" />
-      <div class="promo-content">
-        <h3 class="promo-title">Смеситель Modern</h3>
-        <p class="promo-description">20% скидка на стильный смеситель с гарантией 5 лет.</p>
-        <div class="promo-discount" aria-label="Скидка 20 процентов">20%</div>
-      </div>
-    </div>
-    <div class="promo-banner" tabindex="0" aria-label="Скидка 15% на ванну Comfort Plus">
-      <img src="https://images.unsplash.com/photo-1506719040630-373222d72b15?auto=format&fit=crop&w=320&q=80" alt="Ванна Comfort Plus - акционное фото, Актау bathtub_comfort_03" loading="lazy" width="320" height="180" />
-      <div class="promo-content">
-        <h3 class="promo-title">Ванна Comfort Plus</h3>
-        <p class="promo-description">Скидка 15% на удобные и долговечные ванны.</p>
-        <div class="promo-discount" aria-label="Скидка 15 процентов" style="color: var(--clr-cta);">15%</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- GALLERY -->
-<section id="gallery" role="region" aria-label="Галерея товаров">
-  <div class="container">
-    <h2>Галерея товаров</h2>
-    <div class="gallery-grid" role="list" aria-label="Фотографии товаров">
-      <img src="https://images.unsplash.com/photo-1578894382359-2aff997aaebd?auto=format&fit=crop&w=400&q=80" alt="Смеситель современный, Актау faucet_modern_01" loading="lazy" role="listitem" />
-      <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=400&q=80" alt="Умывальник классический, Актау washbasin_classic_02" loading="lazy" role="listitem" />
-      <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=400&q=80" alt="Ванна Comfort Plus, Актау bathtub_comfort_03" loading="lazy" role="listitem" />
-      <img src="https://images.unsplash.com/photo-1560185127-22e50d63e3a5?auto=format&fit=crop&w=400&q=80" alt="Душевая кабина Aqua, Актау shower_aqua_04" loading="lazy" role="listitem" />
-      <img src="https://images.unsplash.com/photo-1601038538372-43c596f3397d?auto=format&fit=crop&w=400&q=80" alt="Водонагреватель, Актау waterheater_01" loading="lazy" role="listitem" />
-    </div>
-  </div>
-</section>
-
-<!-- PRODUCT MODAL -->
-<div id="product-modal" role="dialog" aria-modal="true" aria-labelledby="modal-product-title" aria-describedby="modal-product-desc">
-  <div class="modal-content">
-    <button class="close-btn" aria-label="Закрыть окно" onclick="toggleModal(false)">&times;</button>
-    <div class="modal-gallery" role="list" aria-label="Галерея фотографий товара">
-      <img src="https://images.unsplash.com/photo-1578894382359-2aff997aaebd?auto=format&fit=crop&w=400&q=80" alt="Фото 1 смесителя Modern, Актау faucet_modern_01" class="selected" loading="lazy" role="listitem" onclick="selectModalImage(this)" />
-      <img src="https://images.unsplash.com/photo-1532330141369-85f365c53cae?auto=format&fit=crop&w=400&q=80" alt="Фото 2 смесителя Modern, Актау faucet_modern_02" loading="lazy" role="listitem" onclick="selectModalImage(this)" />
-      <img src="https://images.unsplash.com/photo-1514712547457-af489d216f83?auto=format&fit=crop&w=400&q=80" alt="Фото 3 смесителя Modern, Актау faucet_modern_03" loading="lazy" role="listitem" onclick="selectModalImage(this)" />
-    </div>
-    <div class="modal-info">
-      <h3 id="modal-product-title">Смеситель Modern</h3>
-      <p id="modal-product-desc">Современный дизайн, экономия воды, легкая установка и надежность.</p>
-      <div class="modal-price">8 500 ₸</div>
-      <div class="modal-availability" aria-live="polite">В наличии</div>
-      <div class="modal-buttons">
-        <button class="buy-btn" type="button" aria-label="Купить Смеситель Modern">Купить</button>
-        <button class="install-btn" type="button" aria-label="Заказать установку Смесителя Modern">Заказать установку</button>
-      </div>
-      <section class="reviews-section" aria-label="Отзывы покупателей">
-        <h4>Отзывы</h4>
-        <article class="review">
-          <strong>Айдын:</strong> Отличный смеситель, поставили быстро и качественно.
-        </article>
-        <article class="review">
-          <strong>Жанна:</strong> Работа службы установки на высшем уровне, рекомендую.
-        </article>
-      </section>
-      <section class="related-products" aria-label="Похожие товары">
-        <h4>Сопутствующие товары</h4>
-        <div class="related-grid">
-          <div class="related-product-card" tabindex="0" role="button" aria-label="Перейти к товару Умывальник Classic">
-            <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=160&q=80" alt="Умывальник Classic, Актау washbasin_classic_02" loading="lazy" />
-            <p>Умывальник Classic</p>
-          </div>
-          <div class="related-product-card" tabindex="0" role="button" aria-label="Перейти к товару Душевая кабина Aqua">
-            <img src="https://images.unsplash.com/photo-1560185127-22e50d63e3a5?auto=format&fit=crop&w=160&q=80" alt="Душевая кабина Aqua, Актау shower_aqua_04" loading="lazy" />
-            <p>Душевая кабина Aqua</p>
-          </div>
-          <div class="related-product-card" tabindex="0" role="button" aria-label="Перейти к товару Ванна Comfort Plus">
-            <img src="https://images.unsplash.com/photo-1506719040630-373222d72b15?auto=format&fit=crop&w=160&q=80" alt="Ванна Comfort Plus, Актау bathtub_comfort_03" loading="lazy" />
-            <p>Ванна Comfort Plus</p>
-          </div>
-        </div>
-      </section>
-    </div>
-  </div>
-</div>
-
-<!-- FOOTER -->
-<footer id="footer" role="contentinfo" aria-label="Контактная информация и подвал сайта">
-  <div class="container">
-    <div class="footer-block footer-contact">
+<footer role="contentinfo" id="contacts">
+  <div class="footer-container">
+    <section class="footer-section footer-contact" aria-label="Контактная информация">
       <h3>Контакты</h3>
-      <p>Сантехника Актау</p>
-      <p>Адрес: Актау, ул. Транспортная 10</p>
-      <p>Телефон: +7 (700) 555-33-22</p>
-      <div class="map-container" aria-label="Карта города Актау">
-        <iframe loading="lazy" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d20235.1622956183!2d51.17037750844802!3d43.65243679703963!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x417e65b0e27a6071%3A0x431f24e27365fa78!2z0KDQvtGB0YHRgtCw0LnQuNC5INGB0LDQvdCwINCQ0LXRgNCw0LLQvtGA0L3QsNGP!5e0!3m2!1sru!2skz!4v1695836000000!5m2!1sru!2skz" title="Карта Актау" width="400" height="180" allowfullscreen="" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <p>г. Актау, ул. Ленина, 45</p>
+      <p>Тел: <a href="tel:+77233112233" style="color: var(--light-green-bg);">+7 (7233) 11-22-33</a></p>
+      <p>Email: <a href="mailto:info@autoaktau.kz" style="color: var(--light-green-bg);">info@autoaktau.kz</a></p>
+      <p>Часы работы: Пн-Пт 9:00–18:00</p>
+    </section>
+    <section class="footer-section" aria-label="Социальные сети">
+      <h3>Соцсети</h3>
+      <div class="social-links">
+        <a href="#" aria-label="Facebook" tabindex="0" target="_blank" rel="noopener"><svg width="20" height="20" aria-hidden="true" focusable="false" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12.1a10 10 0 1 0-11.5 9.9v-7h-2v-3h2v-2a3 3 0 0 1 3-3h2v3h-2a1 1 0 0 0-1 1v2h3l-1 3h-2v7A10 10 0 0 0 22 12.1z"/></svg></a>
+        <a href="#" aria-label="Instagram" tabindex="0" target="_blank" rel="noopener"><svg width="20" height="20" aria-hidden="true" focusable="false" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2C4 2 2 4 2 7v10c0 3 2 5 5 5h10c3 0 5-2 5-5V7c0-3-2-5-5-5H7zm0 2h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3zm8 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg></a>
+        <a href="#" aria-label="Telegram" tabindex="0" target="_blank" rel="noopener"><svg width="20" height="20" aria-hidden="true" focusable="false" fill="currentColor" viewBox="0 0 24 24"><path d="M21 2L3 10l7.75 1.75L9 17l3.75-3.75L21 2z"/></svg></a>
       </div>
-    </div>
-    <div class="footer-block footer-links">
-      <h3>Информация</h3>
-      <a href="#footer" aria-label="Страница доставки">Доставка</a>
-      <a href="#footer" aria-label="Страница оплаты">Оплата</a>
-    </div>
-    <div class="footer-block footer-info">
-      <h3>Часы работы</h3>
-      <p>Понедельник – Пятница: 9:00–18:00</p>
-      <p>Суббота: 10:00–16:00</p>
-      <p>Воскресенье: Выходной</p>
-    </div>
-    <div class="footer-block footer-socials" aria-label="Социальные сети">
-      <a href="https://www.facebook.com" target="_blank" rel="noopener" aria-label="Facebook">
-        <svg role="img" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12c0-5.522-4.477-10-10-10S2 6.478 2 12c0 4.991 3.657 9.129 8.438 9.877v-6.987h-2.54v-2.89h2.54v-2.205c0-2.507 1.492-3.89 3.777-3.89 1.093 0 2.238.195 2.238.195v2.47h-1.26c-1.243 0-1.63.775-1.63 1.57v1.86h2.773l-.443 2.89h-2.33v6.987C18.343 21.13 22 16.991 22 12z"/></svg>
-      </a>
-      <a href="https://www.instagram.com" target="_blank" rel="noopener" aria-label="Instagram">
-        <svg role="img" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.849.07 1.366.062 2.633.336 3.608 1.311.974.975 1.249 2.242 1.31 3.607.059 1.265.069 1.645.069 4.848 0 3.204-.011 3.583-.069 4.849-.061 1.364-.336 2.63-1.31 3.606-.975.975-2.242 1.25-3.608 1.312-1.265.058-1.645.069-4.849.069-3.203 0-3.583-.011-4.848-.069-1.365-.062-2.631-.337-3.607-1.312-.975-.975-1.25-2.242-1.311-3.606C2.174 15.583 2.163 15.204 2.163 12c0-3.203.011-3.583.069-4.848.061-1.366.336-2.633 1.311-3.608.976-.975 2.242-1.249 3.607-1.31 1.265-.059 1.645-.069 4.848-.069zM12 0C8.741 0 8.332.015 7.052.07 5.78.123 4.555.394 3.48 1.468 2.405 2.543 2.134 3.768 2.082 5.04.026 7.783.026 16.217 2.082 19.96c.052 1.271.323 2.497 1.398 3.572 1.075 1.074 2.3 1.345 3.572 1.397 1.281.055 1.69.07 4.95.07s3.668-.015 4.95-.07c1.271-.052 2.496-.323 3.572-1.398 1.074-1.075 1.345-2.301 1.397-3.572C23.974 16.217 23.974 7.783 21.918 5.04zM12 5.838A6.163 6.163 0 105.838 12 6.163 6.163 0 0012 5.838zm0 10.163a4 4 0 114-4 4 4 0 01-4 4zm6.406-11.845a1.44 1.44 0 11-1.44-1.44 1.44 1.44 0 011.44 1.44z"/></svg>
-      </a>
-      <a href="https://wa.me/77005553322" target="_blank" rel="noopener" aria-label="WhatsApp">
-        <svg role="img" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.52 3.48A11.82 11.82 0 0012 1.5C6.21 1.5 1.5 6.21 1.5 12c0 2.11.66 4.06 1.78 5.69L1 23l5.49-2.14a11.79 11.79 0 006.88 2.14c5.79 0 10.5-4.71 10.5-10.5 0-2.8-1.1-5.43-3.35-7.15zm-8.4 15.8a8.972 8.972 0 01-4.7-1.37l-.33-.2-3.25 1.27 1.37-3.17-.21-.33a8.743 8.743 0 1117.21-4.46 8.872 8.872 0 01-9.9 8.9zm5.43-6.04c-.3-.15-1.75-.86-2.02-.96-.27-.11-.47-.15-.67.15-.19.3-.75.96-.91 1.17-.17.2-.33.22-.61.07-.27-.15-1.14-.42-2.17-1.34-.8-.71-1.34-1.59-1.5-1.87-.16-.27-.02-.42.13-.56.14-.14.26-.33.39-.5.13-.17.17-.3.27-.5.09-.19.05-.37-.03-.52-.08-.15-.67-1.63-.92-2.23-.24-.58-.49-.5-.67-.51-.17 0-.37-.01-.57-.01s-.53.07-.81.38c-.28.3-1.07 1.04-1.07 2.54s1.1 2.95 1.25 3.15c.15.2 2.16 3.3 5.23 4.63.73.31 1.3.5 1.75.64.74.23 1.41.2 1.94.12.59-.09 1.75-.71 2-.14.27.56 1.9 2.83 2.18 3.04.28.2.45.16.62.1.17-.07.53-.19.64-.37.11-.19.39-.7.44-1.34.05-.63.05-1.17-.37-1.63-.42-.46-1.59-2.46-1.85-2.67z"/></svg>
-      </a>
-    </div>
+    </section>
+    <section class="footer-section" aria-label="Подписка на рассылку">
+      <h3>Подписка на рассылку</h3>
+      <form class="newsletter" aria-label="Форма подписки на новости" onsubmit="event.preventDefault();">
+        <label for="email" class="visually-hidden">Email для подписки</label>
+        <input type="email" id="email" name="email" placeholder="Ваш email" aria-required="true" required />
+        <button type="submit" aria-label="Подписаться на рассылку">Подписаться</button>
+      </form>
+    </section>
+    <section class="footer-section footer-legal" aria-label="Юридическая информация">
+      <p>© 2024 AutoAktau.kz — Все права защищены.</p>
+      <p>Использование сайта означает согласие с <a href="#" style="color: var(--lime-green);text-decoration: underline;" tabindex="0">политикой конфиденциальности</a> и <a href="#" style="color: var(--lime-green);text-decoration: underline;" tabindex="0">пользовательским соглашением</a>.</p>
+    </section>
   </div>
 </footer>
 
-<script>
-  // Mobile menu toggle
-  const menuToggleBtn = document.querySelector('.menu-toggle');
-  const mobileNav = document.getElementById('mobile-nav');
-  menuToggleBtn?.addEventListener('click', () => {
-    const expanded = menuToggleBtn.getAttribute('aria-expanded') === 'true';
-    menuToggleBtn.setAttribute('aria-expanded', String(!expanded));
-    if (!expanded) {
-      mobileNav.style.display = 'block';
-    } else {
-      mobileNav.style.display = 'none';
-    }
-  });
-
-  // Product modal open (simulate)
-  document.querySelectorAll('.details-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      toggleModal(true);
-    });
-  });
-
-  function toggleModal(show) {
-    const modal = document.getElementById('product-modal');
-    if (show) {
-      modal.classList.add('active');
-      modal.focus();
-      document.body.style.overflow = 'hidden';
-    } else {
-      modal.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  }
-
-  // Close modal by clicking outside content or ESC
-  const modal = document.getElementById('product-modal');
-  modal?.addEventListener('click', e => {
-    if (e.target === modal) toggleModal(false);
-  });
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && modal.classList.contains('active')) toggleModal(false);
-  });
-
-  // Modal gallery image selection
-  function selectModalImage(img) {
-    document.querySelectorAll('.modal-gallery img').forEach(i => i.classList.remove('selected'));
-    img.classList.add('selected');
-  }
-</script>
 </body>
 </html>
