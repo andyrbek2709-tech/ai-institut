@@ -3,922 +3,1210 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Вкус Актау — Ресторан</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;1,300&family=Open+Sans&display=swap" rel="stylesheet" />
+<title>Вкус Актау - Ресторан</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans&display=swap" rel="stylesheet" />
 <style>
-  :root {
-    --sand: #f2d398;
-    --terracotta: #c2583e;
-    --deepblue: #2a3d66;
-    --white: #ffffff;
-    --gold: #d4af37;
-  }
+  /* Reset & base */
   * {
     box-sizing: border-box;
   }
   body {
     margin: 0;
     font-family: 'Open Sans', sans-serif;
-    background-color: var(--white);
-    color: var(--deepblue);
+    background-color: #F7F7F7;
+    color: #003366;
     line-height: 1.5;
+    scroll-behavior: smooth;
   }
   a {
     color: inherit;
     text-decoration: none;
   }
-  header {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    background: var(--white);
-    border-bottom: 1px solid var(--sand);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    height: 64px;
-    z-index: 1000;
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
   }
-  .logo {
+  button {
+    cursor: pointer;
     font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.5rem;
-    color: var(--terracotta);
-    letter-spacing: 2px;
-    user-select: none;
   }
-  nav {
-    display: flex;
-    gap: 24px;
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #C14A00;
+    border-radius: 8px;
+  }
+
+  /* Colors */
+  :root {
+    --sea-blue: #003366;
+    --sand-beige: #F4E3C1;
+    --white: #FFFFFF;
+    --light-gray: #F7F7F7;
+    --terracotta: #C14A00;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+    margin-top: 0;
+    margin-bottom: 0.5em;
+    color: var(--sea-blue);
+  }
+  h1 {
+    font-weight: 700;
+    font-size: 2.5rem;
+  }
+  h2 {
+    font-weight: 700;
+    font-size: 2rem;
+  }
+  h3 {
+    font-weight: 600;
+    font-size: 1.5rem;
+  }
+  p {
+    font-weight: 400;
+    font-size: 1rem;
+    margin-top: 0;
+    margin-bottom: 1em;
+    color: var(--sea-blue);
+  }
+  strong, b {
+    font-weight: 600;
   }
   nav a {
-    font-weight: 600;
     font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
     font-size: 1rem;
-    color: var(--deepblue);
-    position: relative;
-    padding: 4px 0;
+    margin-left: 2rem;
+    transition: color 0.25s ease;
   }
   nav a:hover,
   nav a:focus {
     color: var(--terracotta);
+    outline: none;
   }
-  nav a::after {
-    content: "";
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    width: 0%;
-    height: 2px;
-    background: var(--terracotta);
-    transition: width 0.3s ease;
+
+  /* Container */
+  .container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
   }
-  nav a:hover::after,
-  nav a:focus::after {
+
+  /* Header */
+  header {
+    background-color: var(--white);
+    border-bottom: 1px solid #ddd;
+    position: fixed;
+    top: 0;
     width: 100%;
+    z-index: 9999;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
   }
-  .contacts {
+  .header-inner {
     display: flex;
     align-items: center;
-    gap: 16px;
-    font-weight: 600;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.9rem;
-    color: var(--deepblue);
+    justify-content: space-between;
+    height: 64px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
   }
-  .contacts a {
-    color: var(--deepblue);
-  }
-  .btn-book {
-    background-color: var(--terracotta);
-    color: var(--white);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--sea-blue);
+  }
+  .logo svg {
+    width: 32px;
+    height: 32px;
+    fill: var(--terracotta);
+  }
+  nav.menu {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  nav.menu a {
+    margin-left: 1.5rem;
+    color: var(--sea-blue);
+  }
+  nav.menu a:first-child {
+    margin-left: 0;
+  }
+
+  /* Phone & WhatsApp */
+  .header-contacts {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     font-size: 0.9rem;
-    cursor: pointer;
+    color: var(--sea-blue);
+  }
+  .header-contacts a {
+    color: var(--sea-blue);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .header-contacts a svg {
+    fill: var(--terracotta);
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Book button */
+  .btn-book {
+    background-color: var(--terracotta);
+    border: none;
+    border-radius: 4px;
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
     transition: background-color 0.3s ease;
-    white-space: nowrap;
   }
   .btn-book:hover,
   .btn-book:focus {
-    background-color: var(--gold);
-    color: var(--deepblue);
+    background-color: #9a3900;
+    outline: none;
   }
+
+  /* Hamburger & mobile nav */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+  }
+  .hamburger span {
+    width: 24px;
+    height: 3px;
+    background: var(--sea-blue);
+    border-radius: 2px;
+  }
+  @media (max-width: 991px) {
+    nav.menu {
+      position: fixed;
+      top: 64px;
+      left: 0;
+      right: 0;
+      background-color: var(--white);
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 1rem 2rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      box-shadow: 0 4px 6px rgb(0 0 0 / 0.15);
+      z-index: 10;
+    }
+    nav.menu.open {
+      max-height: 300px;
+    }
+    nav.menu a {
+      margin: 1rem 0;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+    .header-contacts {
+      display: none;
+    }
+    .hamburger {
+      display: flex;
+    }
+    .btn-book {
+      padding: 0.6rem 1.2rem;
+      font-size: 1.1rem;
+    }
+  }
+
+  /* Main content bottom padding for fixed header */
   main {
-    margin-top: 64px;
+    padding-top: 64px;
   }
-  .hero {
+
+  /* Hero */
+  #hero {
     position: relative;
-    height: 80vh;
-    background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600') center/cover no-repeat;
+    background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200') center/cover no-repeat;
+    height: 480px;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     color: var(--white);
     text-align: center;
   }
-  .hero::before {
-    content: "";
+  #hero::before {
+    content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(178,138,91,0.7) 0%, rgba(44,38,30,0.6) 100%);
-    mix-blend-mode: multiply;
+    background: linear-gradient(180deg, rgba(0, 51, 102, 0.75) 0%, rgba(0, 51, 102, 0.85) 100%);
     z-index: 0;
   }
-  .hero-content {
+  #hero .hero-content {
     position: relative;
-    max-width: 600px;
     z-index: 1;
+    max-width: 90%;
+  }
+  #hero h1 {
     font-family: 'Montserrat', sans-serif;
-  }
-  .hero-content h1 {
-    font-size: 2.8rem;
     font-weight: 700;
-    margin: 0 0 1rem;
-    text-shadow: 1px 1px 6px rgba(0,0,0,0.6);
+    font-size: 2.75rem;
+    margin-bottom: 1rem;
+    line-height: 1.1;
   }
-  .hero-buttons {
+  #hero .hero-buttons {
+    margin-top: 1.5rem;
     display: flex;
-    gap: 16px;
     justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
-  .hero-btn {
-    cursor: pointer;
+  #hero .btn {
+    background-color: var(--sand-beige);
+    color: var(--sea-blue);
+    border: none;
+    border-radius: 24px;
+    padding: 0.75rem 2rem;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    box-shadow: 0 3px 6px rgb(197 159 94 / 0.45);
+  }
+  #hero .btn:hover,
+  #hero .btn:focus {
+    background-color: var(--terracotta);
+    color: var(--white);
+    outline: none;
+  }
+
+  /* Section common styles */
+  section {
+    padding: 3rem 0 4rem;
+    background-color: var(--white);
+  }
+  section.alt-bg {
+    background-color: var(--light-gray);
+  }
+  section > .container {
+    max-width: 1200px;
+  }
+  h2.section-title {
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
-    border: none;
-    padding: 12px 28px;
-    border-radius: 30px;
-    font-size: 1rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-    color: var(--white);
+    text-align:center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: var(--sea-blue);
   }
-  .hero-btn.menu {
-    background-color: var(--terracotta);
-  }
-  .hero-btn.menu:hover,
-  .hero-btn.menu:focus {
-    background-color: var(--gold);
-    color: var(--deepblue);
-    transform: scale(1.05);
-    box-shadow: 0 6px 12px rgba(212,175,55,0.8);
-  }
-  .hero-btn.book {
-    background-color: var(--gold);
-    color: var(--deepblue);
-  }
-  .hero-btn.book:hover,
-  .hero-btn.book:focus {
-    background-color: var(--terracotta);
-    color: var(--white);
-    transform: scale(1.05);
-    box-shadow: 0 6px 12px rgba(194,88,62,0.8);
-  }
-  section {
-    max-width: 1024px;
-    margin: 48px auto;
-    padding: 0 24px;
-  }
-  /* О ресторане */
+
+  /* About */
   #about {
     display: flex;
     flex-wrap: wrap;
-    gap: 32px;
-    color: var(--deepblue);
+    gap: 2rem;
+    align-items: center;
   }
-  #about .text {
-    flex: 1 1 300px;
-    font-size: 1.05rem;
+  #about .about-text {
+    flex: 1 1 350px;
+    font-family: 'Open Sans', sans-serif;
+    color: var(--sea-blue);
+    line-height: 1.6;
   }
-  #about .text h2 {
+  #about .about-photo {
+    flex: 1 1 350px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgb(0 51 102 / 0.15);
+  }
+  #about .about-photo img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  #about strong {
+    color: var(--terracotta);
+  }
+
+  /* Menu */
+  #menu {
+    background-color: var(--light-gray);
+  }
+  #menu .filters {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  #menu .filters button {
+    background: none;
+    border: 2px solid var(--sea-blue);
+    color: var(--sea-blue);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+    margin: 0 0.3rem 1rem 0.3rem;
+    border-radius: 30px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  #menu .filters button.active,
+  #menu .filters button:hover,
+  #menu .filters button:focus {
+    background-color: var(--terracotta);
+    border-color: var(--terracotta);
+    color: var(--white);
+    outline: none;
+  }
+  #menu .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 2rem;
+  }
+  #menu .card {
+    background-color: var(--white);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgb(0 51 102 / 0.1);
+    display: flex;
+    flex-direction: column;
+  }
+  #menu .card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+  #menu .card-content {
+    padding: 1rem 1.25rem 1.25rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  #menu .card-title {
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
-    font-size: 2rem;
-    margin-bottom: 16px;
-    position: relative;
+    font-size: 1.15rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--sea-blue);
   }
-  #about .text h2::after {
-    content: "";
+  #menu .card-desc {
+    flex-grow: 1;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 0.9rem;
+    color: #3a3a3a;
+    margin-bottom: 0.75rem;
+  }
+  #menu .card-price {
+    font-weight: 700;
+    color: var(--terracotta);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+  }
+
+  /* Booking */
+  #booking form {
+    max-width: 420px;
+    margin: 0 auto;
+    background-color: var(--white);
+    padding: 2rem 2.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgb(197 74 0 / 0.15);
+  }
+  #booking label {
     display: block;
-    width: 60px;
-    height: 3px;
-    background-color: var(--gold);
-    margin-top: 6px;
-    border-radius: 2px;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    margin-bottom: 0.2rem;
+    color: var(--sea-blue);
   }
-  #about .image {
-    flex: 1 1 320px;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 0 12px rgba(194,88,62,0.3);
-  }
-  #about img {
+  #booking input,
+  #booking select {
     width: 100%;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1.5rem;
+    border: 1.5px solid #ccc;
+    border-radius: 4px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+  }
+  #booking input:focus,
+  #booking select:focus {
+    border-color: var(--terracotta);
+    outline: none;
+  }
+  #booking .btn-book {
+    width: 100%;
+    padding: 0.75rem 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 30px;
+  }
+  #booking .hours-info {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--sea-blue);
+  }
+
+  /* Gallery */
+  #gallery {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  #gallery .carousel {
+    position: relative;
+    overflow: hidden;
+  }
+  #gallery .carousel-track {
+    display: flex;
+    transition: transform 0.4s ease;
+  }
+  #gallery .carousel-item {
+    min-width: 300px;
+    margin-right: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 9px rgb(0 51 102 / 0.15);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  #gallery .carousel-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
     display: block;
+    transition: transform 0.3s ease;
+  }
+  #gallery .carousel-item:hover img,
+  #gallery .carousel-item:focus img {
+    transform: scale(1.05);
+  }
+  #gallery .carousel-controls {
+    margin-top: 1rem;
+    text-align: center;
+  }
+  #gallery .carousel-controls button {
+    background-color: var(--terracotta);
+    border: none;
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    margin: 0 0.25rem;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    transition: background-color 0.3s ease;
+  }
+  #gallery .carousel-controls button:disabled {
+    background-color: #ba6b3f;
+    cursor: default;
+  }
+  #gallery .carousel-controls button:not(:disabled):hover,
+  #gallery .carousel-controls button:not(:disabled):focus {
+    background-color: #7d2b00;
+    outline: none;
+  }
+
+  /* Reviews */
+  #reviews {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  #reviews .review-slider {
+    position: relative;
+    overflow: hidden;
+  }
+  #reviews .reviews-track {
+    display: flex;
+    transition: transform 0.4s ease;
+  }
+  #reviews .review-card {
+    min-width: 320px;
+    background: var(--white);
+    margin-right: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 3px 12px rgb(0 51 102 / 0.12);
+    padding: 1.5rem 1.75rem;
+    flex-shrink: 0;
+    color: var(--sea-blue);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  #reviews .review-text {
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+  #reviews .review-author {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  #reviews .review-photo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  #reviews .review-photo img {
+    width: 100%;
     height: 100%;
     object-fit: cover;
   }
-  /* Меню */
-  #menu {
-    color: var(--deepblue);
-  }
-  #menu h2 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 2rem;
-    margin-bottom: 16px;
-    position: relative;
-  }
-  #menu h2::after {
-    content: "";
-    display: block;
-    width: 60px;
-    height: 3px;
-    background-color: var(--gold);
-    margin-top: 6px;
-    border-radius: 2px;
-  }
-  .menu-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .menu-filter-btn {
-    background: var(--sand);
-    border: none;
-    padding: 8px 18px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-family: 'Montserrat', sans-serif;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    color: var(--deepblue);
-  }
-  .menu-filter-btn:hover,
-  .menu-filter-btn:focus,
-  .menu-filter-btn.active {
-    background-color: var(--terracotta);
-    color: var(--white);
-  }
-  .menu-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(280px,1fr));
-    gap: 24px;
-  }
-  .menu-card {
-    background: var(--sand);
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-    display: flex;
-    flex-direction: column;
-  }
-  .menu-card:hover,
-  .menu-card:focus-within {
-    transform: scale(1.03);
-    box-shadow: 0 6px 12px rgba(194,88,62,0.3);
-  }
-  .menu-card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-  }
-  .menu-card-body {
-    padding: 14px 16px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .menu-card-title {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.1rem;
-    margin-bottom: 8px;
-  }
-  .menu-card-desc {
-    flex-grow: 1;
-    font-size: 0.9rem;
-    color: #4a4a4a;
-    margin-bottom: 12px;
-  }
-  .menu-card-price {
+  #reviews .author-name {
     font-weight: 700;
     font-family: 'Montserrat', sans-serif;
     font-size: 1rem;
-    color: var(--terracotta);
   }
-  .menu-footer-link {
-    margin-top: 24px;
-    display: inline-block;
+  #reviews .btn-review {
+    display: block;
+    margin: 2rem auto 0;
+    background-color: var(--terracotta);
+    color: var(--white);
+    border: none;
+    padding: 0.75rem 2.5rem;
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
-    color: var(--deepblue);
-    border: 2px solid var(--deepblue);
+    font-size: 1.1rem;
     border-radius: 30px;
-    padding: 10px 24px;
-    transition: background-color 0.3s ease,color 0.3s ease;
-  }
-  .menu-footer-link:hover,
-  .menu-footer-link:focus {
-    background-color: var(--terracotta);
-    color: var(--white);
-    border-color: var(--terracotta);
-  }
-  /* Отзывы */
-  #reviews {
-    background-color: var(--sand);
-    color: var(--deepblue);
-    padding: 48px 24px;
-  }
-  #reviews h2 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 2rem;
-    margin-bottom: 32px;
-    text-align: center;
-    position: relative;
-  }
-  #reviews h2::after {
-    content: "";
-    display: block;
-    width: 60px;
-    height: 3px;
-    background-color: var(--gold);
-    margin: 6px auto 0;
-    border-radius: 2px;
-  }
-  .reviews-slider {
-    max-width: 720px;
-    margin: 0 auto;
-    position: relative;
-  }
-  .review {
-    background: var(--white);
-    border-radius: 12px;
-    padding: 24px 28px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    outline: none;
-  }
-  .review-text {
-    font-size: 1rem;
-    font-style: italic;
-    margin-bottom: 20px;
-    color: #444;
-  }
-  .review-user {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .review-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    box-shadow: 0 0 6px rgba(194,88,62,0.6);
-  }
-  .review-name {
-    font-weight: 700;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 1rem;
-    color: var(--terracotta);
-  }
-  .review-stars {
-    margin-left: auto;
-    color: var(--gold);
-    font-size: 1.1rem;
-    user-select: none;
-  }
-  /* Галерея */
-  #gallery {
-    max-width: 1024px;
-    margin: 48px auto 72px;
-    padding: 0 24px;
-    color: var(--deepblue);
-  }
-  #gallery h2 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 2rem;
-    margin-bottom: 24px;
-    position: relative;
-  }
-  #gallery h2::after {
-    content: "";
-    display: block;
-    width: 60px;
-    height: 3px;
-    background-color: var(--gold);
-    margin-top: 6px;
-    border-radius: 2px;
-  }
-  .gallery-carousel {
-    display: flex;
-    overflow-x: auto;
-    gap: 16px;
-    scroll-padding: 24px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--terracotta) var(--sand);
-  }
-  .gallery-carousel::-webkit-scrollbar {
-    height: 8px;
-  }
-  .gallery-carousel::-webkit-scrollbar-track {
-    background: var(--sand);
-  }
-  .gallery-carousel::-webkit-scrollbar-thumb {
-    background-color: var(--terracotta);
-    border-radius: 10px;
-  }
-  .gallery-item {
-    flex: 0 0 auto;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(194,88,62,0.3);
-    width: 280px;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-  }
-  .gallery-item:hover,
-  .gallery-item:focus {
-    transform: scale(1.05);
-  }
-  .gallery-item img {
-    display: block;
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-  }
-  .video-container {
-    margin: 32px 0 0;
-    max-width: 720px;
-    max-height: 405px;
-    aspect-ratio: 16 / 9;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(194,88,62,0.4);
-  }
-  /* Контакты и карта */
-  #contact {
-    max-width: 1024px;
-    margin: 48px auto;
-    padding: 0 24px 72px;
-    color: var(--deepblue);
-  }
-  #contact h2 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 2rem;
-    margin-bottom: 24px;
-    position: relative;
-  }
-  #contact h2::after {
-    content: "";
-    display: block;
-    width: 60px;
-    height: 3px;
-    background-color: var(--gold);
-    margin-top: 6px;
-    border-radius: 2px;
-  }
-  .contact-details {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 32px;
-  }
-  .contact-info {
-    flex: 1 1 320px;
-  }
-  .contact-info p,
-  .contact-info a {
-    font-size: 1rem;
-    margin: 8px 0;
-    color: var(--deepblue);
-  }
-  .contact-info a:hover,
-  .contact-info a:focus {
-    color: var(--terracotta);
-  }
-  .contact-info strong {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    color: var(--terracotta);
-  }
-  .contact-hours {
-    margin-top: 16px;
-    background: var(--sand);
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-style: italic;
-  }
-  .contact-form {
-    flex: 1 1 320px;
-  }
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  label {
-    font-weight: 600;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.95rem;
-    color: var(--deepblue);
-  }
-  input[type="text"],
-  input[type="tel"],
-  textarea {
-    border: 2px solid var(--sand);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 1rem;
-    font-family: 'Open Sans', sans-serif;
-    resize: vertical;
-    transition: border-color 0.3s ease;
-  }
-  input[type="text"]:focus,
-  input[type="tel"]:focus,
-  textarea:focus {
-    outline: none;
-    border-color: var(--terracotta);
-  }
-  textarea {
-    min-height: 80px;
-  }
-  button[type="submit"] {
-    background-color: var(--terracotta);
-    color: var(--white);
-    border: none;
-    padding: 12px 24px;
-    border-radius: 20px;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.3s ease;
   }
-  button[type="submit"]:hover,
-  button[type="submit"]:focus {
-    background-color: var(--gold);
-    color: var(--deepblue);
+  #reviews .btn-review:hover,
+  #reviews .btn-review:focus {
+    background-color: #9a3900;
+    outline: none;
   }
-  iframe {
-    border-radius: 12px;
-    width: 100%;
-    min-height: 320px;
+  #reviews .review-controls {
+    text-align: center;
+    margin-top: 1rem;
+  }
+  #reviews .review-controls button {
+    background-color: var(--terracotta);
     border: none;
-    box-shadow: 0 4px 14px rgba(42,61,102,0.3);
+    color: var(--white);
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    margin: 0 0.3rem;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
   }
-  /* Футер */
+  #reviews .review-controls button:disabled {
+    background-color: #ba6b3f;
+    cursor: default;
+  }
+  #reviews .review-controls button:not(:disabled):hover,
+  #reviews .review-controls button:not(:disabled):focus {
+    background-color: #7d2b00;
+    outline: none;
+  }
+
+  /* Contacts */
+  #contacts {
+    background-color: var(--light-gray);
+    padding: 3rem 0 5rem;
+  }
+  #contacts .info {
+    max-width: 400px;
+    margin: 0 auto 3rem;
+    text-align: center;
+    color: var(--sea-blue);
+  }
+  #contacts .info p {
+    margin: 0.25rem 0;
+    font-size: 1.05rem;
+  }
+  #contacts .info a {
+    color: var(--terracotta);
+    font-weight: 700;
+  }
+  #contacts .socials {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+  #contacts .socials a svg {
+    width: 32px;
+    height: 32px;
+    fill: var(--sea-blue);
+    transition: fill 0.3s ease;
+  }
+  #contacts .socials a:hover svg,
+  #contacts .socials a:focus svg {
+    fill: var(--terracotta);
+    outline: none;
+  }
+  #contacts iframe {
+    border: none;
+    width: 100%;
+    max-width: 900px;
+    height: 300px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgb(0 51 102 / 0.15);
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* Footer */
   footer {
-    background-color: var(--deepblue);
-    color: var(--sand);
-    font-size: 0.875rem;
-    padding: 24px 32px;
+    background-color: var(--sea-blue);
+    color: var(--sand-beige);
+    padding: 1.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  footer .footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    align-items: center;
+    gap: 1rem;
   }
   footer nav {
-    display: flex;
-    gap: 18px;
-    flex-wrap: wrap;
+    order: 2;
   }
   footer nav a {
-    color: var(--sand);
+    color: var(--sand-beige);
+    margin-left: 1rem;
     font-weight: 600;
     font-family: 'Montserrat', sans-serif;
-    transition: color 0.3s ease;
   }
-  footer nav a:hover,
-  footer nav a:focus {
-    color: var(--gold);
+  footer nav a:first-child {
+    margin-left: 0;
   }
-  .footer-copy {
-    flex: 1 1 200px;
+  footer .copyright {
+    order: 1;
   }
-  .footer-privacy,
-  .footer-socials {
+  footer .socials {
+    order: 3;
     display: flex;
-    gap: 18px;
+    gap: 1rem;
   }
-  .footer-privacy a,
-  .footer-socials a {
-    color: var(--sand);
-    transition: color 0.3s ease;
+  footer .socials a svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--sand-beige);
+    transition: fill 0.3s ease;
   }
-  .footer-privacy a:hover,
-  .footer-privacy a:focus,
-  .footer-socials a:hover,
-  .footer-socials a:focus {
-    color: var(--gold);
+  footer .socials a:hover svg,
+  footer .socials a:focus svg {
+    fill: var(--terracotta);
+    outline: none;
   }
-  /* Акценты курсив и light */
-  em, .accent-italic {
-    font-family: 'Montserrat', sans-serif;
-    font-style: italic;
-    font-weight: 300;
-    color: var(--terracotta);
-  }
-  /* Адаптив */
-  @media (max-width: 768px) {
+  @media (max-width: 600px) {
     #about {
       flex-direction: column;
-      align-items: center;
     }
-    .hero-content h1 {
-      font-size: 2rem;
+    footer .footer-container {
+      justify-content: center;
+      text-align: center;
     }
-    .hero-buttons {
-      flex-direction: column;
-      gap: 12px;
+    footer nav {
+      order: 3;
+      margin-top: 0.5rem;
     }
-    header {
-      padding: 0 16px;
+    footer .copyright {
+      order: 1;
+      width: 100%;
+      margin-bottom: 8px;
     }
-    nav {
-      display: none;
-    }
-    .contacts {
-      font-size: 0.85rem;
-      gap: 8px;
+    footer .socials {
+      order: 2;
+      margin-bottom: 8px;
     }
   }
+
+  /* Accessibility & focus */
+  a:focus,
+  button:focus {
+    outline-offset: 2px;
+    outline: 3px solid var(--terracotta);
+  }
+
+  /* Microanimations */
+  button,
+  nav a,
+  .btn-book,
+  #hero .btn {
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .fade-in {
+    opacity: 0;
+    transform: translateY(25px);
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-out;
+    animation-duration: 0.7s;
+  }
+  .fade-in.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
 </style>
 </head>
 <body>
 <header>
-  <a href="#hero" class="logo" aria-label="Логотип ресторана Вкус Актау">Вкус Актау</a>
-  <nav role="navigation" aria-label="Главное меню">
-    <a href="#hero">Главная</a>
-    <a href="#menu">Меню</a>
-    <a href="#about">О ресторане</a>
-    <a href="#reviews">Отзывы</a>
-    <a href="#contact">Контакты</a>
-  </nav>
-  <div class="contacts">
-    <a href="tel:+77771234567" aria-label="Позвонить в ресторан">+7 (777) 123-45-67</a>
-    <button class="btn-book" type="button" aria-haspopup="dialog">Заказать стол</button>
+  <div class="header-inner container">
+    <a href="#hero" class="logo" aria-label="Главная">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.582 2 4 5.582 4 10c0 4.418 3.582 8 8 8s8-3.582 8-8c0-4.418-3.582-8-8-8zm0 14a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z" fill="#C14A00"/></svg>
+      Вкус Актау
+    </a>
+    <nav class="menu" role="navigation" aria-label="Главное меню">
+      <a href="#hero">Главная</a>
+      <a href="#menu">Меню</a>
+      <a href="#about">О нас</a>
+      <a href="#booking">Бронирование</a>
+      <a href="#gallery">Галерея</a>
+      <a href="#contacts">Контакты</a>
+    </nav>
+    <div class="header-contacts">
+      <a href="tel:+77001234567" aria-label="Позвонить +7 700 123 45 67">+7 700 123 45 67</a>
+      <a href="https://wa.me/77001234567" target="_blank" rel="noopener" aria-label="Написать в WhatsApp">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.52 3.48a11.88 11.88 0 0 0-16.57 0c-4.64 4.28-4.54 11.44.22 15.94l-1.62 4.73 4.86-1.6a11.86 11.86 0 0 0 9.11-.28 11.9 11.9 0 0 0 5.93-14.54Zm-8.76 15.06a8.06 8.06 0 0 1-4.94-1.63l-.35-.25-2.93.96.98-2.85-.25-.37a8.11 8.11 0 0 1-1.52-5.02 8.16 8.16 0 0 1 14.1-5.58 8.17 8.17 0 0 1-8.04 13.5Zm4.55-6.47-.26-.13a.4.4 0 0 0-.49.14l-.75.94a9.44 9.44 0 0 1-1.16-1.17l.91-.74a.4.4 0 0 0 .13-.51l-.13-.25a.46.46 0 0 0-.52-.27c-.9.16-2.94 1.34-3.11 1.57a.44.44 0 0 0-.08.51c.4.7 1.95 3.58 5.3 4.81a.41.41 0 0 0 .54-.35c.08-1 .9-2.74 1.3-3.24a.42.42 0 0 0-.13-.5Z"/></svg>
+      </a>
+    </div>
+    <button class="btn-book" id="header-book-btn" aria-label="Забронировать стол">Забронировать стол</button>
+    <button class="hamburger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobile-menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </div>
 </header>
-
 <main>
-  <section class="hero" id="hero" role="banner" aria-label="Главный баннер ресторана">
-    <div class="hero-content">
-      <h1>Вкус Актау в каждом блюде</h1>
+  <section id="hero" role="banner">
+    <div class="hero-content fade-in" style="animation-delay:0.2s">
+      <h1>Вкус Актау – у нас на столе</h1>
       <div class="hero-buttons">
-        <button class="hero-btn menu" type="button" onclick="document.getElementById('menu').scrollIntoView({behavior:'smooth'})">Посмотреть меню</button>
-        <button class="hero-btn book" type="button" aria-haspopup="dialog">Забронировать стол</button>
+        <a href="#menu" class="btn" tabindex="0">Посмотреть меню</a>
+        <a href="#booking" class="btn" tabindex="0">Забронировать</a>
       </div>
     </div>
   </section>
 
-  <section id="about" aria-labelledby="about-title">
-    <div class="text">
-      <h2 id="about-title">О ресторане</h2>
-      <p>«Вкус Актау» — современный ресторан, сочетающий минимализм с изящными элементами восточного дизайна. Наша атмосфера — это тепло прибрежных дней и богатство местных традиций.</p>
-      <p>Мы гордимся использованием только свежих и натуральных продуктов с местных рынков Казахстана и Каспия, что придаёт уникальный колорит нашей кухне. Восточные специи и традиции подаются в каждом блюде с деликатной подачей.</p>
-      <p>Приходите и окунитесь в уникальный колорит Актау — от интерьера до каждого вкуса.</p>
-    </div>
-    <div class="image">
-      <img src="https://images.unsplash.com/photo-1555992336-03a23c5278ea?w=800" alt="Интерьер ресторана Вкус Актау" />
-    </div>
-  </section>
-
-  <section id="menu" aria-labelledby="menu-title">
-    <h2 id="menu-title">Меню</h2>
-    <div class="menu-filters" role="list" aria-label="Фильтр категорий меню">
-      <button class="menu-filter-btn active" type="button" data-filter="all" aria-pressed="true">Все</button>
-      <button class="menu-filter-btn" type="button" data-filter="starters" aria-pressed="false">Закуски</button>
-      <button class="menu-filter-btn" type="button" data-filter="salads" aria-pressed="false">Салаты</button>
-      <button class="menu-filter-btn" type="button" data-filter="mains" aria-pressed="false">Основные блюда</button>
-      <button class="menu-filter-btn" type="button" data-filter="desserts" aria-pressed="false">Десерты</button>
-      <button class="menu-filter-btn" type="button" data-filter="drinks" aria-pressed="false">Напитки</button>
-    </div>
-    <div class="menu-cards" role="list">
-      <article class="menu-card" data-category="starters" tabindex="0" role="listitem" aria-label="Закуска: Плов по-актауски, цена 1200 тенге">
-        <img src="https://images.unsplash.com/photo-1562967916-eb82221dfb66?w=800" alt="Плов по-актауски" loading="lazy" />
-        <div class="menu-card-body">
-          <h3 class="menu-card-title">Плов по-актауски</h3>
-          <p class="menu-card-desc">Традиционный восточный плов с мясом и специями, приготовленный по старинному рецепту.</p>
-          <div class="menu-card-price">1200 ₸</div>
-        </div>
-      </article>
-      <article class="menu-card" data-category="salads" tabindex="0" role="listitem" aria-label="Салат: Свежие овощи с пряным соусом, цена 750 тенге">
-        <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800" alt="Свежие овощи с пряным соусом" loading="lazy" />
-        <div class="menu-card-body">
-          <h3 class="menu-card-title">Свежие овощи с пряным соусом</h3>
-          <p class="menu-card-desc">Микс свежих сезонных овощей с восточным соусом на основе оливкового масла и специй.</p>
-          <div class="menu-card-price">750 ₸</div>
-        </div>
-      </article>
-      <article class="menu-card" data-category="mains" tabindex="0" role="listitem" aria-label="Основное блюдо: Рыба на гриле с травами, цена 1800 тенге">
-        <img src="https://images.unsplash.com/photo-1516684669134-c99b957b3b7d?w=800" alt="Рыба на гриле с травами" loading="lazy" />
-        <div class="menu-card-body">
-          <h3 class="menu-card-title">Рыба на гриле с травами</h3>
-          <p class="menu-card-desc">Свежая каспийская рыба, аккуратно приготовленная на углях с ароматными травами.</p>
-          <div class="menu-card-price">1800 ₸</div>
-        </div>
-      </article>
-      <article class="menu-card" data-category="desserts" tabindex="0" role="listitem" aria-label="Десерт: Восточные сладости ассорти, цена 650 тенге">
-        <img src="https://images.unsplash.com/photo-1588167056541-3427b3cea9d1?w=800" alt="Восточные сладости ассорти" loading="lazy" />
-        <div class="menu-card-body">
-          <h3 class="menu-card-title">Восточные сладости ассорти</h3>
-          <p class="menu-card-desc">Нежные пахлава, хурма и другие классические сладости региона.</p>
-          <div class="menu-card-price">650 ₸</div>
-        </div>
-      </article>
-      <article class="menu-card" data-category="drinks" tabindex="0" role="listitem" aria-label="Напиток: Чай с мятой и восточными травами, цена 300 тенге">
-        <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800" alt="Чай с мятой и восточными травами" loading="lazy" />
-        <div class="menu-card-body">
-          <h3 class="menu-card-title">Чай с мятой и восточными травами</h3>
-          <p class="menu-card-desc">Ароматный горячий напиток, прекрасно дополняющий любое блюдо.</p>
-          <div class="menu-card-price">300 ₸</div>
-        </div>
-      </article>
-    </div>
-    <a href="/menu.pdf" class="menu-footer-link" target="_blank" rel="noopener">Полное меню (PDF)</a>
-  </section>
-
-  <section id="reviews" aria-labelledby="reviews-title">
-    <h2 id="reviews-title">Отзывы</h2>
-    <div class="reviews-slider" role="region" aria-live="polite" aria-label="Отзывы клиентов">
-      <article class="review" tabindex="0">
-        <p class="review-text">«Невероятно вкусные блюда и приятная атмосфера. Отдельное спасибо за внимание к деталям и восточный шарм.»</p>
-        <div class="review-user">
-          <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Аватар пользователя Алина" class="review-avatar" />
-          <span class="review-name">Алина</span>
-          <span class="review-stars" aria-label="Рейтинг 5 из 5 звезд">★★★★★</span>
-        </div>
-      </article>
-      <article class="review" tabindex="0" hidden>
-        <p class="review-text">«Обожаю это место за свежесть и отменный вкус продуктов. Прекрасное обслуживание и уютный интерьер.»</p>
-        <div class="review-user">
-          <img src="https://randomuser.me/api/portraits/men/44.jpg" alt="Аватар пользователя Дмитрий" class="review-avatar" />
-          <span class="review-name">Дмитрий</span>
-          <span class="review-stars" aria-label="Рейтинг 4 из 5 звезд">★★★★☆</span>
-        </div>
-      </article>
-      <article class="review" tabindex="0" hidden>
-        <p class="review-text">«Отличный выбор блюд и дружелюбная атмосфера. Рекомендую каждому, кто хочет попробовать настоящие вкусы Актау.»</p>
-        <div class="review-user">
-          <img src="https://randomuser.me/api/portraits/women/12.jpg" alt="Аватар пользователя Марина" class="review-avatar" />
-          <span class="review-name">Марина</span>
-          <span class="review-stars" aria-label="Рейтинг 5 из 5 звезд">★★★★★</span>
-        </div>
-      </article>
-      <div style="text-align:center; margin-top:16px;">
-        <button aria-label="Предыдущий отзыв" type="button" id="prevReview" style="background:none; border:none; font-size:24px; color: var(--terracotta); cursor:pointer;">‹</button>
-        <button aria-label="Следующий отзыв" type="button" id="nextReview" style="background:none; border:none; font-size:24px; color: var(--terracotta); cursor:pointer;">›</button>
+  <section id="about" class="container fade-in" style="animation-delay:0.4s">
+    <h2 class="section-title">О ресторане</h2>
+    <div id="about-content" style="display:flex; flex-wrap:wrap; gap:2rem; align-items:center;">
+      <div class="about-text">
+        <p>Наш ресторан объединяет лучший <strong>морской колорит Актау</strong> и теплоту <strong>пустынных традиций</strong>. Мы ценим локальные продукты и аутентичность, чтобы подарить вам настоящие вкусы нашего региона.</p>
+        <p>История заведения берет своё начало в любви к качественной кухне и гостеприимству, которое мы несем в каждое блюдо.</p>
+      </div>
+      <div class="about-photo">
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Интерьер ресторана" loading="lazy" />
       </div>
     </div>
   </section>
 
-  <section id="gallery" aria-labelledby="gallery-title">
-    <h2 id="gallery-title">Галерея</h2>
-    <div class="gallery-carousel" role="list" aria-label="Фотогалерея ресторана">
-      <div class="gallery-item" role="listitem" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1533777324565-a04df0e527b7?w=600" alt="Блюдо из меню ресторана" loading="lazy" />
+  <section id="menu" class="fade-in" style="animation-delay:0.6s">
+    <div class="container">
+      <h2 class="section-title">Меню</h2>
+      <div class="filters" role="list" aria-label="Фильтр меню">
+        <button type="button" class="filter-btn active" data-filter="all" aria-pressed="true">Все</button>
+        <button type="button" class="filter-btn" data-filter="starters" aria-pressed="false">Закуски</button>
+        <button type="button" class="filter-btn" data-filter="mains" aria-pressed="false">Основные блюда</button>
+        <button type="button" class="filter-btn" data-filter="desserts" aria-pressed="false">Десерты</button>
+        <button type="button" class="filter-btn" data-filter="drinks" aria-pressed="false">Напитки</button>
       </div>
-      <div class="gallery-item" role="listitem" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600" alt="Интерьер ресторана с восточными орнаментами" loading="lazy" />
+      <div class="cards" role="list" aria-live="polite" aria-atomic="true">
+
+        <article class="card" data-category="starters" tabindex="0" role="listitem" aria-label="Закуска: Хумус с лепёшками">
+          <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?w=800" alt="Хумус с лепёшками" loading="lazy" />
+          <div class="card-content">
+            <h3 class="card-title">Хумус с лепёшками</h3>
+            <p class="card-desc">Традиционная паста из нута с оливковым маслом и лимоном, подается с теплой лепёшкой.</p>
+            <p class="card-price">1200 ₸</p>
+          </div>
+        </article>
+
+        <article class="card" data-category="mains" tabindex="0" role="listitem" aria-label="Основное блюдо: Манты с мясом">
+          <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800" alt="Манты с мясом" loading="lazy" />
+          <div class="card-content">
+            <h3 class="card-title">Манты с мясом</h3>
+            <p class="card-desc">Классические манты с сочной начинкой из баранины и специй, подаются с чесночным соусом.</p>
+            <p class="card-price">2200 ₸</p>
+          </div>
+        </article>
+
+        <article class="card" data-category="desserts" tabindex="0" role="listitem" aria-label="Десерт: Шек-шек">
+          <img src="https://images.unsplash.com/photo-1601924638867-3eec0fdb5216?w=800" alt="Шек-шек десерт" loading="lazy" />
+          <div class="card-content">
+            <h3 class="card-title">Шек-шек</h3>
+            <p class="card-desc">Традиционный казахский десерт из хруститых полосок теста в медовом сиропе.</p>
+            <p class="card-price">900 ₸</p>
+          </div>
+        </article>
+
+        <article class="card" data-category="drinks" tabindex="0" role="listitem" aria-label="Напиток: Кумыс">
+          <img src="https://images.unsplash.com/photo-1551022371-310a45d8e6d0?w=800" alt="Кумыс в стеклянном стакане" loading="lazy" />
+          <div class="card-content">
+            <h3 class="card-title">Кумыс</h3>
+            <p class="card-desc">Ферментированное кобылье молоко с характерным вкусом, традиционный напиток региона.</p>
+            <p class="card-price">700 ₸</p>
+          </div>
+        </article>
+
+        <article class="card" data-category="starters" tabindex="0" role="listitem" aria-label="Закуска: Рыбное ассорти с лимоном">
+          <img src="https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800" alt="Рыбное ассорти с лимоном" loading="lazy" />
+          <div class="card-content">
+            <h3 class="card-title">Рыбное ассорти с лимоном</h3>
+            <p class="card-desc">Свежая рыба и морепродукты, маринованные с травами и лимоном.</p>
+            <p class="card-price">1800 ₸</p>
+          </div>
+        </article>
+
+        <article class="card" data-category="mains" tabindex="0" role="listitem" aria-label="Основное блюдо: Бешбармак">
+          <img src="https://images.unsplash.com/photo-1543352634-0f4868a55315?w=800" alt="Тарелка бешбармака" loading="lazy" />
+          <div class="card-content">
+            <h3 class="card-title">Бешбармак</h3>
+            <p class="card-desc">Национальное казахское блюдо из варёного мяса и домашней лапши с бульоном.</p>
+            <p class="card-price">2500 ₸</p>
+          </div>
+        </article>
+
       </div>
-      <div class="gallery-item" role="listitem" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1541592106381-f04f3cd37ca4?w=600" alt="Посетители ресторана наслаждаются едой" loading="lazy" />
-      </div>
-      <div class="gallery-item" role="listitem" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1553570739-8f17f57a1d67?w=600" alt="Восточные сладости и напитки" loading="lazy" />
-      </div>
-      <div class="gallery-item" role="listitem" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1509228627152-40a7581dcd69?w=600" alt="Атмосфера прибрежного города" loading="lazy" />
-      </div>
-    </div>
-    <div class="video-container" aria-label="Видео-ролик с обзором ресторана">
-      <iframe src="https://www.youtube.com/embed/qEHjYV8JYok" title="Видео о ресторане Вкус Актау" allowfullscreen></iframe>
     </div>
   </section>
 
-  <section id="contact" aria-labelledby="contact-title">
-    <h2 id="contact-title">Контакты и карта</h2>
-    <div class="contact-details">
-      <div class="contact-info">
-        <p><strong>Адрес:</strong> Казахстан, г. Актау, пр. Мубарякова, 12</p>
-        <p><strong>Телефон:</strong> <a href="tel:+77771234567" aria-label="Позвонить по телефону +7 (777) 123-45-67">+7 (777) 123-45-67</a></p>
-        <p><strong>Соцсети:</strong> 
-          <a href="https://www.instagram.com" target="_blank" rel="noopener" aria-label="Instagram ресторана">Instagram</a>, 
-          <a href="https://www.facebook.com" target="_blank" rel="noopener" aria-label="Facebook ресторана">Facebook</a>
-        </p>
-        <div class="contact-hours" aria-label="Часы работы">
-          Пн–Пт: 10:00 — 22:00<br />
-          Сб–Вс: 11:00 — 23:00
-        </div>
+  <section id="booking" class="container fade-in" style="animation-delay:0.8s">
+    <h2 class="section-title">Бронирование</h2>
+    <form id="booking-form" aria-label="Форма бронирования столика">
+      <label for="date">Дата</label>
+      <input type="date" id="date" name="date" required aria-required="true" min="" />
+      <label for="time">Время</label>
+      <select id="time" name="time" required aria-required="true">
+        <option value="" disabled selected>Выберите время</option>
+        <option value="12:00">12:00</option>
+        <option value="13:00">13:00</option>
+        <option value="14:00">14:00</option>
+        <option value="18:00">18:00</option>
+        <option value="19:00">19:00</option>
+        <option value="20:00">20:00</option>
+      </select>
+      <label for="guests">Количество гостей</label>
+      <input type="number" id="guests" name="guests" min="1" max="20" required aria-required="true" />
+      <label for="name">Ваше имя</label>
+      <input type="text" id="name" name="name" required aria-required="true" autocomplete="name" />
+      <label for="phone">Телефон</label>
+      <input type="tel" id="phone" name="phone" pattern="\\+?\\d{7,15}" placeholder="+7 700 123 45 67" required aria-required="true" autocomplete="tel" />
+      <button type="submit" class="btn-book">Забронировать</button>
+    </form>
+    <p class="hours-info" aria-live="polite" aria-atomic="true">Режим работы: 12:00 - 22:00 ежедневно</p>
+  </section>
+
+  <section id="gallery" class="fade-in" style="animation-delay:1s">
+    <h2 class="section-title">Галерея</h2>
+    <div class="carousel" aria-label="Галерея ресторана" role="region">
+      <div class="carousel-track" aria-live="off">
+        <div class="carousel-item" tabindex="0"><img src="https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=800" alt="Блюдо из рыбы и риса" loading="lazy" /></div>
+        <div class="carousel-item" tabindex="0"><img src="https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=800" alt="Интерьер ресторана с деревянными столами" loading="lazy" /></div>
+        <div class="carousel-item" tabindex="0"><img src="https://images.unsplash.com/photo-1533777324565-a04df0e527b7?w=800" alt="Морепродукты на разделочной доске" loading="lazy" /></div>
+        <div class="carousel-item" tabindex="0"><img src="https://images.unsplash.com/photo-1505253210343-c0df9613276b?w=800" alt="Пустынный пейзаж в Актау" loading="lazy" /></div>
+        <div class="carousel-item" tabindex="0"><img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800" alt="Праздничный банкет в ресторане" loading="lazy" /></div>
       </div>
-      <div class="contact-form">
-        <form action="#" method="post" aria-label="Форма обратной связи">
-          <label for="name">Имя</label>
-          <input type="text" id="name" name="name" required autocomplete="name" />
-          <label for="phone">Телефон</label>
-          <input type="tel" id="phone" name="phone" required autocomplete="tel" pattern="[\d\s()+-]{5,}" placeholder="+7 (___) ___-__-__" />
-          <label for="message">Сообщение</label>
-          <textarea id="message" name="message" required></textarea>
-          <button type="submit">Отправить</button>
-        </form>
+      <div class="carousel-controls" role="group" aria-label="Управление галереей">
+        <button type="button" id="gallery-prev" aria-label="Предыдущее изображение">‹</button>
+        <button type="button" id="gallery-next" aria-label="Следующее изображение">›</button>
       </div>
     </div>
-    <iframe
-      src="https://yandex.ru/map-widget/v1/?um=constructor%3A5d57d91436a0f077fa124bc80b3a554f485e45e5a8fa5f833b7e4a9a8bbb7430&amp;source=constructor"
-      aria-label="Карта расположения ресторана Вкус Актау"
-      loading="lazy"
-      referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </section>
+
+  <section id="reviews" class="container fade-in" style="animation-delay:1.2s">
+    <h2 class="section-title">Отзывы клиентов</h2>
+    <div class="review-slider" aria-label="Отзывы клиентов" role="region">
+      <div class="reviews-track">
+        <article class="review-card" tabindex="0" aria-label="Отзыв от Амина">
+          <p class="review-text">«Потрясающий вкус и атмосфера! Особенно понравились блюда из местных продуктов. Обязательно вернусь!»</p>
+          <div class="review-author">
+            <div class="review-photo"><img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Фото Амина" loading="lazy" /></div>
+            <div class="author-name">Амина</div>
+          </div>
+        </article>
+        <article class="review-card" tabindex="0" aria-label="Отзыв от Каната">
+          <p class="review-text">«Отличное место для семьи. Интерьер очень приятный, персонал доброжелательный, а блюда – выше всяких похвал.»</p>
+          <div class="review-author">
+            <div class="review-photo"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Фото Канат" loading="lazy" /></div>
+            <div class="author-name">Канат</div>
+          </div>
+        </article>
+        <article class="review-card" tabindex="0" aria-label="Отзыв от Жанны">
+          <p class="review-text">«Люблю сюда приходить за традиционными блюдами с современным акцентом. Настоящий вкус Актау в каждом кусочке.»</p>
+          <div class="review-author">
+            <div class="review-photo"><img src="https://randomuser.me/api/portraits/women/12.jpg" alt="Фото Жанна" loading="lazy" /></div>
+            <div class="author-name">Жанна</div>
+          </div>
+        </article>
+      </div>
+      <div class="review-controls" role="group" aria-label="Навигация отзывов">
+        <button type="button" id="reviews-prev" aria-label="Предыдущий отзыв">‹</button>
+        <button type="button" id="reviews-next" aria-label="Следующий отзыв">›</button>
+      </div>
+    </div>
+    <button class="btn-review" id="leave-review-btn" aria-haspopup="dialog" aria-controls="review-dialog">Оставить отзыв</button>
+  </section>
+
+  <section id="contacts" class="fade-in" style="animation-delay:1.4s">
+    <h2 class="section-title">Контакты</h2>
+    <div class="info" role="contentinfo">
+      <p><strong>Адрес:</strong> г. Актау, улица Мангистауская, 22</p>
+      <p><strong>Телефон:</strong> <a href="tel:+77001234567">+7 700 123 45 67</a></p>
+      <p><strong>E-mail:</strong> <a href="mailto:info@aktau-restaurant.kz">info@aktau-restaurant.kz</a></p>
+      <div class="socials" role="list" aria-label="Социальные сети">
+        <a href="https://instagram.com/" target="_blank" rel="noopener" aria-label="Instagram" role="listitem">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm3.5-1.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>
+        </a>
+        <a href="https://facebook.com/" target="_blank" rel="noopener" aria-label="Facebook" role="listitem">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 12v-2a10 10 0 1 0-11 9.86V15.1h-2.4v-3.1H11v-2.05c0-2.44 1.49-3.78 3.67-3.78 1.06 0 2.14.18 2.14.18v2.35h-1.21c-1.2 0-1.57.75-1.57 1.53v1.77h2.66l-.43 3.1h-2.23v6.76A10.02 10.02 0 0 0 22 12Z"/></svg>
+        </a>
+        <a href="https://wa.me/77001234567" target="_blank" rel="noopener" aria-label="WhatsApp" role="listitem">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.52 3.48a11.88 11.88 0 0 0-16.57 0c-4.64 4.28-4.54 11.44.22 15.94l-1.62 4.73 4.86-1.6a11.86 11.86 0 0 0 9.11-.28 11.9 11.9 0 0 0 5.93-14.54Zm-8.76 15.06a8.06 8.06 0 0 1-4.94-1.63l-.35-.25-2.93.96.98-2.85-.25-.37a8.11 8.11 0 0 1-1.52-5.02 8.16 8.16 0 0 1 14.1-5.58 8.17 8.17 0 0 1-8.04 13.5Zm4.55-6.47-.26-.13a.4.4 0 0 0-.49.14l-.75.94a9.44 9.44 0 0 1-1.16-1.17l.91-.74a.4.4 0 0 0 .13-.51l-.13-.25a.46.46 0 0 0-.52-.27c-.9.16-2.94 1.34-3.11 1.57a.44.44 0 0 0-.08.51c.4.7 1.95 3.58 5.3 4.81a.41.41 0 0 0 .54-.35c.08-1 .9-2.74 1.3-3.24a.42.42 0 0 0-.13-.5Z"/></svg>
+        </a>
+      </div>
+    </div>
+    <iframe 
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d58292.016765914576!2d51.14275196821457!3d43.65539324887527!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4244c88356a3abe1%3A0x578e341fa8b274c7!2sAktau!5e0!3m2!1sru!2skz!4v1687654321098!5m2!1sru!2skz" 
+      allowfullscreen="" 
+      loading="lazy" 
+      aria-label="Карта расположения ресторана в Актау"></iframe>
   </section>
 </main>
 
 <footer>
-  <nav aria-label="Меню в футере">
-    <a href="#hero">Главная</a>
-    <a href="#menu">Меню</a>
-    <a href="#about">О ресторане</a>
-    <a href="#reviews">Отзывы</a>
-    <a href="#contact">Контакты</a>
-  </nav>
-  <div class="footer-copy">&copy; 2024 Вкус Актау. Все права защищены.</div>
-  <div class="footer-privacy">
-    <a href="/privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>
-  </div>
-  <div class="footer-socials" role="list" aria-label="Социальные сети">
-    <a href="https://www.instagram.com" target="_blank" rel="noopener" role="listitem" aria-label="Перейти в Instagram">
-      Instagram
-    </a>
-    <a href="https://www.facebook.com" target="_blank" rel="noopener" role="listitem" aria-label="Перейти в Facebook">
-      Facebook
-    </a>
+  <div class="footer-container container" role="contentinfo">
+    <div class="copyright">&copy; 2024 Вкус Актау. Все права защищены.</div>
+    <nav aria-label="Футер меню">
+      <a href="#hero">Главная</a>
+      <a href="#menu">Меню</a>
+      <a href="#about">О нас</a>
+      <a href="#booking">Бронирование</a>
+      <a href="#gallery">Галерея</a>
+      <a href="#contacts">Контакты</a>
+      <a href="#">Политика конфиденциальности</a>
+      <a href="#">Условия использования</a>
+    </nav>
+    <div class="socials" role="list" aria-label="Социальные сети в футере">
+      <a href="https://instagram.com/" target="_blank" rel="noopener" aria-label="Instagram" role="listitem">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm3.5-1.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>
+      </a>
+      <a href="https://facebook.com/" target="_blank" rel="noopener" aria-label="Facebook" role="listitem">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 12v-2a10 10 0 1 0-11 9.86V15.1h-2.4v-3.1H11v-2.05c0-2.44 1.49-3.78 3.67-3.78 1.06 0 2.14.18 2.14.18v2.35h-1.21c-1.2 0-1.57.75-1.57 1.53v1.77h2.66l-.43 3.1h-2.23v6.76A10.02 10.02 0 0 0 22 12Z"/></svg>
+      </a>
+      <a href="https://wa.me/77001234567" target="_blank" rel="noopener" aria-label="WhatsApp" role="listitem">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.52 3.48a11.88 11.88 0 0 0-16.57 0c-4.64 4.28-4.54 11.44.22 15.94l-1.62 4.73 4.86-1.6a11.86 11.86 0 0 0 9.11-.28 11.9 11.9 0 0 0 5.93-14.54Zm-8.76 15.06a8.06 8.06 0 0 1-4.94-1.63l-.35-.25-2.93.96.98-2.85-.25-.37a8.11 8.11 0 0 1-1.52-5.02 8.16 8.16 0 0 1 14.1-5.58 8.17 8.17 0 0 1-8.04 13.5Zm4.55-6.47-.26-.13a.4.4 0 0 0-.49.14l-.75.94a9.44 9.44 0 0 1-1.16-1.17l.91-.74a.4.4 0 0 0 .13-.51l-.13-.25a.46.46 0 0 0-.52-.27c-.9.16-2.94 1.34-3.11 1.57a.44.44 0 0 0-.08.51c.4.7 1.95 3.58 5.3 4.81a.41.41 0 0 0 .54-.35c.08-1 .9-2.74 1.3-3.24a.42.42 0 0 0-.13-.5Z"/></svg>
+      </a>
+    </div>
   </div>
 </footer>
 
-<script>
-  // Меню фильтрация
-  const filterButtons = document.querySelectorAll('.menu-filter-btn');
-  const menuCards = document.querySelectorAll('.menu-card');
+<!-- Pop-up confirmation -->
+<div id="booking-popup" role="dialog" aria-modal="true" aria-labelledby="booking-popup-title" tabindex="-1" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;">
+  <div style="background:#FFFFFF;padding:2rem 3rem;border-radius:8px;max-width: 400px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.25);">
+    <h3 id="booking-popup-title" style="font-family:'Montserrat',sans-serif;color:#003366;margin-bottom:1rem;">Бронирование подтверждено</h3>
+    <p style="color:#003366;font-size:1rem;">Спасибо за бронирование! Мы с вами свяжемся.</p>
+    <button id="popup-close" style="margin-top:1.5rem;background:#C14A00;color:#fff;border:none;padding:0.65rem 1.5rem;font-family:'Montserrat',sans-serif;font-weight:700;border-radius:30px;cursor:pointer;">Закрыть</button>
+  </div>
+</div>
 
-  filterButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const filter = btn.dataset.filter;
-      filterButtons.forEach(b => {
-        b.classList.toggle('active', b === btn);
-        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+<script>
+  // Hamburger toggle
+  const hamburger = document.querySelector('.hamburger');
+  const menu = document.querySelector('nav.menu');
+  hamburger.addEventListener('click', () => {
+    const expanded = hamburger.getAttribute('aria-expanded') === 'true';
+    hamburger.setAttribute('aria-expanded', !expanded);
+    menu.classList.toggle('open');
+  });
+
+  // Set min date to today for booking form
+  const dateInput = document.getElementById('date');
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.setAttribute('min', today);
+
+  // Filter menu items
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const cards = document.querySelectorAll('#menu .card');
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', e => {
+      const filter = btn.getAttribute('data-filter');
+      filterBtns.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed','false');
       });
-      menuCards.forEach(card => {
-        if (filter === 'all' || card.dataset.category === filter) card.style.display = '';
-        else card.style.display = 'none';
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed','true');
+      cards.forEach(card => {
+        if(filter === 'all' || card.dataset.category === filter) {
+          card.style.display = 'flex';
+          card.setAttribute('aria-hidden', 'false');
+        } else {
+          card.style.display = 'none';
+          card.setAttribute('aria-hidden', 'true');
+        }
       });
     });
   });
 
-  // Отзывы слайдер (простой)
-  const reviews = document.querySelectorAll('#reviews .review');
-  let currentReview = 0;
-  const prevBtn = document.getElementById('prevReview');
-  const nextBtn = document.getElementById('nextReview');
+  // Booking form submission & popup
+  const bookingForm = document.getElementById('booking-form');
+  const bookingPopup = document.getElementById('booking-popup');
+  const popupCloseBtn = document.getElementById('popup-close');
+  const headerBookBtn = document.getElementById('header-book-btn');
 
-  function showReview(index) {
-    reviews.forEach((r,i) => {
-      if(i === index) {
-        r.hidden = false;
-        r.setAttribute('tabindex', '0');
-      } else {
-        r.hidden = true;
-        r.removeAttribute('tabindex');
+  function openPopup(){
+    bookingPopup.style.display = 'flex';
+    bookingPopup.focus();
+  }
+  function closePopup(){
+    bookingPopup.style.display = 'none';
+    bookingForm.reset();
+  }
+
+  bookingForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    // Basic form validation handled by browser. We confirm booking.
+    openPopup();
+  });
+  popupCloseBtn.addEventListener('click', closePopup);
+  bookingPopup.addEventListener('click', (e) => {
+    if(e.target === bookingPopup){
+      closePopup();
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && bookingPopup.style.display === 'flex'){
+      closePopup();
+    }
+  });
+
+  // Header book button scroll to booking
+  headerBookBtn.addEventListener('click', () => {
+    document.getElementById('booking').scrollIntoView({behavior: 'smooth'});
+  });
+
+  // Gallery carousel
+  const galleryTrack = document.querySelector('#gallery .carousel-track');
+  const galleryItems = document.querySelectorAll('#gallery .carousel-item');
+  const galleryPrev = document.getElementById('gallery-prev');
+  const galleryNext = document.getElementById('gallery-next');
+  let galleryIndex = 0;
+  const galleryVisibleCount = Math.floor(document.querySelector('#gallery .carousel').offsetWidth / 320) || 1;
+
+  function updateGallery() {
+    const width = galleryItems[0].offsetWidth + 16; // item width + margin-right
+    galleryTrack.style.transform = `translateX(${-galleryIndex * width}px)`;
+    galleryPrev.disabled = galleryIndex === 0;
+    galleryNext.disabled = galleryIndex >= galleryItems.length - galleryVisibleCount;
+  }
+  galleryPrev.addEventListener('click', () => {
+    if(galleryIndex > 0){
+      galleryIndex--;
+      updateGallery();
+    }
+  });
+  galleryNext.addEventListener('click', () => {
+    if(galleryIndex < galleryItems.length - galleryVisibleCount){
+      galleryIndex++;
+      updateGallery();
+    }
+  });
+  window.addEventListener('resize', () => {
+    updateGallery();
+  });
+  updateGallery();
+
+  // Gallery enlarge on click
+  galleryItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const src = item.querySelector('img').src;
+      const alt = item.querySelector('img').alt;
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.backgroundColor = 'rgba(0,0,0,0.75)';
+      overlay.style.display = 'flex';
+      overlay.style.justifyContent = 'center';
+      overlay.style.alignItems = 'center';
+      overlay.style.cursor = 'zoom-out';
+      overlay.style.zIndex = '10000';
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = alt;
+      img.style.maxWidth = '90vw';
+      img.style.maxHeight = '90vh';
+      img.style.borderRadius = '8px';
+      overlay.appendChild(img);
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+      });
+    });
+  });
+
+  // Reviews slider
+  const reviewsTrack = document.querySelector('#reviews .reviews-track');
+  const reviewCards = document.querySelectorAll('#reviews .review-card');
+  const reviewsPrev = document.getElementById('reviews-prev');
+  const reviewsNext = document.getElementById('reviews-next');
+  let reviewsIndex = 0;
+  const reviewsVisibleCount = Math.floor(document.querySelector('#reviews .review-slider').offsetWidth / 340) || 1;
+
+  function updateReviews() {
+    const width = reviewCards[0].offsetWidth + 16;
+    reviewsTrack.style.transform = `translateX(${-reviewsIndex * width}px)`;
+    reviewsPrev.disabled = reviewsIndex === 0;
+    reviewsNext.disabled = reviewsIndex >= reviewCards.length - reviewsVisibleCount;
+  }
+  reviewsPrev.addEventListener('click', () => {
+    if(reviewsIndex > 0){
+      reviewsIndex--;
+      updateReviews();
+    }
+  });
+  reviewsNext.addEventListener('click', () => {
+    if(reviewsIndex < reviewCards.length - reviewsVisibleCount){
+      reviewsIndex++;
+      updateReviews();
+    }
+  });
+  window.addEventListener('resize', () => {
+    updateReviews();
+  });
+  updateReviews();
+
+  // Microanimation on scroll fade-in blocks
+  const fadeIns = document.querySelectorAll('.fade-in');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        entry.target.classList.add('show');
+        observer.unobserve(entry.target);
       }
     });
-  }
-  showReview(currentReview);
-
-  prevBtn.addEventListener('click', () => {
-    currentReview = (currentReview - 1 + reviews.length) % reviews.length;
-    showReview(currentReview);
+  }, {
+    threshold: 0.15
   });
-  nextBtn.addEventListener('click', () => {
-    currentReview = (currentReview + 1) % reviews.length;
-    showReview(currentReview);
-  });
+  fadeIns.forEach(el => observer.observe(el));
 
-  // Кнопка "Заказать стол" плавно скроллит к форме
-  const ctaBookButtons = document.querySelectorAll('button[aria-haspopup="dialog"]');
-  const contactForm = document.querySelector('#contact form');
-  ctaBookButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      contactForm.scrollIntoView({behavior: 'smooth'});
-      contactForm.querySelector('input').focus();
-    });
+  // Leave review button (just alert for placeholder)
+  const leaveReviewBtn = document.getElementById('leave-review-btn');
+  leaveReviewBtn.addEventListener('click', () => {
+    alert('Спасибо за желание оставить отзыв! Функция в разработке.');
   });
 </script>
 </body>
