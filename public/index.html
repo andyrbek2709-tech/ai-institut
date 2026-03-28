@@ -1,608 +1,219 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Юридическая фирма "Право и Закон"</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;700&display=swap');
-  :root {
-    --color-primary: #0D3B66;
-    --color-bg: #F5F5F5;
-    --color-white: #FFFFFF;
-    --color-accent: #911F27;
-    --color-accent-alt: #556B2F;
-    --font-heading: 'Montserrat', sans-serif;
-    --font-body: 'Open Sans', sans-serif;
-  }
-  * {
-    box-sizing: border-box;
-  }
-  body {
-    margin: 0;
-    background-color: var(--color-bg);
-    color: var(--color-primary);
-    font-family: var(--font-body);
-    font-size: 16px;
-    line-height: 1.5;
-  }
-  a {
-    color: var(--color-accent);
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-  a:hover, a:focus {
-    color: var(--color-accent-alt);
-    outline: none;
-  }
-  header {
-    background: var(--color-white);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 2rem;
-    border-bottom: 1px solid #ccc;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-  }
-  .logo {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 24px;
-    color: var(--color-primary);
-    user-select: none;
-  }
-  nav {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-  }
-  nav a {
-    font-weight: 600;
-    font-size: 16px;
-    position: relative;
-  }
-  nav a:focus-visible {
-    outline-offset: 2px;
-  }
-  .btn-consult {
-    background-color: var(--color-accent);
-    color: var(--color-white);
-    border: none;
-    padding: 0.5rem 1.25rem;
-    border-radius: 4px;
-    font-weight: 700;
-    font-family: var(--font-heading);
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    text-align: center;
-  }
-  .btn-consult:hover,
-  .btn-consult:focus {
-    background-color: var(--color-accent-alt);
-    outline: none;
-  }
-  main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1rem 1rem 3rem;
-  }
-  .hero {
-    position: relative;
-    color: var(--color-white);
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 3rem;
-    min-height: 320px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 2rem 1rem;
-  }
-  .hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: url('https://images.unsplash.com/photo-1508385082359-f2528a625610?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center/cover;
-    filter: brightness(0.4);
-    z-index: 0;
-  }
-  .hero-content {
-    position: relative;
-    z-index: 1;
-    max-width: 800px;
-  }
-  .hero h1 {
-    font-family: var(--font-heading);
-    font-size: 40px;
-    font-weight: 700;
-    margin: 0 0 0.5rem;
-    line-height: 1.1;
-  }
-  .hero p {
-    font-size: 20px;
-    margin: 0 0 1.5rem;
-  }
-  .hero .btn-consult {
-    font-size: 18px;
-    padding: 0.75rem 2rem;
-  }
-  section {
-    background: var(--color-white);
-    border-radius: 8px;
-    padding: 2rem 2rem 2.5rem;
-    margin-bottom: 2.5rem;
-    box-shadow: 0 3px 8px rgb(13 59 102 / 0.15);
-  }
-  h2 {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 32px;
-    color: var(--color-primary);
-    margin-top: 0;
-    margin-bottom: 1rem;
-    border-bottom: 3px solid var(--color-accent);
-    display: inline-block;
-    padding-bottom: 0.25rem;
-  }
-  h3 {
-    font-family: var(--font-heading);
-    font-weight: 600;
-    font-size: 22px;
-    margin-bottom: 0.5rem;
-    color: var(--color-primary);
-  }
-  p {
-    margin-top: 0;
-    margin-bottom: 1rem;
-    color: #2a2a2a;
-  }
-
-  /* О фирме */
-  .about-icons {
-    display: flex;
-    gap: 3rem;
-    justify-content: center;
-    margin-top: 2rem;
-    flex-wrap: wrap;
-  }
-  .about-icon {
-    text-align: center;
-    max-width: 160px;
-  }
-  .about-icon svg {
-    width: 48px;
-    height: 48px;
-    fill: var(--color-accent);
-    margin-bottom: 0.5rem;
-  }
-  .about-icon p {
-    font-weight: 600;
-    color: var(--color-primary);
-  }
-
-  /* Услуги */
-  .services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
-    gap: 1.5rem;
-  }
-  .service-card {
-    background: var(--color-bg);
-    border-radius: 6px;
-    padding: 1.5rem 1.5rem 2rem;
-    box-shadow: 0 2px 6px rgb(13 59 102 / 0.1);
-    cursor: default;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    text-align: center;
-    user-select: none;
-  }
-  .service-card:hover,
-  .service-card:focus-within {
-    transform: translateY(-6px);
-    box-shadow: 0 6px 16px rgb(13 59 102 / 0.25);
-    outline: none;
-  }
-  .service-icon {
-    margin-bottom: 1rem;
-    width: 54px;
-    height: 54px;
-    fill: var(--color-primary);
-  }
-  .service-title {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 20px;
-    margin-bottom: 0.5rem;
-    color: var(--color-primary);
-  }
-  .service-desc {
-    font-size: 15px;
-    color: #444;
-  }
-
-  /* Кейсы / отзывы */
-  .cases-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-    gap: 1.75rem;
-  }
-  .case-card {
-    background: var(--color-bg);
-    border-radius: 6px;
-    padding: 1.5rem 1.5rem 2rem;
-    box-shadow: 0 2px 8px rgb(13 59 102 / 0.12);
-  }
-  .case-quote {
-    font-style: italic;
-    color: #333;
-    margin-bottom: 1rem;
-    min-height: 70px;
-  }
-  .case-client {
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--color-accent);
-  }
-  .case-task {
-    font-size: 14px;
-    color: #555;
-  }
-
-  /* Команда */
-  .team-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-    gap: 2rem;
-  }
-  .team-member {
-    background: var(--color-bg);
-    border-radius: 6px;
-    padding: 1rem;
-    box-shadow: 0 2px 6px rgb(13 59 102 / 0.1);
-    text-align: center;
-  }
-  .team-photo {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 1rem;
-    border: 3px solid var(--color-primary);
-  }
-  .member-name {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 18px;
-    margin-bottom: 0.25rem;
-    color: var(--color-primary);
-  }
-  .member-position {
-    font-weight: 600;
-    font-size: 14px;
-    margin-bottom: 0.5rem;
-    color: var(--color-accent);
-  }
-  .member-info {
-    font-size: 14px;
-    color: #444;
-  }
-
-  /* Контакты */
-  .contacts-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-  }
-  .contacts-info {
-    flex: 1 1 320px;
-  }
-  .contacts-info p {
-    margin: 0.5rem 0;
-    font-size: 16px;
-    color: var(--color-primary);
-    font-weight: 600;
-  }
-  .contacts-info a {
-    font-weight: 400;
-    color: var(--color-accent);
-    word-break: break-word;
-  }
-  .contacts-info a:hover,
-  .contacts-info a:focus {
-    color: var(--color-accent-alt);
-  }
-  form {
-    flex: 1 1 320px;
-    background: var(--color-white);
-    padding: 1.5rem 1.75rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgb(13 59 102 / 0.1);
-  }
-  form label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    color: var(--color-primary);
-    font-size: 14px;
-  }
-  form input,
-  form textarea {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 1.25rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: var(--font-body);
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-    resize: vertical;
-  }
-  form input:focus,
-  form textarea:focus {
-    border-color: var(--color-primary);
-    outline: none;
-  }
-  form button {
-    background-color: var(--color-accent);
-    color: var(--color-white);
-    border: none;
-    padding: 0.6rem 1.5rem;
-    font-family: var(--font-heading);
-    font-weight: 700;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
-    user-select: none;
-    width: 100%;
-  }
-  form button:hover,
-  form button:focus {
-    background-color: var(--color-accent-alt);
-    outline: none;
-  }
-  .map-container {
-    margin-top: 2rem;
-    border: 3px solid var(--color-primary);
-    border-radius: 8px;
-    overflow: hidden;
-    height: 280px;
-  }
-
-  /* Футер */
-  footer {
-    background: var(--color-primary);
-    color: var(--color-white);
-    padding: 1.5rem 2rem;
-  }
-  footer nav {
-    display: flex;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-  }
-  footer nav a {
-    color: var(--color-white);
-    font-size: 14px;
-    font-weight: 600;
-  }
-  footer nav a:hover,
-  footer nav a:focus {
-    text-decoration: underline;
-    outline: none;
-  }
-  .social-links {
-    margin-bottom: 1rem;
-  }
-  .social-links a {
-    margin-right: 1rem;
-    display: inline-block;
-    color: var(--color-white);
-    font-size: 20px;
-    transition: color 0.3s ease;
-  }
-  .social-links a:hover,
-  .social-links a:focus {
-    color: var(--color-accent);
-    outline: none;
-  }
-  .legal-info {
-    font-size: 12px;
-    color: #d1d1d1;
-    user-select: none;
-  }
-
-  /* Адаптив */
-  @media (max-width: 767px) {
-    header {
-      flex-wrap: wrap;
-      padding: 1rem;
-    }
-    nav {
-      flex-basis: 100%;
-      justify-content: center;
-      gap: 1.5rem;
-      margin-top: 0.5rem;
-    }
-    main {
-      padding: 0 1rem 3rem;
-    }
-    .hero h1 {
-      font-size: 28px;
-    }
-    .hero p {
-      font-size: 16px;
-    }
-    section {
-      padding: 1.5rem 1rem 2rem;
-    }
-    .about-icons {
-      gap: 2rem;
-    }
-    .services-grid, .cases-grid, .team-grid {
-      grid-template-columns: 1fr;
-    }
-    .contacts-container {
-      flex-direction: column;
-    }
-    form button {
-      font-size: 18px;
-    }
-  }
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bella Pizza - Пиццерия</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff8f0;
+            color: #4a2c0f;
+        }
+        header {
+            background: #d84315;
+            color: #fff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(216,67,21,0.4);
+        }
+        header h1 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            font-family: 'Brush Script MT', cursive;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #ffe5d0;
+        }
+        main {
+            max-width: 960px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        section#welcome {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        section#welcome h2 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+        section#welcome p {
+            font-size: 1.1rem;
+            color: #7f4a1f;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        section#menu {
+            margin-bottom: 3rem;
+        }
+        section#menu h2 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 3px solid #d84315;
+            display: inline-block;
+            padding-bottom: 0.3rem;
+        }
+        .menu-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+        }
+        .menu-item {
+            background: #fff0e8;
+            border: 2px solid #d84315;
+            border-radius: 12px;
+            max-width: 280px;
+            box-shadow: 4px 4px 8px #e5b797aa;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+        .menu-item:hover {
+            transform: translateY(-6px);
+        }
+        .menu-item img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-bottom: 2px solid #d84315;
+        }
+        .menu-item-content {
+            padding: 1rem 1.2rem 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .menu-item-content h3 {
+            margin: 0 0 0.5rem;
+            color: #bf360c;
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        .menu-item-content p {
+            margin: 0 0 1rem;
+            font-size: 0.95rem;
+            color: #6d3b09;
+            text-align: center;
+            min-height: 44px;
+        }
+        .price {
+            text-align: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #d84315;
+            background: #ffe5d0;
+            border-radius: 6px;
+            padding: 0.4rem 0;
+            box-shadow: inset 0 -3px 6px #d84315aa;
+        }
+        footer {
+            background: #d84315;
+            color: #fff;
+            text-align: center;
+            padding: 1rem 1rem;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            margin-top: 4rem;
+            box-shadow: 0 -4px 8px rgba(216,67,21,0.4);
+        }
+        @media (max-width: 600px) {
+            .menu-list {
+                flex-direction: column;
+                align-items: center;
+            }
+            nav a {
+                margin-left: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
 </head>
 <body>
 <header>
-  <div class="logo" aria-label="Логотип юридической фирмы Право и Закон">Право и Закон</div>
-  <nav role="navigation" aria-label="Основное меню">
-    <a href="#services">Услуги</a>
-    <a href="#about">О нас</a>
-    <a href="#cases">Кейсы</a>
-    <a href="#contacts">Контакты</a>
-  </nav>
-  <a href="#contacts" class="btn-consult">Заказать консультацию</a>
+    <h1>Bella Pizza</h1>
+    <nav aria-label="Основное меню">
+        <a href="#welcome">Главная</a>
+        <a href="#menu">Меню</a>
+        <a href="#contact">Контакты</a>
+    </nav>
 </header>
 <main>
-  <section class="hero" role="banner" aria-label="Главный баннер">
-    <div class="hero-content">
-      <h1>Ваш надежный юридический партнёр</h1>
-      <p>Профессиональная помощь и персональный подход в решении любых правовых вопросов</p>
-      <a href="#contacts" class="btn-consult" role="button">Получить консультацию</a>
-    </div>
-  </section>
-
-  <section id="about" aria-labelledby="about-title">
-    <h2 id="about-title">О фирме</h2>
-    <p>Юридическая фирма "Право и Закон" более 10 лет предоставляет квалифицированные услуги юридического сопровождения бизнеса и частных клиентов. Мы ценим доверие и индивидуальный подход к каждому делу, гарантируя вашему бизнесу защиту и стабильность.</p>
-    <div class="about-icons">
-      <div class="about-icon" tabindex="0" aria-describedby="about-exp-desc">
-        <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M32 4a28 28 0 1 0 28 28A28.031 28.031 0 0 0 32 4zm0 52a24 24 0 1 1 24-24 24.027 24.027 0 0 1-24 24z"/><path d="M31 15h2v18h-2zm1 30a3 3 0 1 0 3 3 3 3 0 0 0-3-3z"/></svg>
-        <p id="about-exp-desc">Опыт</p>
-      </div>
-      <div class="about-icon" tabindex="0" aria-describedby="about-rel-desc">
-        <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M32 6C18.745 6 8 16.745 8 30s10.745 24 24 24 24-10.745 24-24S45.255 6 32 6zm0 44a20 20 0 1 1 20-20 20.023 20.023 0 0 1-20 20z"/><circle cx="32" cy="30" r="10"/></svg>
-        <p id="about-rel-desc">Надёжность</p>
-      </div>
-      <div class="about-icon" tabindex="0" aria-describedby="about-approach-desc">
-        <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M32 12a20 20 0 1 0 20 20A20.023 20.023 0 0 0 32 12zm5 25h-3v7h-4v-7h-3l5-7z"/></svg>
-        <p id="about-approach-desc">Персональный подход</p>
-      </div>
-    </div>
-  </section>
-
-  <section id="services" aria-labelledby="services-title">
-    <h2 id="services-title">Услуги</h2>
-    <div class="services-grid">
-      <article tabindex="0" class="service-card" aria-labelledby="service1-title" role="region">
-        <svg class="service-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M32 6a26 26 0 1 0 26 26A26.029 26.029 0 0 0 32 6zm0 48a22 22 0 1 1 22-22 22.025 22.025 0 0 1-22 22z"/><path d="M25 30h14v4H25z"/></svg>
-        <h3 id="service1-title" class="service-title">Корпоративное право</h3>
-        <p class="service-desc">Регистрация, сопровождение бизнеса, подготовка договоров и корпоративные споры.</p>
-      </article>
-      <article tabindex="0" class="service-card" aria-labelledby="service2-title" role="region">
-        <svg class="service-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M32 4a28 28 0 1 0 28 28A28.031 28.031 0 0 0 32 4zm0 52a24 24 0 1 1 24-24 24.027 24.027 0 0 1-24 24z"/><path d="M41 22H23v6h18zm0 10H23v6h18z"/></svg>
-        <h3 id="service2-title" class="service-title">Недвижимость</h3>
-        <p class="service-desc">Юридическая проверка и сопровождение сделок с недвижимостью, регистрация прав.</p>
-      </article>
-      <article tabindex="0" class="service-card" aria-labelledby="service3-title" role="region">
-        <svg class="service-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M32 2a30 30 0 1 0 30 30A30.034 30.034 0 0 0 32 2zm0 56a26 26 0 1 1 26-26 26.03 26.03 0 0 1-26 26z"/><path d="M20 36h24v4H20z"/></svg>
-        <h3 id="service3-title" class="service-title">Семейное право</h3>
-        <p class="service-desc">Консультации и представительство по вопросам брака, развода, опеки и наследства.</p>
-      </article>
-      <article tabindex="0" class="service-card" aria-labelledby="service4-title" role="region">
-        <svg class="service-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M32 12a20 20 0 1 0 20 20A20.023 20.023 0 0 0 32 12zm6 26h-4v7h-4v-7h-4l6-8z"/></svg>
-        <h3 id="service4-title" class="service-title">Трудовое право</h3>
-        <p class="service-desc">Консультации работодателей и работников, разрешение трудовых споров в суде.</p>
-      </article>
-    </div>
-  </section>
-
-  <section id="cases" aria-labelledby="cases-title">
-    <h2 id="cases-title">Кейсы и отзывы</h2>
-    <div class="cases-grid">
-      <article class="case-card" role="region" tabindex="0" aria-label="Отзыв клиента Иванов С.А.">
-        <p class="case-quote">"Благодаря помощи фирмы «Право и Закон» мы успешно зарегистрировали наш стартап и избежали многих ошибок."</p>
-        <p class="case-client">Иванов С.А.</p>
-        <p class="case-task">Регистрация компании, договорное сопровождение</p>
-      </article>
-      <article class="case-card" role="region" tabindex="0" aria-label="Отзыв клиента ООО СтройСервис">
-        <p class="case-quote">"Профессиональный подход к сделкам с недвижимостью – все прошло быстро и без проблем."</p>
-        <p class="case-client">ООО «СтройСервис»</p>
-        <p class="case-task">Юридическая проверка объектов недвижимости</p>
-      </article>
-      <article class="case-card" role="region" tabindex="0" aria-label="Отзыв клиента Кузнецова Е.В.">
-        <p class="case-quote">"Консультации по семейному праву помогли мне быстро и мирно решить сложный вопрос."</p>
-        <p class="case-client">Кузнецова Е.В.</p>
-        <p class="case-task">Развод и раздел имущества</p>
-      </article>
-    </div>
-  </section>
-
-  <section id="team" aria-labelledby="team-title">
-    <h2 id="team-title">Команда</h2>
-    <div class="team-grid">
-      <article class="team-member" tabindex="0" role="region" aria-label="Руководитель юридической фирмы Алексей Смирнов">
-        <img src="https://images.unsplash.com/photo-1607746882042-944635dfe10e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Фото Алексея Смирнова" class="team-photo" />
-        <h3 class="member-name">Алексей Смирнов</h3>
-        <p class="member-position">Руководитель</p>
-        <p class="member-info">Юрист с 15-летним опытом в корпоративном и гражданском праве.</p>
-      </article>
-      <article class="team-member" tabindex="0" role="region" aria-label="Ведущий юрист Наталья Иванова">
-        <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Фото Натальи Ивановой" class="team-photo" />
-        <h3 class="member-name">Наталья Иванова</h3>
-        <p class="member-position">Ведущий юрист</p>
-        <p class="member-info">Специалист по недвижимости и сопровождению сделок.</p>
-      </article>
-      <article class="team-member" tabindex="0" role="region" aria-label="Юрист Мария Петрова">
-        <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Фото Марии Петровой" class="team-photo" />
-        <h3 class="member-name">Мария Петрова</h3>
-        <p class="member-position">Юрист</p>
-        <p class="member-info">Опыт в семейном и трудовом праве, индивидуальный подход к клиентам.</p>
-      </article>
-    </div>
-  </section>
-
-  <section id="contacts" aria-labelledby="contacts-title">
-    <h2 id="contacts-title">Контакты</h2>
-    <div class="contacts-container">
-      <div class="contacts-info">
-        <p><strong>Адрес:</strong> г. Москва, ул. Правды, д. 10, офис 502</p>
-        <p><strong>Телефон:</strong> <a href="tel:+74951234567">+7 (495) 123-45-67</a></p>
-        <p><strong>Email:</strong> <a href="mailto:info@pravo-zakon.ru">info@pravo-zakon.ru</a></p>
-        <div class="map-container" aria-label="Карта расположения офиса юридической фирмы">
-          <iframe src="https://yandex.ru/map-widget/v1/?um=constructor%3A0ef3d68810a56dce9d40a2ec2a04c95cfda86538121a0ac8f3f7ecbd008d6e78&amp;source=constructor" width="100%" height="280" frameborder="0" allowfullscreen="" aria-hidden="false"></iframe>
+    <section id="welcome">
+        <h2>Добро пожаловать в Bella Pizza!</h2>
+        <p>Лучшие итальянские традиции и аромат свежей пиццы в самом сердце города. Наслаждайтесь любимыми вкусами по доступной цене в тенге.</p>
+        <img
+            src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80"
+            alt="Свежая пицца Bella Pizza"
+            style="margin-top: 1.5rem; max-width: 100%; border-radius: 12px; box-shadow: 4px 4px 12px #c34a1e88;"
+            loading="lazy"
+        />
+    </section>
+    <section id="menu">
+        <h2>Меню</h2>
+        <div class="menu-list">
+            <article class="menu-item">
+                <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Пицца Маргарита" />
+                <div class="menu-item-content">
+                    <h3>Маргарита</h3>
+                    <p>Классическая пицца с томатным соусом, моцареллой и свежим базиликом.</p>
+                    <div class="price">2 500 ₸</div>
+                </div>
+            </article>
+            <article class="menu-item">
+                <img src="https://images.unsplash.com/photo-1592861956603-25922c411c6b?auto=format&fit=crop&w=600&q=80" alt="Пицца Пепперони" />
+                <div class="menu-item-content">
+                    <h3>Пепперони</h3>
+                    <p>Острая пицца с ароматной копченой колбасой пепперони и моцареллой.</p>
+                    <div class="price">3 200 ₸</div>
+                </div>
+            </article>
+            <article class="menu-item">
+                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80" alt="Пицца Четыре сыра" />
+                <div class="menu-item-content">
+                    <h3>Четыре сыра</h3>
+                    <p>Идеальное сочетание сыра моцарелла, горгонзола, пармезан и эмменталь.</p>
+                    <div class="price">3 800 ₸</div>
+                </div>
+            </article>
         </div>
-      </div>
-      <form action="#" method="post" aria-label="Форма обратной связи">
-        <label for="name">Имя</label>
-        <input type="text" id="name" name="name" required placeholder="Ваше имя" autocomplete="name" />
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required placeholder="example@mail.ru" autocomplete="email" />
-        <label for="message">Сообщение</label>
-        <textarea id="message" name="message" rows="5" required placeholder="Ваш вопрос или сообщение"></textarea>
-        <button type="submit">Отправить</button>
-      </form>
-    </div>
-  </section>
+    </section>
+    <section id="contact" style="text-align:center; margin-bottom: 4rem;">
+        <h2>Контакты</h2>
+        <p style="max-width: 500px; margin: 0.5rem auto 1rem;">
+            Мы находимся по адресу: г. Алматы, ул. Абая, 15.<br />
+            Телефон: +7 (727) 123-45-67<br />
+            Время работы: 10:00 — 22:00 без выходных
+        </p>
+        <img
+            src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=60"
+            alt="Интерьер пиццерии"
+            style="width: 100%; max-width: 600px; border-radius: 12px; box-shadow: 4px 4px 12px #c34a1e88;"
+            loading="lazy"
+        />
+    </section>
 </main>
-
 <footer>
-  <nav aria-label="Навигация в футере">
-    <a href="#services">Услуги</a>
-    <a href="#about">О нас</a>
-    <a href="#cases">Кейсы</a>
-    <a href="#contacts">Контакты</a>
-  </nav>
-  <div class="social-links" aria-label="Социальные сети">
-    <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook" tabindex="0">📘</a>
-    <a href="https://vk.com" target="_blank" rel="noopener" aria-label="ВКонтакте" tabindex="0">📱</a>
-    <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn" tabindex="0">🔗</a>
-  </div>
-  <div class="legal-info" aria-label="Юридическая информация и копирайт">
-    &copy; 2024 Юридическая фирма "Право и Закон". Все права защищены.
-  </div>
+    &copy; 2024 Bella Pizza — Все права защищены.
 </footer>
 </body>
 </html>
