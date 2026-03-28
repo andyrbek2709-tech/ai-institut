@@ -1,219 +1,188 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bella Pizza - Пиццерия</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #fff8f0;
-            color: #4a2c0f;
-        }
-        header {
-            background: #d84315;
-            color: #fff;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 8px rgba(216,67,21,0.4);
-        }
-        header h1 {
-            margin: 0;
-            font-weight: 700;
-            font-size: 1.8rem;
-            letter-spacing: 2px;
-            font-family: 'Brush Script MT', cursive;
-        }
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            margin-left: 1.5rem;
-            font-weight: 600;
-            transition: color 0.3s ease;
-        }
-        nav a:hover {
-            color: #ffe5d0;
-        }
-        main {
-            max-width: 960px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        section#welcome {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-        section#welcome h2 {
-            font-size: 2.2rem;
-            margin-bottom: 0.5rem;
-            letter-spacing: 1px;
-        }
-        section#welcome p {
-            font-size: 1.1rem;
-            color: #7f4a1f;
-            max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.5;
-        }
-        section#menu {
-            margin-bottom: 3rem;
-        }
-        section#menu h2 {
-            font-size: 2rem;
-            text-align: center;
-            margin-bottom: 2rem;
-            border-bottom: 3px solid #d84315;
-            display: inline-block;
-            padding-bottom: 0.3rem;
-        }
-        .menu-list {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 2rem;
-        }
-        .menu-item {
-            background: #fff0e8;
-            border: 2px solid #d84315;
-            border-radius: 12px;
-            max-width: 280px;
-            box-shadow: 4px 4px 8px #e5b797aa;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s ease;
-        }
-        .menu-item:hover {
-            transform: translateY(-6px);
-        }
-        .menu-item img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-bottom: 2px solid #d84315;
-        }
-        .menu-item-content {
-            padding: 1rem 1.2rem 1.5rem;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .menu-item-content h3 {
-            margin: 0 0 0.5rem;
-            color: #bf360c;
-            font-size: 1.4rem;
-            font-weight: 700;
-            text-align: center;
-        }
-        .menu-item-content p {
-            margin: 0 0 1rem;
-            font-size: 0.95rem;
-            color: #6d3b09;
-            text-align: center;
-            min-height: 44px;
-        }
-        .price {
-            text-align: center;
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: #d84315;
-            background: #ffe5d0;
-            border-radius: 6px;
-            padding: 0.4rem 0;
-            box-shadow: inset 0 -3px 6px #d84315aa;
-        }
-        footer {
-            background: #d84315;
-            color: #fff;
-            text-align: center;
-            padding: 1rem 1rem;
-            font-size: 0.9rem;
-            letter-spacing: 0.05em;
-            margin-top: 4rem;
-            box-shadow: 0 -4px 8px rgba(216,67,21,0.4);
-        }
-        @media (max-width: 600px) {
-            .menu-list {
-                flex-direction: column;
-                align-items: center;
-            }
-            nav a {
-                margin-left: 1rem;
-                font-size: 0.9rem;
-            }
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Современный дизайн сайта</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #fafafa;
+    color: #222;
+    line-height: 1.6;
+  }
+  header {
+    background: linear-gradient(90deg, #4b6cb7, #182848);
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 {
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    font-size: 1.8rem;
+  }
+  nav a {
+    color: #d1d9ff;
+    text-decoration: none;
+    margin-left: 1.5rem;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+  nav a:hover, nav a:focus {
+    color: #f0f4ff;
+  }
+  main {
+    max-width: 1080px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  section {
+    margin-bottom: 3rem;
+  }
+  h2 {
+    font-weight: 700;
+    font-size: 2rem;
+    border-bottom: 3px solid #4b6cb7;
+    padding-bottom: 0.3rem;
+    margin-bottom: 1rem;
+  }
+  .image-container {
+    width: 100%;
+    max-height: 400px;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgb(0 0 0 / 0.1);
+    margin-bottom: 1.5rem;
+  }
+  .image-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+  }
+  .description {
+    font-size: 1.1rem;
+    color: #444;
+    max-width: 720px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.8rem;
+  }
+  .card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.07);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+  }
+  .card:hover, .card:focus-within {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 25px rgb(0 0 0 / 0.15);
+  }
+  .card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+  .card-content {
+    padding: 1rem 1.2rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .card-title {
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin: 0 0 0.5rem;
+  }
+  .card-price {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #4b6cb7;
+  }
+  footer {
+    background: #182848;
+    color: #9ca8d6;
+    text-align: center;
+    padding: 1.2rem 1rem;
+    font-size: 0.9rem;
+  }
+  @media (max-width: 480px) {
+    header h1 {
+      font-size: 1.4rem;
+    }
+    nav a {
+      margin-left: 1rem;
+      font-size: 0.9rem;
+    }
+  }
+</style>
 </head>
 <body>
 <header>
-    <h1>Bella Pizza</h1>
-    <nav aria-label="Основное меню">
-        <a href="#welcome">Главная</a>
-        <a href="#menu">Меню</a>
-        <a href="#contact">Контакты</a>
-    </nav>
+  <h1>Современный дизайн сайта</h1>
+  <nav aria-label="Главное меню">
+    <a href="#about">О проекте</a>
+    <a href="#gallery">Галерея</a>
+    <a href="#contact">Контакты</a>
+  </nav>
 </header>
 <main>
-    <section id="welcome">
-        <h2>Добро пожаловать в Bella Pizza!</h2>
-        <p>Лучшие итальянские традиции и аромат свежей пиццы в самом сердце города. Наслаждайтесь любимыми вкусами по доступной цене в тенге.</p>
-        <img
-            src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80"
-            alt="Свежая пицца Bella Pizza"
-            style="margin-top: 1.5rem; max-width: 100%; border-radius: 12px; box-shadow: 4px 4px 12px #c34a1e88;"
-            loading="lazy"
-        />
-    </section>
-    <section id="menu">
-        <h2>Меню</h2>
-        <div class="menu-list">
-            <article class="menu-item">
-                <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Пицца Маргарита" />
-                <div class="menu-item-content">
-                    <h3>Маргарита</h3>
-                    <p>Классическая пицца с томатным соусом, моцареллой и свежим базиликом.</p>
-                    <div class="price">2 500 ₸</div>
-                </div>
-            </article>
-            <article class="menu-item">
-                <img src="https://images.unsplash.com/photo-1592861956603-25922c411c6b?auto=format&fit=crop&w=600&q=80" alt="Пицца Пепперони" />
-                <div class="menu-item-content">
-                    <h3>Пепперони</h3>
-                    <p>Острая пицца с ароматной копченой колбасой пепперони и моцареллой.</p>
-                    <div class="price">3 200 ₸</div>
-                </div>
-            </article>
-            <article class="menu-item">
-                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80" alt="Пицца Четыре сыра" />
-                <div class="menu-item-content">
-                    <h3>Четыре сыра</h3>
-                    <p>Идеальное сочетание сыра моцарелла, горгонзола, пармезан и эмменталь.</p>
-                    <div class="price">3 800 ₸</div>
-                </div>
-            </article>
+  <section id="about">
+    <h2>Что такое современный стиль?</h2>
+    <div class="image-container">
+      <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1080&q=80" alt="Современный интерьер с чистыми линиями" loading="lazy" />
+    </div>
+    <p class="description">
+      Современный стиль дизайна — это гармоничное сочетание минимализма, функциональности и эстетики. В нем преобладают простые формы, чистые линии, нейтральные цвета с яркими акцентами и использование инновационных материалов. Такой дизайн создает ощущение порядка и пространства, а также оптимизирует комфорт и удобство.
+    </p>
+  </section>
+  <section id="gallery">
+    <h2>Галерея современных дизайнов</h2>
+    <div class="grid">
+      <article class="card" tabindex="0">
+        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80" alt="Современный интерьер с мебелью" />
+        <div class="card-content">
+          <h3 class="card-title">Чистые линии и комфорт</h3>
+          <p>Использование простых, функциональных форм и материалов.</p>
         </div>
-    </section>
-    <section id="contact" style="text-align:center; margin-bottom: 4rem;">
-        <h2>Контакты</h2>
-        <p style="max-width: 500px; margin: 0.5rem auto 1rem;">
-            Мы находимся по адресу: г. Алматы, ул. Абая, 15.<br />
-            Телефон: +7 (727) 123-45-67<br />
-            Время работы: 10:00 — 22:00 без выходных
-        </p>
-        <img
-            src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=60"
-            alt="Интерьер пиццерии"
-            style="width: 100%; max-width: 600px; border-radius: 12px; box-shadow: 4px 4px 12px #c34a1e88;"
-            loading="lazy"
-        />
-    </section>
+      </article>
+      <article class="card" tabindex="0">
+        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=400&q=80" alt="Минималистический современный интерьер" />
+        <div class="card-content">
+          <h3 class="card-title">Минималистический подход</h3>
+          <p>Минимализм уменьшает визуальный шум и усиливает пространство.</p>
+        </div>
+      </article>
+      <article class="card" tabindex="0">
+        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80" alt="Современная мебель и декор" />
+        <div class="card-content">
+          <h3 class="card-title">Яркие акценты</h3>
+          <p>Акцентные цвета оживляют и персонализируют интерьер.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+  <section id="contact">
+    <h2>Контакты</h2>
+    <p class="description">По вопросам дизайна и сотрудничества пишите нам на <a href="mailto:info@designmodern.ru">info@designmodern.ru</a> или звоните по телефону +7 (123) 456-78-90.</p>
+  </section>
 </main>
 <footer>
-    &copy; 2024 Bella Pizza — Все права защищены.
+  &copy; 2024 Современный дизайн сайта. Все права защищены.
 </footer>
 </body>
 </html>
