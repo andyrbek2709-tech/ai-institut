@@ -3,161 +3,198 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Bella Pizza — Пиццерия</title>
+<title>Ресторан в Актау</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
   body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #fff8f0;
-    color: #4a2c0a;
+    margin:0; 
+    font-family: 'Montserrat', sans-serif;
+    background: #fafafa;
+    color: #333;
   }
   header {
-    background-color: #bb3e03;
-    padding: 1rem 2rem;
+    background: #0D3B66;
     color: white;
+    padding: 20px 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
   header h1 {
-    margin: 0;
     font-weight: 700;
-    letter-spacing: 2px;
     font-size: 1.8rem;
+    letter-spacing: 2px;
   }
   nav a {
     color: white;
     text-decoration: none;
-    margin-left: 1.5rem;
+    margin-left: 30px;
     font-weight: 600;
+    font-size: 1rem;
     transition: color 0.3s ease;
   }
   nav a:hover {
-    color: #ffcc8a;
-  }
-  main {
-    max-width: 960px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    color: #F95738;
   }
   .hero {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-  .hero img {
-    max-width: 100%;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(187,62,3,0.4);
+    position: relative;
+    height: 450px;
+    background: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1470&q=80') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-shadow: 0 0 15px rgba(0,0,0,0.7);
   }
   .hero h2 {
-    margin: 1rem 0 0.25rem;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #7b2a00;
-  }
-  .hero p {
-    font-size: 1.1rem;
-    color: #a35700;
-    font-style: italic;
-  }
-  section.menu {
-    margin-top: 3rem;
-  }
-  section.menu h3 {
-    font-size: 1.6rem;
-    margin-bottom: 1rem;
-    border-bottom: 2px solid #bb3e03;
-    padding-bottom: 0.3rem;
-  }
-  ul.menu-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-    gap: 1.8rem;
-  }
-  ul.menu-list li {
-    background: #fff;
-    padding: 1rem 1.5rem;
+    font-size: 3rem;
+    background: rgba(0,0,0,0.4);
+    padding: 20px 40px;
     border-radius: 10px;
-    box-shadow: 0 3px 8px rgb(187 62 3 / 0.25);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+  }
+  main {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  section {
+    margin-bottom: 60px;
+  }
+  h3 {
+    font-size: 2rem;
+    color: #0D3B66;
+    margin-bottom: 30px;
+    border-bottom: 3px solid #F95738;
+    display: inline-block;
+    padding-bottom: 5px;
+  }
+  .menu-grid {
+    display: grid;
+    gap: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  .menu-item {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    overflow: hidden;
     transition: transform 0.3s ease;
   }
-  ul.menu-list li:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgb(187 62 3 / 0.4);
+  .menu-item:hover {
+    transform: translateY(-10px);
   }
-  ul.menu-list img {
-    width: 140px;
-    height: 140px;
+  .menu-item img {
+    width: 100%;
+    height: 200px;
     object-fit: cover;
-    border-radius: 10px;
-    margin-bottom: 1rem;
   }
-  ul.menu-list .pizza-name {
+  .menu-item-content {
+    padding: 20px;
+  }
+  .menu-item-content h4 {
+    margin: 0 0 10px 0;
+    color: #F95738;
+  }
+  .menu-item-content p {
+    margin: 0 0 15px 0;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: #555;
+  }
+  .menu-item-content span {
     font-weight: 700;
-    font-size: 1.3rem;
-    margin-bottom: 0.3rem;
-    color: #7b2a00;
-  }
-  ul.menu-list .pizza-price {
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: #bb3e03;
+    font-size: 1.2rem;
+    color: #0D3B66;
   }
   footer {
-    margin-top: 4rem;
-    background-color: #bb3e03;
+    background: #0D3B66;
     color: white;
     text-align: center;
-    padding: 1rem 1rem;
+    padding: 20px 40px;
     font-size: 0.9rem;
+  }
+  @media (max-width: 600px) {
+    header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    nav {
+      margin-top: 10px;
+    }
+    nav a {
+      margin-left: 0;
+      margin-right: 20px;
+    }
+    .hero h2 {
+      font-size: 2rem;
+      padding: 15px 30px;
+    }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Bella Pizza</h1>
+  <h1>Ресторан Актау</h1>
   <nav>
+    <a href="#about">О ресторане</a>
     <a href="#menu">Меню</a>
-    <a href="#contact">Контакты</a>
+    <a href="#contacts">Контакты</a>
   </nav>
 </header>
+<section class="hero" aria-label="Главный баннер ресторана">
+  <h2>Вкус Актау — Современная кухня и атмосфера</h2>
+</section>
 <main>
-  <section class="hero">
-    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80" alt="Пицца Bella Pizza" />
-    <h2>Сочная, ароматная итальянская пицца</h2>
-    <p>Только свежие ингредиенты и традиционные рецепты</p>
+  <section id="about" aria-labelledby="about-title">
+    <h3 id="about-title">О ресторане</h3>
+    <p>Добро пожаловать в наш современный ресторан в Актау, где традиции сочетаются с инновациями. Мы предлагаем лучшие блюда местной и международной кухни, используя только свежие и качественные продукты. Насладитесь стильным интерьером и душевной атмосферой в самом сердце города.</p>
   </section>
-  <section id="menu" class="menu">
-    <h3>Наше меню</h3>
-    <ul class="menu-list">
-      <li>
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=150&q=80" alt="Пицца Маргарита"/>
-        <div class="pizza-name">Маргарита</div>
-        <div class="pizza-price">1500 ₸</div>
-      </li>
-      <li>
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=150&q=80" alt="Пицца Пепперони"/>
-        <div class="pizza-name">Пепперони</div>
-        <div class="pizza-price">1800 ₸</div>
-      </li>
-      <li>
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=150&q=80" alt="Пицца Четыре сыра"/>
-        <div class="pizza-name">Четыре сыра</div>
-        <div class="pizza-price">2000 ₸</div>
-      </li>
-    </ul>
+  <section id="menu" aria-labelledby="menu-title">
+    <h3 id="menu-title">Меню</h3>
+    <div class="menu-grid">
+      <article class="menu-item">
+        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80" alt="Традиционный казахский бешбармак" />
+        <div class="menu-item-content">
+          <h4>Бешбармак</h4>
+          <p>Классическое казахское блюдо из отварного мяса лапши с ароматным бульоном и зеленью.</p>
+          <span>2 200 ₸</span>
+        </div>
+      </article>
+      <article class="menu-item">
+        <img src="https://images.unsplash.com/photo-1516685018646-54954104828b?auto=format&fit=crop&w=600&q=80" alt="Салат с тунцом и авокадо" />
+        <div class="menu-item-content">
+          <h4>Салат с тунцом и авокадо</h4>
+          <p>Свежие листья салата, тунец, авокадо, черри и легкая лимонная заправка.</p>
+          <span>1 700 ₸</span>
+        </div>
+      </article>
+      <article class="menu-item">
+        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80" alt="Стерлядь на гриле с овощами" />
+        <div class="menu-item-content">
+          <h4>Стерлядь на гриле</h4>
+          <p>Нежная стейковая стерлядь, поданная с сезонными овощами гриль и травяным соусом.</p>
+          <span>3 300 ₸</span>
+        </div>
+      </article>
+      <article class="menu-item">
+        <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=600&q=80" alt="Десерт шоколадный мусс" />
+        <div class="menu-item-content">
+          <h4>Шоколадный мусс</h4>
+          <p>Насыщенный и нежный мусс из темного шоколада с малиновым соусом.</p>
+          <span>1 200 ₸</span>
+        </div>
+      </article>
+    </div>
+  </section>
+  <section id="contacts" aria-labelledby="contacts-title">
+    <h3 id="contacts-title">Контакты</h3>
+    <p>Адрес: г. Актау, пр. Мангистауский 15</p>
+    <p>Телефон: +7 (7292) 123-456</p>
+    <p>Email: info@aktau-restoran.kz</p>
   </section>
 </main>
-<footer id="contact">
-  <p>© 2024 Bella Pizza — Лучшие пиццы в вашем городе</p>
-  <p>Телефон: +7 707 123 45 67 | Адрес: ул. Пиццерийная, 15</p>
+<footer>
+  &copy; 2024 Ресторан в Актау. Все права защищены.
 </footer>
 </body>
 </html>
