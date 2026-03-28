@@ -1,255 +1,241 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Шиномонтаж – Профессиональный сервис</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background: #f9fafb;
-            color: #222;
-            line-height: 1.6;
-        }
-        header {
-            background: linear-gradient(90deg, #1e3c72, #2a5298);
-            color: #fff;
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo {
-            font-weight: 700;
-            font-size: 1.5rem;
-            letter-spacing: 1px;
-            cursor: default;
-            user-select: none;
-        }
-        ul.nav-links {
-            list-style: none;
-            display: flex;
-        }
-        ul.nav-links li {
-            margin-left: 1.75rem;
-        }
-        ul.nav-links a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s ease;
-        }
-        ul.nav-links a:hover {
-            color: #ffc107;
-        }
-        main {
-            margin-top: 2rem;
-        }
-        .hero {
-            background: url('https://images.unsplash.com/photo-1571607389533-c6fa79c21bc0?w=1200') center center/cover no-repeat;
-            height: 400px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            text-shadow: 0 0 10px rgba(0,0,0,0.7);
-            border-radius: 0 0 15px 15px;
-        }
-        .hero h1 {
-            font-size: 3rem;
-            background-color: rgba(0,0,0,0.35);
-            padding: 1rem 2rem;
-            border-radius: 10px;
-        }
-        section.services {
-            background: #fff;
-            margin: 3rem 0;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        section.services h2 {
-            text-align: center;
-            margin-bottom: 2rem;
-            color: #1e3c72;
-            font-weight: 700;
-            font-size: 2rem;
-        }
-        .service-list {
-            display: flex;
-            gap: 2rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .service-item {
-            flex: 1 1 280px;
-            background: #f3f6fb;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: default;
-        }
-        .service-item:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-        }
-        .service-item img {
-            max-width: 80px;
-            margin-bottom: 1rem;
-            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
-        }
-        .service-item h3 {
-            margin-bottom: 0.75rem;
-            color: #2a5298;
-        }
-        .service-item p {
-            font-size: 0.95rem;
-            color: #555;
-        }
-        section.about {
-            max-width: 900px;
-            margin: 2rem auto 4rem;
-            padding: 1rem 2rem;
-            text-align: center;
-            color: #333;
-        }
-        section.about h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: #1e3c72;
-        }
-        section.about p {
-            font-size: 1.1rem;
-            line-height: 1.65;
-        }
-        footer {
-            background: #1e3c72;
-            color: #eee;
-            text-align: center;
-            padding: 1rem 2rem;
-            font-size: 0.9rem;
-            user-select: none;
-        }
-        @media (max-width: 768px) {
-            ul.nav-links {
-                flex-direction: column;
-                background: #2a5298;
-                position: fixed;
-                top: 64px;
-                right: 0;
-                width: 200px;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-                padding: 1rem 1.5rem;
-                border-radius: 0 0 0 10px;
-                height: calc(100% - 64px);
-            }
-            ul.nav-links.active {
-                transform: translateX(0);
-            }
-            ul.nav-links li {
-                margin: 1rem 0;
-            }
-            .menu-toggle {
-                display: block;
-                cursor: pointer;
-                font-size: 1.5rem;
-                user-select: none;
-            }
-        }
-        @media (min-width: 769px) {
-            .menu-toggle {
-                display: none;
-            }
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Шиномонтаж Профи</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f6f8;
+    color: #333;
+  }
+  header {
+    background-color: #1e2a38;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  header h1 {
+    color: #fff;
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+  }
+  nav {
+    display: flex;
+    gap: 25px;
+  }
+  nav a {
+    color: #a8bfcf;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+  }
+  nav a:hover, nav a:focus {
+    color: #ff6f3c;
+  }
+  main {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  .hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 60px;
+  }
+  .hero-text {
+    flex: 1 1 400px;
+  }
+  .hero-text h2 {
+    font-size: 2.8rem;
+    color: #1e2a38;
+    margin: 0 0 20px;
+    line-height: 1.2;
+  }
+  .hero-text p {
+    font-size: 1.15rem;
+    color: #555f6e;
+    margin-bottom: 30px;
+    max-width: 520px;
+  }
+  .btn-primary {
+    padding: 14px 28px;
+    background-color: #ff6f3c;
+    color: white;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+  }
+  .btn-primary:hover, .btn-primary:focus {
+    background-color: #e05b2a;
+  }
+  .hero-img {
+    flex: 1 1 400px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+  .hero-img img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  section.services {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 35px;
+    margin-bottom: 60px;
+  }
+  .service-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px 25px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    text-align: center;
+    transition: transform 0.25s ease;
+  }
+  .service-card:hover, .service-card:focus-within {
+    transform: translateY(-8px);
+  }
+  .service-card img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin-bottom: 18px;
+  }
+  .service-card h3 {
+    font-size: 1.4rem;
+    color: #1e2a38;
+    margin-bottom: 14px;
+  }
+  .service-card p {
+    font-size: 1rem;
+    color: #556270;
+  }
+  section.about {
+    background-color: #1e2a38;
+    color: white;
+    padding: 60px 20px;
+    border-radius: 12px;
+    max-width: 900px;
+    margin: 0 auto 80px auto;
+    text-align: center;
+  }
+  section.about h2 {
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+  }
+  section.about p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  footer {
+    background-color: #161f2b;
+    color: #9faecf;
+    text-align: center;
+    padding: 25px 20px;
+    font-size: 0.9rem;
+  }
+  @media(max-width: 600px) {
+    header {
+      flex-direction: column;
+      gap: 15px;
+    }
+    nav {
+      gap: 15px;
+    }
+    .hero {
+      flex-direction: column;
+      gap: 30px;
+    }
+  }
+</style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <nav>
-                <div class="logo">Шиномонтаж PRO</div>
-                <div class="menu-toggle" id="menu-toggle">&#9776;</div>
-                <ul class="nav-links" id="nav-links">
-                    <li><a href="#services">Услуги</a></li>
-                    <li><a href="#about">О нас</a></li>
-                    <li><a href="#contact">Контакты</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-    <main>
-        <div class="hero">
-            <h1>Качественный шиномонтаж<br>для вашего автомобиля</h1>
-        </div>
-        <section class="services" id="services">
-            <h2>Наши услуги</h2>
-            <div class="service-list">
-                <div class="service-item">
-                    <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=80" alt="Замена шин" />
-                    <h3>Замена шин</h3>
-                    <p>Быстрая и качественная замена шин всех размеров и типов.</p>
-                </div>
-                <div class="service-item">
-                    <img src="https://images.unsplash.com/photo-1519741491914-6fecd4d0a978?w=80" alt="Балансировка" />
-                    <h3>Балансировка колес</h3>
-                    <p>Точная балансировка для комфортного и безопасного движения.</p>
-                </div>
-                <div class="service-item">
-                    <img src="https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=80" alt="Ремонт шин" />
-                    <h3>Ремонт шин</h3>
-                    <p>Профессиональный ремонт проколов и порезов шин с гарантией.</p>
-                </div>
-                <div class="service-item">
-                    <img src="https://images.unsplash.com/photo-1549924231-f129b911e442?w=80" alt="Хранение шин" />
-                    <h3>Хранение шин</h3>
-                    <p>Удобное и безопасное хранение сезонных шин в нашем сервисе.</p>
-                </div>
-            </div>
-        </section>
-        <section class="about" id="about">
-            <h2>О нас</h2>
-            <p>Мы — команда профессионалов, которая уже более 10 лет занимается шиномонтажом и обслуживанием колес. Используем современное оборудование и только качественные материалы, чтобы ваш автомобиль всегда был в отличном состоянии. Наша цель — ваша безопасность и комфорт на дороге.</p>
-        </section>
-        <section class="contact" id="contact" style="max-width:900px; margin:0 auto 3rem; padding: 0 2rem; text-align:center;">
-            <h2 style="color:#1e3c72; margin-bottom:1rem;">Контакты</h2>
-            <p style="margin-bottom:0.5rem;">Адрес: г. Москва, ул. Примерная, д. 15</p>
-            <p style="margin-bottom:0.5rem;">Телефон: <a href="tel:+74951234567" style="color:#2a5298; text-decoration:none;">+7 (495) 123-45-67</a></p>
-            <p>Электронная почта: <a href="mailto:info@shinomontazhpro.ru" style="color:#2a5298; text-decoration:none;">info@shinomontazhpro.ru</a></p>
-        </section>
-    </main>
-    <footer>
-        &copy; 2024 Шиномонтаж PRO. Все права защищены.
-    </footer>
-    <script>
-        const menuToggle = document.getElementById('menu-toggle');
-        const navLinks = document.getElementById('nav-links');
-        menuToggle.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
-        // Close menu on link click (mobile)
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                navLinks.classList.remove('active');
-            });
-        });
-    </script>
+<header>
+  <h1>Шиномонтаж Профи</h1>
+  <nav aria-label="Основная навигация">
+    <a href="#services">Услуги</a>
+    <a href="#about">О нас</a>
+    <a href="#contact">Контакты</a>
+  </nav>
+</header>
+<main>
+  <section class="hero" aria-label="Главный баннер">
+    <div class="hero-text">
+      <h2>Профессиональный шиномонтаж в вашем городе</h2>
+      <p>Быстро, качественно и по доступным ценам меняем и балансируем ваши шины. Ваш автомобиль в надежных руках!</p>
+      <a href="#contact" class="btn-primary">Записаться сейчас</a>
+    </div>
+    <div class="hero-img">
+      <img src="https://images.unsplash.com/photo-1517991104124-5320fe302617?w=800" alt="Мастер шиномонтажа за работой" />
+    </div>
+  </section>
+  <section id="services" class="services" aria-label="Услуги шиномонтажа">
+    <article class="service-card" tabindex="0">
+      <img src="https://images.unsplash.com/photo-1502877338535-766e1452684a?w=80" alt="Замена шин" />
+      <h3>Замена шин</h3>
+      <p>Быстрая и аккуратная замена летних и зимних шин без очередей и с гарантией качества.</p>
+    </article>
+    <article class="service-card" tabindex="0">
+      <img src="https://images.unsplash.com/photo-1568667256549-f59bde70e0ca?w=80" alt="Балансировка колес" />
+      <h3>Балансировка колес</h3>
+      <p>Точная балансировка под любый тип колёсных дисков для плавной и безопасной езды.</p>
+    </article>
+    <article class="service-card" tabindex="0">
+      <img src="https://images.unsplash.com/photo-1572656634897-dd3d778e3942?w=80" alt="Ремонт шин" />
+      <h3>Ремонт шин</h3>
+      <p>Ремонт повреждений шин без снятия с диска, восстановление герметичности и прочности.</p>
+    </article>
+    <article class="service-card" tabindex="0">
+      <img src="https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?w=80" alt="Хранение шин" />
+      <h3>Хранение шин</h3>
+      <p>Комфортное сезонное хранение ваших шин в чистом и сухом помещении с контролем температуры.</p>
+    </article>
+  </section>
+  <section id="about" class="about" aria-label="О компании">
+    <h2>Почему выбирают нас?</h2>
+    <p>Наш шиномонтаж оснащён современным оборудованием, а команда состоит из опытных профессионалов, которые любят и знают своё дело. Мы всегда готовы помочь вам в любое время года и гарантировать качественный сервис, чтобы вы были спокойны за свою безопасность на дороге.</p>
+  </section>
+  <section id="contact" aria-label="Контакты и запись" style="max-width: 600px; margin: 0 auto 80px auto; padding: 0 20px;">
+    <h2 style="text-align:center; margin-bottom: 20px;">Свяжитесь с нами</h2>
+    <form style="display: flex; flex-direction: column; gap: 15px;">
+      <label for="name">Ваше имя</label>
+      <input id="name" name="name" type="text" placeholder="Иван Иванов" required style="padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem;" />
+      <label for="phone">Телефон</label>
+      <input id="phone" name="phone" type="tel" placeholder="+7 (999) 123-45-67" required style="padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem;" />
+      <label for="service">Услуга</label>
+      <select id="service" name="service" required style="padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem;">
+        <option value="" disabled selected>Выберите услугу</option>
+        <option value="Замена шин">Замена шин</option>
+        <option value="Балансировка колес">Балансировка колес</option>
+        <option value="Ремонт шин">Ремонт шин</option>
+        <option value="Хранение шин">Хранение шин</option>
+      </select>
+      <button type="submit" class="btn-primary" style="width: 100%; font-size: 1.2rem;">Отправить заявку</button>
+    </form>
+  </section>
+</main>
+<footer>
+  &copy; 2024 Шиномонтаж Профи — Все права защищены<br />
+  Телефон: +7 (123) 456-78-90 | Адрес: г. Москва, ул. Примерная, д. 10
+</footer>
 </body>
 </html>
