@@ -1,155 +1,142 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Задача [object Object]</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-            color: #333;
-            line-height: 1.6;
-        }
-        header {
-            background: linear-gradient(90deg, #007cf0 0%, #00dfd8 100%);
-            padding: 20px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            letter-spacing: 1px;
-            font-weight: 700;
-        }
-        nav ul {
-            list-style: none;
-            display: flex;
-            margin: 0;
-            padding: 0;
-        }
-        nav ul li {
-            margin-left: 25px;
-        }
-        nav ul li a {
-            color: white;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: color 0.3s ease;
-        }
-        nav ul li a:hover,
-        nav ul li a:focus {
-            color: #ffe600;
-            outline: none;
-        }
-        main {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-        main h2 {
-            margin-bottom: 20px;
-            font-size: 2.4rem;
-            color: #007cf0;
-            text-align: center;
-        }
-        .image-container {
-            max-width: 800px;
-            margin: 20px auto;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-        }
-        .image-container img {
-            width: 100%;
-            display: block;
-            object-fit: cover;
-            height: 450px;
-            transition: transform 0.5s ease;
-        }
-        .image-container img:hover {
-            transform: scale(1.05);
-        }
-        footer {
-            background-color: #007cf0;
-            color: white;
-            text-align: center;
-            padding: 20px 40px;
-            margin-top: 80px;
-        }
-        footer p {
-            margin: 0;
-            font-size: 1rem;
-        }
-        @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                text-align: center;
-            }
-            nav ul {
-                flex-direction: column;
-                margin-top: 15px;
-            }
-            nav ul li {
-                margin: 10px 0 0 0;
-            }
-            .image-container img {
-                height: 300px;
-            }
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Современный сайт</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f9f9f9;
+    color: #333;
+  }
+  header {
+    background: #004aad;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  header nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 1.5rem;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+  header nav a:hover {
+    color: #fdd835;
+  }
+  .logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  .hero {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .hero-text {
+    flex: 1 1 300px;
+  }
+  .hero-text h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #004aad;
+  }
+  .hero-text p {
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+  .hero-text button {
+    background-color: #fdd835;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #333;
+    transition: background-color 0.3s ease;
+  }
+  .hero-text button:hover {
+    background-color: #ffeb3b;
+  }
+  .hero-image {
+    flex: 1 1 300px;
+  }
+  .hero-image img {
+    max-width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  }
+  footer {
+    background: #222;
+    color: #bbb;
+    text-align: center;
+    padding: 1.5rem 1rem;
+    margin-top: 3rem;
+    font-size: 0.9rem;
+  }
+  @media (max-width: 600px) {
+    header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    header nav {
+      margin-top: 0.5rem;
+    }
+    .hero {
+      flex-direction: column;
+      text-align: center;
+    }
+    .hero-text, .hero-image {
+      flex: none;
+      width: 100%;
+    }
+  }
+</style>
 </head>
 <body>
-    <header>
-        <h1>Модерн Сайт</h1>
-        <nav>
-            <ul>
-                <li><a href="#home" tabindex="1">Главная</a></li>
-                <li><a href="#about" tabindex="2">О нас</a></li>
-                <li><a href="#gallery" tabindex="3">Галерея</a></li>
-                <li><a href="#contact" tabindex="4">Контакты</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <section id="home">
-            <h2>Добро пожаловать</h2>
-            <p style="max-width: 700px; margin: 0 auto; text-align: center;">
-                Это современный красивый сайт с удобной навигацией и футером. Здесь вы можете разместить любую информацию о вашем проекте или компании. Используйте удобное меню для перехода по разделам.
-            </p>
-        </section>
-        <section id="about" style="margin-top: 60px;">
-            <h2>О нас</h2>
-            <p style="max-width: 700px; margin: 0 auto; text-align: center;">
-                Мы профессиональные веб-разработчики, создающие современные и адаптивные сайты. Наша цель — сделать ваш веб-проект красивым и функциональным.
-            </p>
-        </section>
-        <section id="gallery" style="margin-top: 60px;">
-            <h2>Галерея</h2>
-            <div class="image-container" aria-label="Изображение с Unsplash">
-                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Прекрасный пейзаж природы" />
-            </div>
-        </section>
-        <section id="contact" style="margin-top: 60px; margin-bottom: 40px;">
-            <h2>Контакты</h2>
-            <p style="max-width: 700px; margin: 0 auto; text-align: center;">
-                Свяжитесь с нами по электронной почте: <a href="mailto:info@modernsite.ru" style="color:#007cf0; text-decoration: underline;">info@modernsite.ru</a> или по телефону: <a href="tel:+79001234567" style="color:#007cf0; text-decoration: underline;">+7 (900) 123-45-67</a>.
-            </p>
-        </section>
-    </main>
-    <footer>
-        <p>© 2024 Modern Site. Все права защищены.</p>
-    </footer>
+<header>
+  <div class="logo">MyModernSite</div>
+  <nav>
+    <a href="#home">Главная</a>
+    <a href="#about">О нас</a>
+    <a href="#services">Услуги</a>
+    <a href="#contact">Контакты</a>
+  </nav>
+</header>
+<main>
+  <section class="hero" id="home">
+    <div class="hero-text">
+      <h1>Добро пожаловать на современный сайт</h1>
+      <p>Мы создаем красивые и удобные решения для веба, используя передовые технологии и лучшие практики дизайна.</p>
+      <button>Узнать больше</button>
+    </div>
+    <div class="hero-image">
+      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный дизайн" />
+    </div>
+  </section>
+</main>
+<footer>
+  &copy; 2024 MyModernSite. Все права защищены.
+</footer>
 </body>
 </html>
