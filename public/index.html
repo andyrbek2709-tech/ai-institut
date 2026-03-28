@@ -3,126 +3,173 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Современный сайт</title>
+<title>Барбершоп "Ретро Стиль"</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-  * {
-    box-sizing: border-box;
-  }
   body {
-    margin: 0;
-    font-family: 'Roboto', sans-serif;
-    background: #fafafa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 0;
+    background: #f1f1f1;
     color: #222;
-    line-height: 1.6;
   }
   header {
-    background: #222;
-    color: #fff;
-    padding: 1rem 2rem;
+    background-color: #222;
+    color: #f0c040;
+    padding: 20px 40px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
   }
   header h1 {
     margin: 0;
     font-weight: 700;
-    font-size: 1.6rem;
+    letter-spacing: 2px;
   }
   nav a {
-    color: #fff;
+    color: #f0c040;
     text-decoration: none;
-    margin-left: 1.5rem;
-    font-weight: 500;
+    margin-left: 25px;
+    font-weight: 600;
     transition: color 0.3s ease;
   }
   nav a:hover {
-    color: #1abc9c;
+    color: #fff;
   }
   main {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    max-width: 1100px;
+    margin: 30px auto;
+    padding: 0 20px;
+  }
+  .intro {
     display: flex;
-    flex-direction: column;
-    gap: 2rem;
+    flex-wrap: wrap;
+    gap: 30px;
+    align-items: center;
+    margin-bottom: 50px;
   }
-  section {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 6px 15px rgb(0 0 0 / 0.1);
-    padding: 2rem;
-  }
-  section h2 {
-    margin-top: 0;
-    font-weight: 700;
-    font-size: 1.8rem;
-    border-bottom: 3px solid #1abc9c;
-    padding-bottom: 0.3rem;
-    max-width: max-content;
-  }
-  .photo-container {
-    text-align: center;
-    margin-top: 1rem;
-  }
-  .photo-container img {
+  .intro img {
     max-width: 100%;
+    border-radius: 12px;
+    flex: 1 1 380px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+  .intro-text {
+    flex: 1 1 400px;
+  }
+  .intro-text h2 {
+    margin-top: 0;
+    font-size: 2.3rem;
+    color: #222;
+  }
+  .intro-text p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #444;
+  }
+  section.services {
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  section.services h3 {
+    text-align: center;
+    color: #222;
+    font-size: 2rem;
+    margin-bottom: 25px;
+    letter-spacing: 1.5px;
+  }
+  .services-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center;
+  }
+  .service-item {
+    background: #fefcf7;
+    border: 2px solid #f0c040;
     border-radius: 10px;
-    object-fit: cover;
-    box-shadow: 0 8px 18px rgb(0 0 0 / 0.15);
+    padding: 20px 25px;
+    width: 250px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(240,192,64,0.15);
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #333;
+    position: relative;
+  }
+  .service-item::after {
+    content: "₸";
+    color: #f0c040;
+    font-weight: 700;
+    font-size: 1.5rem;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+  }
+  .service-item span {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #222;
   }
   footer {
     background: #222;
-    color: #ccc;
+    color: #bbb;
     text-align: center;
-    padding: 1.5rem 1rem;
+    padding: 20px 40px;
+    margin-top: 60px;
     font-size: 0.9rem;
   }
-  @media(min-width: 768px) {
-    main {
-      flex-direction: row;
-      gap: 3rem;
+  @media(max-width: 700px) {
+    .intro {
+      flex-direction: column;
     }
-    section {
-      flex: 1;
-      min-width: 0;
+    .service-item {
+      width: 100%;
+    }
+    header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    nav a {
+      margin-left: 0;
+      margin-right: 20px;
     }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Современный сайт</h1>
+  <h1>Барбершоп "Ретро Стиль"</h1>
   <nav>
-    <a href="#about">О проекте</a>
-    <a href="#gallery">Галерея</a>
-    <a href="#contact">Контакты</a>
+    <a href="#about">О нас</a>
+    <a href="#services">Услуги</a>
+    <a href="#contacts">Контакты</a>
   </nav>
 </header>
 <main>
-  <section id="about">
-    <h2>О сайте</h2>
-    <p>Этот сайт разработан в современном стиле с чистым и минималистичным дизайном. Используются плавные тени, гармоничные цвета и удобная навигация, чтобы создать приятный и функциональный пользовательский опыт.</p>
-    <p>Структура сайта содержит навигацию, содержательный контент и простой футер, что обеспечивает удобство и легкость восприятия информации.</p>
-  </section>
-  <section id="gallery">
-    <h2>Галерея</h2>
-    <div class="photo-container">
-      <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80" alt="Еда на современном столе" />
+  <section class="intro" id="about">
+    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80" alt="Барбершоп" />
+    <div class="intro-text">
+      <h2>Добро пожаловать в барбершоп "Ретро Стиль"</h2>
+      <p>Насладитесь классическим мужским уходом в атмосфере ретро-стиля. Мы предлагаем качественные стрижки, бритье опасной бритвой и укладку с применением профессиональных средств. Позвольте себе выглядеть на все 100%!</p>
     </div>
   </section>
-  <section id="contact">
-    <h2>Контакты</h2>
-    <p>Если у вас есть вопросы или предложения, вы можете связаться с нами:</p>
-    <ul>
-      <li>Email: info@modernstyle.ru</li>
-      <li>Телефон: +7 (777) 123-45-67</li>
-      <li>Адрес: г. Москва, ул. Современная, д. 10</li>
-    </ul>
+  <section class="services" id="services">
+    <h3>Наши услуги и цены</h3>
+    <div class="services-list">
+      <div class="service-item">Классическая стрижка <span>4000</span></div>
+      <div class="service-item">Бритье опасной бритвой <span>3500</span></div>
+      <div class="service-item">Моделирование бороды <span>3000</span></div>
+      <div class="service-item">Укладка волос <span>2500</span></div>
+      <div class="service-item">Детская стрижка <span>3000</span></div>
+      <div class="service-item">Комплекс (стрижка + бритье) <span>6500</span></div>
+    </div>
   </section>
 </main>
-<footer>
-  &copy; 2024 Современный стиль. Все права защищены.
+<footer id="contacts">
+  <p>Барбершоп "Ретро Стиль" &middot; г. Алматы &middot; Тел: +7 (777) 123-45-67 &middot; Адрес: ул. Панфилова, 15</p>
+  <p>© 2024 Все права защищены</p>
 </footer>
 </body>
 </html>
