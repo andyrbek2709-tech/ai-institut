@@ -3,817 +3,937 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Мистический и Утончённый Сайт</title>
+<title>Кофейня Уютный Кофе</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans&family=Poppins:wght@700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Merriweather&display=swap');
 
-  /* Корень с цветами */
   :root {
-    --color-dark-purple-start: #2B0B42;
-    --color-dark-purple-end: #1A0137;
-    --color-light-lavender: #B39DDB;
-    --color-deep-indigo: #4B0082;
-    --color-golden-soft: #C9A66B;
-    --color-silver: #C0C0C0;
-    --color-pinkish-purple: #D8B4E2;
-    --color-text-primary: #E0E0E0;
-    --color-text-white: #fff;
-    --color-button-hover-glow: #e6d1a8;
-    --color-sparkle-light: rgba(211,198,241,0.7);
-    --color-sparkle-soft-pink: rgba(216,180,226,0.7);
-    --color-sparkle-silver: rgba(192,192,192,0.7);
+    --brown-dark: #6F4E37;
+    --brown-light: #8B6D5C;
+    --cream-light: #F5F0E6;
+    --cream-dark: #DCC9B6;
+    --accent-green: #3A5A40;
+    --accent-brick: #A1523E;
+    --font-header: 'Montserrat', sans-serif;
+    --font-body: 'Merriweather', serif;
   }
 
-  /* Reset */
-  * {
-    margin: 0; padding: 0; box-sizing: border-box;
+  *, *::before, *::after {
+    box-sizing: border-box;
   }
+
   body {
-    background: linear-gradient(135deg, var(--color-dark-purple-start), var(--color-dark-purple-end));
-    font-family: 'Open Sans', sans-serif;
-    color: var(--color-text-primary);
-    line-height: 1.6;
-    min-height: 100vh;
-    overflow-x: hidden;
+    margin: 0;
+    background: var(--cream-light);
+    color: var(--brown-dark);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    font-size: 17px;
   }
+
   a {
-    color: inherit;
+    color: var(--accent-green);
     text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  a:hover, a:focus {
+    color: var(--accent-brick);
   }
 
-  /* Scrollbar for dark theme */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-deep-indigo);
-    border-radius: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  /* Sparkle animation - subtle particle effect */
-  @keyframes sparkle-flicker {
-    0%, 100% { opacity: 0.4; transform: scale(1) translateY(0); }
-    50% { opacity: 1; transform: scale(1.3) translateY(-2px); }
-  }
-
-  /* Header */
   header {
     position: fixed;
-    top: 0;
-    width: 100%;
-    background: rgba(12,8,24,0.8);
-    backdrop-filter: saturate(180%) blur(12px);
-    border-bottom: 1px solid rgba(255 255 255 / 0.1);
+    top: 0; left: 0; right: 0;
+    background: var(--cream-light);
+    box-shadow: 0 2px 10px rgb(111 78 55 / 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    height: 60px;
     z-index: 1000;
+  }
+
+  .logo {
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 24px;
+    color: var(--brown-dark);
+    user-select: none;
+  }
+
+  nav {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.8rem 2rem;
-  }
-  .logo {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 700;
-    font-size: 1.8rem;
-    color: var(--color-light-lavender);
-    position: relative;
-  }
-  .logo .sparkle {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 12px;
-    height: 12px;
-    background: radial-gradient(circle at center, var(--color-sparkle-light), transparent 60%);
-    border-radius: 50%;
-    animation: sparkle-flicker 1.8s infinite;
-    filter: drop-shadow(0 0 2px var(--color-light-lavender));
+    gap: 20px;
   }
 
   nav ul {
+    margin: 0;
+    padding: 0;
     list-style: none;
     display: flex;
-    gap: 2rem;
-  }
-  nav ul li {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--color-text-primary);
-    cursor: pointer;
-    transition: color 0.3s ease;
-  }
-  nav ul li:hover {
-    color: var(--color-light-lavender);
-    text-shadow: 0 0 8px var(--color-light-lavender);
+    gap: 20px;
   }
 
-  .btn-contact {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    background-color: transparent;
-    border: 2px solid var(--color-golden-soft);
-    color: var(--color-golden-soft);
-    padding: 0.4rem 1rem;
-    border-radius: 24px;
-    cursor: pointer;
-    box-shadow: 0 0 8px var(--color-golden-soft);
-    transition: all 0.3s ease;
-    user-select: none;
+  nav li {
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 16px;
   }
-  .btn-contact:hover, .btn-contact:focus {
-    color: var(--color-text-white);
-    background: linear-gradient(135deg, var(--color-golden-soft), var(--color-light-lavender));
-    box-shadow:
-      0 0 20px var(--color-golden-soft),
-      0 0 30px var(--color-light-lavender);
+
+  nav li a {
+    padding: 6px 4px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  nav li a:hover, nav li a:focus {
+    background-color: var(--cream-dark);
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-order {
+    background-color: var(--accent-brick);
+    color: var(--cream-light);
+    font-family: var(--font-header);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
+  }
+  .btn-order:hover, .btn-order:focus {
+    background-color: var(--accent-green);
+  }
+
+  .icon-cart {
+    width: 28px;
+    height: 28px;
+    stroke: var(--brown-dark);
+    cursor: pointer;
+    transition: stroke 0.3s ease;
+  }
+  .icon-cart:hover, .icon-cart:focus {
+    stroke: var(--accent-brick);
   }
 
   main {
-    padding-top: 5.5rem;
+    padding-top: 70px;
+  }
+
+  section {
+    max-width: 960px;
+    margin: 40px auto;
+    padding: 0 20px;
   }
 
   /* Hero */
   .hero {
     position: relative;
-    height: 80vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 0 1.5rem;
-    overflow: visible;
-  }
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: 0; right: 0; left: 0; bottom: 0;
-    background: linear-gradient(135deg, var(--color-dark-purple-start), var(--color-dark-purple-end));
-    z-index: -3;
-  }
-  .hero::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-image:
-      radial-gradient(circle at top left, var(--color-sparkle-light) 1px, transparent 5px),
-      radial-gradient(circle at bottom right, var(--color-sparkle-soft-pink) 1px, transparent 7px),
-      radial-gradient(circle at center, var(--color-sparkle-silver) 1px, transparent 6px);
-    background-repeat: repeat;
-    background-size: 120px 120px;
-    animation: sparkle-flicker 6s linear infinite alternate;
-    opacity: 0.15;
-    z-index: -2;
-  }
-
-  .hero-title {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 700;
-    font-size: clamp(2.8rem, 5vw, 4rem);
-    color: var(--color-light-lavender);
-    position: relative;
-    margin-bottom: 0.4rem;
-  }
-  /* Sparkle animation on hero title */
-  .hero-title .sparkle {
-    position: absolute;
-    top: -10px;
-    right: 6%;
-    width: 18px;
-    height: 18px;
-    background: radial-gradient(circle at center, var(--color-pinkish-purple), transparent 50%);
-    border-radius: 50%;
-    filter: drop-shadow(0 0 4px var(--color-light-lavender));
-    animation: sparkle-flicker 2.3s infinite ease-in-out alternate;
-  }
-
-  .hero-subtitle {
-    font-family: 'Open Sans', sans-serif;
-    font-size: clamp(1.2rem, 2vw, 1.6rem);
-    color: var(--color-text-primary);
-    max-width: 600px;
-    margin: 0 auto 2.5rem auto;
-    font-weight: 500;
-  }
-
-  .btn-cta {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 0.95rem;
-    text-transform: uppercase;
-    letter-spacing: 0.11em;
-    padding: 0.85rem 2.6rem;
-    border-radius: 40px;
-    background: linear-gradient(135deg, var(--color-golden-soft), var(--color-light-lavender));
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    position: relative;
-    box-shadow:
-      0 0 15px var(--color-golden-soft),
-      0 0 10px var(--color-light-lavender);
+    border-radius: 14px;
     overflow: hidden;
-    transition: color 0.3s ease;
-    user-select: none;
+    background-color: var(--cream-light);
   }
-  .btn-cta::before {
-    content: '';
-    pointer-events: none;
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background:
-      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.75), transparent 60%),
-      radial-gradient(circle at 70% 60%, rgba(255,255,255,0.5), transparent 70%);
-    background-repeat: no-repeat;
-    animation: sparkle-flicker 2.5s infinite ease-in-out alternate;
-    mix-blend-mode: screen;
-    opacity: 0.7;
-    border-radius: 40px;
-  }
-  .btn-cta:hover, .btn-cta:focus {
-    color: var(--color-text-white);
-    box-shadow:
-      0 0 30px var(--color-golden-soft),
-      0 0 35px var(--color-light-lavender);
-  }
-
-  /* Section common */
-  section {
-    max-width: 1080px;
-    margin: 4rem auto;
-    padding: 0 1.2rem;
-  }
-  h2.section-title {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 2rem;
-    color: var(--color-light-lavender);
-    margin-bottom: 1.8rem;
-    position: relative;
-  }
-  h2.section-title::after {
-    content: '';
+  .hero img {
+    width: 100%;
+    height: auto;
     display: block;
-    width: 68px;
-    height: 3px;
-    background: var(--color-golden-soft);
-    margin-top: 8px;
-    border-radius: 2px;
+    filter: brightness(0.85);
+    transition: filter 0.5s ease;
+  }
+  .hero img:hover {
+    filter: brightness(1);
+  }
+  .hero-content {
+    position: absolute;
+    top: 50%;
+    left: 5%;
+    transform: translateY(-50%);
+    color: var(--cream-light);
+    max-width: 360px;
+    font-family: var(--font-header);
+  }
+  .hero-content h1 {
+    font-size: 36px;
+    margin: 0 0 12px 0;
+    line-height: 1.1;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
+  }
+  .hero-content .btn-menu {
+    background-color: var(--accent-green);
+    color: var(--cream-light);
+    border: none;
+    padding: 10px 22px;
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(58,90,64,0.7);
+    transition: background-color 0.3s ease;
+  }
+  .hero-content .btn-menu:hover, .hero-content .btn-menu:focus {
+    background-color: var(--accent-brick);
   }
 
   /* About */
-  #about {
-    background: rgba(255 255 255 / 0.06);
-    border-radius: 16px;
-    box-shadow:
-      0 0 24px rgba(75,0,130,0.38),
-      0 12px 30px rgba(181,157,219,0.13);
-    padding: 2rem 3rem;
-    color: var(--color-text-white);
-    position: relative;
-  }
-  #about p {
-    font-size: 1.15rem;
-    max-width: 720px;
-    line-height: 1.7;
-    margin-bottom: 2rem;
-  }
-  #about-icons {
+  .about {
     display: flex;
-    gap: 2.4rem;
-    justify-content: space-around;
-    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    font-size: 17px;
+    line-height: 1.6;
   }
-  .about-icon {
-    flex: 1 1 100px;
-    max-width: 140px;
-    text-align: center;
-    color: var(--color-light-lavender);
-    position: relative;
-    cursor: default;
-  }
-  .about-icon svg {
-    width: 56px;
-    height: 56px;
-    margin-bottom: 0.5rem;
-    filter: drop-shadow(0 0 6px var(--color-light-lavender));
-  }
-  .about-icon .sparkle {
-    position: absolute;
-    top: 6px;
-    right: 5px;
-    width: 14px;
-    height: 14px;
-    background: radial-gradient(circle at center, var(--color-sparkle-soft-pink), transparent 65%);
-    border-radius: 50%;
-    animation: sparkle-flicker 2.6s infinite alternate ease-in-out;
-    filter: drop-shadow(0 0 2px var(--color-light-lavender));
-  }
-  .about-icon span {
-    font-family: 'Roboto', sans-serif;
-    font-weight: 600;
-    font-size: 1rem;
-  }
-
-  /* Services */
-  #services {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-    gap: 2rem;
-  }
-  .service-card {
-    background: rgba(255 255 255 / 0.04);
-    border-radius: 20px;
-    padding: 2rem 1.5rem;
-    box-shadow: 0 0 20px rgba(75,0,130,0.2);
-    color: var(--color-text-white);
-    transition: box-shadow 0.4s ease, transform 0.3s ease;
-    position: relative;
-  }
-  .service-card:hover, .service-card:focus-within {
-    box-shadow:
-      0 0 30px var(--color-golden-soft),
-      0 5px 20px var(--color-pinkish-purple);
-    transform: translateY(-4px);
-  }
-  .service-icon {
-    width: 56px;
-    height: 56px;
-    margin-bottom: 1rem;
-    fill: var(--color-light-lavender);
-    filter: drop-shadow(0 0 5px var(--color-light-lavender));
-    position: relative;
-  }
-  .service-icon .sparkle {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 12px;
-    height: 12px;
-    background: radial-gradient(circle at center, var(--color-sparkle-silver), transparent 65%);
-    border-radius: 50%;
-    animation: sparkle-flicker 3s infinite ease-in-out alternate;
-  }
-  .service-card h3 {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: var(--color-light-lavender);
-    margin-bottom: 0.4rem;
-  }
-  .service-card p {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 1rem;
-    color: var(--color-text-primary);
-  }
-
-  /* Portfolio */
-  #portfolio {
-    margin-top: 3rem;
-  }
-  #portfolio-filters {
-    margin-bottom: 2rem;
-    text-align: center;
-  }
-  #portfolio-filters button {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    background: none;
-    border: 2px solid var(--color-light-lavender);
-    color: var(--color-light-lavender);
-    padding: 0.5rem 1.4rem;
-    margin: 0 0.6rem;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  .about img {
+    flex: 1 1 320px;
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgb(111 78 55 / 0.2);
     user-select: none;
   }
-  #portfolio-filters button.active,
-  #portfolio-filters button:hover {
-    background: var(--color-golden-soft);
-    border-color: var(--color-golden-soft);
-    color: #fff;
-    box-shadow:
-      0 0 15px var(--color-golden-soft),
-      0 0 25px var(--color-light-lavender);
+  .about-text {
+    flex: 1 1 520px;
+    font-family: var(--font-body);
+    color: var(--brown-dark);
+  }
+  .about-text h2 {
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 32px;
+    margin-bottom: 16px;
+    color: var(--brown-dark);
   }
 
-  #portfolio-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
-    gap: 1.6rem;
+  /* Menu */
+  .menu {
+    font-family: var(--font-body);
   }
-  .portfolio-item {
-    position: relative;
-    overflow: hidden;
-    border-radius: 20px;
+  .menu h2 {
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: var(--brown-dark);
+  }
+  .filter-buttons {
+    margin-bottom: 18px;
+    display: flex;
+    gap: 14px;
+  }
+  .filter-button {
+    background-color: var(--cream-dark);
+    border: none;
+    padding: 7px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
     cursor: pointer;
-    box-shadow:
-      0 0 0 2px transparent;
-    transition: box-shadow 0.4s ease;
+    color: var(--brown-dark);
+    box-shadow: 0 2px 5px rgba(139,109,92,0.3);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
-  .portfolio-item img {
-    display: block;
-    width: 100%;
-    height: auto;
-    border-radius: 20px;
-    transition: transform 0.4s ease;
+  .filter-button.active,
+  .filter-button:hover,
+  .filter-button:focus {
+    background-color: var(--accent-green);
+    color: var(--cream-light);
+    box-shadow: 0 4px 10px rgba(58,90,64,0.7);
   }
-  .portfolio-item:hover img,
-  .portfolio-item:focus-within img {
-    transform: scale(1.08);
+  .menu-items {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
   }
-  .portfolio-item:hover,
-  .portfolio-item:focus-within {
-    box-shadow:
-      0 0 12px var(--color-pinkish-purple),
-      0 0 20px var(--color-silver);
-  }
-  .portfolio-item .sparkle-frame {
-    position: absolute;
-    top: 6px; left: 6px; right: 6px; bottom: 6px;
-    border-radius: 18px;
-    pointer-events: none;
-    box-shadow:
-      0 0 8px var(--color-pinkish-purple),
-      inset 0 0 10px var(--color-silver);
-    animation: sparkle-flicker 4s infinite alternate ease-in-out;
-  }
-
-  /* Testimonials */
-  #testimonials {
-    background: rgba(255 255 255 / 0.04);
-    border-radius: 16px;
-    padding: 3rem 2rem;
-    box-shadow:
-      0 0 28px rgba(75,0,130,0.16);
-    position: relative;
-  }
-  .testimonial-slider {
-    position: relative;
-    max-width: 720px;
-    margin: 0 auto;
+  .menu-item {
+    background-color: var(--cream-light);
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgb(111 78 55 / 0.12);
     overflow: hidden;
+    cursor: default;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
   }
-  .testimonial-slider > div {
-    display: none;
-    color: var(--color-text-primary);
-    font-size: 1.1rem;
-    line-height: 1.7;
-    font-style: italic;
+  .menu-item:hover, .menu-item:focus-within {
+    box-shadow: 0 8px 20px rgb(161 82 62 / 0.4);
+    transform: translateY(-4px);
   }
-  .testimonial-slider > div.active {
+  .menu-item img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
     display: block;
-    transition: opacity 0.6s ease;
+    user-select: none;
   }
-  .testimonial-author {
-    margin-top: 1.3rem;
-    font-family: 'Montserrat', sans-serif;
+  .menu-item-content {
+    padding: 14px 16px;
+  }
+  .menu-item-content h3 {
+    margin: 0 0 8px 0;
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 20px;
+    color: var(--brown-dark);
+  }
+  .menu-item-content p {
+    margin: 0 0 10px 0;
+    font-size: 15px;
+    color: var(--brown-light);
+  }
+  .menu-item-price {
     font-weight: 700;
-    font-size: 1rem;
-    color: var(--color-light-lavender);
-  }
-  .testimonial-stars {
-    margin-top: 0.6rem;
-  }
-  .testimonial-stars svg {
-    width: 18px;
-    height: 18px;
-    margin-right: 3px;
-    fill: var(--color-light-lavender);
-    filter: drop-shadow(0 0 4px var(--color-light-lavender));
+    font-size: 16px;
+    color: var(--accent-brick);
   }
 
-  /* CTA */
-  #cta {
-    margin: 4rem auto 6rem;
+  /* Special offers */
+  .special-offers {
+    font-family: var(--font-body);
+  }
+  .special-offers h2 {
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: var(--brown-dark);
+  }
+  .offers-list {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .offer-card {
+    background: var(--cream-dark);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 4px 10px rgb(161 82 62 / 0.3);
+    max-width: 280px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  .offer-card:hover, .offer-card:focus-within {
+    box-shadow: 0 8px 20px rgb(161 82 62 / 0.5);
+    transform: scale(1.03);
+  }
+  .offer-card img {
+    width: 100%;
+    border-radius: 10px;
+    user-select: none;
+    margin-bottom: 12px;
+    object-fit: cover;
+    height: 160px;
+  }
+  .offer-card h3 {
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0 0 8px 0;
+    color: var(--brown-dark);
+  }
+  .offer-card p {
+    margin: 0;
+    font-size: 15px;
+    color: var(--brown-light);
+  }
+
+  /* Reviews */
+  .reviews {
+    font-family: var(--font-body);
+    max-width: 960px;
+  }
+  .reviews h2 {
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: var(--brown-dark);
     text-align: center;
   }
-  #cta button {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.3rem;
-    padding: 1rem 3.4rem;
-    border-radius: 50px;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-    background: var(--color-golden-soft);
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    box-shadow:
-      0 0 25px var(--color-golden-soft),
-      0 0 38px var(--color-light-lavender);
+  .reviews-carousel {
     position: relative;
+    display: flex;
     overflow: hidden;
-    transition: all 0.4s ease;
   }
-  #cta button::before {
-    content: '';
-    pointer-events: none;
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background:
-      radial-gradient(circle at 30% 50%, rgba(255,255,255,0.7), transparent 60%),
-      radial-gradient(circle at 70% 40%, rgba(255,255,255,0.4), transparent 60%);
-    background-repeat: no-repeat;
-    animation: sparkle-flicker 2.7s infinite alternate ease-in-out;
-    mix-blend-mode: screen;
-    opacity: 0.7;
-    border-radius: 50px;
+  .review-item {
+    min-width: 100%;
+    padding: 24px 20px;
+    box-sizing: border-box;
+    text-align: center;
+    transition: transform 0.5s ease;
+    user-select: none;
   }
-  #cta button:hover, #cta button:focus {
+  .review-photo {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 14px auto;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgb(111 78 55 / 0.3);
+  }
+  .review-text {
+    font-size: 16px;
+    font-style: italic;
+    color: var(--brown-dark);
+    margin-bottom: 14px;
+  }
+  .review-author {
+    font-weight: 700;
+    font-family: var(--font-header);
+    color: var(--accent-green);
+    font-size: 16px;
+  }
+  .reviews-controls {
+    text-align: center;
+    margin-top: 12px;
+  }
+  .reviews-button {
+    background: var(--cream-dark);
+    border: none;
+    font-size: 18px;
+    color: var(--brown-dark);
+    cursor: pointer;
+    margin: 0 6px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+  .reviews-button:hover, .reviews-button:focus {
+    background-color: var(--accent-brick);
+    color: var(--cream-light);
+  }
+
+  /* Contacts */
+  .contacts {
+    font-family: var(--font-body);
+    max-width: 960px;
+  }
+  .contacts h2 {
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 32px;
+    margin-bottom: 24px;
+    color: var(--brown-dark);
+    text-align: center;
+  }
+  .contact-info {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 30px;
+    font-size: 16px;
+    color: var(--brown-dark);
+  }
+  .contact-item {
+    min-width: 200px;
+  }
+  .contact-item strong {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .map {
+    max-width: 960px;
+    height: 320px;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgb(111 78 55 / 0.15);
+    overflow: hidden;
+    user-select: none;
+  }
+  .contact-form {
+    margin-top: 30px;
+    max-width: 480px;
+    background-color: var(--cream-dark);
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgb(111 78 55 / 0.25);
+  }
+  .contact-form label {
+    display: block;
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 6px;
+    color: var(--brown-dark);
+  }
+  .contact-form input, .contact-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    border: 1.5px solid var(--brown-light);
+    font-family: var(--font-body);
+    font-size: 16px;
+    color: var(--brown-dark);
+    resize: vertical;
+  }
+  .contact-form input:focus, .contact-form textarea:focus {
     outline: none;
-    box-shadow:
-      0 0 40px var(--color-golden-soft),
-      0 0 52px var(--color-light-lavender);
-    background: linear-gradient(135deg, var(--color-light-lavender), var(--color-golden-soft));
+    border-color: var(--accent-green);
+    box-shadow: 0 0 6px var(--accent-green);
+  }
+  .contact-form button {
+    background-color: var(--accent-green);
+    color: var(--cream-light);
+    border: none;
+    padding: 12px 24px;
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+  }
+  .contact-form button:hover, .contact-form button:focus {
+    background-color: var(--accent-brick);
   }
 
   /* Footer */
   footer {
-    background-color: #0B0529;
-    color: #B8B8B8;
-    padding: 2.5rem 1.5rem;
-    text-align: center;
-    font-size: 0.9rem;
-    font-family: 'Open Sans', sans-serif;
+    background-color: var(--brown-light);
+    color: var(--cream-light);
+    padding: 24px 20px;
+    font-size: 14px;
   }
-  footer .contacts {
-    margin-bottom: 1.3rem;
+  .footer-content {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
   }
-  footer .contacts a {
-    color: #B8B8B8;
-    margin: 0 0.9rem;
-    display: inline-block;
-    vertical-align: middle;
-    filter: drop-shadow(0 0 4px #553377);
-    transition: color 0.3s ease;
+  .footer-copy {
+    font-family: var(--font-body);
   }
-  footer .contacts a:hover,
-  footer .contacts a:focus {
-    color: var(--color-golden-soft);
-    filter: drop-shadow(0 0 8px var(--color-golden-soft));
+  .footer-menu {
+    display: flex;
+    gap: 22px;
   }
-  footer small {
-    color: #888;
+  .footer-menu a {
+    color: var(--cream-light);
+    font-family: var(--font-header);
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .footer-menu a:hover, .footer-menu a:focus {
+    color: var(--accent-brick);
+  }
+  .footer-socials {
+    display: flex;
+    gap: 18px;
+  }
+  .social-icon {
+    width: 22px;
+    height: 22px;
+    fill: var(--cream-light);
+    cursor: pointer;
+    transition: fill 0.3s ease;
+  }
+  .social-icon:hover, .social-icon:focus {
+    fill: var(--accent-brick);
   }
 
   /* Responsive */
-  @media (max-width: 720px) {
-    nav ul {
-      gap: 1rem;
-      font-size: 0.9rem;
+  @media (max-width: 900px) {
+    .about {
+      flex-direction: column;
+      text-align: center;
     }
-    #about-icons {
-      gap: 1.4rem;
+    .about img {
+      max-width: 100%;
+      height: auto;
     }
-    .service-card {
-      padding: 1.5rem 1.1rem;
-    }
-    #portfolio-filters button {
-      margin: 0 0.4rem;
-      padding: 0.42rem 1rem;
-      font-size: 0.85rem;
+    .contact-info {
+      flex-direction: column;
+      text-align: center;
     }
   }
-  @media (max-width: 480px) {
-    header {
-      padding: 0.7rem 1rem;
+
+  @media (max-width: 700px) {
+    nav ul {
+      display: none;
     }
-    .btn-contact {
-      padding: 0.3rem 0.85rem;
-      font-size: 0.8rem;
+    .header-actions {
+      gap: 10px;
     }
-    .hero-subtitle {
-      font-size: 1rem;
-      max-width: 320px;
+    .hamburger {
+      display: block;
+      width: 26px;
+      height: 22px;
+      position: relative;
+      cursor: pointer;
+      z-index: 1100;
     }
-    .btn-cta {
-      font-size: 0.85rem;
-      padding: 0.7rem 1.9rem;
+    .hamburger span {
+      display: block;
+      height: 3px;
+      background: var(--brown-dark);
+      margin: 5px 0;
+      border-radius: 2px;
+      transition: 0.3s ease;
     }
-    #about {
-      padding: 1.5rem 2rem;
+    nav[data-open="true"] {
+      position: fixed;
+      top: 60px;
+      right: 0;
+      width: 220px;
+      background-color: var(--cream-light);
+      box-shadow: -4px 0 8px rgb(111 78 55 / 0.3);
+      height: calc(100vh - 60px);
+      display: flex !important;
+      flex-direction: column;
+      padding: 20px 10px;
+      gap: 20px;
+      z-index: 1050;
+      border-radius: 0 0 0 20px;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+    }
+    nav[data-open="false"] {
+      transform: translateX(100%);
+    }
+    nav ul {
+      flex-direction: column;
+      gap: 18px;
+      display: flex !important;
+    }
+    nav li a {
+      font-size: 18px;
+    }
+    .btn-order {
+      padding: 10px 14px;
+      font-size: 14px;
     }
   }
 </style>
 </head>
 <body>
+
 <header>
-  <a href="#" class="logo" aria-label="Логотип мистического сайта">
-    Mysti<span>✨</span>ra<div class="sparkle"></div>
-  </a>
-  <nav>
+  <div class="logo" aria-label="Уютный Кофе - Логотип">Уютный Кофе</div>
+  <nav id="main-nav" aria-label="Основное меню" data-open="false">
     <ul>
-      <li><a href="#about" tabindex="0">О проекте</a></li>
-      <li><a href="#services" tabindex="0">Услуги</a></li>
-      <li><a href="#portfolio" tabindex="0">Портфолио</a></li>
-      <li><a href="#testimonials" tabindex="0">Отзывы</a></li>
-      <li><a href="#cta" tabindex="0">Контакты</a></li>
+      <li><a href="#hero">Главная</a></li>
+      <li><a href="#menu">Меню</a></li>
+      <li><a href="#about">О нас</a></li>
+      <li><a href="#contacts">Контакты</a></li>
     </ul>
+    <button class="btn-order" tabindex="0" aria-label="Заказать онлайн">Заказать онлайн</button>
   </nav>
-  <button class="btn-contact" type="button" aria-label="Связаться с нами">Связаться</button>
+  <svg class="icon-cart" tabindex="0" aria-label="Корзина" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" role="img" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="9" cy="21" r="1.5"/>
+    <circle cx="20" cy="21" r="1.5"/>
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+  </svg>
+  <div class="hamburger" aria-label="Открыть меню" role="button" tabindex="0" aria-expanded="false">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
 </header>
 
 <main>
-  <section class="hero" aria-label="Главный баннер">
-    <h1 class="hero-title">Погрузись в Таинство<div class="sparkle"></div></h1>
-    <p class="hero-subtitle">Изысканный дизайн с мистическим оттенком для вашего проекта</p>
-    <button class="btn-cta" type="button" aria-label="Начать сейчас">Начать сейчас</button>
-  </section>
 
-  <section id="about" aria-labelledby="about-title">
-    <h2 class="section-title" id="about-title">О проекте</h2>
-    <p>Наша миссия — создать современный и элегантный интерфейс с лёгкой долей футуризма, который дарит мистическую и утончённую атмосферу, помогая вашему бренду сиять в цифровом пространстве.</p>
-    <div id="about-icons" role="list">
-      <div class="about-icon" role="listitem" tabindex="0" aria-label="Качество и внимание к деталям">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" focusable="false"><path d="M12 2l4 8-8 0 8 8-4-8-4 8 0-16z"/></svg>
-        <div class="sparkle"></div>
-        <span>Качество</span>
-      </div>
-      <div class="about-icon" role="listitem" tabindex="0" aria-label="Изысканный стиль">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" focusable="false"><circle cx="12" cy="12" r="10"/></svg>
-        <div class="sparkle"></div>
-        <span>Стиль</span>
-      </div>
-      <div class="about-icon" role="listitem" tabindex="0" aria-label="Современные технологии">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" focusable="false"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-        <div class="sparkle"></div>
-        <span>Технологии</span>
-      </div>
-    </div>
-  </section>
+<section class="hero" id="hero" aria-label="Главный баннер">
+  <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1200" alt="Крупный план чашки кофе в уютной кофейне" loading="lazy" />
+  <div class="hero-content">
+    <h1>Ваш уютный кофе с утра</h1>
+    <button class="btn-menu" onclick="location.href='#menu'" aria-label="Посмотреть меню">Посмотреть меню</button>
+  </div>
+</section>
 
-  <section id="services" aria-labelledby="services-title">
-    <h2 class="section-title" id="services-title">Услуги</h2>
-    <article class="service-card" tabindex="0">
-      <div class="service-icon" aria-hidden="true" style="position:relative;">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>
-        <div class="sparkle"></div>
+<section class="about" id="about" aria-labelledby="about-title">
+  <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800" alt="Интерьер кофейни с деревянными элементами и текстурой" loading="lazy" />
+  <div class="about-text">
+    <h2 id="about-title">О нашей кофейне</h2>
+    <p>Наше кафе – это место, где современный минимализм встречается с уютной винтажностью. Мы готовим кофе с любовью, отдавая дань качеству и атмосфере, пропитанной ароматами свежей выпечки и дерева.</p>
+    <p>История нашего кофейного пространства началась с желания подарить каждому тепло и комфорт с каждой чашкой.</p>
+  </div>
+</section>
+
+<section class="menu" id="menu" aria-labelledby="menu-title">
+  <h2 id="menu-title">Меню</h2>
+  <div class="filter-buttons" role="tablist" aria-label="Фильтр по меню">
+    <button class="filter-button active" data-filter="all" role="tab" aria-selected="true" tabindex="0">Все</button>
+    <button class="filter-button" data-filter="coffee" role="tab" aria-selected="false" tabindex="-1">Кофе</button>
+    <button class="filter-button" data-filter="bakery" role="tab" aria-selected="false" tabindex="-1">Выпечка</button>
+    <button class="filter-button" data-filter="drinks" role="tab" aria-selected="false" tabindex="-1">Напитки</button>
+    <button class="filter-button" data-filter="decaf" role="tab" aria-selected="false" tabindex="-1">Без кофеина</button>
+  </div>
+  <div class="menu-items">
+
+    <article class="menu-item" data-category="coffee" tabindex="0" aria-label="Эспрессо, кофейный напиток, цена 150 рублей">
+      <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800" alt="Чашка эспрессо" loading="lazy" />
+      <div class="menu-item-content">
+        <h3>Эспрессо</h3>
+        <p>Классический крепкий кофейный напиток с насыщенным вкусом.</p>
+        <div class="menu-item-price">150 ₽</div>
       </div>
-      <h3>Веб-разработка</h3>
-      <p>Создание современных, адаптивных и высокопроизводительных сайтов с учётом всех потребностей бизнеса.</p>
     </article>
-    <article class="service-card" tabindex="0">
-      <div class="service-icon" aria-hidden="true" style="position:relative;">
-        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M5.5 22h13"/></svg>
-        <div class="sparkle"></div>
+
+    <article class="menu-item" data-category="coffee decaf" tabindex="0" aria-label="Капучино без кофеина, цена 190 рублей">
+      <img src="https://images.unsplash.com/photo-1517685352821-92cf88aee5a5?w=800" alt="Капучино с пенкой" loading="lazy" />
+      <div class="menu-item-content">
+        <h3>Капучино без кофеина</h3>
+        <p>Нежный капучино на основе декофеинизированного эспрессо.</p>
+        <div class="menu-item-price">190 ₽</div>
       </div>
-      <h3>Дизайн</h3>
-      <p>Уникальные и гармоничные решения для визуального оформления, сочетающие стиль и удобство.</p>
     </article>
-    <article class="service-card" tabindex="0">
-      <div class="service-icon" aria-hidden="true" style="position:relative;">
-        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="8" width="20" height="4" rx="1"/></svg>
-        <div class="sparkle"></div>
+
+    <article class="menu-item" data-category="bakery" tabindex="0" aria-label="Круассан с миндалём, цена 120 рублей">
+      <img src="https://images.unsplash.com/photo-1505253210345-845de44a7e6f?w=800" alt="Круассан с миндалём" loading="lazy" />
+      <div class="menu-item-content">
+        <h3>Круассан с миндалём</h3>
+        <p>Свежая сладкая выпечка с приятной миндальной начинкой.</p>
+        <div class="menu-item-price">120 ₽</div>
       </div>
-      <h3>Консалтинг</h3>
-      <p>Анализ и рекомендации для эффективного развития и масштабирования вашего цифрового продукта.</p>
     </article>
-  </section>
 
-  <section id="portfolio" aria-labelledby="portfolio-title">
-    <h2 class="section-title" id="portfolio-title">Портфолио</h2>
-    <div id="portfolio-filters" role="tablist" aria-label="Фильтры портфолио">
-      <button class="active" role="tab" aria-selected="true" aria-controls="all-items" id="filter-all" type="button">Все</button>
-      <button role="tab" aria-selected="false" aria-controls="web-items" id="filter-web" type="button">Веб</button>
-      <button role="tab" aria-selected="false" aria-controls="design-items" id="filter-design" type="button">Дизайн</button>
-      <button role="tab" aria-selected="false" aria-controls="branding-items" id="filter-branding" type="button">Брендинг</button>
-    </div>
-    <div id="portfolio-grid" role="tabpanel" aria-labelledby="filter-all" tabindex="0">
-      <div class="portfolio-item" tabindex="0" aria-label="Проект веб-разработки">
-        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный веб-дизайн" />
-        <div class="sparkle-frame" aria-hidden="true"></div>
+    <article class="menu-item" data-category="bakery" tabindex="0" aria-label="Пирожное с ягодами, цена 140 рублей">
+      <img src="https://images.unsplash.com/photo-1523983308745-3e3f2b05f562?w=800" alt="Пирожное с ягодами" loading="lazy" />
+      <div class="menu-item-content">
+        <h3>Пирожное с ягодами</h3>
+        <p>Лёгкое пирожное с сезонными свежими ягодами.</p>
+        <div class="menu-item-price">140 ₽</div>
       </div>
-      <div class="portfolio-item" tabindex="0" aria-label="Проект дизайна">
-        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800" alt="Креативный дизайн" />
-        <div class="sparkle-frame" aria-hidden="true"></div>
-      </div>
-      <div class="portfolio-item" tabindex="0" aria-label="Проект веб-разработки">
-        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800" alt="Корпоративный сайт" />
-        <div class="sparkle-frame" aria-hidden="true"></div>
-      </div>
-      <div class="portfolio-item" tabindex="0" aria-label="Проект брендинга">
-        <img src="https://images.unsplash.com/photo-1508385082359-f0602553c51e?w=800" alt="Современный брендинг" />
-        <div class="sparkle-frame" aria-hidden="true"></div>
-      </div>
-      <div class="portfolio-item" tabindex="0" aria-label="Проект дизайна">
-        <img src="https://images.unsplash.com/photo-1492724441997-5dc865305da7?w=800" alt="Футуристический дизайн" />
-        <div class="sparkle-frame" aria-hidden="true"></div>
-      </div>
-    </div>
-  </section>
+    </article>
 
-  <section id="testimonials" aria-labelledby="testimonials-title">
-    <h2 class="section-title" id="testimonials-title">Отзывы</h2>
-    <div class="testimonial-slider" role="region" aria-live="polite" aria-atomic="true">
-      <div class="testimonial active" tabindex="0">
-        <p>«Работа с Mystira — это настоящая магия! Их внимание к деталям и профессионализм превзошли все ожидания.»</p>
-        <div class="testimonial-author">Ирина К.</div>
-        <div class="testimonial-stars" aria-label="5 звезд">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-        </div>
+    <article class="menu-item" data-category="drinks" tabindex="0" aria-label="Зелёный чай, цена 110 рублей">
+      <img src="https://images.unsplash.com/photo-1484981138541-3d074aa97716?w=800" alt="Чашка с зелёным чаем" loading="lazy" />
+      <div class="menu-item-content">
+        <h3>Зелёный чай</h3>
+        <p>Свежий заваренный зелёный чай для спокойствия и уюта.</p>
+        <div class="menu-item-price">110 ₽</div>
       </div>
-      <div class="testimonial" tabindex="0" hidden>
-        <p>«Уникальный подход и изысканный стиль проекта сделали наш бренд по-настоящему запоминающимся.»</p>
-        <div class="testimonial-author">Алексей М.</div>
-        <div class="testimonial-stars" aria-label="5 звезд">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-        </div>
-      </div>
-    </div>
-  </section>
+    </article>
 
-  <section id="cta" aria-label="Призыв к действию">
-    <button type="button" aria-label="Связаться с нами сейчас">Связаться с нами</button>
-  </section>
+    <article class="menu-item" data-category="drinks" tabindex="0" aria-label="Мятный лимонад, цена 130 рублей">
+      <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" alt="Стакан мятного лимонада" loading="lazy" />
+      <div class="menu-item-content">
+        <h3>Мятный лимонад</h3>
+        <p>Освежающий лимонад с натуральной мятой и лимоном.</p>
+        <div class="menu-item-price">130 ₽</div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<section class="special-offers" aria-label="Специальные предложения">
+  <h2>Специальные предложения</h2>
+  <div class="offers-list">
+
+    <article class="offer-card" tabindex="0" aria-label="Сезонное предложение: тыквенный латте">
+      <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800" alt="Тыквенный латте с корицей" loading="lazy" />
+      <h3>Тыквенный латте</h3>
+      <p>Тёплый сезонный напиток с пряностями и тыквенным пюре.</p>
+    </article>
+
+    <article class="offer-card" tabindex="0" aria-label="Акция: вторая выпечка бесплатно при заказе кофе">
+      <img src="https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=800" alt="Свежая выпечка" loading="lazy" />
+      <h3>Акция: 2-я выпечка бесплатно</h3>
+      <p>При заказе любого кофе — получи вторую выпечку в подарок.</p>
+    </article>
+
+  </div>
+</section>
+
+<section class="reviews" aria-labelledby="reviews-title" tabindex="0">
+  <h2 id="reviews-title">Отзывы клиентов</h2>
+  <div class="reviews-carousel" id="reviews-carousel" aria-live="polite">
+    <article class="review-item" aria-hidden="false">
+      <img class="review-photo" src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=80" alt="Фото клиента Анастасии" loading="lazy" />
+      <p class="review-text">"Лучшее место для утреннего кофе! Атмосфера и сервис вызывают улыбку каждый день."</p>
+      <p class="review-author">— Анастасия П.</p>
+    </article>
+    <article class="review-item" aria-hidden="true" style="transform: translateX(100%)">
+      <img class="review-photo" src="https://images.unsplash.com/photo-1517363898877-7371a117b7f6?w=80" alt="Фото клиента Ивана" loading="lazy" />
+      <p class="review-text">"Отличный кофе и уютный интерьер. Всегда приятно возвращаться сюда."</p>
+      <p class="review-author">— Иван С.</p>
+    </article>
+    <article class="review-item" aria-hidden="true" style="transform: translateX(100%)">
+      <img class="review-photo" src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=80" alt="Фото клиента Ольги" loading="lazy" />
+      <p class="review-text">"Всегда свежая выпечка и внимательный персонал. Настоящее уютное место."</p>
+      <p class="review-author">— Ольга К.</p>
+    </article>
+  </div>
+  <div class="reviews-controls">
+    <button class="reviews-button" aria-label="Предыдущий отзыв" id="prev-review">&#8592;</button>
+    <button class="reviews-button" aria-label="Следующий отзыв" id="next-review">&#8594;</button>
+  </div>
+</section>
+
+<section class="contacts" id="contacts" aria-labelledby="contacts-title">
+  <h2 id="contacts-title">Контактная информация</h2>
+  <div class="contact-info">
+    <div class="contact-item" tabindex="0">
+      <strong>Адрес</strong>
+      Москва, ул. Кофейная, 25
+    </div>
+    <div class="contact-item" tabindex="0">
+      <strong>Телефон</strong>
+      <a href="tel:+74951234567" style="color: var(--brown-dark); text-decoration: underline;">+7 (495) 123-45-67</a>
+    </div>
+    <div class="contact-item" tabindex="0">
+      <strong>Часы работы</strong>
+      Пн-Вс: 08:00 – 22:00
+    </div>
+  </div>
+
+  <iframe class="map" 
+    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2244.045634337366!2d37.62156381608494!3d55.75582698055354!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x414ab585f51b4c99%3A0x42a63c9e6cab373b!2z0JrRgNCw0L3QvtCy0LAsIDE1LCDQntC10LrQsCDQodCw0YHQutC-0YHQutCy0LAsIDEwMDAwMA!5e0!3m2!1sru!2sru!4v1686221580551!5m2!1sru!2sru" 
+    allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" aria-label="Карта расположения кофейни"></iframe>
+
+  <form class="contact-form" aria-label="Форма обратной связи" novalidate>
+    <label for="name">Имя</label>
+    <input type="text" id="name" name="name" required autocomplete="name" placeholder="Ваше имя" />
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required autocomplete="email" placeholder="example@mail.com" />
+    <label for="message">Сообщение</label>
+    <textarea id="message" name="message" rows="4" placeholder="Ваш вопрос или отзыв" required></textarea>
+    <button type="submit" aria-label="Отправить сообщение">Отправить</button>
+  </form>
+</section>
+
 </main>
 
 <footer>
-  <div class="contacts" aria-label="Контактные данные и социальные сети">
-    <a href="mailto:contact@mystira.ru" aria-label="Электронная почта">contact@mystira.ru</a>
-    <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Твиттер (открывается в новом окне)">
-      <svg width="20" height="20" fill="currentColor" aria-hidden="true" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 0.86A5.4 5.4 0 0 0 23 3.3a10.93 10.93 0 0 1-3.5 1.35 5.48 5.48 0 0 0-9.4 5v0A15.56 15.56 0 0 1 1.64 2.15 5.38 5.38 0 0 0 3 9 5.33 5.33 0 0 1 1.7 8.5v0A5.41 5.41 0 0 0 5.1 13.5a5.51 5.51 0 0 1-2.5.1 5.45 5.45 0 0 0 5 3.82A11 11 0 0 1 1 18a15.52 15.52 0 0 0 8.4 2.46c10.07 0 15.6-8.46 15.6-15.8 0-.24 0-.48-.02-.71A11 11 0 0 0 23 3z"/></svg>
-    </a>
-    <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Инстаграм (открывается в новом окне)">
-      <svg width="20" height="20" fill="currentColor" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm5 3.7a4.3 4.3 0 1 0 4.3 4.3A4.3 4.3 0 0 0 12 5.7zm5.8-.2a1.2 1.2 0 1 0 1.2 1.2 1.2 1.2 0 0 0-1.2-1.2z"/></svg>
-    </a>
+  <div class="footer-content">
+    <div class="footer-copy" aria-label="Копирайт">
+      &copy; 2024 Уютный Кофе. Все права защищены.
+    </div>
+    <nav class="footer-menu" aria-label="Дополнительное меню">
+      <a href="#privacy-policy">Политика конфиденциальности</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="footer-socials" aria-label="Социальные сети">
+      <a href="#" aria-label="Instagram" tabindex="0">
+        <svg class="social-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M7 2H17C20.31 2 22 3.69 22 7V17C22 20.31 20.31 22 17 22H7C3.69 22 2 20.31 2 17V7C2 3.69 3.69 2 7 2Z"/>
+          <path stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M12 17A5 5 0 1 0 12 7a5 5 0 0 0 0 10z"/>
+          <path stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M17.5 6.5H17.51"/>
+        </svg>
+      </a>
+      <a href="#" aria-label="Facebook" tabindex="0">
+        <svg class="social-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M18 2H15C12.243 2 10 4.243 10 7V10H7V14H10V22H14V14H17L18 10H14V7C14 6.447 14.448 6 15 6H18V2Z"/>
+        </svg>
+      </a>
+      <a href="#" aria-label="Twitter" tabindex="0">
+        <svg class="social-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3V9a12.94 12.94 0 0 1-9.4-4.92S1 11.12 8 14a13.34 13.34 0 0 1-7 2c9 5 20 0 20-11.5a4.75 4.75 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/>
+        </svg>
+      </a>
+    </div>
   </div>
-  <small>© 2024 Mystira. Все права защищены.</small>
 </footer>
 
 <script>
-  // Portfolio filter buttons
-  const filterButtons = document.querySelectorAll('#portfolio-filters button');
-  const portfolioGrid = document.getElementById('portfolio-grid');
-  const items = Array.from(portfolioGrid.children);
+  // Hamburger toggle for mobile
+  const hamburger = document.querySelector('.hamburger');
+  const nav = document.getElementById('main-nav');
+  hamburger.addEventListener('click', () => {
+    const expanded = hamburger.getAttribute('aria-expanded') === 'true';
+    hamburger.setAttribute('aria-expanded', (!expanded).toString());
+    nav.dataset.open = (!expanded).toString();
+    if (!expanded) {
+      // Trap focus inside menu
+      nav.querySelector('ul li a, .btn-order').focus();
+    }
+  });
+  hamburger.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      hamburger.click();
+    }
+  });
+
+  // Menu filtering
+  const filterButtons = document.querySelectorAll('.filter-button');
+  const menuItems = document.querySelectorAll('.menu-item');
 
   filterButtons.forEach(button => {
     button.addEventListener('click', () => {
-      if(button.classList.contains('active')) return;
-
+      // Update ARIA and active states
       filterButtons.forEach(btn => {
         btn.classList.remove('active');
         btn.setAttribute('aria-selected', 'false');
+        btn.tabIndex = -1;
       });
       button.classList.add('active');
       button.setAttribute('aria-selected', 'true');
-      portfolioGrid.setAttribute('aria-labelledby', button.id);
+      button.tabIndex = 0;
 
-      const filter = button.textContent.trim().toLowerCase();
-      if(filter === 'все') {
-        items.forEach(item => item.style.display = '');
-      } else {
-        items.forEach(item => {
-          // For demo purpose: map images by alt attribute keywords to categories
-          const alt = item.querySelector('img').alt.toLowerCase();
-          if(alt.includes(filter)) item.style.display = '';
-          else item.style.display = 'none';
-        });
-      }
+      const filter = button.dataset.filter;
+      menuItems.forEach(item => {
+        if (filter === 'all') {
+          item.style.display = 'block';
+        } else {
+          // support categories with multiple classes (e.g. decaf)
+          const categories = item.dataset.category.split(' ');
+          item.style.display = categories.includes(filter) ? 'block' : 'none';
+        }
+      });
     });
   });
 
-  // Testimonials slider
-  const testimonials = document.querySelectorAll('#testimonials .testimonial');
-  let currentIndex = 0;
+  // Reviews carousel
+  const reviews = document.querySelectorAll('.review-item');
+  const prevBtn = document.getElementById('prev-review');
+  const nextBtn = document.getElementById('next-review');
+  let currentReview = 0;
 
-  function showTestimonial(index) {
-    testimonials.forEach((t, i) => {
-      if(i === index) {
-        t.classList.add('active');
-        t.removeAttribute('hidden');
-      } else {
-        t.classList.remove('active');
-        t.setAttribute('hidden', '');
-      }
+  function showReview(index) {
+    reviews.forEach((review, i) => {
+      review.style.transform = `translateX(${100 * (i - index)}%)`;
+      review.setAttribute('aria-hidden', i === index ? 'false' : 'true');
+      if(i === index) review.tabIndex = 0;
+      else review.tabIndex = -1;
     });
+    currentReview = index;
   }
-  showTestimonial(currentIndex);
 
-  setInterval(() => {
-    currentIndex = (currentIndex + 1) % testimonials.length;
-    showTestimonial(currentIndex);
-  }, 8000);
+  prevBtn.addEventListener('click', () => {
+    let nextIndex = currentReview - 1;
+    if (nextIndex < 0) nextIndex = reviews.length -1;
+    showReview(nextIndex);
+  });
+  nextBtn.addEventListener('click', () => {
+    let nextIndex = currentReview + 1;
+    if (nextIndex >= reviews.length) nextIndex = 0;
+    showReview(nextIndex);
+  });
+
+  showReview(0);
+
+  // Simple form validation and submission handler
+  const form = document.querySelector('.contact-form');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = form.name.value.trim();
+    const email = form.email.value.trim();
+    const message = form.message.value.trim();
+    if (name && email && message) {
+      // Simulate sending
+      alert(`Спасибо за ваше сообщение, ${name}! Мы свяжемся с вами по почте ${email}.`);
+      form.reset();
+    } else {
+      alert('Пожалуйста, заполните все поля.');
+    }
+  });
+
 </script>
 </body>
 </html>
