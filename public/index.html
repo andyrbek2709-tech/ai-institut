@@ -3,722 +3,1038 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Современный минималистичный сайт</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto&display=swap" rel="stylesheet" />
+<title>Пиццерия «Домашняя Пицца»</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Open+Sans&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --color-primary: #1E3A8A;
-    --color-secondary: #F5F7FA;
-    --color-accent: #F97316;
-    --text-color: #333333;
+    --color-red: #D32F2F;
+    --color-brown: #4E342E;
+    --color-cream: #FFF3E0;
+    --color-green: #81C784;
+    --font-heading: 'Montserrat', sans-serif;
+    --font-body: 'Open Sans', sans-serif;
   }
   * {
     box-sizing: border-box;
   }
   body {
     margin: 0;
-    font-family: 'Roboto', sans-serif;
-    font-size: 17px;
+    font-family: var(--font-body);
+    background: var(--color-cream);
+    color: var(--color-brown);
     line-height: 1.5;
-    color: var(--text-color);
-    background-color: var(--color-secondary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   a {
-    color: var(--color-accent);
+    color: var(--color-red);
     text-decoration: none;
-    transition: color 0.3s ease;
   }
   a:hover,
-  button:hover {
-    color: #d75b0f;
+  a:focus {
+    text-decoration: underline;
+  }
+  img {
+    max-width: 100%;
+    display: block;
+    border-radius: 10px;
   }
   header {
-    position: sticky;
+    position: fixed;
     top: 0;
-    background: var(--color-secondary);
-    border-bottom: 1px solid #ddd;
-    padding: 0.75rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    width: 100%;
+    background: var(--color-cream);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     z-index: 1000;
   }
+  .container {
+    width: 90%;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 70px;
+  }
   .logo {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.5rem;
-    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: var(--color-red);
     user-select: none;
   }
+  .logo svg {
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+    fill: var(--color-red);
+  }
   nav {
-    flex-grow: 1;
-    margin-left: 3rem;
-  }
-  .menu {
     display: flex;
-    justify-content: flex-end;
-    gap: 2rem;
-    font-family: 'Montserrat', sans-serif;
+    gap: 24px;
     font-weight: 600;
+    font-family: var(--font-heading);
     font-size: 1rem;
   }
-  .menu a {
-    color: var(--color-primary);
-    position: relative;
+  nav a {
+    padding: 8px 0;
+    transition: color 0.3s ease;
   }
-  .menu a:focus, .menu a:hover {
-    color: var(--color-accent);
+  nav a:hover,
+  nav a:focus {
+    color: var(--color-green);
   }
-  .btn-contact {
-    margin-left: 2rem;
-    padding: 0.5rem 1.3rem;
-    background: var(--color-accent);
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  .btn-contact:hover,
-  .btn-contact:focus {
-    background: #d75b0f;
-  }
-  /* Mobile menu toggle */
-  .menu-toggle {
-    display: none;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 25px;
-    height: 18px;
-    cursor: pointer;
-  }
-  .menu-toggle span {
-    display: block;
-    height: 3px;
-    background: var(--color-primary);
-    border-radius: 2px;
-  }
-  /* Mobile menu */
-  @media (max-width: 768px) {
-    nav {
-      position: fixed;
-      top: 56px;
-      right: 0;
-      background: var(--color-secondary);
-      width: 220px;
-      height: calc(100% - 56px);
-      transform: translateX(100%);
-      transition: transform 0.3s ease;
-      box-shadow: -2px 0 8px rgba(0,0,0,0.1);
-      padding-top: 1.5rem;
-      z-index: 999;
-    }
-    nav.open {
-      transform: translateX(0);
-    }
-    .menu {
-      flex-direction: column;
-      gap: 1.5rem;
-      padding-left: 1.5rem;
-    }
-    .btn-contact {
-      margin: 1.5rem 0 0 1.5rem;
-      width: calc(100% - 3rem);
-    }
-    .menu-toggle {
-      display: flex;
-    }
-    .menu a {
-      font-size: 1.2rem;
-    }
-  }
-
-  main > section {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 4rem 2rem;
-  }
-
-  /* Hero Section */
-  .hero {
+  .header-right {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
-    flex-wrap: wrap;
-    padding-top: 6rem;
-  }
-  .hero-text {
-    flex: 1 1 320px;
-  }
-  .hero h1 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 3rem;
-    color: var(--color-primary);
-    margin: 0 0 1rem 0;
-    line-height: 1.1;
-  }
-  .hero p.subtitle {
-    font-family: 'Roboto', sans-serif;
-    font-size: 1.2rem;
-    margin: 0 0 1.5rem 0;
-    color: var(--text-color);
-  }
-  .hero p.description {
+    gap: 20px;
+    font-weight: 600;
     font-size: 1rem;
-    margin-bottom: 2rem;
-    color: var(--text-color);
-    max-width: 480px;
+    font-family: var(--font-heading);
   }
-  .hero .btn-primary {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    background: var(--color-accent);
+  .phone {
+    color: var(--color-brown);
+    user-select: text;
+  }
+  .btn-order {
+    background-color: var(--color-red);
+    color: #fff;
     border: none;
-    color: white;
-    padding: 0.75rem 2rem;
-    font-size: 1.2rem;
-    border-radius: 5px;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgb(249 115 22 / 0.45);
-    transition: background-color 0.25s ease;
-  }
-  .hero .btn-primary:hover,
-  .hero .btn-primary:focus {
-    background: #d75b0f;
-  }
-  .hero-image {
-    flex: 1 1 320px;
-    text-align: center;
-  }
-  .hero-image img {
-    max-width: 100%;
-    border-radius: 8px;
-    object-fit: cover;
-    box-shadow: 0 2px 12px rgb(30 58 138 / 0.25);
-  }
-
-  /* About Section */
-  .about {
-    text-align: center;
-  }
-  .about p {
-    max-width: 700px;
-    margin: 0 auto 2.5rem auto;
-    font-size: 1.1rem;
-    color: var(--text-color);
-  }
-  .advantages {
-    display: flex;
-    justify-content: center;
-    gap: 3rem;
-    flex-wrap: wrap;
-  }
-  .advantage-item {
-    flex: 1 1 200px;
-    max-width: 240px;
-    text-align: center;
-  }
-  .advantage-icon {
-    font-size: 3rem;
-    color: var(--color-primary);
-    margin-bottom: 0.5rem;
-  }
-  .advantage-title {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.15rem;
-    margin-bottom: 0.4rem;
-    color: var(--color-primary);
-  }
-  .advantage-desc {
-    font-size: 0.9rem;
-    color: var(--text-color);
-  }
-  .about-team-photo {
-    margin-top: 3rem;
-    max-width: 360px;
-    margin-left: auto;
-    margin-right: auto;
-    border-radius: 10px;
-    box-shadow: 0 2px 15px rgb(30 58 138 / 0.1);
-  }
-
-  /* Services Section */
-  .services {
-    max-width: 1100px;
-  }
-  .services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-    gap: 2rem;
-  }
-  .service-item {
-    background: white;
-    padding: 1.8rem 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 12px rgb(30 58 138 / 0.05);
-    text-align: center;
-    transition: box-shadow 0.3s ease;
-  }
-  .service-item:hover {
-    box-shadow: 0 6px 20px rgb(249 115 22 / 0.3);
-  }
-  .service-icon {
-    font-size: 2.8rem;
-    color: var(--color-primary);
-    margin-bottom: 1rem;
-  }
-  .service-title {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.25rem;
-    margin-bottom: 0.6rem;
-    color: var(--color-primary);
-  }
-  .service-desc {
-    font-size: 0.95rem;
-    color: var(--text-color);
-  }
-
-  /* Portfolio Section */
-  .portfolio-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-    gap: 1.5rem;
-  }
-  .portfolio-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 8px;
-    box-shadow: 0 2px 12px rgb(30 58 138 / 0.1);
-    background: white;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s ease;
-  }
-  .portfolio-card:hover {
-    transform: translateY(-4px);
-  }
-  .portfolio-card img {
-    width: 100%;
-    display: block;
-    object-fit: cover;
-    aspect-ratio: 4 / 3;
-  }
-  .portfolio-info {
-    padding: 1rem 1.25rem 1.5rem 1.25rem;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .portfolio-desc {
+    padding: 10px 22px;
+    font-family: var(--font-heading);
+    font-weight: 600;
     font-size: 1rem;
-    color: var(--text-color);
-    margin-bottom: 1rem;
-    flex-grow: 1;
-  }
-  .portfolio-more {
-    align-self: start;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    color: var(--color-accent);
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    font-size: 1rem;
-    transition: color 0.25s ease;
-  }
-  .portfolio-more:hover {
-    color: #d75b0f;
-    text-decoration: underline;
-  }
-
-  /* Testimonials Section */
-  .testimonials {
-    max-width: 800px;
-    margin: 0 auto;
-    position: relative;
-  }
-  .testimonial-slider {
-    overflow: hidden;
-    position: relative;
-  }
-  .testimonial-item {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 2rem 1rem;
-    color: var(--text-color);
-  }
-  .testimonial-item.active {
-    display: flex;
-  }
-  .testimonial-photo {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 1rem;
-    box-shadow: 0 0 0 3px var(--color-primary);
-  }
-  .testimonial-text {
-    font-style: italic;
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-    max-width: 600px;
-  }
-  .testimonial-author {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    color: var(--color-primary);
-  }
-  .testimonial-position {
-    font-size: 0.9rem;
-    color: #666666;
-  }
-  .testimonial-controls {
-    margin-top: 1rem;
-    text-align: center;
-  }
-  .testimonial-btn {
-    background: var(--color-accent);
-    border: none;
-    color: white;
-    padding: 0.4rem 1rem;
-    margin: 0 0.3rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: background-color 0.3s ease;
-  }
-  .testimonial-btn:hover,
-  .testimonial-btn:focus {
-    background: #d75b0f;
-  }
-
-  /* CTA Section */
-  .cta {
-    background: var(--color-primary);
-    color: white;
-    text-align: center;
-    padding: 4rem 2rem;
-    border-radius: 12px;
-    max-width: 900px;
-    margin: 3rem auto 4rem auto;
-  }
-  .cta-text {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 2rem;
-    margin-bottom: 1.2rem;
-    line-height: 1.1;
-  }
-  .cta-subtext {
-    font-size: 1.1rem;
-    margin-bottom: 2.2rem;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .cta-button {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.3rem;
-    background: var(--color-accent);
-    border: none;
-    color: white;
-    padding: 0.9rem 3rem;
     border-radius: 6px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgb(249 115 22 / 0.65);
-    transition: background-color 0.25s ease;
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
   }
-  .cta-button:hover,
-  .cta-button:focus {
-    background: #d75b0f;
+  .btn-order:hover,
+  .btn-order:focus {
+    background-color: #b02727;
+    outline: none;
   }
-
-  /* Footer Section */
-  footer {
-    background: var(--color-primary);
-    color: white;
-    padding: 3rem 2rem 2rem 2rem;
-    font-size: 0.95rem;
+  main {
+    padding-top: 70px;
+    min-height: 100vh;
   }
-  .footer-container {
-    max-width: 1100px;
+  /* Hero */
+  .hero {
+    background: var(--color-cream);
+    padding: 60px 0 40px;
+    text-align: center;
+  }
+  .hero-content {
+    max-width: 900px;
     margin: 0 auto;
+  }
+  .hero img {
+    max-width: 800px;
+    border-radius: 16px;
+    box-shadow: 0 10px 20px rgba(77, 52, 46, 0.25);
+    margin-bottom: 30px;
+    user-select: none;
+  }
+  .hero-title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 2rem;
+    color: var(--color-brown);
+    margin-bottom: 16px;
+  }
+  .hero-buttons {
+    display: inline-flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .btn-primary, .btn-secondary {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 14px 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    transition: box-shadow 0.3s ease;
+  }
+  .btn-primary {
+    background-color: var(--color-red);
+    color: #fff;
+  }
+  .btn-primary:hover,
+  .btn-primary:focus {
+    box-shadow: 0 0 12px var(--color-red);
+    outline: none;
+  }
+  .btn-secondary {
+    background-color: var(--color-green);
+    color: #fff;
+  }
+  .btn-secondary:hover,
+  .btn-secondary:focus {
+    box-shadow: 0 0 12px var(--color-green);
+    outline: none;
+  }
+  /* Advantages */
+  .advantages {
+    background: #fff;
+    padding: 40px 0 50px;
+  }
+  .advantages .container {
     display: flex;
     flex-wrap: wrap;
-    gap: 2rem;
+    justify-content: center;
+    gap: 48px;
+    max-width: 1020px;
+  }
+  .advantage {
+    flex: 1 1 180px;
+    max-width: 220px;
+    text-align: center;
+    color: var(--color-brown);
+  }
+  .advantage svg {
+    width: 48px;
+    height: 48px;
+    fill: var(--color-red);
+    margin-bottom: 14px;
+  }
+  .advantage p {
+    font-weight: 600;
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    user-select: none;
+  }
+  /* Menu */
+  .menu {
+    padding: 40px 0 60px;
+    background: var(--color-cream);
+  }
+  .menu .container {
+    max-width: 1180px;
+  }
+  .menu h2 {
+    font-family: var(--font-heading);
+    color: var(--color-brown);
+    font-weight: 600;
+    font-size: 2rem;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .menu-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 32px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+  }
+  .menu-tab {
+    cursor: pointer;
+    position: relative;
+    padding-bottom: 6px;
+    color: var(--color-brown);
+    user-select: none;
+    transition: color 0.3s ease;
+  }
+  .menu-tab.active,
+  .menu-tab:hover,
+  .menu-tab:focus {
+    color: var(--color-red);
+  }
+  .menu-tab.active::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    height: 3px;
+    background-color: var(--color-red);
+    border-radius: 3px 3px 0 0;
+  }
+  .menu-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    justify-content: center;
+  }
+  .menu-card {
+    background: #fff;
+    border-radius: 14px;
+    width: 260px;
+    box-shadow: 0 10px 18px rgb(78 52 46 / 0.12);
+    transition: box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .menu-card:hover,
+  .menu-card:focus-within {
+    box-shadow: 0 15px 25px var(--color-green);
+  }
+  .menu-card img {
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    user-select: none;
+  }
+  .menu-content {
+    padding: 16px 18px 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
     justify-content: space-between;
   }
-  .footer-col {
-    min-width: 200px;
-    flex: 1 1 200px;
+  .menu-title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin: 0 0 6px;
+    color: var(--color-brown);
   }
-  .footer-logo {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.6rem;
-    margin-bottom: 1rem;
+  .menu-desc {
+    font-size: 0.9rem;
+    color: var(--color-brown);
+    flex-grow: 1;
+    margin-bottom: 8px;
   }
-  .footer-contact p,
-  .footer-links a {
-    margin: 0.3rem 0;
-    color: white;
-    opacity: 0.85;
-    text-decoration: none;
-  }
-  .footer-links a:hover,
-  .footer-contact p a:hover {
-    opacity: 1;
-    text-decoration: underline;
-  }
-  .footer-socials {
+  .menu-footer {
     display: flex;
-    gap: 1rem;
-    margin-top: 0.5rem;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .menu-price {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--color-red);
+    user-select: none;
+  }
+  .btn-add {
+    background-color: var(--color-green);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    padding: 8px 14px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    user-select: none;
+  }
+  .btn-add:hover,
+  .btn-add:focus {
+    background-color: #5baa6b;
+    outline: none;
+  }
+  /* Promotions */
+  .promotions {
+    background: #fff;
+    padding: 40px 0 40px;
+  }
+  .promotions .container {
+    max-width: 1080px;
+    position: relative;
+  }
+  .promo-slider {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 20px;
+    padding-bottom: 8px;
+  }
+  .promo-slide {
+    flex: 0 0 320px;
+    scroll-snap-align: start;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 18px rgb(0 0 0 / 0.12);
+    position: relative;
+    background-color: var(--color-red);
+    color: #fff;
+  }
+  .promo-slide img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    user-select: none;
+  }
+  .promo-content {
+    position: relative;
+    padding: 18px 20px 20px;
+    background: linear-gradient(0deg, rgba(211,47,47,0.85), rgba(211,47,47,0.85));
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .promo-title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.3rem;
+    margin-bottom: 6px;
+  }
+  .promo-time {
+    font-weight: 600;
+    font-size: 0.9rem;
+    opacity: 0.85;
+    user-select: none;
+  }
+  /* About us */
+  .about {
+    background: var(--color-cream);
+    padding: 50px 0 50px;
+  }
+  .about .container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 40px;
+    max-width: 1100px;
+  }
+  .about-text {
+    flex: 1 1 470px;
+    font-size: 1.05rem;
+    color: var(--color-brown);
+    font-family: var(--font-body);
+    line-height: 1.6;
+  }
+  .about-text strong {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    color: var(--color-red);
+  }
+  .about-img {
+    flex: 1 1 420px;
+    border-radius: 18px;
+    box-shadow: 0 10px 18px rgb(78 52 46 / 0.18);
+    user-select: none;
+  }
+  /* Reviews */
+  .reviews {
+    padding: 60px 0 50px;
+    background: #fff;
+  }
+  .reviews .container {
+    max-width: 1020px;
+    text-align: center;
+  }
+  .reviews h2 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 2rem;
+    color: var(--color-brown);
+    margin-bottom: 36px;
+  }
+  .review-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+  }
+  .review {
+    background: var(--color-cream);
+    border-radius: 14px;
+    padding: 24px 20px;
+    max-width: 360px;
+    box-shadow: 0 10px 18px rgb(78 52 46 / 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+  .review-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+  .review-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    user-select: none;
+  }
+  .review-text {
+    font-style: italic;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--color-brown);
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+  .review-author {
+    font-weight: 600;
+    font-family: var(--font-heading);
+    color: var(--color-red);
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+  .review-stars {
+    color: var(--color-green);
+    font-size: 1.1rem;
+    user-select: none;
+  }
+  /* Contact */
+  .contact {
+    background: var(--color-cream);
+    padding: 50px 0 70px;
+  }
+  .contact .container {
+    max-width: 1080px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: space-between;
+  }
+  .contact-info {
+    flex: 1 1 380px;
+    font-family: var(--font-body);
+    color: var(--color-brown);
+  }
+  .contact-info h3 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.8rem;
+    margin-bottom: 24px;
+  }
+  .contact-info p {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .contact-info a {
+    color: var(--color-red);
+    font-weight: 600;
+    user-select: text;
+  }
+  .contact-form {
+    flex: 1 1 380px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 18px rgb(78 52 46 / 0.12);
+    padding: 30px 24px;
+  }
+  .contact-form h3 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.8rem;
+    margin-bottom: 24px;
+    text-align: center;
+    color: var(--color-brown);
+    user-select: none;
+  }
+  .contact-form label {
+    display: block;
+    font-weight: 600;
+    font-family: var(--font-body);
+    margin-bottom: 6px;
+    color: var(--color-brown);
+  }
+  .contact-form input,
+  .contact-form textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1.8px solid #bba996;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    resize: vertical;
+    margin-bottom: 18px;
+    transition: border-color 0.25s ease;
+  }
+  .contact-form input:focus,
+  .contact-form textarea:focus {
+    outline: none;
+    border-color: var(--color-red);
+  }
+  .contact-form button {
+    width: 100%;
+    background-color: var(--color-red);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 12px 0;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .contact-form button:hover,
+  .contact-form button:focus {
+    background-color: #b02727;
+    outline: none;
+  }
+  .map {
+    flex: 1 1 100%;
+    height: 300px;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 32px;
+    box-shadow: 0 10px 18px rgb(78 52 46 / 0.12);
+  }
+  /* Footer */
+  footer {
+    background: var(--color-brown);
+    color: #fff;
+    font-family: var(--font-body);
+    padding: 24px 0;
+  }
+  footer .container {
+    max-width: 1100px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+  }
+  footer nav {
+    display: flex;
+    gap: 24px;
+    font-weight: 600;
+    font-family: var(--font-heading);
+  }
+  footer nav a {
+    color: #f5f5f5;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+  }
+  footer nav a:hover,
+  footer nav a:focus {
+    color: var(--color-green);
   }
   .footer-socials a {
-    color: white;
-    opacity: 0.85;
-    font-size: 1.3rem;
-    text-decoration: none;
-    transition: opacity 0.3s ease;
+    color: #f5f5f5;
+    font-size: 1.4rem;
+    margin-left: 14px;
+    transition: color 0.3s ease;
+  }
+  .footer-socials a:first-child {
+    margin-left: 0;
   }
   .footer-socials a:hover,
   .footer-socials a:focus {
-    opacity: 1;
+    color: var(--color-green);
   }
-  .footer-bottom {
-    text-align: center;
-    margin-top: 2rem;
-    font-size: 0.85rem;
-    opacity: 0.7;
+  .footer-copy {
+    font-size: 0.88rem;
+    user-select: none;
   }
-  @media (max-width:600px) {
-    footer {
-      font-size: 0.9rem;
-      padding: 2rem 1rem 1.5rem 1rem;
+  /* Icons */
+  svg.icon {
+    vertical-align: middle;
+    fill: var(--color-red);
+  }
+  /* Stars for reviews */
+  .star {
+    width: 16px;
+    height: 16px;
+    fill: var(--color-green);
+    margin: 0 1.5px;
+  }
+  /* Responsive */
+  @media (max-width: 950px) {
+    .menu-list {
+      justify-content: center;
     }
-    .footer-container {
+    .advantages .container {
+      gap: 28px 48px;
+    }
+  }
+  @media (max-width: 768px) {
+    nav {
+      display: none;
+    }
+    .header-right > .phone {
+      display: none;
+    }
+    .header-inner {
+      justify-content: space-between;
+    }
+    .btn-order {
+      padding: 10px 18px;
+      font-size: 0.95rem;
+    }
+    .about .container {
       flex-direction: column;
-      gap: 1.5rem;
+      align-items: center;
+      gap: 32px;
+    }
+    .about-text, .about-img {
+      flex: 1 1 100%;
+      max-width: 100%;
+    }
+    .contact .container {
+      flex-direction: column;
+      gap: 32px;
+    }
+    .contact-info, .contact-form {
+      flex: 1 1 100%;
+    }
+    .menu-tabs {
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 18px 24px;
+      font-size: 1rem;
+    }
+    .menu-card {
+      width: 100%;
+      max-width: 500px;
+    }
+    .promo-slide {
+      flex: 0 0 85vw;
+    }
+  }
+  @media (max-width: 400px) {
+    .btn-primary,
+    .btn-secondary {
+      padding: 12px 24px;
+      font-size: 1rem;
     }
   }
 </style>
 </head>
 <body>
-
-<header>
-  <div class="logo" aria-label="Логотип сайта">MyCompany</div>
-  <button class="menu-toggle" aria-label="Открыть меню" aria-expanded="false" aria-controls="primary-menu">
-    <span></span><span></span><span></span>
-  </button>
-  <nav id="primary-menu" aria-label="Основное меню">
-    <div class="menu">
-      <a href="#hero">Главная</a>
-      <a href="#about">О компании</a>
-      <a href="#services">Услуги</a>
-      <a href="#portfolio">Портфолио</a>
-      <a href="#testimonials">Отзывы</a>
-    </div>
-    <button class="btn-contact" type="button">Связаться</button>
-  </nav>
-</header>
-
-<main>
-
-  <section id="hero" class="hero" role="banner">
-    <div class="hero-text">
-      <h1>Создаём современные цифровые решения</h1>
-      <p class="subtitle">Профессиональные веб-сервисы и мобильные приложения на заказ.</p>
-      <p class="description">Мы объединяем минимализм и функциональность для вашего бизнеса – качественно, быстро и с заботой о пользователях.</p>
-      <button class="btn-primary" type="button">Начать</button>
-    </div>
-    <div class="hero-image" aria-hidden="true">
-      <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800" alt="Современное цифровое решение" />
-    </div>
-  </section>
-
-  <section id="about" class="about" aria-labelledby="about-title">
-    <h2 id="about-title" style="font-family: 'Montserrat',sans-serif; font-weight:700; font-size:28px; color:#1E3A8A; margin-bottom:1rem; text-align:center;">О компании</h2>
-    <p>Мы стремимся создавать инновационные продукты, которые упрощают жизнь людей и помогают бизнесам расти, сохраняя минималистичный и удобный дизайн.</p>
-    <div class="advantages" role="list">
-      <div class="advantage-item" role="listitem">
-        <div class="advantage-icon" aria-hidden="true">🚀</div>
-        <div class="advantage-title">Быстрая разработка</div>
-        <div class="advantage-desc">Оптимизированные процессы и опытная команда.</div>
-      </div>
-      <div class="advantage-item" role="listitem">
-        <div class="advantage-icon" aria-hidden="true">💡</div>
-        <div class="advantage-title">Креативные решения</div>
-        <div class="advantage-desc">Индивидуальный подход к каждому проекту.</div>
-      </div>
-      <div class="advantage-item" role="listitem">
-        <div class="advantage-icon" aria-hidden="true">🔒</div>
-        <div class="advantage-title">Безопасность</div>
-        <div class="advantage-desc">Данные и проекты под надежной защитой.</div>
-      </div>
-    </div>
-    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800" alt="Фото команды" class="about-team-photo" />
-  </section>
-
-  <section id="services" class="services" aria-labelledby="services-title">
-    <h2 id="services-title" style="font-family: 'Montserrat',sans-serif; font-weight:700; font-size:28px; color:#1E3A8A; margin-bottom:2rem; text-align:center;">Наши услуги</h2>
-    <div class="services-grid">
-      <article class="service-item" tabindex="0">
-        <div class="service-icon" aria-hidden="true">🌐</div>
-        <h3 class="service-title">Веб-разработка</h3>
-        <p class="service-desc">Создание современных и адаптивных сайтов любой сложности.</p>
-      </article>
-      <article class="service-item" tabindex="0">
-        <div class="service-icon" aria-hidden="true">📱</div>
-        <h3 class="service-title">Мобильные приложения</h3>
-        <p class="service-desc">Разработка нативных и кроссплатформенных приложений.</p>
-      </article>
-      <article class="service-item" tabindex="0">
-        <div class="service-icon" aria-hidden="true">⚙️</div>
-        <h3 class="service-title">Поддержка и сопровождение</h3>
-        <p class="service-desc">Обеспечение стабильной работы и обновление продуктов.</p>
-      </article>
-    </div>
-  </section>
-
-  <section id="portfolio" aria-labelledby="portfolio-title">
-    <h2 id="portfolio-title" style="font-family: 'Montserrat',sans-serif; font-weight:700; font-size:28px; color:#1E3A8A; margin: 2rem auto 2rem auto; max-width:1100px; text-align:center;">Портфолио</h2>
-    <div class="portfolio-grid" role="list">
-      <article class="portfolio-card" role="listitem" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800" alt="Проект интернет-магазин" />
-        <div class="portfolio-info">
-          <p class="portfolio-desc">Интернет-магазин с интеграцией платежных систем и адаптивным дизайном.</p>
-          <button class="portfolio-more" type="button">Подробнее</button>
-        </div>
-      </article>
-      <article class="portfolio-card" role="listitem" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800" alt="Проект мобильное приложение" />
-        <div class="portfolio-info">
-          <p class="portfolio-desc">Кроссплатформенное мобильное приложение для управления задачами.</p>
-          <button class="portfolio-more" type="button">Подробнее</button>
-        </div>
-      </article>
-      <article class="portfolio-card" role="listitem" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1492724441997-5dc865305da7?w=800" alt="Проект корпоративный сайт" />
-        <div class="portfolio-info">
-          <p class="portfolio-desc">Корпоративный сайт с возможностями блога и клиентской поддержки.</p>
-          <button class="portfolio-more" type="button">Подробнее</button>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <section id="testimonials" class="testimonials" aria-labelledby="testimonials-title">
-    <h2 id="testimonials-title" style="font-family: 'Montserrat',sans-serif; font-weight:700; font-size:28px; color:#1E3A8A; margin-bottom:2rem; text-align:center;">Отзывы клиентов</h2>
-    <div class="testimonial-slider" id="testimonial-slider" role="region" aria-roledescription="carousel" aria-live="polite">
-      <article class="testimonial-item active" role="group" aria-label="Отзыв 1 из 3">
-        <img class="testimonial-photo" src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=80" alt="Фото клиента Иван Иванов" />
-        <p class="testimonial-text">"Отличная команда, быстро и качественно воплотили все наши идеи. Рекомендуем!"</p>
-        <div class="testimonial-author">Иван Иванов</div>
-        <div class="testimonial-position">Директор, ООО Ромашка</div>
-      </article>
-      <article class="testimonial-item" role="group" aria-label="Отзыв 2 из 3">
-        <img class="testimonial-photo" src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=80" alt="Фото клиента Мария Смирнова" />
-        <p class="testimonial-text">"Профессиональный подход и отличное понимание задач. Работаем уже второй год."</p>
-        <div class="testimonial-author">Мария Смирнова</div>
-        <div class="testimonial-position">Маркетолог, Стартап Х</div>
-      </article>
-      <article class="testimonial-item" role="group" aria-label="Отзыв 3 из 3">
-        <img class="testimonial-photo" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80" alt="Фото клиента Алексей Петров" />
-        <p class="testimonial-text">"Дизайн и реализация выше всяких похвал. Спасибо за сотрудничество!"</p>
-        <div class="testimonial-author">Алексей Петров</div>
-        <div class="testimonial-position">Основатель, Компания Z</div>
-      </article>
-    </div>
-    <div class="testimonial-controls" role="group" aria-label="Управление слайдером отзывов">
-      <button class="testimonial-btn" type="button" aria-label="Предыдущий отзыв" id="testimonial-prev">&larr;</button>
-      <button class="testimonial-btn" type="button" aria-label="Следующий отзыв" id="testimonial-next">&rarr;</button>
-    </div>
-  </section>
-
-  <section class="cta" aria-labelledby="cta-title">
-    <h2 id="cta-title" class="cta-text">Готовы начать работу с профессионалами?</h2>
-    <p class="cta-subtext">Свяжитесь с нами прямо сейчас и создайте продукт, который полюбят ваши пользователи.</p>
-    <button class="cta-button" type="button">Связаться</button>
-  </section>
-
-</main>
-
-<footer>
-  <div class="footer-container">
-    <div class="footer-col">
-      <div class="footer-logo" aria-label="Логотип сайта">MyCompany</div>
-      <p>Современные цифровые решения с заботой о пользователях.</p>
-      <div class="footer-socials" role="list" aria-label="Социальные сети">
-        <a href="#" role="listitem" aria-label="Facebook" target="_blank" rel="noopener noreferrer">🌐</a>
-        <a href="#" role="listitem" aria-label="Instagram" target="_blank" rel="noopener noreferrer">📸</a>
-        <a href="#" role="listitem" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">🔗</a>
-      </div>
-    </div>
-    <div class="footer-col footer-contact" aria-label="Контактная информация">
-      <p>Телефон: <a href="tel:+71234567890">+7 (123) 456-78-90</a></p>
-      <p>Email: <a href="mailto:info@mycompany.ru">info@mycompany.ru</a></p>
-      <p>Адрес: Москва, ул. Пушкина, д. 10</p>
-    </div>
-    <div class="footer-col footer-links" aria-label="Полезные ссылки">
-      <a href="#">Политика конфиденциальности</a><br/>
-      <a href="#">Пользовательское соглашение</a><br/>
-      <a href="#">Карта сайта</a>
+<header role="banner" aria-label="Основная навигация">
+  <div class="container header-inner">
+    <a href="#hero" class="logo" aria-label="Главная страница">
+      <svg aria-hidden="true" role="img" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" stroke="#D32F2F" stroke-width="3" fill="#FFF3E0"/><path d="M16 32a16 16 0 0132 0 16 16 0 01-32 0z" fill="#D32F2F"/><circle cx="32" cy="24" r="4" fill="#FFF3E0"/><path d="M24 36a2 2 0 014 0 4 4 0 008 0 2 2 0 014 0 10 10 0 01-20 0z" fill="#FFF3E0"/></svg>
+      Домашняя Пицца
+    </a>
+    <nav role="navigation" aria-label="Основное меню">
+      <a href="#hero" tabindex="0">Главная</a>
+      <a href="#menu" tabindex="0">Меню</a>
+      <a href="#promotions" tabindex="0">Акции</a>
+      <a href="#about" tabindex="0">О нас</a>
+      <a href="#contact" tabindex="0">Контакты</a>
+    </nav>
+    <div class="header-right">
+      <a class="phone" href="tel:+74951234567" aria-label="Позвонить в пиццерию +7 (495) 123-45-67">+7 (495) 123-45-67</a>
+      <button class="btn-order" type="button" aria-haspopup="dialog" aria-controls="order-modal" aria-label="Заказать пиццу">Заказать</button>
     </div>
   </div>
-  <div class="footer-bottom">
-    &copy; 2024 MyCompany. Все права защищены.
+</header>
+<main>
+  <section id="hero" class="hero" aria-label="Приветственный баннер">
+    <div class="hero-content" tabindex="-1">
+      <img src="https://images.unsplash.com/photo-1601924582975-c72169501eb0?w=800" alt="Аппетитная пицца на деревянном столе" />
+      <h1 class="hero-title">Свежая пицца с доставкой за 30 минут</h1>
+      <div class="hero-buttons">
+        <a href="#menu" class="btn-primary" role="button">Посмотреть меню</a>
+        <button class="btn-secondary" type="button" aria-haspopup="dialog" aria-controls="order-modal">Заказать сейчас</button>
+      </div>
+    </div>
+  </section>
+  <section class="advantages" aria-label="Преимущества пиццерии">
+    <div class="container">
+      <article class="advantage" tabindex="0">
+        <svg class="icon" aria-hidden="true" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" stroke="none" fill="var(--color-red)"/><path d="M40 22a8 8 0 11-16 0 8 8 0 0116 0z" fill="#FFF3E0"/></svg>
+        <p>Свежие ингредиенты</p>
+      </article>
+      <article class="advantage" tabindex="0">
+        <svg class="icon" aria-hidden="true" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" stroke="none" fill="var(--color-red)"/><path d="M24 38v10h16V38" fill="#FFF3E0"/></svg>
+        <p>Быстрая доставка</p>
+      </article>
+      <article class="advantage" tabindex="0">
+        <svg class="icon" aria-hidden="true" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" stroke="none" fill="var(--color-red)"/><path d="M36 22l-8 20" stroke="#FFF3E0" stroke-width="4" stroke-linecap="round"/></svg>
+        <p>Ручная лепка</p>
+      </article>
+      <article class="advantage" tabindex="0">
+        <svg class="icon" aria-hidden="true" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" stroke="none" fill="var(--color-red)"/><rect x="22" y="22" width="20" height="20" rx="4" ry="4" fill="#FFF3E0"/></svg>
+        <p>Экологичная упаковка</p>
+      </article>
+    </div>
+  </section>
+  <section id="menu" class="menu" aria-label="Меню пиццерии">
+    <h2>Наше меню</h2>
+    <nav class="menu-tabs" role="tablist">
+      <button type="button" role="tab" aria-selected="true" id="tab-classic" aria-controls="panel-classic" class="menu-tab active" tabindex="0">Классические пиццы</button>
+      <button type="button" role="tab" aria-selected="false" id="tab-special" aria-controls="panel-special" class="menu-tab" tabindex="-1">Специальные предложения</button>
+      <button type="button" role="tab" aria-selected="false" id="tab-snacks" aria-controls="panel-snacks" class="menu-tab" tabindex="-1">Закуски</button>
+    </nav>
+    <div id="panel-classic" role="tabpanel" aria-labelledby="tab-classic">
+      <div class="menu-list">
+        <article class="menu-card" tabindex="0" aria-label="Пицца Маргарита, классическая итальянская пицца с сыром и базиликом, цена 450 рублей">
+          <img src="https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" alt="Пицца Маргарита" loading="lazy"/>
+          <div class="menu-content">
+            <h3 class="menu-title">Маргарита</h3>
+            <p class="menu-desc">Классическая итальянская с томатным соусом, сыром моцарелла и свежим базиликом.</p>
+            <div class="menu-footer">
+              <span class="menu-price">450 ₽</span>
+              <button class="btn-add" type="button" aria-label="Добавить пиццу Маргарита в корзину">В корзину</button>
+            </div>
+          </div>
+        </article>
+        <article class="menu-card" tabindex="0" aria-label="Пицца Пепперони, с острыми колбасками и сыром, цена 520 рублей">
+          <img src="https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=800" alt="Пицца Пепперони" loading="lazy"/>
+          <div class="menu-content">
+            <h3 class="menu-title">Пепперони</h3>
+            <p class="menu-desc">Пикантная пицца с острыми колбасками, томатным соусом и сыром моцарелла.</p>
+            <div class="menu-footer">
+              <span class="menu-price">520 ₽</span>
+              <button class="btn-add" type="button" aria-label="Добавить пиццу Пепперони в корзину">В корзину</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div id="panel-special" role="tabpanel" aria-labelledby="tab-special" hidden>
+      <div class="menu-list">
+        <article class="menu-card" tabindex="0" aria-label="Пицца Вегетарианская, с овощами и свежими травами, цена 490 рублей">
+          <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" alt="Пицца Вегетарианская" loading="lazy"/>
+          <div class="menu-content">
+            <h3 class="menu-title">Вегетарианская</h3>
+            <p class="menu-desc">Свежие овощи, томатный соус и ароматные травы для любителей лёгкой пиццы.</p>
+            <div class="menu-footer">
+              <span class="menu-price">490 ₽</span>
+              <button class="btn-add" type="button" aria-label="Добавить пиццу Вегетарианская в корзину">В корзину</button>
+            </div>
+          </div>
+        </article>
+        <article class="menu-card" tabindex="0" aria-label="Пицца Четыре Сыра, с миксом итальянских сыров, цена 570 рублей">
+          <img src="https://images.unsplash.com/photo-1548365328-971920689bbf?w=800" alt="Пицца Четыре Сыра" loading="lazy"/>
+          <div class="menu-content">
+            <h3 class="menu-title">Четыре Сыра</h3>
+            <p class="menu-desc">Микс из моцареллы, горгонзолы, пармезана и ситтера на нежном тесте.</p>
+            <div class="menu-footer">
+              <span class="menu-price">570 ₽</span>
+              <button class="btn-add" type="button" aria-label="Добавить пиццу Четыре Сыра в корзину">В корзину</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div id="panel-snacks" role="tabpanel" aria-labelledby="tab-snacks" hidden>
+      <div class="menu-list">
+        <article class="menu-card" tabindex="0" aria-label="Куриные крылышки с соусом барбекю, цена 350 рублей">
+          <img src="https://images.unsplash.com/photo-1605479569813-3a0122afa8d1?w=800" alt="Куриные крылышки с соусом" loading="lazy"/>
+          <div class="menu-content">
+            <h3 class="menu-title">Куриные крылышки</h3>
+            <p class="menu-desc">Нежные крылышки в соусе барбекю с пикантным ароматом.</p>
+            <div class="menu-footer">
+              <span class="menu-price">350 ₽</span>
+              <button class="btn-add" type="button" aria-label="Добавить Куриные крылышки в корзину">В корзину</button>
+            </div>
+          </div>
+        </article>
+        <article class="menu-card" tabindex="0" aria-label="Сырные палочки с чесночным соусом, цена 320 рублей">
+          <img src="https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=800" alt="Сырные палочки" loading="lazy"/>
+          <div class="menu-content">
+            <h3 class="menu-title">Сырные палочки</h3>
+            <p class="menu-desc">Сырные палочки с ароматом чеснока и соусом для макания.</p>
+            <div class="menu-footer">
+              <span class="menu-price">320 ₽</span>
+              <button class="btn-add" type="button" aria-label="Добавить Сырные палочки в корзину">В корзину</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section id="promotions" class="promotions" aria-label="Акции и специальные предложения">
+    <div class="container">
+      <h2 class="visually-hidden">Акции и спецпредложения</h2>
+      <div class="promo-slider" aria-live="polite" aria-atomic="true" aria-relevant="additions removals">
+        <article class="promo-slide" tabindex="0" role="region" aria-label="Скидка 20% на все пиццы с понедельника по среду">
+          <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" alt="Пицца со скидкой 20%" loading="lazy" />
+          <div class="promo-content">
+            <h3 class="promo-title">Скидка 20% на все пиццы</h3>
+            <p class="promo-time">Действует: Понедельник - Среда</p>
+          </div>
+        </article>
+        <article class="promo-slide" tabindex="0" role="region" aria-label="Бонусные баллы при заказе от 1000 рублей">
+          <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800" alt="Бонусные баллы при заказе" loading="lazy" />
+          <div class="promo-content">
+            <h3 class="promo-title">Бонусы при заказе от 1000 ₽</h3>
+            <p class="promo-time">Акция длится весь месяц</p>
+          </div>
+        </article>
+        <article class="promo-slide" tabindex="0" role="region" aria-label="Бесплатная доставка при первом заказе">
+          <img src="https://images.unsplash.com/photo-1552332386-f8dd00dc0f7f?w=800" alt="Бесплатная доставка" loading="lazy" />
+          <div class="promo-content">
+            <h3 class="promo-title">Бесплатная доставка</h3>
+            <p class="promo-time">Для новых клиентов</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section id="about" class="about" aria-label="Информация о пиццерии">
+    <div class="container">
+      <div class="about-text" tabindex="0">
+        <h2>О нас</h2>
+        <p><strong>Домашняя Пицца</strong> — небольшая пиццерия с большой душой. Мы ценим традиции итальянской кухни и бережно подбираем свежие натуральные ингредиенты. Наша философия — быстрый сервис, домашний уют и высокое качество в каждом кусочке.</p>
+        <p>Каждая пицца у нас — ручная лепка и любовь в тесто. Мы гордимся своей командой настоящих пиццайоло, которые делают вкус каждой пиццы уникальным.</p>
+      </div>
+      <div class="about-img" aria-hidden="true">
+        <img src="https://images.unsplash.com/photo-1525755662778-989d0524087e?w=800" alt="Команда пиццайоло" loading="lazy" />
+      </div>
+    </div>
+  </section>
+  <section class="reviews" aria-label="Отзывы клиентов">
+    <div class="container">
+      <h2>Отзывы наших клиентов</h2>
+      <div class="review-list">
+        <article class="review" tabindex="0" aria-label="Отзыв Анны">
+          <div class="review-img">
+            <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=64" alt="Анна" loading="lazy" />
+          </div>
+          <p class="review-text">«Пицца всегда свежая и вкусная! Доставка действительно быстрая, а сервис — на высоте.»</p>
+          <p class="review-author">Анна, Москва</p>
+          <div class="review-stars" aria-label="Рейтинг: 5 из 5 звезд">
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+          </div>
+        </article>
+        <article class="review" tabindex="0" aria-label="Отзыв Сергея">
+          <div class="review-img">
+            <img src="https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=64" alt="Сергей" loading="lazy" />
+          </div>
+          <p class="review-text">«Идеальная пицца на любой вкус! Особенно нравится вегетарианская и доставка — всегда вовремя.»</p>
+          <p class="review-author">Сергей, Санкт-Петербург</p>
+          <div class="review-stars" aria-label="Рейтинг: 5 из 5 звезд">
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+          </div>
+        </article>
+        <article class="review" tabindex="0" aria-label="Отзыв Марии">
+          <div class="review-img">
+            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=64" alt="Мария" loading="lazy" />
+          </div>
+          <p class="review-text">«Очень приятное обслуживание! Пицца вкусная, сытная и свежая. Буду заказывать снова.»</p>
+          <p class="review-author">Мария, Казань</p>
+          <div class="review-stars" aria-label="Рейтинг: 5 из 5 звезд">
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+            <svg class="star" aria-hidden="true" viewBox="0 0 20 20"><path d="M10 1.5l2.93 5.94 6.57 0.96-4.76 4.64 1.12 6.54L10 16.27l-5.87 3.08 1.12-6.54-4.76-4.64 6.57-0.96L10 1.5z"/></svg>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section id="contact" class="contact" aria-label="Контактная информация и форма обратной связи">
+    <div class="container">
+      <div class="contact-info" tabindex="0">
+        <h3>Контакты</h3>
+        <p><strong>Адрес:</strong><br />г. Москва, ул. Пиццерийная, 15</p>
+        <p><strong>Телефон:</strong><br /><a href="tel:+74951234567">+7 (495) 123-45-67</a></p>
+        <p><strong>E-mail:</strong><br /><a href="mailto:info@domashnyapizza.ru">info@domashnyapizza.ru</a></p>
+        <p><strong>Часы работы:</strong><br />Пн-Вс: 10:00 — 23:00</p>
+      </div>
+      <form class="contact-form" aria-label="Форма обратной связи" name="feedback" method="post" action="#" novalidate>
+        <h3>Обратная связь</h3>
+        <label for="cf-name">Имя</label>
+        <input type="text" id="cf-name" name="name" placeholder="Ваше имя" required aria-required="true" />
+        <label for="cf-phone">Телефон</label>
+        <input type="tel" id="cf-phone" name="phone" placeholder="+7 (___) ___-__-__" pattern="[\+7]{2}[0-9\s\-\(\)]{10,}" required aria-required="true" />
+        <label for="cf-message">Сообщение</label>
+        <textarea id="cf-message" name="message" rows="4" placeholder="Ваш вопрос или комментарий" required aria-required="true"></textarea>
+        <button type="submit">Отправить</button>
+      </form>
+      <div class="map" aria-label="Карта расположения пиццерии">
+        <iframe title="Карта пиццерии" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2244.093142184316!2d37.61729961593099!3d55.75582658055367!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x414ab7f3e8e18449%3A0x50023217750b45c0!2z0JPQsNC90LDRgNC-0YHQutCw0Y8g0L3QsNGA0LDQvNC10LrQuNC1INCc0LTQsNGPINGB0YLQvtCz0L4g0LzQvtC00LXQvdC-0LLQsCwgMTUsINC_0YDQuNC90LjQtSwg0JHQtdC-0YLQtdC80YHQutC-0LAsIDEwMDA2MA!5e0!3m2!1sru!2sru!4v1687648511723!5m2!1sru!2sru" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </section>
+</main>
+<footer role="contentinfo" aria-label="Футер сайта">
+  <div class="container">
+    <nav aria-label="Меню в футере">
+      <a href="#hero">Главная</a>
+      <a href="#menu">Меню</a>
+      <a href="#promotions">Акции</a>
+      <a href="#about">О нас</a>
+      <a href="#contact">Контакты</a>
+    </nav>
+    <div class="footer-socials" aria-label="Социальные сети">
+      <a href="https://www.facebook.com" target="_blank" rel="noopener" aria-label="Facebook" tabindex="0" >
+        <svg aria-hidden="true" width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12a10 10 0 10-11.5 9.87v-7h-2v-3h2v-2.3c0-2 1.2-3.1 3-3.1.9 0 1.8.15 1.8.15v2h-1c-1 0-1.3.6-1.3 1.2V12h2.3l-.4 3h-1.9v7A10 10 0 0022 12z"/></svg>
+      </a>
+      <a href="https://www.instagram.com" target="_blank" rel="noopener" aria-label="Instagram" tabindex="0">
+        <svg aria-hidden="true" width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2C4 2 2 4 2 7v10c0 3 2 5 5 5h10c3 0 5-2 5-5V7c0-3-2-5-5-5H7zm7 3a2 2 0 110 4 2 2 0 010-4zm-5 3a5 5 0 110 10 5 5 0 010-10zm6.5-2a1 1 0 110 2 1 1 0 010-2z"/></svg>
+      </a>
+      <a href="https://www.twitter.com" target="_blank" rel="noopener" aria-label="Twitter" tabindex="0">
+        <svg aria-hidden="true" width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M19 7.5c.01.17.01.34.01.5a9.4 9.4 0 01-9.6 9.47 9.3 9.3 0 01-5.6-1.62c.3.03.6.05.92.05a6.7 6.7 0 004.17-1.47 3.34 3.34 0 01-3.11-2.31c.2.03.4.05.6.05a3.3 3.3 0 01-.99-4.43 9.4 9.4 0 006.83 3.47 3.76 3.76 0 01-.08-.75 3.3 3.3 0 015.7-2.25 6.54 6.54 0 002.1-.8 3.3 3.3 0 01-1.46 1.82 6.65 6.65 0 001.88-.52 7.08 7.08 0 01-1.65 1.7z"/></svg>
+      </a>
+    </div>
+    <small class="footer-copy" aria-label="Авторские права">© 2024 Домашняя Пицца. Все права защищены.</small>
   </div>
 </footer>
-
 <script>
-  // Mobile menu toggle
-  const menuToggle = document.querySelector('.menu-toggle');
-  const nav = document.querySelector('nav#primary-menu');
+  // Tabs for menu
+  const tabs = document.querySelectorAll('.menu-tab');
+  const panels = document.querySelectorAll('[role="tabpanel"]');
 
-  menuToggle.addEventListener('click', () => {
-    const expanded = menuToggle.getAttribute('aria-expanded') === 'true' || false;
-    menuToggle.setAttribute('aria-expanded', !expanded);
-    nav.classList.toggle('open');
-  });
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => {
+        t.setAttribute('aria-selected', 'false');
+        t.tabIndex = -1;
+        t.classList.remove('active');
+      });
+      tab.setAttribute('aria-selected', 'true');
+      tab.tabIndex = 0;
+      tab.classList.add('active');
 
-  // Testimonials slider logic
-  const testimonials = document.querySelectorAll('.testimonial-item');
-  const prevBtn = document.getElementById('testimonial-prev');
-  const nextBtn = document.getElementById('testimonial-next');
-  let currentIndex = 0;
+      panels.forEach(panel => panel.hidden = true);
+      const id = tab.getAttribute('aria-controls');
+      const panel = document.getElementById(id);
+      if (panel) panel.hidden = false;
 
-  function showTestimonial(index) {
-    testimonials.forEach((item, i) => {
-      item.classList.toggle('active', i === index);
+      tab.focus();
     });
-  }
-
-  prevBtn.addEventListener('click', () => {
-    currentIndex = (currentIndex === 0) ? testimonials.length - 1 : currentIndex - 1;
-    showTestimonial(currentIndex);
   });
 
-  nextBtn.addEventListener('click', () => {
-    currentIndex = (currentIndex === testimonials.length - 1) ? 0 : currentIndex + 1;
-    showTestimonial(currentIndex);
+  // Keyboard arrow key navigation between tabs
+  let tabFocus = 0;
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('keydown', e => {
+      if(e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        tabs[tabFocus].tabIndex = -1;
+        if(e.key === "ArrowRight") tabFocus++;
+        else if(e.key === "ArrowLeft") tabFocus--;
+        if(tabFocus >= tabs.length) tabFocus = 0;
+        if(tabFocus < 0) tabFocus = tabs.length - 1;
+        tabs[tabFocus].tabIndex = 0;
+        tabs[tabFocus].focus();
+      }
+    });
+  });
+
+  // Focus trap/order modal placeholder (just alert on order buttons)
+  const orderButtons = document.querySelectorAll('.btn-order, .btn-secondary');
+  orderButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      alert('Функция заказа временно недоступна.');
+    });
+  });
+
+  // Add to cart button feedback
+  const addButtons = document.querySelectorAll('.btn-add');
+  addButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.textContent = "Добавлено";
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = "В корзину";
+        btn.disabled = false;
+      }, 2000);
+    });
   });
 </script>
-
 </body>
 </html>
