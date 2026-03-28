@@ -1,135 +1,156 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>/clear</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f8fa;
-            color: #222;
-            line-height: 1.6;
-        }
-        header {
-            background: linear-gradient(90deg, #007CF0, #00DFD8);
-            color: white;
-            padding: 1.2rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
-        }
-        header h1 {
-            margin: 0;
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-left: 1.5rem;
-            font-weight: 600;
-            transition: opacity 0.2s ease;
-        }
-        nav a:hover,
-        nav a:focus {
-            opacity: 0.8;
-        }
-        main {
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        section {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgb(0 0 0 / 0.06);
-            margin-bottom: 2rem;
-        }
-        h2 {
-            margin-top: 0;
-            color: #007CF0;
-            font-weight: 700;
-            border-bottom: 3px solid #00DFD8;
-            padding-bottom: 0.3rem;
-            margin-bottom: 1rem;
-        }
-        footer {
-            text-align: center;
-            padding: 1rem 0;
-            background: #007CF0;
-            color: white;
-            font-size: 0.9rem;
-            font-weight: 500;
-            user-select: none;
-        }
-        .img-container {
-            width: 100%;
-            max-height: 400px;
-            overflow: hidden;
-            border-radius: 12px;
-            box-shadow: 0 6px 18px rgb(0 0 0 / 0.1);
-            margin-bottom: 1.5rem;
-        }
-        .img-container img {
-            width: 100%;
-            height: auto;
-            object-fit: cover;
-            display: block;
-            transition: transform 0.4s ease;
-        }
-        .img-container img:hover {
-            transform: scale(1.05);
-        }
-        @media (max-width:600px) {
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            nav {
-                margin-top: 0.8rem;
-            }
-            nav a {
-                margin: 0 0.5rem 0 0;
-                display: inline-block;
-            }
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Современный стиль - Дизайн сайта</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+  body {
+    margin:0;
+    font-family: 'Montserrat', sans-serif;
+    background: #f5f7fa;
+    color: #333;
+  }
+  header {
+    background: linear-gradient(90deg, #007cf0, #00dfd8);
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header h1 {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.8rem;
+    letter-spacing: 1.2px;
+  }
+  nav a {
+    color: #fff;
+    text-decoration: none;
+    margin-left: 25px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: opacity 0.3s ease;
+  }
+  nav a:hover {
+    opacity: 0.75;
+  }
+  main {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  .intro {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+  .intro h2 {
+    font-weight: 700;
+    font-size: 2.4rem;
+    margin-bottom: 15px;
+    color: #007cf0;
+  }
+  .intro p {
+    font-size: 1.15rem;
+    color: #555;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  .image-section {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+  .image-section img {
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  }
+  section.content-block {
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px 40px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+    margin-bottom: 40px;
+  }
+  section.content-block h3 {
+    color: #00bcd4;
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    border-bottom: 3px solid #00bcd4;
+    display: inline-block;
+    padding-bottom: 5px;
+  }
+  p {
+    font-size: 1rem;
+    color: #444;
+    line-height: 1.6;
+  }
+
+  footer {
+    background: #222;
+    color: #bbb;
+    text-align: center;
+    padding: 20px 0;
+    font-size: 0.9rem;
+  }
+  @media (max-width: 600px) {
+    header {
+      flex-direction: column;
+      text-align: center;
+    }
+    nav a {
+      margin: 15px 10px 0 10px;
+      display: inline-block;
+    }
+    main {
+      margin: 30px 15px;
+      padding: 0 10px;
+    }
+    section.content-block {
+      padding: 25px 20px;
+    }
+  }
+</style>
 </head>
 <body>
-    <header>
-        <h1>/clear</h1>
-        <nav>
-            <a href="#about">О сайте</a>
-            <a href="#photo">Фото</a>
-            <a href="#footer">Контакты</a>
-        </nav>
-    </header>
-    <main>
-        <section id="about" aria-label="Описание темы сайта">
-            <h2>Тема сайта "/clear"</h2>
-            <p>Этот современный сайт посвящён понятию "/clear". Он выполнен в минималистичном и чистом стиле, отражая идею ясности, порядка и простоты. Навигация, дизайн и контент сосредоточены на визуальной лёгкости и удобстве восприятия.</p>
-            <p>Слово <code>/clear</code> ассоциируется с очисткой, обновлением и началом с чистого листа — все элементы сайта подчёркнуто упрощены и структурированы, чтобы поддерживать атмосферу прозрачности и гармонии.</p>
-        </section>
-        <section id="photo" aria-label="Фотография по теме clear">
-            <h2>Визуализация концепта</h2>
-            <div class="img-container" role="img" aria-label="Чистое небо без облаков">
-                <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=900&q=80" alt="Чистое голубое небо без облаков" />
-            </div>
-            <p>Фото подчёркивает концепцию «чистоты» и «простоты», демонстрируя ясное небо, символизирующее свободное пространство для новых идей и порядков.</p>
-        </section>
-    </main>
-    <footer id="footer">
-        &copy; 2024 /clear — современность и ясность в одном месте
-    </footer>
+<header>
+  <h1>Современный стиль</h1>
+  <nav>
+    <a href="#about">О дизайне</a>
+    <a href="#gallery">Галерея</a>
+    <a href="#contact">Контакты</a>
+  </nav>
+</header>
+<main>
+  <section class="intro" id="about">
+    <h2>Добро пожаловать в мир современного дизайна</h2>
+    <p>Современный стиль — это гармония функции и эстетики, где простые формы, чистые линии и продуманная цветовая палитра создают пространство для вдохновения и комфорта. Наш сайт посвящён именно этой теме — новейшим тенденциям и подходам в современном дизайне интерьера, архитектуры и графики.</p>
+  </section>
+  <section class="image-section" id="gallery">
+    <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1170&q=80" alt="Современный дизайн" />
+  </section>
+  <section class="content-block">
+    <h3>Ключевые черты современного стиля</h3>
+    <p>Современный стиль выделяется простотой и функциональностью. Основные характеристики:</p>
+    <ul>
+      <li>Минимализм и лаконичность форм</li>
+      <li>Использование нейтральных и спокойных цветов, часто с акцентами</li>
+      <li>Чистые линии и геометрические фигуры</li>
+      <li>Активное применение современных материалов — стекло, металл, бетон</li>
+      <li>Пространственная свобода и открытые планы</li>
+    </ul>
+  </section>
+  <section class="content-block" id="contact">
+    <h3>Свяжитесь с нами</h3>
+    <p>Если вы хотите узнать больше или заказать дизайн в современном стиле, пишите нам на email: <a href="mailto:info@moderndesign.ru">info@moderndesign.ru</a><br />
+    Или звоните: +7 (777) 123-45-67</p>
+  </section>
+</main>
+<footer>
+  &copy; 2024 Современный стиль — Все права защищены
+</footer>
 </body>
 </html>
