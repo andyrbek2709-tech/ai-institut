@@ -3,173 +3,162 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ыы</title>
+<title>Bella Pizza - Пиццерия</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+  * {
+    box-sizing: border-box;
+  }
   body {
-    margin:0; font-family: 'Roboto', sans-serif; background: #f5f7fa; color: #222;
-    display: flex; flex-direction: column; min-height: 100vh;
+    margin: 0; 
+    font-family: 'Montserrat', sans-serif;
+    background: #fff8f0;
+    color: #3e2f1c;
   }
   header {
-    background: linear-gradient(90deg, #2c3e50, #3498db);
-    padding: 20px 30px;
-    color: #fff;
+    background: #d94f20;
+    padding: 20px 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
   header h1 {
-    margin: 0; font-weight: 700; font-size: 28px;
-    letter-spacing: 3px;
+    margin: 0;
+    font-weight: 700;
+    font-size: 28px;
+    color: #fff;
+    letter-spacing: 1.2px;
+  }
+  nav {
+    display: flex; 
+    gap: 25px;
   }
   nav a {
-    color: #dbe9fb; text-decoration: none; margin-left: 25px; font-weight: 500;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
     transition: color 0.3s ease;
-    text-transform: uppercase;
-    font-size: 14px;
-    letter-spacing: 1.5px;
   }
   nav a:hover {
-    color: #fff;
+    color: #fbe9de;
   }
   main {
-    flex-grow: 1;
     max-width: 1200px;
-    width: 90%;
     margin: 40px auto;
-    background: #fff;
-    box-shadow: 0 12px 24px rgba(0,0,0,0.07);
-    border-radius: 12px;
-    overflow: hidden;
+    padding: 0 20px;
   }
-  .hero {
-    position: relative;
-    height: 380px;
-    background: url('https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1350&q=80') center center/cover no-repeat;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
+  .intro {
+    text-align: center;
+    margin-bottom: 60px;
   }
-  .hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: rgba(44, 62, 80, 0.65);
-    z-index: 0;
+  .intro h2 {
+    font-size: 36px;
+    margin-bottom: 12px;
   }
-  .hero h2 {
-    position: relative;
-    font-size: 48px;
-    font-weight: 800;
-    letter-spacing: 10px;
-    margin: 0;
-    z-index: 1;
-  }
-  .content-section {
-    padding: 40px 50px;
-  }
-  .content-section h3 {
-    font-size: 32px;
-    margin-bottom: 20px;
-    color: #2c3e50;
-    letter-spacing: 2px;
-  }
-  .intro-text {
+  .intro p {
     font-size: 18px;
-    line-height: 1.58;
-    color: #555;
-    max-width: 720px;
-    margin-bottom: 28px;
+    font-weight: 500;
+    color: #7b6550;
   }
-  .gallery {
-    display: flex;
-    gap: 30px;
-    justify-content: center;
-    flex-wrap: wrap;
+  .menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 40px;
   }
-  .gallery figure {
-    margin: 0;
-    width: 240px;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 8px 16px rgba(52,152,219,0.15);
+  .pizza-card {
     background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgb(217 79 32 / 0.2);
+    overflow: hidden;
     transition: transform 0.3s ease;
   }
-  .gallery figure:hover {
+  .pizza-card:hover {
     transform: translateY(-8px);
   }
-  .gallery img {
-    display: block;
+  .pizza-card img {
     width: 100%;
-    height: 160px;
+    height: 200px;
     object-fit: cover;
   }
-  .gallery figcaption {
-    padding: 16px 14px;
+  .pizza-content {
+    padding: 20px;
+  }
+  .pizza-content h3 {
+    margin: 0 0 8px 0;
+    font-size: 22px;
+    color: #d94f20;
+  }
+  .pizza-content p {
+    margin: 6px 0 14px 0;
+    font-size: 16px;
+    color: #5b4b36;
+    min-height: 44px;
+  }
+  .price {
     font-weight: 700;
-    font-size: 18px;
-    text-align: center;
-    background: #f0f5fa;
-    color: #2c3e50;
-    letter-spacing: 1px;
+    font-size: 20px;
+    color: #3e2f1c;
   }
   footer {
-    background: #2c3e50;
-    color: #aab7c3;
+    background: #3e2f1c;
+    color: #fff;
     text-align: center;
-    padding: 18px 15px;
+    padding: 20px 10px;
+    margin-top: 80px;
     font-size: 14px;
-    letter-spacing: 1.2px;
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Ыы</h1>
+  <h1>Bella Pizza</h1>
   <nav>
-    <a href="#about">О проекте</a>
-    <a href="#gallery">Галерея</a>
+    <a href="#menu">Меню</a>
+    <a href="#about">О нас</a>
     <a href="#contact">Контакты</a>
   </nav>
 </header>
 <main>
-  <section class="hero" aria-label="Главная секция с изображением">
-    <h2>ЫЫ</h2>
+  <section class="intro" id="about">
+    <h2>Добро пожаловать в Bella Pizza!</h2>
+    <p>Лучшие пиццы в современном стиле, приготовленные с любовью и свежими ингредиентами. Насладитесь классикой и новинками в нашем меню.</p>
   </section>
-  <section id="about" class="content-section">
-    <h3>Современный сайт «Ыы»</h3>
-    <p class="intro-text">
-      Добро пожаловать на сайт «Ыы» — острое современное ощущение в мире веб-дизайна. Здесь каждый элемент пропитан уникальностью, а дизайн балансирует между лаконичностью и выразительностью. Название «Ыы» — это игра с формой и звуком, выражение свободы и нестандартного мышления.
-    </p>
+  <section class="menu" id="menu">
+    <article class="pizza-card">
+      <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Пицца Маргарита">
+      <div class="pizza-content">
+        <h3>Маргарита</h3>
+        <p>Традиционная пицца с томатным соусом, моцареллой и свежим базиликом.</p>
+        <div class="price">2 300 ₸</div>
+      </div>
+    </article>
+    <article class="pizza-card">
+      <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Пицца Пепперони">
+      <div class="pizza-content">
+        <h3>Пепперони</h3>
+        <p>Острая пицца с пепперони, моцареллой и пикантным томатным соусом.</p>
+        <div class="price">2 800 ₸</div>
+      </div>
+    </article>
+    <article class="pizza-card">
+      <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Пицца Четыре сыра">
+      <div class="pizza-content">
+        <h3>Четыре сыра</h3>
+        <p>Безупречное сочетание моцареллы, пармезана, горгонзолы и эмменталя.</p>
+        <div class="price">3 100 ₸</div>
+      </div>
+    </article>
   </section>
-  <section id="gallery" class="content-section">
-    <h3>Галерея</h3>
-    <div class="gallery" role="list">
-      <figure role="listitem">
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=480&q=80" alt="Абстрактное современное изображение визуального искусства"/>
-        <figcaption>Визуальное Искусство</figcaption>
-      </figure>
-      <figure role="listitem">
-        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=480&q=80" alt="Современный городской пейзаж с акцентом на архитектуру"/>
-        <figcaption>Городская Архитектура</figcaption>
-      </figure>
-      <figure role="listitem">
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=480&q=80" alt="Динамичное абстрактное изображение света и тени"/>
-        <figcaption>Игра Света и Тени</figcaption>
-      </figure>
-    </div>
-  </section>
-  <section id="contact" class="content-section" style="text-align:center;">
-    <h3>Контакты</h3>
-    <p>Свяжитесь с нами для обсуждения креативных проектов и идей.</p>
-    <p><strong>Email:</strong> info@yy-site.kz</p>
-    <p><strong>Телефон:</strong> +7 (777) 123-45-67</p>
+  <section id="contact" style="max-width:600px; margin:80px auto 40px; text-align:center; color:#5b4b36;">
+    <h2>Контакты</h2>
+    <p>Адрес: г. Нур-Султан, ул. Пиццерийная, 15</p>
+    <p>Телефон: +7 777 123 45 67</p>
+    <p>Работаем ежедневно с 10:00 до 23:00</p>
   </section>
 </main>
 <footer>
-  &copy; 2024 Ыы. Все права защищены.
+  &copy; 2024 Bella Pizza. Все права защищены.
 </footer>
 </body>
 </html>
