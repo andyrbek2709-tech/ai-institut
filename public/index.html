@@ -3,132 +3,194 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Розовый современный сайт</title>
+<title>Современный сайт</title>
 <style>
+  * {
+    box-sizing: border-box;
+    margin: 0; 
+    padding: 0;
+  }
   body {
-    margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #fff0f6;
-    color: #4a1a40;
+    line-height: 1.6;
+    background: #f5f7fa;
+    color: #333;
   }
   header {
-    background: #ff8fb1;
-    padding: 1rem 2rem;
+    background-color: #004aad;
+    padding: 20px 40px;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
+  }
+  nav {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
   }
-  header h1 {
-    margin: 0;
+  nav .logo {
     font-weight: 700;
-    font-size: 1.8rem;
-    color: #fff;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    user-select: none;
   }
-  nav a {
-    color: #ffe3f0;
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 25px;
+  }
+  nav ul li a {
+    color: white;
     text-decoration: none;
-    margin-left: 1.5rem;
     font-weight: 600;
-    transition: color 0.3s;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
   }
-  nav a:hover {
-    color: #ff4d94;
+  nav ul li a:hover,
+  nav ul li a:focus {
+    background-color: rgba(255 255 255 / 0.3);
+    outline: none;
   }
   main {
-    max-width: 1000px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
   }
   .hero {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    align-items: center;
-    background: #ffd6e8;
+    position: relative;
+    overflow: hidden;
     border-radius: 12px;
-    padding: 2rem;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.15);
   }
   .hero img {
-    max-width: 100%;
-    border-radius: 12px;
-    flex: 1 1 300px;
-    box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    height: 320px;
   }
   .hero-text {
-    flex: 1 1 300px;
-    color: #6a1b4d;
+    position: absolute;
+    bottom: 30px;
+    left: 40px;
+    color: white;
+    background: rgba(0,0,0,0.35);
+    padding: 20px 30px;
+    border-radius: 8px;
+    max-width: 60%;
   }
-  .hero-text h2 {
-    margin-top: 0;
-    font-size: 2rem;
+  .hero-text h1 {
+    font-size: 2.8rem;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 10px rgba(0,0,0,0.7);
   }
   .hero-text p {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-shadow: 1px 1px 10px rgba(0,0,0,0.6);
+  }
+  section.cards {
+    margin-top: 60px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 35px;
+  }
+  .card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.1);
+    transition: transform 0.3s ease;
+  }
+  .card:hover {
+    transform: translateY(-8px);
+  }
+  .card h3 {
+    margin-bottom: 15px;
+    color: #004aad;
+    font-size: 1.4rem;
+  }
+  .card p {
+    font-size: 1rem;
+    color: #555;
     line-height: 1.5;
   }
   footer {
-    background: #ff8fb1;
-    color: #fff;
+    background-color: #222f5b;
+    color: white;
+    padding: 30px 40px;
+    margin-top: 80px;
     text-align: center;
-    padding: 1rem 2rem;
     font-size: 0.9rem;
-    margin-top: 3rem;
+    user-select: none;
   }
   @media (max-width: 600px) {
-    header {
-      flex-direction: column;
-      align-items: flex-start;
+    .hero-text {
+      max-width: 90%;
+      left: 20px;
+      bottom: 20px;
+      padding: 15px 20px;
     }
-    nav {
-      margin-top: 0.5rem;
-    }
-    .hero {
-      flex-direction: column;
+    .hero-text h1 {
+      font-size: 2rem;
     }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Розовый Сайт</h1>
-  <nav>
-    <a href="#about">О нас</a>
-    <a href="#services">Услуги</a>
-    <a href="#contact">Контакты</a>
+  <nav aria-label="Основная навигация сайта">
+    <div class="logo" tabindex="0">ModernSite</div>
+    <ul>
+      <li><a href="#home" tabindex="0">Главная</a></li>
+      <li><a href="#services" tabindex="0">Услуги</a></li>
+      <li><a href="#about" tabindex="0">О нас</a></li>
+      <li><a href="#contact" tabindex="0">Контакты</a></li>
+    </ul>
   </nav>
 </header>
 <main>
-  <section class="hero" id="about">
-    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Розовое настроение" />
+  <section class="hero" id="home" role="banner" aria-label="Главный баннер с изображением и текстом">
+    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный город с небоскребами под голубым небом" />
     <div class="hero-text">
-      <h2>Добро пожаловать в Розовый Мир</h2>
-      <p>Создаем красивые и современные веб-сайты в нежных розовых оттенках, подарим вашим проектам уют и стиль.</p>
+      <h1>Добро пожаловать на ModernSite</h1>
+      <p>Современный и красивый веб-сайт для вашего бизнеса или личного проекта.</p>
     </div>
   </section>
-  <section id="services" style="margin-top: 3rem;">
-    <h2 style="color:#9c4774;">Наши Услуги</h2>
-    <ul style="color:#7a2e56; font-size:1.1rem; line-height:1.6;">
-      <li>Дизайн и разработка сайтов в розовых тонах</li>
-      <li>UX/UI дизайн с фокусом на приятные цветовые палитры</li>
-      <li>Оптимизация и адаптивная верстка</li>
-      <li>Поддержка и развитие проектов</li>
-    </ul>
+  <section class="cards" id="services" aria-label="Наши услуги">
+    <article class="card" tabindex="0">
+      <h3>Веб-дизайн</h3>
+      <p>Создаем интуитивно понятные и стильные интерфейсы, которые привлекают и удерживают внимание.</p>
+    </article>
+    <article class="card" tabindex="0">
+      <h3>Разработка</h3>
+      <p>Пишем качественный, адаптивный и современный код, оптимизированный для всех устройств.</p>
+    </article>
+    <article class="card" tabindex="0">
+      <h3>SEO-оптимизация</h3>
+      <p>Помогаем вашему сайту занимать первые позиции в поисковых системах и привлекать больше клиентов.</p>
+    </article>
   </section>
-  <section id="contact" style="margin-top: 3rem;">
-    <h2 style="color:#9c4774;">Свяжитесь с нами</h2>
-    <form style="display:flex; flex-direction: column; max-width: 400px;">
-      <label for="name" style="margin-bottom:0.3rem; color:#7a2e56;">Имя</label>
-      <input type="text" id="name" name="name" style="padding:0.5rem; border-radius:6px; border:1px solid #ffbad2; margin-bottom:1rem;" />
-      <label for="email" style="margin-bottom:0.3rem; color:#7a2e56;">Email</label>
-      <input type="email" id="email" name="email" style="padding:0.5rem; border-radius:6px; border:1px solid #ffbad2; margin-bottom:1rem;" />
-      <label for="message" style="margin-bottom:0.3rem; color:#7a2e56;">Сообщение</label>
-      <textarea id="message" name="message" rows="4" style="padding:0.5rem; border-radius:6px; border:1px solid #ffbad2; margin-bottom:1rem;"></textarea>
-      <button type="submit" style="background:#ff5c8d; border:none; color:#fff; padding:0.7rem; border-radius:8px; font-weight:700; cursor:pointer;">Отправить</button>
-    </form>
+  <section id="about" style="margin-top: 60px;" tabindex="0">
+    <h2 style="color:#004aad; margin-bottom: 20px;">О нас</h2>
+    <p style="max-width: 700px; color:#444; font-size:1.1rem; line-height:1.6;">
+      ModernSite — команда профессионалов в области веб-разработки с многолетним опытом. Мы создаем удобные и качественные решения для вашего бизнеса. Наша цель — помочь вам выделиться в интернете и достичь успеха.
+    </p>
+  </section>
+  <section id="contact" style="margin-top: 60px;" tabindex="0">
+    <h2 style="color:#004aad; margin-bottom: 20px;">Контакты</h2>
+    <p style="max-width: 700px; color:#444; font-size:1.1rem; line-height:1.6;">
+      <strong>Email:</strong> info@modernsite.ru<br />
+      <strong>Телефон:</strong> +7 999 123 45 67<br />
+      <strong>Адрес:</strong> г. Москва, ул. Примерная, д.1
+    </p>
   </section>
 </main>
 <footer>
-  &copy; 2024 Розовый Сайт. Все права защищены.
+  &copy; 2024 ModernSite. Все права защищены.
 </footer>
 </body>
 </html>
