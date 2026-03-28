@@ -3,1211 +3,817 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Вкус Актау - Ресторан</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans&display=swap" rel="stylesheet" />
+<title>Мистический и Утончённый Сайт</title>
 <style>
-  /* Reset & base */
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans&family=Poppins:wght@700&display=swap');
+
+  /* Корень с цветами */
+  :root {
+    --color-dark-purple-start: #2B0B42;
+    --color-dark-purple-end: #1A0137;
+    --color-light-lavender: #B39DDB;
+    --color-deep-indigo: #4B0082;
+    --color-golden-soft: #C9A66B;
+    --color-silver: #C0C0C0;
+    --color-pinkish-purple: #D8B4E2;
+    --color-text-primary: #E0E0E0;
+    --color-text-white: #fff;
+    --color-button-hover-glow: #e6d1a8;
+    --color-sparkle-light: rgba(211,198,241,0.7);
+    --color-sparkle-soft-pink: rgba(216,180,226,0.7);
+    --color-sparkle-silver: rgba(192,192,192,0.7);
+  }
+
+  /* Reset */
   * {
-    box-sizing: border-box;
+    margin: 0; padding: 0; box-sizing: border-box;
   }
   body {
-    margin: 0;
+    background: linear-gradient(135deg, var(--color-dark-purple-start), var(--color-dark-purple-end));
     font-family: 'Open Sans', sans-serif;
-    background-color: #F7F7F7;
-    color: #003366;
-    line-height: 1.5;
-    scroll-behavior: smooth;
+    color: var(--color-text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
   a {
     color: inherit;
     text-decoration: none;
   }
-  img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-  }
-  button {
-    cursor: pointer;
-    font-family: 'Montserrat', sans-serif;
-  }
 
-  /* Scrollbar */
+  /* Scrollbar for dark theme */
   ::-webkit-scrollbar {
     width: 8px;
-    height: 8px;
   }
   ::-webkit-scrollbar-thumb {
-    background: #C14A00;
+    background: var(--color-deep-indigo);
     border-radius: 8px;
   }
-
-  /* Colors */
-  :root {
-    --sea-blue: #003366;
-    --sand-beige: #F4E3C1;
-    --white: #FFFFFF;
-    --light-gray: #F7F7F7;
-    --terracotta: #C14A00;
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
 
-  /* Typography */
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Montserrat', sans-serif;
-    margin-top: 0;
-    margin-bottom: 0.5em;
-    color: var(--sea-blue);
-  }
-  h1 {
-    font-weight: 700;
-    font-size: 2.5rem;
-  }
-  h2 {
-    font-weight: 700;
-    font-size: 2rem;
-  }
-  h3 {
-    font-weight: 600;
-    font-size: 1.5rem;
-  }
-  p {
-    font-weight: 400;
-    font-size: 1rem;
-    margin-top: 0;
-    margin-bottom: 1em;
-    color: var(--sea-blue);
-  }
-  strong, b {
-    font-weight: 600;
-  }
-  nav a {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    font-size: 1rem;
-    margin-left: 2rem;
-    transition: color 0.25s ease;
-  }
-  nav a:hover,
-  nav a:focus {
-    color: var(--terracotta);
-    outline: none;
-  }
-
-  /* Container */
-  .container {
-    width: 90%;
-    max-width: 1200px;
-    margin: 0 auto;
+  /* Sparkle animation - subtle particle effect */
+  @keyframes sparkle-flicker {
+    0%, 100% { opacity: 0.4; transform: scale(1) translateY(0); }
+    50% { opacity: 1; transform: scale(1.3) translateY(-2px); }
   }
 
   /* Header */
   header {
-    background-color: var(--white);
-    border-bottom: 1px solid #ddd;
     position: fixed;
     top: 0;
     width: 100%;
-    z-index: 9999;
-    box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
-  }
-  .header-inner {
+    background: rgba(12,8,24,0.8);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid rgba(255 255 255 / 0.1);
+    z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 64px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0.8rem 2rem;
   }
   .logo {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 700;
-    font-size: 1.2rem;
-    color: var(--sea-blue);
+    font-size: 1.8rem;
+    color: var(--color-light-lavender);
+    position: relative;
   }
-  .logo svg {
-    width: 32px;
-    height: 32px;
-    fill: var(--terracotta);
-  }
-  nav.menu {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  nav.menu a {
-    margin-left: 1.5rem;
-    color: var(--sea-blue);
-  }
-  nav.menu a:first-child {
-    margin-left: 0;
+  .logo .sparkle {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 12px;
+    height: 12px;
+    background: radial-gradient(circle at center, var(--color-sparkle-light), transparent 60%);
+    border-radius: 50%;
+    animation: sparkle-flicker 1.8s infinite;
+    filter: drop-shadow(0 0 2px var(--color-light-lavender));
   }
 
-  /* Phone & WhatsApp */
-  .header-contacts {
+  nav ul {
+    list-style: none;
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-size: 0.9rem;
-    color: var(--sea-blue);
+    gap: 2rem;
   }
-  .header-contacts a {
-    color: var(--sea-blue);
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-  .header-contacts a svg {
-    fill: var(--terracotta);
-    width: 18px;
-    height: 18px;
-  }
-
-  /* Book button */
-  .btn-book {
-    background-color: var(--terracotta);
-    border: none;
-    border-radius: 4px;
-    color: var(--white);
-    padding: 0.5rem 1rem;
-    font-weight: 700;
+  nav ul li {
     font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
     font-size: 1rem;
-    transition: background-color 0.3s ease;
-  }
-  .btn-book:hover,
-  .btn-book:focus {
-    background-color: #9a3900;
-    outline: none;
-  }
-
-  /* Hamburger & mobile nav */
-  .hamburger {
-    display: none;
-    flex-direction: column;
-    gap: 5px;
+    color: var(--color-text-primary);
     cursor: pointer;
+    transition: color 0.3s ease;
   }
-  .hamburger span {
-    width: 24px;
-    height: 3px;
-    background: var(--sea-blue);
-    border-radius: 2px;
-  }
-  @media (max-width: 991px) {
-    nav.menu {
-      position: fixed;
-      top: 64px;
-      left: 0;
-      right: 0;
-      background-color: var(--white);
-      flex-direction: column;
-      align-items: flex-start;
-      padding: 1rem 2rem;
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-      box-shadow: 0 4px 6px rgb(0 0 0 / 0.15);
-      z-index: 10;
-    }
-    nav.menu.open {
-      max-height: 300px;
-    }
-    nav.menu a {
-      margin: 1rem 0;
-      font-weight: 600;
-      font-size: 1.2rem;
-    }
-    .header-contacts {
-      display: none;
-    }
-    .hamburger {
-      display: flex;
-    }
-    .btn-book {
-      padding: 0.6rem 1.2rem;
-      font-size: 1.1rem;
-    }
+  nav ul li:hover {
+    color: var(--color-light-lavender);
+    text-shadow: 0 0 8px var(--color-light-lavender);
   }
 
-  /* Main content bottom padding for fixed header */
+  .btn-contact {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background-color: transparent;
+    border: 2px solid var(--color-golden-soft);
+    color: var(--color-golden-soft);
+    padding: 0.4rem 1rem;
+    border-radius: 24px;
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--color-golden-soft);
+    transition: all 0.3s ease;
+    user-select: none;
+  }
+  .btn-contact:hover, .btn-contact:focus {
+    color: var(--color-text-white);
+    background: linear-gradient(135deg, var(--color-golden-soft), var(--color-light-lavender));
+    box-shadow:
+      0 0 20px var(--color-golden-soft),
+      0 0 30px var(--color-light-lavender);
+  }
+
   main {
-    padding-top: 64px;
+    padding-top: 5.5rem;
   }
 
   /* Hero */
-  #hero {
+  .hero {
     position: relative;
-    background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200') center/cover no-repeat;
-    height: 480px;
+    height: 80vh;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    color: var(--white);
     text-align: center;
+    padding: 0 1.5rem;
+    overflow: visible;
   }
-  #hero::before {
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; left: 0; bottom: 0;
+    background: linear-gradient(135deg, var(--color-dark-purple-start), var(--color-dark-purple-end));
+    z-index: -3;
+  }
+  .hero::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(0, 51, 102, 0.75) 0%, rgba(0, 51, 102, 0.85) 100%);
-    z-index: 0;
-  }
-  #hero .hero-content {
-    position: relative;
-    z-index: 1;
-    max-width: 90%;
-  }
-  #hero h1 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 2.75rem;
-    margin-bottom: 1rem;
-    line-height: 1.1;
-  }
-  #hero .hero-buttons {
-    margin-top: 1.5rem;
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  #hero .btn {
-    background-color: var(--sand-beige);
-    color: var(--sea-blue);
-    border: none;
-    border-radius: 24px;
-    padding: 0.75rem 2rem;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    font-size: 1.1rem;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    box-shadow: 0 3px 6px rgb(197 159 94 / 0.45);
-  }
-  #hero .btn:hover,
-  #hero .btn:focus {
-    background-color: var(--terracotta);
-    color: var(--white);
-    outline: none;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at top left, var(--color-sparkle-light) 1px, transparent 5px),
+      radial-gradient(circle at bottom right, var(--color-sparkle-soft-pink) 1px, transparent 7px),
+      radial-gradient(circle at center, var(--color-sparkle-silver) 1px, transparent 6px);
+    background-repeat: repeat;
+    background-size: 120px 120px;
+    animation: sparkle-flicker 6s linear infinite alternate;
+    opacity: 0.15;
+    z-index: -2;
   }
 
-  /* Section common styles */
+  .hero-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: clamp(2.8rem, 5vw, 4rem);
+    color: var(--color-light-lavender);
+    position: relative;
+    margin-bottom: 0.4rem;
+  }
+  /* Sparkle animation on hero title */
+  .hero-title .sparkle {
+    position: absolute;
+    top: -10px;
+    right: 6%;
+    width: 18px;
+    height: 18px;
+    background: radial-gradient(circle at center, var(--color-pinkish-purple), transparent 50%);
+    border-radius: 50%;
+    filter: drop-shadow(0 0 4px var(--color-light-lavender));
+    animation: sparkle-flicker 2.3s infinite ease-in-out alternate;
+  }
+
+  .hero-subtitle {
+    font-family: 'Open Sans', sans-serif;
+    font-size: clamp(1.2rem, 2vw, 1.6rem);
+    color: var(--color-text-primary);
+    max-width: 600px;
+    margin: 0 auto 2.5rem auto;
+    font-weight: 500;
+  }
+
+  .btn-cta {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    padding: 0.85rem 2.6rem;
+    border-radius: 40px;
+    background: linear-gradient(135deg, var(--color-golden-soft), var(--color-light-lavender));
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    box-shadow:
+      0 0 15px var(--color-golden-soft),
+      0 0 10px var(--color-light-lavender);
+    overflow: hidden;
+    transition: color 0.3s ease;
+    user-select: none;
+  }
+  .btn-cta::before {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.75), transparent 60%),
+      radial-gradient(circle at 70% 60%, rgba(255,255,255,0.5), transparent 70%);
+    background-repeat: no-repeat;
+    animation: sparkle-flicker 2.5s infinite ease-in-out alternate;
+    mix-blend-mode: screen;
+    opacity: 0.7;
+    border-radius: 40px;
+  }
+  .btn-cta:hover, .btn-cta:focus {
+    color: var(--color-text-white);
+    box-shadow:
+      0 0 30px var(--color-golden-soft),
+      0 0 35px var(--color-light-lavender);
+  }
+
+  /* Section common */
   section {
-    padding: 3rem 0 4rem;
-    background-color: var(--white);
-  }
-  section.alt-bg {
-    background-color: var(--light-gray);
-  }
-  section > .container {
-    max-width: 1200px;
+    max-width: 1080px;
+    margin: 4rem auto;
+    padding: 0 1.2rem;
   }
   h2.section-title {
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
-    text-align:center;
     font-size: 2rem;
-    margin-bottom: 2rem;
-    color: var(--sea-blue);
+    color: var(--color-light-lavender);
+    margin-bottom: 1.8rem;
+    position: relative;
+  }
+  h2.section-title::after {
+    content: '';
+    display: block;
+    width: 68px;
+    height: 3px;
+    background: var(--color-golden-soft);
+    margin-top: 8px;
+    border-radius: 2px;
   }
 
   /* About */
   #about {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    align-items: center;
+    background: rgba(255 255 255 / 0.06);
+    border-radius: 16px;
+    box-shadow:
+      0 0 24px rgba(75,0,130,0.38),
+      0 12px 30px rgba(181,157,219,0.13);
+    padding: 2rem 3rem;
+    color: var(--color-text-white);
+    position: relative;
   }
-  #about .about-text {
-    flex: 1 1 350px;
-    font-family: 'Open Sans', sans-serif;
-    color: var(--sea-blue);
-    line-height: 1.6;
-  }
-  #about .about-photo {
-    flex: 1 1 350px;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgb(0 51 102 / 0.15);
-  }
-  #about .about-photo img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-  #about strong {
-    color: var(--terracotta);
-  }
-
-  /* Menu */
-  #menu {
-    background-color: var(--light-gray);
-  }
-  #menu .filters {
-    text-align: center;
+  #about p {
+    font-size: 1.15rem;
+    max-width: 720px;
+    line-height: 1.7;
     margin-bottom: 2rem;
   }
-  #menu .filters button {
-    background: none;
-    border: 2px solid var(--sea-blue);
-    color: var(--sea-blue);
-    font-family: 'Montserrat', sans-serif;
+  #about-icons {
+    display: flex;
+    gap: 2.4rem;
+    justify-content: space-around;
+    flex-wrap: wrap;
+  }
+  .about-icon {
+    flex: 1 1 100px;
+    max-width: 140px;
+    text-align: center;
+    color: var(--color-light-lavender);
+    position: relative;
+    cursor: default;
+  }
+  .about-icon svg {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 0 6px var(--color-light-lavender));
+  }
+  .about-icon .sparkle {
+    position: absolute;
+    top: 6px;
+    right: 5px;
+    width: 14px;
+    height: 14px;
+    background: radial-gradient(circle at center, var(--color-sparkle-soft-pink), transparent 65%);
+    border-radius: 50%;
+    animation: sparkle-flicker 2.6s infinite alternate ease-in-out;
+    filter: drop-shadow(0 0 2px var(--color-light-lavender));
+  }
+  .about-icon span {
+    font-family: 'Roboto', sans-serif;
     font-weight: 600;
-    padding: 0.5rem 1.25rem;
-    margin: 0 0.3rem 1rem 0.3rem;
-    border-radius: 30px;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    font-size: 1rem;
   }
-  #menu .filters button.active,
-  #menu .filters button:hover,
-  #menu .filters button:focus {
-    background-color: var(--terracotta);
-    border-color: var(--terracotta);
-    color: var(--white);
-    outline: none;
-  }
-  #menu .cards {
+
+  /* Services */
+  #services {
     display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
     gap: 2rem;
   }
-  #menu .card {
-    background-color: var(--white);
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgb(0 51 102 / 0.1);
-    display: flex;
-    flex-direction: column;
-  }
-  #menu .card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-  }
-  #menu .card-content {
-    padding: 1rem 1.25rem 1.25rem;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  #menu .card-title {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.15rem;
-    margin: 0 0 0.5rem 0;
-    color: var(--sea-blue);
-  }
-  #menu .card-desc {
-    flex-grow: 1;
-    font-family: 'Open Sans', sans-serif;
-    font-size: 0.9rem;
-    color: #3a3a3a;
-    margin-bottom: 0.75rem;
-  }
-  #menu .card-price {
-    font-weight: 700;
-    color: var(--terracotta);
-    font-family: 'Montserrat', sans-serif;
-    font-size: 1rem;
-  }
-
-  /* Booking */
-  #booking form {
-    max-width: 420px;
-    margin: 0 auto;
-    background-color: var(--white);
-    padding: 2rem 2.5rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgb(197 74 0 / 0.15);
-  }
-  #booking label {
-    display: block;
-    font-weight: 600;
-    font-family: 'Montserrat', sans-serif;
-    margin-bottom: 0.2rem;
-    color: var(--sea-blue);
-  }
-  #booking input,
-  #booking select {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 1.5rem;
-    border: 1.5px solid #ccc;
-    border-radius: 4px;
-    font-family: 'Open Sans', sans-serif;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
-  }
-  #booking input:focus,
-  #booking select:focus {
-    border-color: var(--terracotta);
-    outline: none;
-  }
-  #booking .btn-book {
-    width: 100%;
-    padding: 0.75rem 0;
-    font-size: 1.2rem;
-    font-weight: 700;
-    border-radius: 30px;
-  }
-  #booking .hours-info {
-    text-align: center;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: var(--sea-blue);
-  }
-
-  /* Gallery */
-  #gallery {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  #gallery .carousel {
+  .service-card {
+    background: rgba(255 255 255 / 0.04);
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    box-shadow: 0 0 20px rgba(75,0,130,0.2);
+    color: var(--color-text-white);
+    transition: box-shadow 0.4s ease, transform 0.3s ease;
     position: relative;
-    overflow: hidden;
   }
-  #gallery .carousel-track {
-    display: flex;
-    transition: transform 0.4s ease;
+  .service-card:hover, .service-card:focus-within {
+    box-shadow:
+      0 0 30px var(--color-golden-soft),
+      0 5px 20px var(--color-pinkish-purple);
+    transform: translateY(-4px);
   }
-  #gallery .carousel-item {
-    min-width: 300px;
-    margin-right: 1rem;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 9px rgb(0 51 102 / 0.15);
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  #gallery .carousel-item img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.3s ease;
-  }
-  #gallery .carousel-item:hover img,
-  #gallery .carousel-item:focus img {
-    transform: scale(1.05);
-  }
-  #gallery .carousel-controls {
-    margin-top: 1rem;
-    text-align: center;
-  }
-  #gallery .carousel-controls button {
-    background-color: var(--terracotta);
-    border: none;
-    color: var(--white);
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    margin: 0 0.25rem;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    transition: background-color 0.3s ease;
-  }
-  #gallery .carousel-controls button:disabled {
-    background-color: #ba6b3f;
-    cursor: default;
-  }
-  #gallery .carousel-controls button:not(:disabled):hover,
-  #gallery .carousel-controls button:not(:disabled):focus {
-    background-color: #7d2b00;
-    outline: none;
-  }
-
-  /* Reviews */
-  #reviews {
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  #reviews .review-slider {
-    position: relative;
-    overflow: hidden;
-  }
-  #reviews .reviews-track {
-    display: flex;
-    transition: transform 0.4s ease;
-  }
-  #reviews .review-card {
-    min-width: 320px;
-    background: var(--white);
-    margin-right: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 3px 12px rgb(0 51 102 / 0.12);
-    padding: 1.5rem 1.75rem;
-    flex-shrink: 0;
-    color: var(--sea-blue);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  #reviews .review-text {
-    font-style: italic;
-    font-size: 1rem;
-    line-height: 1.5;
+  .service-icon {
+    width: 56px;
+    height: 56px;
     margin-bottom: 1rem;
+    fill: var(--color-light-lavender);
+    filter: drop-shadow(0 0 5px var(--color-light-lavender));
+    position: relative;
   }
-  #reviews .review-author {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  #reviews .review-photo {
-    width: 50px;
-    height: 50px;
+  .service-icon .sparkle {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 12px;
+    height: 12px;
+    background: radial-gradient(circle at center, var(--color-sparkle-silver), transparent 65%);
     border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
+    animation: sparkle-flicker 3s infinite ease-in-out alternate;
   }
-  #reviews .review-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  #reviews .author-name {
+  .service-card h3 {
+    font-family: 'Poppins', sans-serif;
     font-weight: 700;
-    font-family: 'Montserrat', sans-serif;
+    font-size: 1.2rem;
+    color: var(--color-light-lavender);
+    margin-bottom: 0.4rem;
+  }
+  .service-card p {
+    font-family: 'Open Sans', sans-serif;
     font-size: 1rem;
-  }
-  #reviews .btn-review {
-    display: block;
-    margin: 2rem auto 0;
-    background-color: var(--terracotta);
-    color: var(--white);
-    border: none;
-    padding: 0.75rem 2.5rem;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.1rem;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  #reviews .btn-review:hover,
-  #reviews .btn-review:focus {
-    background-color: #9a3900;
-    outline: none;
-  }
-  #reviews .review-controls {
-    text-align: center;
-    margin-top: 1rem;
-  }
-  #reviews .review-controls button {
-    background-color: var(--terracotta);
-    border: none;
-    color: var(--white);
-    padding: 0.4rem 1rem;
-    border-radius: 4px;
-    margin: 0 0.3rem;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-  }
-  #reviews .review-controls button:disabled {
-    background-color: #ba6b3f;
-    cursor: default;
-  }
-  #reviews .review-controls button:not(:disabled):hover,
-  #reviews .review-controls button:not(:disabled):focus {
-    background-color: #7d2b00;
-    outline: none;
+    color: var(--color-text-primary);
   }
 
-  /* Contacts */
-  #contacts {
-    background-color: var(--light-gray);
-    padding: 3rem 0 5rem;
+  /* Portfolio */
+  #portfolio {
+    margin-top: 3rem;
   }
-  #contacts .info {
-    max-width: 400px;
-    margin: 0 auto 3rem;
+  #portfolio-filters {
+    margin-bottom: 2rem;
     text-align: center;
-    color: var(--sea-blue);
   }
-  #contacts .info p {
-    margin: 0.25rem 0;
-    font-size: 1.05rem;
-  }
-  #contacts .info a {
-    color: var(--terracotta);
+  #portfolio-filters button {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
     font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    background: none;
+    border: 2px solid var(--color-light-lavender);
+    color: var(--color-light-lavender);
+    padding: 0.5rem 1.4rem;
+    margin: 0 0.6rem;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
   }
-  #contacts .socials {
-    margin-top: 1rem;
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
+  #portfolio-filters button.active,
+  #portfolio-filters button:hover {
+    background: var(--color-golden-soft);
+    border-color: var(--color-golden-soft);
+    color: #fff;
+    box-shadow:
+      0 0 15px var(--color-golden-soft),
+      0 0 25px var(--color-light-lavender);
   }
-  #contacts .socials a svg {
-    width: 32px;
-    height: 32px;
-    fill: var(--sea-blue);
-    transition: fill 0.3s ease;
+
+  #portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
+    gap: 1.6rem;
   }
-  #contacts .socials a:hover svg,
-  #contacts .socials a:focus svg {
-    fill: var(--terracotta);
-    outline: none;
+  .portfolio-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow:
+      0 0 0 2px transparent;
+    transition: box-shadow 0.4s ease;
   }
-  #contacts iframe {
-    border: none;
-    width: 100%;
-    max-width: 900px;
-    height: 300px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgb(0 51 102 / 0.15);
+  .portfolio-item img {
     display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 20px;
+    transition: transform 0.4s ease;
+  }
+  .portfolio-item:hover img,
+  .portfolio-item:focus-within img {
+    transform: scale(1.08);
+  }
+  .portfolio-item:hover,
+  .portfolio-item:focus-within {
+    box-shadow:
+      0 0 12px var(--color-pinkish-purple),
+      0 0 20px var(--color-silver);
+  }
+  .portfolio-item .sparkle-frame {
+    position: absolute;
+    top: 6px; left: 6px; right: 6px; bottom: 6px;
+    border-radius: 18px;
+    pointer-events: none;
+    box-shadow:
+      0 0 8px var(--color-pinkish-purple),
+      inset 0 0 10px var(--color-silver);
+    animation: sparkle-flicker 4s infinite alternate ease-in-out;
+  }
+
+  /* Testimonials */
+  #testimonials {
+    background: rgba(255 255 255 / 0.04);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    box-shadow:
+      0 0 28px rgba(75,0,130,0.16);
+    position: relative;
+  }
+  .testimonial-slider {
+    position: relative;
+    max-width: 720px;
     margin: 0 auto;
+    overflow: hidden;
+  }
+  .testimonial-slider > div {
+    display: none;
+    color: var(--color-text-primary);
+    font-size: 1.1rem;
+    line-height: 1.7;
+    font-style: italic;
+  }
+  .testimonial-slider > div.active {
+    display: block;
+    transition: opacity 0.6s ease;
+  }
+  .testimonial-author {
+    margin-top: 1.3rem;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--color-light-lavender);
+  }
+  .testimonial-stars {
+    margin-top: 0.6rem;
+  }
+  .testimonial-stars svg {
+    width: 18px;
+    height: 18px;
+    margin-right: 3px;
+    fill: var(--color-light-lavender);
+    filter: drop-shadow(0 0 4px var(--color-light-lavender));
+  }
+
+  /* CTA */
+  #cta {
+    margin: 4rem auto 6rem;
+    text-align: center;
+  }
+  #cta button {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    padding: 1rem 3.4rem;
+    border-radius: 50px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    background: var(--color-golden-soft);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    box-shadow:
+      0 0 25px var(--color-golden-soft),
+      0 0 38px var(--color-light-lavender);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+  #cta button::before {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(circle at 30% 50%, rgba(255,255,255,0.7), transparent 60%),
+      radial-gradient(circle at 70% 40%, rgba(255,255,255,0.4), transparent 60%);
+    background-repeat: no-repeat;
+    animation: sparkle-flicker 2.7s infinite alternate ease-in-out;
+    mix-blend-mode: screen;
+    opacity: 0.7;
+    border-radius: 50px;
+  }
+  #cta button:hover, #cta button:focus {
+    outline: none;
+    box-shadow:
+      0 0 40px var(--color-golden-soft),
+      0 0 52px var(--color-light-lavender);
+    background: linear-gradient(135deg, var(--color-light-lavender), var(--color-golden-soft));
   }
 
   /* Footer */
   footer {
-    background-color: var(--sea-blue);
-    color: var(--sand-beige);
-    padding: 1.5rem 1rem;
+    background-color: #0B0529;
+    color: #B8B8B8;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
     font-size: 0.9rem;
+    font-family: 'Open Sans', sans-serif;
   }
-  footer .footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
+  footer .contacts {
+    margin-bottom: 1.3rem;
   }
-  footer nav {
-    order: 2;
+  footer .contacts a {
+    color: #B8B8B8;
+    margin: 0 0.9rem;
+    display: inline-block;
+    vertical-align: middle;
+    filter: drop-shadow(0 0 4px #553377);
+    transition: color 0.3s ease;
   }
-  footer nav a {
-    color: var(--sand-beige);
-    margin-left: 1rem;
-    font-weight: 600;
-    font-family: 'Montserrat', sans-serif;
+  footer .contacts a:hover,
+  footer .contacts a:focus {
+    color: var(--color-golden-soft);
+    filter: drop-shadow(0 0 8px var(--color-golden-soft));
   }
-  footer nav a:first-child {
-    margin-left: 0;
+  footer small {
+    color: #888;
   }
-  footer .copyright {
-    order: 1;
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    nav ul {
+      gap: 1rem;
+      font-size: 0.9rem;
+    }
+    #about-icons {
+      gap: 1.4rem;
+    }
+    .service-card {
+      padding: 1.5rem 1.1rem;
+    }
+    #portfolio-filters button {
+      margin: 0 0.4rem;
+      padding: 0.42rem 1rem;
+      font-size: 0.85rem;
+    }
   }
-  footer .socials {
-    order: 3;
-    display: flex;
-    gap: 1rem;
-  }
-  footer .socials a svg {
-    width: 24px;
-    height: 24px;
-    fill: var(--sand-beige);
-    transition: fill 0.3s ease;
-  }
-  footer .socials a:hover svg,
-  footer .socials a:focus svg {
-    fill: var(--terracotta);
-    outline: none;
-  }
-  @media (max-width: 600px) {
+  @media (max-width: 480px) {
+    header {
+      padding: 0.7rem 1rem;
+    }
+    .btn-contact {
+      padding: 0.3rem 0.85rem;
+      font-size: 0.8rem;
+    }
+    .hero-subtitle {
+      font-size: 1rem;
+      max-width: 320px;
+    }
+    .btn-cta {
+      font-size: 0.85rem;
+      padding: 0.7rem 1.9rem;
+    }
     #about {
-      flex-direction: column;
-    }
-    footer .footer-container {
-      justify-content: center;
-      text-align: center;
-    }
-    footer nav {
-      order: 3;
-      margin-top: 0.5rem;
-    }
-    footer .copyright {
-      order: 1;
-      width: 100%;
-      margin-bottom: 8px;
-    }
-    footer .socials {
-      order: 2;
-      margin-bottom: 8px;
+      padding: 1.5rem 2rem;
     }
   }
-
-  /* Accessibility & focus */
-  a:focus,
-  button:focus {
-    outline-offset: 2px;
-    outline: 3px solid var(--terracotta);
-  }
-
-  /* Microanimations */
-  button,
-  nav a,
-  .btn-book,
-  #hero .btn {
-    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  }
-  .fade-in {
-    opacity: 0;
-    transform: translateY(25px);
-    animation-fill-mode: forwards;
-    animation-timing-function: ease-out;
-    animation-duration: 0.7s;
-  }
-  .fade-in.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
 </style>
 </head>
 <body>
 <header>
-  <div class="header-inner container">
-    <a href="#hero" class="logo" aria-label="Главная">
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.582 2 4 5.582 4 10c0 4.418 3.582 8 8 8s8-3.582 8-8c0-4.418-3.582-8-8-8zm0 14a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z" fill="#C14A00"/></svg>
-      Вкус Актау
-    </a>
-    <nav class="menu" role="navigation" aria-label="Главное меню">
-      <a href="#hero">Главная</a>
-      <a href="#menu">Меню</a>
-      <a href="#about">О нас</a>
-      <a href="#booking">Бронирование</a>
-      <a href="#gallery">Галерея</a>
-      <a href="#contacts">Контакты</a>
-    </nav>
-    <div class="header-contacts">
-      <a href="tel:+77001234567" aria-label="Позвонить +7 700 123 45 67">+7 700 123 45 67</a>
-      <a href="https://wa.me/77001234567" target="_blank" rel="noopener" aria-label="Написать в WhatsApp">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.52 3.48a11.88 11.88 0 0 0-16.57 0c-4.64 4.28-4.54 11.44.22 15.94l-1.62 4.73 4.86-1.6a11.86 11.86 0 0 0 9.11-.28 11.9 11.9 0 0 0 5.93-14.54Zm-8.76 15.06a8.06 8.06 0 0 1-4.94-1.63l-.35-.25-2.93.96.98-2.85-.25-.37a8.11 8.11 0 0 1-1.52-5.02 8.16 8.16 0 0 1 14.1-5.58 8.17 8.17 0 0 1-8.04 13.5Zm4.55-6.47-.26-.13a.4.4 0 0 0-.49.14l-.75.94a9.44 9.44 0 0 1-1.16-1.17l.91-.74a.4.4 0 0 0 .13-.51l-.13-.25a.46.46 0 0 0-.52-.27c-.9.16-2.94 1.34-3.11 1.57a.44.44 0 0 0-.08.51c.4.7 1.95 3.58 5.3 4.81a.41.41 0 0 0 .54-.35c.08-1 .9-2.74 1.3-3.24a.42.42 0 0 0-.13-.5Z"/></svg>
-      </a>
-    </div>
-    <button class="btn-book" id="header-book-btn" aria-label="Забронировать стол">Забронировать стол</button>
-    <button class="hamburger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobile-menu">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-  </div>
+  <a href="#" class="logo" aria-label="Логотип мистического сайта">
+    Mysti<span>✨</span>ra<div class="sparkle"></div>
+  </a>
+  <nav>
+    <ul>
+      <li><a href="#about" tabindex="0">О проекте</a></li>
+      <li><a href="#services" tabindex="0">Услуги</a></li>
+      <li><a href="#portfolio" tabindex="0">Портфолио</a></li>
+      <li><a href="#testimonials" tabindex="0">Отзывы</a></li>
+      <li><a href="#cta" tabindex="0">Контакты</a></li>
+    </ul>
+  </nav>
+  <button class="btn-contact" type="button" aria-label="Связаться с нами">Связаться</button>
 </header>
+
 <main>
-  <section id="hero" role="banner">
-    <div class="hero-content fade-in" style="animation-delay:0.2s">
-      <h1>Вкус Актау – у нас на столе</h1>
-      <div class="hero-buttons">
-        <a href="#menu" class="btn" tabindex="0">Посмотреть меню</a>
-        <a href="#booking" class="btn" tabindex="0">Забронировать</a>
+  <section class="hero" aria-label="Главный баннер">
+    <h1 class="hero-title">Погрузись в Таинство<div class="sparkle"></div></h1>
+    <p class="hero-subtitle">Изысканный дизайн с мистическим оттенком для вашего проекта</p>
+    <button class="btn-cta" type="button" aria-label="Начать сейчас">Начать сейчас</button>
+  </section>
+
+  <section id="about" aria-labelledby="about-title">
+    <h2 class="section-title" id="about-title">О проекте</h2>
+    <p>Наша миссия — создать современный и элегантный интерфейс с лёгкой долей футуризма, который дарит мистическую и утончённую атмосферу, помогая вашему бренду сиять в цифровом пространстве.</p>
+    <div id="about-icons" role="list">
+      <div class="about-icon" role="listitem" tabindex="0" aria-label="Качество и внимание к деталям">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" focusable="false"><path d="M12 2l4 8-8 0 8 8-4-8-4 8 0-16z"/></svg>
+        <div class="sparkle"></div>
+        <span>Качество</span>
+      </div>
+      <div class="about-icon" role="listitem" tabindex="0" aria-label="Изысканный стиль">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" focusable="false"><circle cx="12" cy="12" r="10"/></svg>
+        <div class="sparkle"></div>
+        <span>Стиль</span>
+      </div>
+      <div class="about-icon" role="listitem" tabindex="0" aria-label="Современные технологии">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" focusable="false"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        <div class="sparkle"></div>
+        <span>Технологии</span>
       </div>
     </div>
   </section>
 
-  <section id="about" class="container fade-in" style="animation-delay:0.4s">
-    <h2 class="section-title">О ресторане</h2>
-    <div id="about-content" style="display:flex; flex-wrap:wrap; gap:2rem; align-items:center;">
-      <div class="about-text">
-        <p>Наш ресторан объединяет лучший <strong>морской колорит Актау</strong> и теплоту <strong>пустынных традиций</strong>. Мы ценим локальные продукты и аутентичность, чтобы подарить вам настоящие вкусы нашего региона.</p>
-        <p>История заведения берет своё начало в любви к качественной кухне и гостеприимству, которое мы несем в каждое блюдо.</p>
+  <section id="services" aria-labelledby="services-title">
+    <h2 class="section-title" id="services-title">Услуги</h2>
+    <article class="service-card" tabindex="0">
+      <div class="service-icon" aria-hidden="true" style="position:relative;">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>
+        <div class="sparkle"></div>
       </div>
-      <div class="about-photo">
-        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Интерьер ресторана" loading="lazy" />
+      <h3>Веб-разработка</h3>
+      <p>Создание современных, адаптивных и высокопроизводительных сайтов с учётом всех потребностей бизнеса.</p>
+    </article>
+    <article class="service-card" tabindex="0">
+      <div class="service-icon" aria-hidden="true" style="position:relative;">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M5.5 22h13"/></svg>
+        <div class="sparkle"></div>
+      </div>
+      <h3>Дизайн</h3>
+      <p>Уникальные и гармоничные решения для визуального оформления, сочетающие стиль и удобство.</p>
+    </article>
+    <article class="service-card" tabindex="0">
+      <div class="service-icon" aria-hidden="true" style="position:relative;">
+        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="8" width="20" height="4" rx="1"/></svg>
+        <div class="sparkle"></div>
+      </div>
+      <h3>Консалтинг</h3>
+      <p>Анализ и рекомендации для эффективного развития и масштабирования вашего цифрового продукта.</p>
+    </article>
+  </section>
+
+  <section id="portfolio" aria-labelledby="portfolio-title">
+    <h2 class="section-title" id="portfolio-title">Портфолио</h2>
+    <div id="portfolio-filters" role="tablist" aria-label="Фильтры портфолио">
+      <button class="active" role="tab" aria-selected="true" aria-controls="all-items" id="filter-all" type="button">Все</button>
+      <button role="tab" aria-selected="false" aria-controls="web-items" id="filter-web" type="button">Веб</button>
+      <button role="tab" aria-selected="false" aria-controls="design-items" id="filter-design" type="button">Дизайн</button>
+      <button role="tab" aria-selected="false" aria-controls="branding-items" id="filter-branding" type="button">Брендинг</button>
+    </div>
+    <div id="portfolio-grid" role="tabpanel" aria-labelledby="filter-all" tabindex="0">
+      <div class="portfolio-item" tabindex="0" aria-label="Проект веб-разработки">
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный веб-дизайн" />
+        <div class="sparkle-frame" aria-hidden="true"></div>
+      </div>
+      <div class="portfolio-item" tabindex="0" aria-label="Проект дизайна">
+        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800" alt="Креативный дизайн" />
+        <div class="sparkle-frame" aria-hidden="true"></div>
+      </div>
+      <div class="portfolio-item" tabindex="0" aria-label="Проект веб-разработки">
+        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800" alt="Корпоративный сайт" />
+        <div class="sparkle-frame" aria-hidden="true"></div>
+      </div>
+      <div class="portfolio-item" tabindex="0" aria-label="Проект брендинга">
+        <img src="https://images.unsplash.com/photo-1508385082359-f0602553c51e?w=800" alt="Современный брендинг" />
+        <div class="sparkle-frame" aria-hidden="true"></div>
+      </div>
+      <div class="portfolio-item" tabindex="0" aria-label="Проект дизайна">
+        <img src="https://images.unsplash.com/photo-1492724441997-5dc865305da7?w=800" alt="Футуристический дизайн" />
+        <div class="sparkle-frame" aria-hidden="true"></div>
       </div>
     </div>
   </section>
 
-  <section id="menu" class="fade-in" style="animation-delay:0.6s">
-    <div class="container">
-      <h2 class="section-title">Меню</h2>
-      <div class="filters" role="list" aria-label="Фильтр меню">
-        <button type="button" class="filter-btn active" data-filter="all" aria-pressed="true">Все</button>
-        <button type="button" class="filter-btn" data-filter="starters" aria-pressed="false">Закуски</button>
-        <button type="button" class="filter-btn" data-filter="mains" aria-pressed="false">Основные блюда</button>
-        <button type="button" class="filter-btn" data-filter="desserts" aria-pressed="false">Десерты</button>
-        <button type="button" class="filter-btn" data-filter="drinks" aria-pressed="false">Напитки</button>
+  <section id="testimonials" aria-labelledby="testimonials-title">
+    <h2 class="section-title" id="testimonials-title">Отзывы</h2>
+    <div class="testimonial-slider" role="region" aria-live="polite" aria-atomic="true">
+      <div class="testimonial active" tabindex="0">
+        <p>«Работа с Mystira — это настоящая магия! Их внимание к деталям и профессионализм превзошли все ожидания.»</p>
+        <div class="testimonial-author">Ирина К.</div>
+        <div class="testimonial-stars" aria-label="5 звезд">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+        </div>
       </div>
-      <div class="cards" role="list" aria-live="polite" aria-atomic="true">
-
-        <article class="card" data-category="starters" tabindex="0" role="listitem" aria-label="Закуска: Хумус с лепёшками">
-          <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?w=800" alt="Хумус с лепёшками" loading="lazy" />
-          <div class="card-content">
-            <h3 class="card-title">Хумус с лепёшками</h3>
-            <p class="card-desc">Традиционная паста из нута с оливковым маслом и лимоном, подается с теплой лепёшкой.</p>
-            <p class="card-price">1200 ₸</p>
-          </div>
-        </article>
-
-        <article class="card" data-category="mains" tabindex="0" role="listitem" aria-label="Основное блюдо: Манты с мясом">
-          <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800" alt="Манты с мясом" loading="lazy" />
-          <div class="card-content">
-            <h3 class="card-title">Манты с мясом</h3>
-            <p class="card-desc">Классические манты с сочной начинкой из баранины и специй, подаются с чесночным соусом.</p>
-            <p class="card-price">2200 ₸</p>
-          </div>
-        </article>
-
-        <article class="card" data-category="desserts" tabindex="0" role="listitem" aria-label="Десерт: Шек-шек">
-          <img src="https://images.unsplash.com/photo-1601924638867-3eec0fdb5216?w=800" alt="Шек-шек десерт" loading="lazy" />
-          <div class="card-content">
-            <h3 class="card-title">Шек-шек</h3>
-            <p class="card-desc">Традиционный казахский десерт из хруститых полосок теста в медовом сиропе.</p>
-            <p class="card-price">900 ₸</p>
-          </div>
-        </article>
-
-        <article class="card" data-category="drinks" tabindex="0" role="listitem" aria-label="Напиток: Кумыс">
-          <img src="https://images.unsplash.com/photo-1551022371-310a45d8e6d0?w=800" alt="Кумыс в стеклянном стакане" loading="lazy" />
-          <div class="card-content">
-            <h3 class="card-title">Кумыс</h3>
-            <p class="card-desc">Ферментированное кобылье молоко с характерным вкусом, традиционный напиток региона.</p>
-            <p class="card-price">700 ₸</p>
-          </div>
-        </article>
-
-        <article class="card" data-category="starters" tabindex="0" role="listitem" aria-label="Закуска: Рыбное ассорти с лимоном">
-          <img src="https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800" alt="Рыбное ассорти с лимоном" loading="lazy" />
-          <div class="card-content">
-            <h3 class="card-title">Рыбное ассорти с лимоном</h3>
-            <p class="card-desc">Свежая рыба и морепродукты, маринованные с травами и лимоном.</p>
-            <p class="card-price">1800 ₸</p>
-          </div>
-        </article>
-
-        <article class="card" data-category="mains" tabindex="0" role="listitem" aria-label="Основное блюдо: Бешбармак">
-          <img src="https://images.unsplash.com/photo-1543352634-0f4868a55315?w=800" alt="Тарелка бешбармака" loading="lazy" />
-          <div class="card-content">
-            <h3 class="card-title">Бешбармак</h3>
-            <p class="card-desc">Национальное казахское блюдо из варёного мяса и домашней лапши с бульоном.</p>
-            <p class="card-price">2500 ₸</p>
-          </div>
-        </article>
-
+      <div class="testimonial" tabindex="0" hidden>
+        <p>«Уникальный подход и изысканный стиль проекта сделали наш бренд по-настоящему запоминающимся.»</p>
+        <div class="testimonial-author">Алексей М.</div>
+        <div class="testimonial-stars" aria-label="5 звезд">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+        </div>
       </div>
     </div>
   </section>
 
-  <section id="booking" class="container fade-in" style="animation-delay:0.8s">
-    <h2 class="section-title">Бронирование</h2>
-    <form id="booking-form" aria-label="Форма бронирования столика">
-      <label for="date">Дата</label>
-      <input type="date" id="date" name="date" required aria-required="true" min="" />
-      <label for="time">Время</label>
-      <select id="time" name="time" required aria-required="true">
-        <option value="" disabled selected>Выберите время</option>
-        <option value="12:00">12:00</option>
-        <option value="13:00">13:00</option>
-        <option value="14:00">14:00</option>
-        <option value="18:00">18:00</option>
-        <option value="19:00">19:00</option>
-        <option value="20:00">20:00</option>
-      </select>
-      <label for="guests">Количество гостей</label>
-      <input type="number" id="guests" name="guests" min="1" max="20" required aria-required="true" />
-      <label for="name">Ваше имя</label>
-      <input type="text" id="name" name="name" required aria-required="true" autocomplete="name" />
-      <label for="phone">Телефон</label>
-      <input type="tel" id="phone" name="phone" pattern="\\+?\\d{7,15}" placeholder="+7 700 123 45 67" required aria-required="true" autocomplete="tel" />
-      <button type="submit" class="btn-book">Забронировать</button>
-    </form>
-    <p class="hours-info" aria-live="polite" aria-atomic="true">Режим работы: 12:00 - 22:00 ежедневно</p>
-  </section>
-
-  <section id="gallery" class="fade-in" style="animation-delay:1s">
-    <h2 class="section-title">Галерея</h2>
-    <div class="carousel" aria-label="Галерея ресторана" role="region">
-      <div class="carousel-track" aria-live="off">
-        <div class="carousel-item" tabindex="0"><img src="https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=800" alt="Блюдо из рыбы и риса" loading="lazy" /></div>
-        <div class="carousel-item" tabindex="0"><img src="https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=800" alt="Интерьер ресторана с деревянными столами" loading="lazy" /></div>
-        <div class="carousel-item" tabindex="0"><img src="https://images.unsplash.com/photo-1533777324565-a04df0e527b7?w=800" alt="Морепродукты на разделочной доске" loading="lazy" /></div>
-        <div class="carousel-item" tabindex="0"><img src="https://images.unsplash.com/photo-1505253210343-c0df9613276b?w=800" alt="Пустынный пейзаж в Актау" loading="lazy" /></div>
-        <div class="carousel-item" tabindex="0"><img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800" alt="Праздничный банкет в ресторане" loading="lazy" /></div>
-      </div>
-      <div class="carousel-controls" role="group" aria-label="Управление галереей">
-        <button type="button" id="gallery-prev" aria-label="Предыдущее изображение">‹</button>
-        <button type="button" id="gallery-next" aria-label="Следующее изображение">›</button>
-      </div>
-    </div>
-  </section>
-
-  <section id="reviews" class="container fade-in" style="animation-delay:1.2s">
-    <h2 class="section-title">Отзывы клиентов</h2>
-    <div class="review-slider" aria-label="Отзывы клиентов" role="region">
-      <div class="reviews-track">
-        <article class="review-card" tabindex="0" aria-label="Отзыв от Амина">
-          <p class="review-text">«Потрясающий вкус и атмосфера! Особенно понравились блюда из местных продуктов. Обязательно вернусь!»</p>
-          <div class="review-author">
-            <div class="review-photo"><img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Фото Амина" loading="lazy" /></div>
-            <div class="author-name">Амина</div>
-          </div>
-        </article>
-        <article class="review-card" tabindex="0" aria-label="Отзыв от Каната">
-          <p class="review-text">«Отличное место для семьи. Интерьер очень приятный, персонал доброжелательный, а блюда – выше всяких похвал.»</p>
-          <div class="review-author">
-            <div class="review-photo"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Фото Канат" loading="lazy" /></div>
-            <div class="author-name">Канат</div>
-          </div>
-        </article>
-        <article class="review-card" tabindex="0" aria-label="Отзыв от Жанны">
-          <p class="review-text">«Люблю сюда приходить за традиционными блюдами с современным акцентом. Настоящий вкус Актау в каждом кусочке.»</p>
-          <div class="review-author">
-            <div class="review-photo"><img src="https://randomuser.me/api/portraits/women/12.jpg" alt="Фото Жанна" loading="lazy" /></div>
-            <div class="author-name">Жанна</div>
-          </div>
-        </article>
-      </div>
-      <div class="review-controls" role="group" aria-label="Навигация отзывов">
-        <button type="button" id="reviews-prev" aria-label="Предыдущий отзыв">‹</button>
-        <button type="button" id="reviews-next" aria-label="Следующий отзыв">›</button>
-      </div>
-    </div>
-    <button class="btn-review" id="leave-review-btn" aria-haspopup="dialog" aria-controls="review-dialog">Оставить отзыв</button>
-  </section>
-
-  <section id="contacts" class="fade-in" style="animation-delay:1.4s">
-    <h2 class="section-title">Контакты</h2>
-    <div class="info" role="contentinfo">
-      <p><strong>Адрес:</strong> г. Актау, улица Мангистауская, 22</p>
-      <p><strong>Телефон:</strong> <a href="tel:+77001234567">+7 700 123 45 67</a></p>
-      <p><strong>E-mail:</strong> <a href="mailto:info@aktau-restaurant.kz">info@aktau-restaurant.kz</a></p>
-      <div class="socials" role="list" aria-label="Социальные сети">
-        <a href="https://instagram.com/" target="_blank" rel="noopener" aria-label="Instagram" role="listitem">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm3.5-1.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>
-        </a>
-        <a href="https://facebook.com/" target="_blank" rel="noopener" aria-label="Facebook" role="listitem">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 12v-2a10 10 0 1 0-11 9.86V15.1h-2.4v-3.1H11v-2.05c0-2.44 1.49-3.78 3.67-3.78 1.06 0 2.14.18 2.14.18v2.35h-1.21c-1.2 0-1.57.75-1.57 1.53v1.77h2.66l-.43 3.1h-2.23v6.76A10.02 10.02 0 0 0 22 12Z"/></svg>
-        </a>
-        <a href="https://wa.me/77001234567" target="_blank" rel="noopener" aria-label="WhatsApp" role="listitem">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.52 3.48a11.88 11.88 0 0 0-16.57 0c-4.64 4.28-4.54 11.44.22 15.94l-1.62 4.73 4.86-1.6a11.86 11.86 0 0 0 9.11-.28 11.9 11.9 0 0 0 5.93-14.54Zm-8.76 15.06a8.06 8.06 0 0 1-4.94-1.63l-.35-.25-2.93.96.98-2.85-.25-.37a8.11 8.11 0 0 1-1.52-5.02 8.16 8.16 0 0 1 14.1-5.58 8.17 8.17 0 0 1-8.04 13.5Zm4.55-6.47-.26-.13a.4.4 0 0 0-.49.14l-.75.94a9.44 9.44 0 0 1-1.16-1.17l.91-.74a.4.4 0 0 0 .13-.51l-.13-.25a.46.46 0 0 0-.52-.27c-.9.16-2.94 1.34-3.11 1.57a.44.44 0 0 0-.08.51c.4.7 1.95 3.58 5.3 4.81a.41.41 0 0 0 .54-.35c.08-1 .9-2.74 1.3-3.24a.42.42 0 0 0-.13-.5Z"/></svg>
-        </a>
-      </div>
-    </div>
-    <iframe 
-      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d58292.016765914576!2d51.14275196821457!3d43.65539324887527!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4244c88356a3abe1%3A0x578e341fa8b274c7!2sAktau!5e0!3m2!1sru!2skz!4v1687654321098!5m2!1sru!2skz" 
-      allowfullscreen="" 
-      loading="lazy" 
-      aria-label="Карта расположения ресторана в Актау"></iframe>
+  <section id="cta" aria-label="Призыв к действию">
+    <button type="button" aria-label="Связаться с нами сейчас">Связаться с нами</button>
   </section>
 </main>
 
 <footer>
-  <div class="footer-container container" role="contentinfo">
-    <div class="copyright">&copy; 2024 Вкус Актау. Все права защищены.</div>
-    <nav aria-label="Футер меню">
-      <a href="#hero">Главная</a>
-      <a href="#menu">Меню</a>
-      <a href="#about">О нас</a>
-      <a href="#booking">Бронирование</a>
-      <a href="#gallery">Галерея</a>
-      <a href="#contacts">Контакты</a>
-      <a href="#">Политика конфиденциальности</a>
-      <a href="#">Условия использования</a>
-    </nav>
-    <div class="socials" role="list" aria-label="Социальные сети в футере">
-      <a href="https://instagram.com/" target="_blank" rel="noopener" aria-label="Instagram" role="listitem">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm3.5-1.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>
-      </a>
-      <a href="https://facebook.com/" target="_blank" rel="noopener" aria-label="Facebook" role="listitem">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 12v-2a10 10 0 1 0-11 9.86V15.1h-2.4v-3.1H11v-2.05c0-2.44 1.49-3.78 3.67-3.78 1.06 0 2.14.18 2.14.18v2.35h-1.21c-1.2 0-1.57.75-1.57 1.53v1.77h2.66l-.43 3.1h-2.23v6.76A10.02 10.02 0 0 0 22 12Z"/></svg>
-      </a>
-      <a href="https://wa.me/77001234567" target="_blank" rel="noopener" aria-label="WhatsApp" role="listitem">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.52 3.48a11.88 11.88 0 0 0-16.57 0c-4.64 4.28-4.54 11.44.22 15.94l-1.62 4.73 4.86-1.6a11.86 11.86 0 0 0 9.11-.28 11.9 11.9 0 0 0 5.93-14.54Zm-8.76 15.06a8.06 8.06 0 0 1-4.94-1.63l-.35-.25-2.93.96.98-2.85-.25-.37a8.11 8.11 0 0 1-1.52-5.02 8.16 8.16 0 0 1 14.1-5.58 8.17 8.17 0 0 1-8.04 13.5Zm4.55-6.47-.26-.13a.4.4 0 0 0-.49.14l-.75.94a9.44 9.44 0 0 1-1.16-1.17l.91-.74a.4.4 0 0 0 .13-.51l-.13-.25a.46.46 0 0 0-.52-.27c-.9.16-2.94 1.34-3.11 1.57a.44.44 0 0 0-.08.51c.4.7 1.95 3.58 5.3 4.81a.41.41 0 0 0 .54-.35c.08-1 .9-2.74 1.3-3.24a.42.42 0 0 0-.13-.5Z"/></svg>
-      </a>
-    </div>
+  <div class="contacts" aria-label="Контактные данные и социальные сети">
+    <a href="mailto:contact@mystira.ru" aria-label="Электронная почта">contact@mystira.ru</a>
+    <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Твиттер (открывается в новом окне)">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 0.86A5.4 5.4 0 0 0 23 3.3a10.93 10.93 0 0 1-3.5 1.35 5.48 5.48 0 0 0-9.4 5v0A15.56 15.56 0 0 1 1.64 2.15 5.38 5.38 0 0 0 3 9 5.33 5.33 0 0 1 1.7 8.5v0A5.41 5.41 0 0 0 5.1 13.5a5.51 5.51 0 0 1-2.5.1 5.45 5.45 0 0 0 5 3.82A11 11 0 0 1 1 18a15.52 15.52 0 0 0 8.4 2.46c10.07 0 15.6-8.46 15.6-15.8 0-.24 0-.48-.02-.71A11 11 0 0 0 23 3z"/></svg>
+    </a>
+    <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Инстаграм (открывается в новом окне)">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm5 3.7a4.3 4.3 0 1 0 4.3 4.3A4.3 4.3 0 0 0 12 5.7zm5.8-.2a1.2 1.2 0 1 0 1.2 1.2 1.2 1.2 0 0 0-1.2-1.2z"/></svg>
+    </a>
   </div>
+  <small>© 2024 Mystira. Все права защищены.</small>
 </footer>
 
-<!-- Pop-up confirmation -->
-<div id="booking-popup" role="dialog" aria-modal="true" aria-labelledby="booking-popup-title" tabindex="-1" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;">
-  <div style="background:#FFFFFF;padding:2rem 3rem;border-radius:8px;max-width: 400px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.25);">
-    <h3 id="booking-popup-title" style="font-family:'Montserrat',sans-serif;color:#003366;margin-bottom:1rem;">Бронирование подтверждено</h3>
-    <p style="color:#003366;font-size:1rem;">Спасибо за бронирование! Мы с вами свяжемся.</p>
-    <button id="popup-close" style="margin-top:1.5rem;background:#C14A00;color:#fff;border:none;padding:0.65rem 1.5rem;font-family:'Montserrat',sans-serif;font-weight:700;border-radius:30px;cursor:pointer;">Закрыть</button>
-  </div>
-</div>
-
 <script>
-  // Hamburger toggle
-  const hamburger = document.querySelector('.hamburger');
-  const menu = document.querySelector('nav.menu');
-  hamburger.addEventListener('click', () => {
-    const expanded = hamburger.getAttribute('aria-expanded') === 'true';
-    hamburger.setAttribute('aria-expanded', !expanded);
-    menu.classList.toggle('open');
-  });
+  // Portfolio filter buttons
+  const filterButtons = document.querySelectorAll('#portfolio-filters button');
+  const portfolioGrid = document.getElementById('portfolio-grid');
+  const items = Array.from(portfolioGrid.children);
 
-  // Set min date to today for booking form
-  const dateInput = document.getElementById('date');
-  const today = new Date().toISOString().split('T')[0];
-  dateInput.setAttribute('min', today);
+  filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      if(button.classList.contains('active')) return;
 
-  // Filter menu items
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  const cards = document.querySelectorAll('#menu .card');
-
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', e => {
-      const filter = btn.getAttribute('data-filter');
-      filterBtns.forEach(b => {
-        b.classList.remove('active');
-        b.setAttribute('aria-pressed','false');
+      filterButtons.forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
       });
-      btn.classList.add('active');
-      btn.setAttribute('aria-pressed','true');
-      cards.forEach(card => {
-        if(filter === 'all' || card.dataset.category === filter) {
-          card.style.display = 'flex';
-          card.setAttribute('aria-hidden', 'false');
-        } else {
-          card.style.display = 'none';
-          card.setAttribute('aria-hidden', 'true');
-        }
-      });
-    });
-  });
+      button.classList.add('active');
+      button.setAttribute('aria-selected', 'true');
+      portfolioGrid.setAttribute('aria-labelledby', button.id);
 
-  // Booking form submission & popup
-  const bookingForm = document.getElementById('booking-form');
-  const bookingPopup = document.getElementById('booking-popup');
-  const popupCloseBtn = document.getElementById('popup-close');
-  const headerBookBtn = document.getElementById('header-book-btn');
-
-  function openPopup(){
-    bookingPopup.style.display = 'flex';
-    bookingPopup.focus();
-  }
-  function closePopup(){
-    bookingPopup.style.display = 'none';
-    bookingForm.reset();
-  }
-
-  bookingForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    // Basic form validation handled by browser. We confirm booking.
-    openPopup();
-  });
-  popupCloseBtn.addEventListener('click', closePopup);
-  bookingPopup.addEventListener('click', (e) => {
-    if(e.target === bookingPopup){
-      closePopup();
-    }
-  });
-  document.addEventListener('keydown', e => {
-    if(e.key === 'Escape' && bookingPopup.style.display === 'flex'){
-      closePopup();
-    }
-  });
-
-  // Header book button scroll to booking
-  headerBookBtn.addEventListener('click', () => {
-    document.getElementById('booking').scrollIntoView({behavior: 'smooth'});
-  });
-
-  // Gallery carousel
-  const galleryTrack = document.querySelector('#gallery .carousel-track');
-  const galleryItems = document.querySelectorAll('#gallery .carousel-item');
-  const galleryPrev = document.getElementById('gallery-prev');
-  const galleryNext = document.getElementById('gallery-next');
-  let galleryIndex = 0;
-  const galleryVisibleCount = Math.floor(document.querySelector('#gallery .carousel').offsetWidth / 320) || 1;
-
-  function updateGallery() {
-    const width = galleryItems[0].offsetWidth + 16; // item width + margin-right
-    galleryTrack.style.transform = `translateX(${-galleryIndex * width}px)`;
-    galleryPrev.disabled = galleryIndex === 0;
-    galleryNext.disabled = galleryIndex >= galleryItems.length - galleryVisibleCount;
-  }
-  galleryPrev.addEventListener('click', () => {
-    if(galleryIndex > 0){
-      galleryIndex--;
-      updateGallery();
-    }
-  });
-  galleryNext.addEventListener('click', () => {
-    if(galleryIndex < galleryItems.length - galleryVisibleCount){
-      galleryIndex++;
-      updateGallery();
-    }
-  });
-  window.addEventListener('resize', () => {
-    updateGallery();
-  });
-  updateGallery();
-
-  // Gallery enlarge on click
-  galleryItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const src = item.querySelector('img').src;
-      const alt = item.querySelector('img').alt;
-      const overlay = document.createElement('div');
-      overlay.style.position = 'fixed';
-      overlay.style.inset = '0';
-      overlay.style.backgroundColor = 'rgba(0,0,0,0.75)';
-      overlay.style.display = 'flex';
-      overlay.style.justifyContent = 'center';
-      overlay.style.alignItems = 'center';
-      overlay.style.cursor = 'zoom-out';
-      overlay.style.zIndex = '10000';
-      const img = document.createElement('img');
-      img.src = src;
-      img.alt = alt;
-      img.style.maxWidth = '90vw';
-      img.style.maxHeight = '90vh';
-      img.style.borderRadius = '8px';
-      overlay.appendChild(img);
-      document.body.appendChild(overlay);
-      overlay.addEventListener('click', () => {
-        document.body.removeChild(overlay);
-      });
-    });
-  });
-
-  // Reviews slider
-  const reviewsTrack = document.querySelector('#reviews .reviews-track');
-  const reviewCards = document.querySelectorAll('#reviews .review-card');
-  const reviewsPrev = document.getElementById('reviews-prev');
-  const reviewsNext = document.getElementById('reviews-next');
-  let reviewsIndex = 0;
-  const reviewsVisibleCount = Math.floor(document.querySelector('#reviews .review-slider').offsetWidth / 340) || 1;
-
-  function updateReviews() {
-    const width = reviewCards[0].offsetWidth + 16;
-    reviewsTrack.style.transform = `translateX(${-reviewsIndex * width}px)`;
-    reviewsPrev.disabled = reviewsIndex === 0;
-    reviewsNext.disabled = reviewsIndex >= reviewCards.length - reviewsVisibleCount;
-  }
-  reviewsPrev.addEventListener('click', () => {
-    if(reviewsIndex > 0){
-      reviewsIndex--;
-      updateReviews();
-    }
-  });
-  reviewsNext.addEventListener('click', () => {
-    if(reviewsIndex < reviewCards.length - reviewsVisibleCount){
-      reviewsIndex++;
-      updateReviews();
-    }
-  });
-  window.addEventListener('resize', () => {
-    updateReviews();
-  });
-  updateReviews();
-
-  // Microanimation on scroll fade-in blocks
-  const fadeIns = document.querySelectorAll('.fade-in');
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if(entry.isIntersecting){
-        entry.target.classList.add('show');
-        observer.unobserve(entry.target);
+      const filter = button.textContent.trim().toLowerCase();
+      if(filter === 'все') {
+        items.forEach(item => item.style.display = '');
+      } else {
+        items.forEach(item => {
+          // For demo purpose: map images by alt attribute keywords to categories
+          const alt = item.querySelector('img').alt.toLowerCase();
+          if(alt.includes(filter)) item.style.display = '';
+          else item.style.display = 'none';
+        });
       }
     });
-  }, {
-    threshold: 0.15
   });
-  fadeIns.forEach(el => observer.observe(el));
 
-  // Leave review button (just alert for placeholder)
-  const leaveReviewBtn = document.getElementById('leave-review-btn');
-  leaveReviewBtn.addEventListener('click', () => {
-    alert('Спасибо за желание оставить отзыв! Функция в разработке.');
-  });
+  // Testimonials slider
+  const testimonials = document.querySelectorAll('#testimonials .testimonial');
+  let currentIndex = 0;
+
+  function showTestimonial(index) {
+    testimonials.forEach((t, i) => {
+      if(i === index) {
+        t.classList.add('active');
+        t.removeAttribute('hidden');
+      } else {
+        t.classList.remove('active');
+        t.setAttribute('hidden', '');
+      }
+    });
+  }
+  showTestimonial(currentIndex);
+
+  setInterval(() => {
+    currentIndex = (currentIndex + 1) % testimonials.length;
+    showTestimonial(currentIndex);
+  }, 8000);
 </script>
 </body>
 </html>
