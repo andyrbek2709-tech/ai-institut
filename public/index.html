@@ -3,186 +3,93 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Современный дизайн сайта</title>
+<title>Bella Pizza - Пиццерия</title>
 <style>
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #fafafa;
-    color: #222;
-    line-height: 1.6;
-  }
-  header {
-    background: linear-gradient(90deg, #4b6cb7, #182848);
-    color: white;
-    padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  header h1 {
-    margin: 0;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    font-size: 1.8rem;
-  }
-  nav a {
-    color: #d1d9ff;
-    text-decoration: none;
-    margin-left: 1.5rem;
-    font-weight: 600;
-    transition: color 0.3s ease;
-  }
-  nav a:hover, nav a:focus {
-    color: #f0f4ff;
-  }
-  main {
-    max-width: 1080px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-  }
-  section {
-    margin-bottom: 3rem;
-  }
-  h2 {
-    font-weight: 700;
-    font-size: 2rem;
-    border-bottom: 3px solid #4b6cb7;
-    padding-bottom: 0.3rem;
-    margin-bottom: 1rem;
-  }
-  .image-container {
-    width: 100%;
-    max-height: 400px;
-    overflow: hidden;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgb(0 0 0 / 0.1);
-    margin-bottom: 1.5rem;
-  }
-  .image-container img {
-    width: 100%;
-    height: auto;
-    display: block;
-    object-fit: cover;
-  }
-  .description {
-    font-size: 1.1rem;
-    color: #444;
-    max-width: 720px;
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.8rem;
-  }
-  .card {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 6px 18px rgb(0 0 0 / 0.07);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s ease;
-  }
-  .card:hover, .card:focus-within {
-    transform: translateY(-6px);
-    box-shadow: 0 10px 25px rgb(0 0 0 / 0.15);
-  }
-  .card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-  }
-  .card-content {
-    padding: 1rem 1.2rem;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .card-title {
-    font-weight: 700;
-    font-size: 1.3rem;
-    margin: 0 0 0.5rem;
-  }
-  .card-price {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: #4b6cb7;
-  }
-  footer {
-    background: #182848;
-    color: #9ca8d6;
-    text-align: center;
-    padding: 1.2rem 1rem;
-    font-size: 0.9rem;
-  }
-  @media (max-width: 480px) {
-    header h1 {
-      font-size: 1.4rem;
-    }
-    nav a {
-      margin-left: 1rem;
-      font-size: 0.9rem;
-    }
+  body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fff8f0; color: #4d2c1a;}
+  header { background: #d94f23; padding: 20px 30px; color: #fff; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { margin: 0; font-family: 'Arial Black', Arial, sans-serif; letter-spacing: 2px; }
+  nav a { color: #fff; text-decoration: none; font-weight: 600; margin-left: 25px; transition: color 0.3s; }
+  nav a:hover { color: #ffc974; }
+  main { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+  section { margin-bottom: 60px; }
+  h2 { border-bottom: 3px solid #d94f23; display: inline-block; margin-bottom: 25px; font-weight: 700; color: #8b3b04; }
+  .menu { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
+  .pizza-card { background: #fff; border-radius: 12px; box-shadow: 0 6px 15px rgba(217,79,35,.2); overflow: hidden; max-width: 320px; flex: 1 1 280px; display: flex; flex-direction: column; }
+  .pizza-card img { width: 100%; height: 200px; object-fit: cover; }
+  .pizza-info { padding: 15px 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;}
+  .pizza-info h3 { margin: 0 0 10px 0; color: #d94f23; }
+  .pizza-info p { margin: 0 0 15px 0; font-size: 14px; line-height: 1.4; color: #55330a; }
+  .pizza-info .price { font-weight: 700; font-size: 18px; color: #8b3b04; }
+  footer { background: #d94f23; text-align: center; color: #fff; padding: 18px 10px; font-size: 14px; letter-spacing: 1px; }
+  @media (max-width: 600px) {
+    .menu { flex-direction: column; align-items: center; }
+    nav a { margin-left: 15px; font-size: 14px;}
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Современный дизайн сайта</h1>
-  <nav aria-label="Главное меню">
-    <a href="#about">О проекте</a>
-    <a href="#gallery">Галерея</a>
+  <h1>Bella Pizza</h1>
+  <nav>
+    <a href="#about">О нас</a>
+    <a href="#menu">Меню</a>
     <a href="#contact">Контакты</a>
   </nav>
 </header>
 <main>
   <section id="about">
-    <h2>Что такое современный стиль?</h2>
-    <div class="image-container">
-      <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1080&q=80" alt="Современный интерьер с чистыми линиями" loading="lazy" />
-    </div>
-    <p class="description">
-      Современный стиль дизайна — это гармоничное сочетание минимализма, функциональности и эстетики. В нем преобладают простые формы, чистые линии, нейтральные цвета с яркими акцентами и использование инновационных материалов. Такой дизайн создает ощущение порядка и пространства, а также оптимизирует комфорт и удобство.
-    </p>
+    <h2>О Bella Pizza</h2>
+    <p>Добро пожаловать в Bella Pizza — пиццерию с душой, где каждая пицца готовится из свежих ингредиентов и с любовью к итальянской традиции. Мы предлагаем классические рецепты, которые подарят вам вкус настоящей Италии в сердце Казахстана.</p>
+    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80" alt="Пицца Bella Pizza" style="width:100%; border-radius: 12px; margin-top: 20px; max-height: 400px; object-fit: cover;">
   </section>
-  <section id="gallery">
-    <h2>Галерея современных дизайнов</h2>
-    <div class="grid">
-      <article class="card" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80" alt="Современный интерьер с мебелью" />
-        <div class="card-content">
-          <h3 class="card-title">Чистые линии и комфорт</h3>
-          <p>Использование простых, функциональных форм и материалов.</p>
+
+  <section id="menu">
+    <h2>Наше меню</h2>
+    <div class="menu">
+
+      <article class="pizza-card">
+        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Пицца Маргарита" />
+        <div class="pizza-info">
+          <h3>Маргарита</h3>
+          <p>Традиционная пицца с томатным соусом, свежей моцареллой и базиликом.</p>
+          <div class="price">2 500 ₸</div>
         </div>
       </article>
-      <article class="card" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=400&q=80" alt="Минималистический современный интерьер" />
-        <div class="card-content">
-          <h3 class="card-title">Минималистический подход</h3>
-          <p>Минимализм уменьшает визуальный шум и усиливает пространство.</p>
+
+      <article class="pizza-card">
+        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80" alt="Пицца Пепперони" />
+        <div class="pizza-info">
+          <h3>Пепперони</h3>
+          <p>Острые колбаски пепперони, томатный соус и моцарелла на тонком тесте.</p>
+          <div class="price">3 200 ₸</div>
         </div>
       </article>
-      <article class="card" tabindex="0">
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80" alt="Современная мебель и декор" />
-        <div class="card-content">
-          <h3 class="card-title">Яркие акценты</h3>
-          <p>Акцентные цвета оживляют и персонализируют интерьер.</p>
+
+      <article class="pizza-card">
+        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Пицца Четыре сыра" />
+        <div class="pizza-info">
+          <h3>Четыре сыра</h3>
+          <p>Моцарелла, горгонзола, пармезан и эмменталь с нежным сливочным соусом.</p>
+          <div class="price">3 500 ₸</div>
         </div>
       </article>
+
     </div>
   </section>
+
   <section id="contact">
     <h2>Контакты</h2>
-    <p class="description">По вопросам дизайна и сотрудничества пишите нам на <a href="mailto:info@designmodern.ru">info@designmodern.ru</a> или звоните по телефону +7 (123) 456-78-90.</p>
+    <p>Адрес: г. Нур-Султан, ул. Пиццерийная, д. 12</p>
+    <p>Телефон: +7 (7172) 123-456</p>
+    <p>Мы в социальных сетях:</p>
+    <ul style="list-style:none; padding-left: 0; font-weight: 600; color: #d94f23;">
+      <li><a href="#" style="color:#d94f23; text-decoration:none;">Instagram</a></li>
+      <li><a href="#" style="color:#d94f23; text-decoration:none;">Facebook</a></li>
+    </ul>
   </section>
 </main>
 <footer>
-  &copy; 2024 Современный дизайн сайта. Все права защищены.
+  Bella Pizza © 2024. Все права защищены.
 </footer>
 </body>
 </html>
