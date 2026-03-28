@@ -3,627 +3,172 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Пример сайта</title>
+<title>Современный сайт</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&display=swap');
-
   :root {
-    --color-bg-main: #0B0F12;
-    --color-bg-panel-light: #111315;
-    --color-bg-panel-dark: #1B1F23;
-    --color-text-primary: #E6EEF3;
-    --color-text-secondary: #9AA3AA;
-    --color-divider: #272B30;
-    --color-error: #FF6B6B;
-    --color-success: #4CD964;
-    --color-accent-blue: #4FC3F7;
-    --color-accent-alt: #FFB86B;
-    --font-sans: 'Inter', 'Roboto', sans-serif;
-    --radius: 8px;
-    --transition: 220ms ease-out;
+    --bg-color: #121212;
+    --text-color: #eee;
+    --accent-color: #4a90e2;
+    --nav-bg: #1f1f1f;
+    --footer-bg: #1f1f1f;
   }
-
-  html {
-    font-family: var(--font-sans);
-    background-color: var(--color-bg-main);
-    color: var(--color-text-primary);
-    font-size: 16px;
-    line-height: 1.5;
-  }
-
-  body, h1, h2, h3, h4, p, ul, li, a, button {
-    margin: 0; padding: 0; border: 0;
-    font-weight: 400;
-    font-family: var(--font-sans);
-  }
-
-  a {
-    color: var(--color-text-secondary);
-    text-decoration: none;
-    cursor: pointer;
-    transition: color var(--transition), filter var(--transition);
-  }
-  a:focus-visible, button:focus-visible {
-    outline-offset: 2px;
-    outline: 2px solid var(--color-accent-blue);
-    outline-radius: 4px;
-  }
-  a:hover, a:focus {
-    color: var(--color-accent-blue);
-  }
-
-  ul {
-    list-style: none;
-  }
-
-  header {
-    background: var(--color-bg-main);
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    user-select: none;
-  }
-  .header-logo {
-    font-weight: 700;
-    font-size: 1.25rem;
-    color: var(--color-text-primary);
-    letter-spacing: 1.5px;
-    user-select: none;
-  }
-
-  nav {
-    display: flex;
-    gap: 32px;
-  }
-  nav a {
-    font-weight: 500;
-    font-size: 1rem;
-    padding-bottom: 3px;
-    border-bottom: 2px solid transparent;
-    color: var(--color-text-primary);
-    transition: border-color var(--transition), color var(--transition);
-  }
-  nav a.active {
-    border-color: var(--color-accent-blue);
-    color: var(--color-accent-blue);
-    font-weight: 600;
-  }
-  nav a:hover:not(.active),
-  nav a:focus-visible:not(.active) {
-    color: var(--color-accent-blue);
-    border-color: transparent;
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 12px;
-  }
-  .btn {
-    font-family: var(--font-sans);
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 8px 24px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: transform var(--transition), filter var(--transition), box-shadow var(--transition);
-    border: none;
-    user-select: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1.2;
-  }
-  .btn:focus-visible {
-    outline-offset: 2px;
-    outline: 2px solid var(--color-accent-blue);
-  }
-  .btn-primary {
-    background-color: var(--color-accent-blue);
-    color: var(--color-bg-main);
-    box-shadow: 0 4px 8px rgb(79 195 247 / 0.4);
-  }
-  .btn-primary:hover,
-  .btn-primary:focus-visible {
-    filter: brightness(1.15);
-    transform: scale(1.05);
-    box-shadow: 0 6px 12px rgb(79 195 247 / 0.7);
-  }
-  .btn-secondary {
-    background-color: transparent;
-    color: var(--color-text-primary);
-    border: 2px solid var(--color-text-primary);
-  }
-  .btn-secondary:hover,
-  .btn-secondary:focus-visible {
-    background-color: var(--color-accent-blue);
-    color: var(--color-bg-main);
-    border-color: var(--color-accent-blue);
-    box-shadow: 0 4px 8px rgb(79 195 247 / 0.4);
-    transform: scale(1.05);
-  }
-
-  /* Header icons */
-  .icon {
-    width: 20px;
-    height: 20px;
-    fill: var(--color-text-primary);
-    transition: fill var(--transition), filter var(--transition);
-    flex-shrink: 0;
-  }
-  .icon:hover,
-  .icon:focus-visible {
-    fill: var(--color-accent-blue);
-    filter: drop-shadow(0 0 2px var(--color-accent-blue));
-  }
-
-  main {
-    display: flex;
-    flex-direction: column;
-    gap: 56px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px 16px 48px;
-  }
-
-  section.hero {
-    position: relative;
-    border-radius: var(--radius);
-    overflow: hidden;
-    color: var(--color-text-primary);
-    min-height: 440px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 0 32px;
-  }
-  section.hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: linear-gradient(to bottom, rgba(11,15,18,0.6), rgba(11,15,18,0.4) 35%, rgba(11,15,18,0.6) 95%);
-    z-index: 0;
-  }
-  section.hero img {
-    position: absolute;
-    inset: 0;
-    object-fit: cover;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    user-select: none;
-  }
-  section.hero h1 {
-    font-weight: 700;
-    font-size: clamp(2.5rem, 6vw, 4rem);
-    line-height: 1.2;
-    margin-bottom: 12px;
-    z-index: 1;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.45);
-  }
-  section.hero p {
-    font-weight: 500;
-    font-size: 1.15rem;
-    line-height: 1.5;
-    margin-bottom: 32px;
-    max-width: 540px;
-    color: var(--color-text-primary);
-    z-index: 1;
-    text-shadow: 0 1px 5px rgba(0,0,0,0.4);
-  }
-  .hero-buttons {
-    display: flex;
-    gap: 20px;
-    z-index: 1;
-  }
-
-  section.features {
-    display: grid;
-    gap: 24px;
-    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-  }
-  .feature-card {
-    background-color: var(--color-bg-panel-light);
-    border-radius: var(--radius);
-    box-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    transition: transform var(--transition), box-shadow var(--transition);
-    cursor: default;
-  }
-  .feature-card:hover,
-  .feature-card:focus-within {
-    transform: scale(1.03);
-    box-shadow:
-      0 8px 18px rgb(79 195 247 / 0.4),
-      0 0 12px rgb(79 195 247 / 0.5);
-  }
-
-  .feature-icon {
-    width: 48px;
-    height: 48px;
-    fill: var(--color-accent-blue);
-    transition: fill var(--transition);
-    flex-shrink: 0;
-  }
-  .feature-card:hover .feature-icon,
-  .feature-card:focus-within .feature-icon {
-    fill: #FFFFFF;
-  }
-
-  .feature-title {
-    font-weight: 600;
-    font-size: 1.25rem;
-    color: var(--color-text-primary);
-  }
-  .feature-desc {
-    font-weight: 400;
-    font-size: 1rem;
-    color: var(--color-text-secondary);
-    line-height: 1.5;
-  }
-
-  section.pricing {
-    display: grid;
-    gap: 24px;
-    grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
-  }
-  .price-card {
-    background-color: var(--color-bg-panel-dark);
-    border-radius: var(--radius);
-    padding: 24px;
-    box-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .price-top {
-    margin-bottom: 24px;
-  }
-  .price-title {
-    font-weight: 700;
-    font-size: 1.5rem;
-    color: var(--color-text-primary);
-    margin-bottom: 8px;
-  }
-  .price-cost {
-    font-weight: 600;
-    font-size: 2rem;
-    color: var(--color-accent-blue);
-    margin-bottom: 12px;
-  }
-  .price-period {
-    font-weight: 400;
-    font-size: 1rem;
-    color: var(--color-text-secondary);
-  }
-  .price-features {
-    margin: 24px 0;
-    padding-left: 0;
-    list-style: none;
-    color: var(--color-text-secondary);
-  }
-  .price-features li {
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 400;
-    font-size: 1rem;
-  }
-  .price-features svg {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-  }
-  .status-success svg {
-    fill: var(--color-success);
-  }
-  .status-error svg {
-    fill: var(--color-error);
-  }
-  .price-actions {
-    margin-top: auto;
-  }
-  .price-btn-primary {
-    width: 100%;
-    padding: 12px 0;
-    font-weight: 700;
-    font-size: 1.125rem;
-  }
-
-  footer {
-    background-color: var(--color-bg-main);
-    color: var(--color-text-secondary);
-    padding: 32px 24px;
-    font-size: 0.9rem;
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
     line-height: 1.6;
   }
-  footer .footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
+  header {
+    background-color: var(--nav-bg);
+    padding: 1rem 2rem;
     display: flex;
-    flex-wrap: wrap;
-    gap: 32px;
     justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.8);
   }
-
-  .footer-col {
-    flex: 1 1 240px;
-    min-width: 220px;
+  header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--accent-color);
   }
-  .footer-title {
-    color: var(--color-text-primary);
-    font-weight: 600;
-    margin-bottom: 12px;
-    font-size: 1.15rem;
-  }
-  .footer-links a {
-    display: inline-block;
-    margin-bottom: 8px;
-    color: var(--color-accent-blue);
-    font-weight: 500;
-    transition: color var(--transition);
-  }
-  .footer-links a:hover,
-  .footer-links a:focus-visible {
-    color: #FFFFFF;
-  }
-  .social-icons {
+  nav ul {
+    list-style: none;
     display: flex;
-    gap: 16px;
-    margin-top: 12px;
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
   }
-  .social-icons a {
-    color: var(--color-text-secondary);
-    transition: color var(--transition), filter var(--transition);
+  nav ul li a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
   }
-  .social-icons a:hover,
-  .social-icons a:focus-visible {
-    color: var(--color-accent-blue);
-    filter: drop-shadow(0 0 4px var(--color-accent-blue));
-  }
-
-  .footer-bottom {
-    margin-top: 32px;
-    border-top: 1px solid var(--color-divider);
-    padding-top: 20px;
-    text-align: center;
-    font-weight: 400;
-  }
-
-  /* Inputs styling for possible future use */
-  input, textarea {
-    background: var(--color-bg-panel-light);
-    color: var(--color-text-primary);
-    border: 1.5px solid transparent;
-    padding: 10px 14px;
-    border-radius: var(--radius);
-    font-family: var(--font-sans);
-    font-weight: 400;
-    font-size: 1rem;
-    line-height: 1.4;
-    transition: border-color var(--transition), box-shadow var(--transition);
-    width: 100%;
-    box-sizing: border-box;
-  }
-  input::placeholder, textarea::placeholder {
-    color: var(--color-text-secondary);
-  }
-  input:focus, textarea:focus {
+  nav ul li a:hover,
+  nav ul li a:focus {
+    color: var(--accent-color);
     outline: none;
-    border-color: var(--color-accent-blue);
-    box-shadow: 0 0 8px var(--color-accent-blue);
   }
-
-  /* Responsive */
-
-  @media (max-width: 768px) {
+  main {
+    max-width: 960px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  .hero {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+  }
+  .hero img {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: brightness(0.75);
+  }
+  .hero-text {
+    position: absolute;
+    top: 50%;
+    left: 2rem;
+    transform: translateY(-50%);
+    color: #fff;
+    max-width: 400px;
+  }
+  .hero-text h2 {
+    font-size: 2.5rem;
+    margin: 0 0 0.5rem;
+  }
+  .hero-text p {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+  section {
+    margin-top: 3rem;
+    padding: 1rem 0;
+  }
+  h2.section-title {
+    font-size: 2rem;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  footer {
+    background-color: var(--footer-bg);
+    color: #bbb;
+    text-align: center;
+    padding: 1rem 2rem;
+    margin-top: 4rem;
+    font-size: 0.9rem;
+  }
+  @media (max-width: 600px) {
     header {
-      flex-wrap: wrap;
-      gap: 12px;
-      padding: 12px 16px;
+      flex-direction: column;
+      align-items: flex-start;
     }
-    nav {
-      gap: 20px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
+    nav ul {
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
     }
-    nav::-webkit-scrollbar {
-      display: none;
-    }
-    main {
-      padding: 24px 16px 32px;
-      gap: 40px;
-    }
-    section.hero {
-      min-height: 360px;
-      padding: 0 20px;
-    }
-    section.hero p {
-      max-width: 100%;
-    }
-    .feature-card {
-      padding: 20px;
-    }
-    .price-card {
-      padding: 20px;
+    .hero-text {
+      max-width: 90%;
+      left: 1rem;
     }
   }
 </style>
 </head>
 <body>
 <header>
-  <div class="header-logo" aria-label="Логотип сайта">SiteLogo</div>
-  <nav role="navigation" aria-label="Основное меню">
-    <a href="#" class="active" aria-current="page">Главная</a>
-    <a href="#">Фичи</a>
-    <a href="#">Тарифы</a>
-    <a href="#">Контакты</a>
+  <h1>ModernSite</h1>
+  <nav>
+    <ul>
+      <li><a href="#home" tabindex="1">Главная</a></li>
+      <li><a href="#about" tabindex="2">О нас</a></li>
+      <li><a href="#services" tabindex="3">Услуги</a></li>
+      <li><a href="#contact" tabindex="4">Контакты</a></li>
+    </ul>
   </nav>
-  <div class="header-actions">
-    <button class="btn btn-secondary" aria-label="Вход в аккаунт">Вход</button>
-    <button class="btn btn-primary" aria-label="Регистрация">Регистрация</button>
-  </div>
 </header>
 <main>
-  <section class="hero" aria-label="Приветственный блок">
-    <img src="https://images.unsplash.com/photo-1517433456452-f9633a875f6f?auto=format&fit=crop&w=1400&q=80" alt="Фоновое изображение с технологической темой" />
-    <h1>Ваш современный цифровой партнер</h1>
-    <p>Используйте передовые технологии для улучшения вашего бизнеса с нашей платформой – быстро, просто и эффективно.</p>
-    <div class="hero-buttons">
-      <button class="btn btn-primary" type="button" aria-label="Начать сейчас">Начать сейчас</button>
-      <button class="btn btn-secondary" type="button" aria-label="Узнать больше">Узнать больше</button>
+  <section class="hero" id="home">
+    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Красивый пейзаж" />
+    <div class="hero-text" role="banner">
+      <h2>Добро пожаловать на ModernSite</h2>
+      <p>Современный, стильный и функциональный веб-сайт для вашего бизнеса.</p>
     </div>
   </section>
-
-  <section class="features" aria-label="Наши преимущества">
-    <article tabindex="0" class="feature-card" aria-labelledby="feat1-title" aria-describedby="feat1-desc">
-      <svg class="feature-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" >
-        <path d="M12 2a9 9 0 1 0 9 9 9.011 9.011 0 0 0-9-9zm1 13v2a1 1 0 0 1-2 0v-2a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1z"/>
-      </svg>
-      <h3 id="feat1-title" class="feature-title">Надежность 24/7</h3>
-      <p id="feat1-desc" class="feature-desc">Мы обеспечиваем стабильную работу вашей инфраструктуры в любое время суток, без сбоев и простоев.</p>
-    </article>
-    <article tabindex="0" class="feature-card" aria-labelledby="feat2-title" aria-describedby="feat2-desc">
-      <svg class="feature-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" >
-        <path d="M12 7a5 5 0 1 0 5 5 5.006 5.006 0 0 0-5-5zm0 8a3 3 0 1 1 3-3 3.004 3.004 0 0 1-3 3z"/>
-      </svg>
-      <h3 id="feat2-title" class="feature-title">Современные технологии</h3>
-      <p id="feat2-desc" class="feature-desc">Используем лучшие решения и интеграции для максимальной эффективности и безопасности ваших данных.</p>
-    </article>
-    <article tabindex="0" class="feature-card" aria-labelledby="feat3-title" aria-describedby="feat3-desc">
-      <svg class="feature-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" >
-        <path d="M20 6a1 1 0 0 1-1 1h-4v9h-2V7H5a1 1 0 0 1 0-2h14a1 1 0 0 1 1 1z"/>
-      </svg>
-      <h3 id="feat3-title" class="feature-title">Удобство использования</h3>
-      <p id="feat3-desc" class="feature-desc">Интуитивный интерфейс и гибкие настройки позволят быстро адаптировать платформу под ваши задачи.</p>
-    </article>
+  <section id="about" aria-labelledby="about-title">
+    <h2 class="section-title" id="about-title">О нас</h2>
+    <p>Мы команда профессионалов, создающих красивые, современные и удобные веб-приложения с учетом всех последних технологий и трендов.</p>
   </section>
-
-  <section class="pricing" aria-label="Тарифные планы">
-    <div class="price-card" role="region" aria-labelledby="price-basic-title" aria-describedby="price-basic-desc">
-      <div class="price-top">
-        <h3 id="price-basic-title" class="price-title">Базовый</h3>
-        <p class="price-cost">₽499<span class="price-period">/мес</span></p>
-      </div>
-      <ul class="price-features">
-        <li class="status-success" aria-label="Функция доступна">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6L9 17l-5-5"/></svg>
-          Доступ к основным функциям
-        </li>
-        <li class="status-error" aria-label="Функция недоступна">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          Приоритетная поддержка
-        </li>
-        <li class="status-error" aria-label="Функция недоступна">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          Дополнительные интеграции
-        </li>
-      </ul>
-      <div class="price-actions">
-        <button class="btn btn-primary price-btn-primary" type="button" aria-label="Выбрать тариф Базовый">Выбрать</button>
-      </div>
-    </div>
-
-    <div class="price-card" role="region" aria-labelledby="price-standard-title" aria-describedby="price-standard-desc">
-      <div class="price-top">
-        <h3 id="price-standard-title" class="price-title">Стандартный</h3>
-        <p class="price-cost">₽999<span class="price-period">/мес</span></p>
-      </div>
-      <ul class="price-features">
-        <li class="status-success" aria-label="Функция доступна">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6L9 17l-5-5"/></svg>
-          Все функции базового пакета
-        </li>
-        <li class="status-success" aria-label="Функция доступна">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6L9 17l-5-5"/></svg>
-          Приоритетная поддержка 24/7
-        </li>
-        <li class="status-error" aria-label="Функция недоступна">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          Эксклюзивные интеграции
-        </li>
-      </ul>
-      <div class="price-actions">
-        <button class="btn btn-primary price-btn-primary" type="button" aria-label="Выбрать тариф Стандартный">Выбрать</button>
-      </div>
-    </div>
-
-    <div class="price-card" role="region" aria-labelledby="price-premium-title" aria-describedby="price-premium-desc">
-      <div class="price-top">
-        <h3 id="price-premium-title" class="price-title">Премиум</h3>
-        <p class="price-cost">₽1699<span class="price-period">/мес</span></p>
-      </div>
-      <ul class="price-features">
-        <li class="status-success" aria-label="Функция доступна">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6L9 17l-5-5"/></svg>
-          Полный доступ ко всем функциям
-        </li>
-        <li class="status-success" aria-label="Функция доступна">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6L9 17l-5-5"/></svg>
-          Личный менеджер и приоритетный саппорт
-        </li>
-        <li class="status-success" aria-label="Функция доступна">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6L9 17l-5-5"/></svg>
-          Индивидуальные интеграции и кастомизация
-        </li>
-      </ul>
-      <div class="price-actions">
-        <button class="btn btn-primary price-btn-primary" type="button" aria-label="Выбрать тариф Премиум">Выбрать</button>
-      </div>
-    </div>
+  <section id="services" aria-labelledby="services-title">
+    <h2 class="section-title" id="services-title">Наши услуги</h2>
+    <ul>
+      <li>Веб-дизайн и разработка</li>
+      <li>Оптимизация для поисковых систем (SEO)</li>
+      <li>Адаптивная верстка для мобильных устройств</li>
+      <li>Поддержка и сопровождение проектов</li>
+    </ul>
+  </section>
+  <section id="contact" aria-labelledby="contact-title">
+    <h2 class="section-title" id="contact-title">Свяжитесь с нами</h2>
+    <form>
+      <label for="name">Имя:</label><br />
+      <input type="text" id="name" name="name" required style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border-radius: 4px; border: none;"/><br />
+      <label for="email">Email:</label><br />
+      <input type="email" id="email" name="email" required style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border-radius: 4px; border: none;"/><br />
+      <label for="message">Сообщение:</label><br />
+      <textarea id="message" name="message" rows="5" required style="width: 100%; padding: 0.5rem; border-radius: 4px; border: none;"></textarea><br />
+      <button type="submit" style="background-color: var(--accent-color); color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Отправить</button>
+    </form>
   </section>
 </main>
 <footer>
-  <div class="footer-container">
-    <div class="footer-col" aria-labelledby="footer-contact-title">
-      <h4 id="footer-contact-title" class="footer-title">Контакты</h4>
-      <address>
-        <p>г. Москва, ул. Примерная, 12</p>
-        <p>Телефон: <a href="tel:+74951234567">+7 (495) 123-45-67</a></p>
-        <p>Email: <a href="mailto:info@example.com">info@example.com</a></p>
-      </address>
-    </div>
-    <div class="footer-col" aria-labelledby="footer-links-title">
-      <h4 id="footer-links-title" class="footer-title">Ссылки</h4>
-      <nav class="footer-links" aria-label="Ссылки сайта">
-        <a href="#">О компании</a><br />
-        <a href="#">Политика конфиденциальности</a><br />
-        <a href="#">Поддержка</a><br />
-        <a href="#">Блог</a>
-      </nav>
-    </div>
-    <div class="footer-col" aria-labelledby="footer-social-title">
-      <h4 id="footer-social-title" class="footer-title">Мы в соцсетях</h4>
-      <div class="social-icons" role="list">
-        <a href="#" aria-label="Facebook" role="listitem" tabindex="0">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M22 12a10 10 0 1 0-11.57 9.83v-6.96h-2.32v-2.87h2.32V9.46c0-2.3 1.37-3.57 3.48-3.57.99 0 2.03.18 2.03.18v2.24h-1.15c-1.14 0-1.49.71-1.49 1.43v1.73h2.54l-.41 2.87h-2.13v6.96A10 10 0 0 0 22 12z"></path>
-          </svg>
-        </a>
-        <a href="#" aria-label="Twitter" role="listitem" tabindex="0">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M23 3a10.9 10.9 0 0 1-3.14.86 5.48 5.48 0 0 0 2.4-3.03 11.09 11.09 0 0 1-3.48 1.33A5.52 5.52 0 0 0 16.11 2c-3.21 0-5.8 3.05-5.08 6.32a15.65 15.65 0 0 1-11.36-5.76 5.3 5.3 0 0 0-.89 2.8 5.48 5.48 0 0 0 2.45 4.6 5.59 5.59 0 0 1-2.49-.68v.07c0 2.73 1.94 5.01 4.5 5.53a5.35 5.35 0 0 1-2.48.1 5.45 5.45 0 0 0 5.09 3.76 11 11 0 0 1-7.22 2c-.46 0-.9-.03-1.34-.08a15.47 15.47 0 0 0 8.36 2.44c10.04 0 15.53-8.3 15.53-15.5 0-.24 0-.48-.02-.71A11 11 0 0 0 23 3z"></path>
-          </svg>
-        </a>
-        <a href="#" aria-label="LinkedIn" role="listitem" tabindex="0">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M16 8a6 6 0 0 1 6 6v6h-4v-6a2 2 0 0 0-4 0v6h-4v-6a6 6 0 0 1 6-6zM6 9H2v12h4zM4 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"></path>
-          </svg>
-        </a>
-      </div>
-    </div>
-  </div>
-  <div class="footer-bottom" role="contentinfo">
-    &copy; 2024 SiteLogo. Все права защищены.
-  </div>
+  &copy; 2024 ModernSite. Все права защищены.
 </footer>
 </body>
 </html>
