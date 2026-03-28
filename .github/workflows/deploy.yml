@@ -23,3 +23,9 @@ jobs:
 
       - name: Deploy to Firebase
         run: firebase deploy --only hosting --token ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: Notify n8n
+        run: |
+          curl -X POST https://andyrbek.app.n8n.cloud/webhook/github-deploy \
+          -H "Content-Type: application/json" \
+          -d '{"status": "success", "site": "https://project-institut-e6345.web.app"}'
