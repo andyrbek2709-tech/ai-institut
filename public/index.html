@@ -1,147 +1,203 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Жёлтый современный сайт</title>
-<style>
-  :root {
-    --yellow-light: #fff9db;
-    --yellow-medium: #f5d547;
-    --yellow-dark: #c9a800;
-    --text-dark: #5a4500;
-    --text-light: #3e2e00;
-  }
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--yellow-light);
-    color: var(--text-dark);
-  }
-  header {
-    background: var(--yellow-medium);
-    padding: 1em 2em;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  header h1 {
-    margin: 0;
-    font-weight: 700;
-    color: var(--text-light);
-  }
-  nav a {
-    color: var(--text-light);
-    margin-left: 1.5em;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s ease;
-  }
-  nav a:hover,
-  nav a:focus {
-    color: var(--yellow-dark);
-  }
-  main {
-    max-width: 1000px;
-    margin: 2em auto;
-    padding: 0 1em;
-  }
-  .hero {
-    position: relative;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 8px 24px rgba(201,168,0,0.3);
-  }
-  .hero img {
-    width: 100%;
-    height: auto;
-    display: block;
-    filter: brightness(1.05);
-  }
-  .hero-text {
-    position: absolute;
-    bottom: 1.5em;
-    left: 2em;
-    color: #5a4500;
-    text-shadow: 1px 1px 5px rgba(255 255 255 / 0.9);
-    background: rgba(245 213 71 / 0.8);
-    padding: 0.5em 1em;
-    border-radius: 6px;
-    font-size: 1.8rem;
-    font-weight: 700;
-  }
-  section {
-    margin-top: 3em;
-  }
-  h2 {
-    color: var(--yellow-dark);
-    border-bottom: 3px solid var(--yellow-medium);
-    padding-bottom: 0.3em;
-    margin-bottom: 1em;
-  }
-  p {
-    line-height: 1.6;
-    color: var(--text-light);
-  }
-  footer {
-    background: var(--yellow-medium);
-    color: var(--text-light);
-    text-align: center;
-    padding: 1em 2em;
-    margin-top: 4em;
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
-  @media (max-width: 600px) {
-    header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    nav {
-      margin-top: 0.5em;
-    }
-    nav a {
-      margin-left: 0;
-      margin-right: 1.2em;
-    }
-    .hero-text {
-      font-size: 1.2rem;
-      left: 1em;
-      bottom: 1em;
-      padding: 0.3em 0.6em;
-    }
-  }
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ресторан в Актау</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        header {
+            background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200') no-repeat center center/cover;
+            height: 60vh;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+            position: relative;
+        }
+        header::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1;
+        }
+        header h1 {
+            font-size: 3rem;
+            z-index: 2;
+            margin: 0;
+        }
+        header p {
+            font-size: 1.3rem;
+            z-index: 2;
+            margin-top: 0.5rem;
+        }
+        nav {
+            background: #222;
+            display: flex;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        nav a {
+            color: #eee;
+            text-decoration: none;
+            padding: 1rem 1.5rem;
+            display: block;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            transition: background 0.3s;
+        }
+        nav a:hover,
+        nav a:focus {
+            background: #555;
+            color: white;
+        }
+        main {
+            max-width: 1100px;
+            margin: 2rem auto 4rem;
+            padding: 0 1rem;
+        }
+        section {
+            margin-bottom: 3rem;
+        }
+        h2 {
+            border-bottom: 3px solid #e67e22;
+            display: inline-block;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            color: #e67e22;
+        }
+        .about-text {
+            font-size: 1.1rem;
+            max-width: 720px;
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+            gap: 1.5rem;
+        }
+        .gallery img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        .gallery img:hover {
+            transform: scale(1.05);
+        }
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            max-width: 720px;
+        }
+        .menu-list li {
+            background: white;
+            margin-bottom: 1rem;
+            padding: 1rem 1.2rem;
+            border-left: 5px solid #e67e22;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+        .menu-list li span.price {
+            color: #e67e22;
+            font-weight: 700;
+        }
+        footer {
+            background: #222;
+            color: #ccc;
+            text-align: center;
+            padding: 1rem 1rem 3rem;
+            font-size: 0.9rem;
+            border-top: 3px solid #e67e22;
+        }
+        footer a {
+            color: #e67e22;
+            text-decoration: none;
+        }
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2.2rem;
+            }
+            nav {
+                flex-wrap: wrap;
+            }
+            nav a {
+                flex: 1 1 100%;
+                text-align: center;
+                padding: 0.8rem 0;
+            }
+        }
+    </style>
 </head>
 <body>
-<header>
-  <h1>Жёлтый Сайт</h1>
-  <nav>
-    <a href="#about">О нас</a>
-    <a href="#services">Услуги</a>
-    <a href="#contact">Контакты</a>
-  </nav>
-</header>
-<main>
-  <section class="hero">
-    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Жёлтое настроение">
-    <div class="hero-text">Добро пожаловать на жёлтый сайт!</div>
-  </section>
-  <section id="about">
-    <h2>О нас</h2>
-    <p>Мы создаём красивые и современные веб-сайты, используя яркую и тёплую цветовую гамму в жёлтых тонах. Наши проекты привлекают внимание и дарят позитивные эмоции каждому посетителю.</p>
-  </section>
-  <section id="services">
-    <h2>Услуги</h2>
-    <p>Разработка адаптивных сайтов, дизайн пользовательского интерфейса, оптимизация производительности и SEO — всё это мы выполняем с особым вниманием к деталям и яркостью оформления.</p>
-  </section>
-  <section id="contact">
-    <h2>Контакты</h2>
-    <p>Свяжитесь с нами по электронной почте: <a href="mailto:contact@yellowsite.ru">contact@yellowsite.ru</a> или по телефону: +7 123 456 78 90.</p>
-  </section>
-</main>
-<footer>
-  &copy; 2024 Жёлтый Сайт. Все права защищены.
-</footer>
+    <nav aria-label="Главное меню">
+        <a href="#about">О ресторане</a>
+        <a href="#menu">Меню</a>
+        <a href="#gallery">Галерея</a>
+        <a href="#contact">Контакты</a>
+    </nav>
+    <header role="banner">
+        <h1>Ресторан "Актау Гурман"</h1>
+        <p>Лучшие блюда моря и кухни Казахстана в сердце Актау</p>
+    </header>
+    <main>
+        <section id="about" aria-labelledby="about-title">
+            <h2 id="about-title">О ресторане</h2>
+            <p class="about-text">
+                Ресторан "Актау Гурман" приглашает вас окунуться в атмосферу уюта и гастрономического наслаждения. Мы предлагаем свежайшие морепродукты, а также классические и авторские блюда казахстанской кухни. Наше расположение в самом центре Актау делает нас идеальным местом для деловых встреч, семейных праздников и романтических вечеров.
+            </p>
+        </section>
+        <section id="menu" aria-labelledby="menu-title">
+            <h2 id="menu-title">Меню</h2>
+            <ul class="menu-list">
+                <li>Шашлык из баранины <span class="price">2500 ₸</span></li>
+                <li>Борщ по-домашнему <span class="price">1200 ₸</span></li>
+                <li>Стейк из тунца <span class="price">3200 ₸</span></li>
+                <li>Плов традиционный <span class="price">1800 ₸</span></li>
+                <li>Салат с осьминогом и авокадо <span class="price">2200 ₸</span></li>
+                <li>Пирог с тыквой и орехами <span class="price">950 ₸</span></li>
+            </ul>
+        </section>
+        <section id="gallery" aria-labelledby="gallery-title">
+            <h2 id="gallery-title">Галерея</h2>
+            <div class="gallery">
+                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" alt="Интерьер ресторана с современным дизайном" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1543352634-fc21b0f1e177?w=800" alt="Красивое блюдо с морепродуктами" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800" alt="Аппетитный стейк с овощами" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800" alt="Посетители ресторана наслаждаются вечером" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1505253210343-9b7551d13014?w=800" alt="Барная стойка и напитки" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1421622548261-c45bfe178854?w=800" alt="Десерт на изысканной посуде" loading="lazy" />
+            </div>
+        </section>
+        <section id="contact" aria-labelledby="contact-title">
+            <h2 id="contact-title">Контакты</h2>
+            <p>Адрес: г. Актау, ул. Набережная, 12</p>
+            <p>Телефон: <a href="tel:+77233456789">+7 (7233) 45-67-89</a></p>
+            <p>Email: <a href="mailto:info@aktaugourmet.kz">info@aktaugourmet.kz</a></p>
+            <p>Часы работы: Пн-Вс 11:00 – 23:00</p>
+        </section>
+    </main>
+    <footer role="contentinfo">
+        <p>&copy; 2024 "Актау Гурман". Все права защищены.</p>
+        <p>Разработано с ♥ для города Актау</p>
+    </footer>
 </body>
 </html>
