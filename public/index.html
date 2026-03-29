@@ -3,81 +3,220 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Привет</title>
+<title>Салон красоты</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
   body {
     margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f9fafb;
+    font-family: 'Montserrat', sans-serif;
+    background: #fff8f5;
     color: #333;
+    line-height: 1.6;
   }
   header {
-    background: #4f46e5;
+    background: #ff6473;
+    color: white;
     padding: 1rem 2rem;
-    color: #fff;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
   }
   header h1 {
     margin: 0;
     font-weight: 700;
+    font-size: 1.7rem;
+    letter-spacing: 2px;
   }
   nav a {
-    color: #c7d2fe;
+    color: white;
     text-decoration: none;
-    margin-left: 1.5rem;
+    margin-left: 1.8rem;
     font-weight: 600;
-    transition: color 0.3s ease;
+    transition: opacity 0.3s ease;
   }
   nav a:hover {
-    color: #a5b4fc;
+    opacity: 0.8;
   }
-  main {
-    max-width: 960px;
+  .hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    max-width: 1200px;
     margin: 2rem auto;
     padding: 0 1rem;
-    text-align: center;
+    gap: 2rem;
   }
-  main h2 {
+  .hero-text {
+    flex: 1 1 400px;
+  }
+  .hero-text h2 {
     font-size: 2.5rem;
     margin-bottom: 1rem;
+    color: #ff6473;
   }
-  main p {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+  .hero-text p {
+    font-size: 1.15rem;
+    margin-bottom: 1.8rem;
     color: #555;
   }
-  main img {
-    max-width: 100%;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  .btn-booking {
+    background: #ff6473;
+    color: white;
+    padding: 0.9rem 2rem;
+    border: none;
+    border-radius: 30px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-booking:hover {
+    background: #e55663;
+  }
+  .hero-image {
+    flex: 1 1 400px;
+    text-align: center;
+  }
+  .hero-image img {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(255,100,115,0.4);
+  }
+  main {
+    max-width: 1200px;
+    margin: 3rem auto 5rem;
+    padding: 0 1rem;
+  }
+  .services {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  .service-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.07);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+  .service-card:hover {
+    transform: translateY(-8px);
+  }
+  .service-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 4px solid #ff6473;
+  }
+  .service-content {
+    padding: 1.2rem 1.5rem;
+  }
+  .service-content h3 {
+    margin-top: 0;
+    margin-bottom: 0.6rem;
+    color: #ff6473;
+  }
+  .service-content p {
+    color: #666;
+    font-size: 0.95rem;
   }
   footer {
-    background: #1e293b;
-    color: #94a3b8;
+    background: #ff6473;
+    color: white;
     text-align: center;
-    padding: 1rem 2rem;
-    font-size: 0.9rem;
+    padding: 1.5rem 1rem;
+  }
+  footer p {
+    margin: 0;
+    font-weight: 500;
+  }
+  @media (max-width: 600px) {
+    header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    nav {
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+    nav a {
+      margin-left: 0;
+      margin-right: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Привет</h1>
+  <h1>Beauty Salon</h1>
   <nav>
-    <a href="#home">Главная</a>
+    <a href="#services">Услуги</a>
     <a href="#about">О нас</a>
     <a href="#contact">Контакты</a>
   </nav>
 </header>
+<section class="hero" aria-label="Главный баннер салона красоты">
+  <div class="hero-text">
+    <h2>Ваш идеальный образ начинается здесь</h2>
+    <p>Профессиональный уход за волосами, кожей и ногтями. Создайте стиль, который подчеркнёт вашу уникальность.</p>
+    <a href="#contact" class="btn-booking">Записаться</a>
+  </div>
+  <div class="hero-image">
+    <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800" alt="Женщина в салоне красоты" />
+  </div>
+</section>
 <main>
-  <h2>Добро пожаловать!</h2>
-  <p>Это современный и красивый сайт с навигацией и футером.</p>
-  <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Красивый пейзаж с природой" />
+  <section id="services" aria-label="Услуги салона красоты">
+    <h2>Наши услуги</h2>
+    <div class="services">
+      <article class="service-card">
+        <img src="https://images.unsplash.com/photo-1526045612212-70caf35c14df?w=800" alt="Стрижка волос" />
+        <div class="service-content">
+          <h3>Стрижка и укладка</h3>
+          <p>Современные и классические стрижки, профессиональная укладка для любого повода и типа волос.</p>
+        </div>
+      </article>
+      <article class="service-card">
+        <img src="https://images.unsplash.com/photo-1495711954306-24a9503c3d3a?w=800" alt="Маникюр" />
+        <div class="service-content">
+          <h3>Маникюр и педикюр</h3>
+          <p>Уход и дизайн ногтей с использованием качественных материалов и новых техник нейл-арта.</p>
+        </div>
+      </article>
+      <article class="service-card">
+        <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800" alt="Уход за кожей лица" />
+        <div class="service-content">
+          <h3>Уход за кожей лица</h3>
+          <p>Косметологические процедуры с натуральными составами для сияющей и здоровой кожи.</p>
+        </div>
+      </article>
+      <article class="service-card">
+        <img src="https://images.unsplash.com/photo-1523983305074-94f6cc25f1e2?w=800" alt="Окрашивание волос" />
+        <div class="service-content">
+          <h3>Окрашивание волос</h3>
+          <p>Яркие и естественные оттенки с использованием щадящих красок и профессиональной техники.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+  <section id="about" aria-label="Информация о салоне красоты" style="margin-top:4rem;">
+    <h2>О нас</h2>
+    <p>Салон Beauty Salon работает с 2010 года, предоставляя высококачественные услуги в сфере красоты и стиля. Наша команда — сертифицированные специалисты, которые не только выполняют процедуры, но и делают всё, чтобы вы чувствовали себя уверенно и комфортно.</p>
+  </section>
 </main>
-<footer>
-  &copy; 2024 Привет. Все права защищены.
+<footer id="contact">
+  <p>Beauty Salon © 2024 | Москва, ул. Примерная, 123 | Телефон: +7 (999) 123-45-67</p>
 </footer>
 </body>
 </html>
