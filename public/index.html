@@ -1,168 +1,204 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Bella Pizza - Пиццерия</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кофейня AromaCafé</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
   body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #fff8f0;
-    color: #4b1d00;
+    margin: 0; font-family: 'Montserrat', sans-serif; background: #fff8f0; color: #4b3b2b;
   }
   header {
-    background-color: #d94f00;
-    padding: 20px;
-    text-align: center;
-    color: #fff7e6;
-    font-weight: 700;
-    font-size: 2rem;
+    background: #6f4e37;
+    color: #fad9b5;
+    padding: 1rem 2rem;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 {
+    margin: 0; font-weight: 700; font-size: 1.8rem;
     letter-spacing: 2px;
   }
-  nav {
-    display: flex;
-    justify-content: center;
-    background: #fff3e6;
-    box-shadow: 0 2px 5px rgb(217 79 0 / 0.4);
-  }
   nav a {
-    text-decoration: none;
-    color: #c24100;
-    padding: 15px 25px;
-    font-weight: 600;
-    transition: background 0.3s ease, color 0.3s ease;
+    color: #fad9b5; text-decoration: none;
+    margin-left: 2rem; font-weight: 600; font-size: 1rem;
+    transition: color 0.3s ease;
   }
   nav a:hover {
-    background: #d94f00;
-    color: #fff7e6;
-    border-radius: 4px;
+    color: #f5af19;
+  }
+  .hero {
+    position: relative;
+    height: 60vh;
+    background: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+    display: flex; justify-content: center; align-items: center;
+  }
+  .hero::after {
+    content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+    background: rgba(111,78,55,0.5);
+  }
+  .hero-text {
+    position: relative; color: #fad9b5;
+    text-align: center;
+    z-index: 1;
+  }
+  .hero-text h2 {
+    font-size: 3rem; margin: 0 0 0.5rem 0; font-weight: 700;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+  }
+  .hero-text p {
+    font-size: 1.2rem; letter-spacing: 1.2px;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
   }
   main {
-    max-width: 1100px;
-    margin: 25px auto 50px;
-    padding: 0 15px;
+    max-width: 960px;
+    margin: 2rem auto 4rem;
+    padding: 0 1rem;
   }
-  h2 {
-    text-align: center;
-    margin-bottom: 25px;
-    font-weight: 700;
-    font-size: 2.25rem;
-    color: #8b2e00;
+  section {
+    margin-bottom: 3rem;
   }
-  .pizza-menu {
-    display: flex;
-    gap: 25px;
-    flex-wrap: wrap;
-    justify-content: center;
+  h3 {
+    font-size: 2rem;
+    color: #6f4e37;
+    margin-bottom: 1rem;
+    border-bottom: 3px solid #f5af19;
+    padding-bottom: 0.25rem;
   }
-  .pizza-item {
-    background: #fff;
-    box-shadow: 0 4px 10px rgb(217 79 0 / 0.15);
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 1.8rem;
+  }
+  .menu-item {
+    background: #fef7f1;
     border-radius: 12px;
-    max-width: 320px;
+    box-shadow: 0 4px 10px rgba(111,78,55,0.15);
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
     transition: transform 0.3s ease;
   }
-  .pizza-item:hover {
-    transform: scale(1.05);
+  .menu-item:hover {
+    transform: translateY(-5px);
   }
-  .pizza-item img {
-    width: 100%;
-    height: 220px;
-    object-fit: cover;
-    border-bottom: 3px solid #d94f00;
+  .menu-item img {
+    width: 100%; height: 180px; object-fit: cover;
   }
-  .pizza-info {
-    padding: 15px 20px 30px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+  .menu-item-details {
+    padding: 1rem 1.3rem 1.5rem;
   }
-  .pizza-info h3 {
-    margin: 0 0 10px;
-    font-size: 1.4rem;
-    color: #b04500;
+  .menu-item-details h4 {
+    margin: 0 0 0.5rem 0;
+    font-weight: 700;
+    font-size: 1.3rem;
   }
-  .pizza-info p {
-    margin: 0 0 15px;
-    font-size: 1rem;
-    line-height: 1.3;
-    color: #6a3200;
+  .menu-item-details p {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: #674d3a;
   }
   .price {
-    font-size: 1.25rem;
     font-weight: 700;
-    color: #d94f00;
-    text-align: right;
+    font-size: 1.1rem;
+    color: #f5af19;
   }
   footer {
-    background-color: #d94f00;
-    color: #fff7e6;
+    background: #6f4e37;
+    color: #fad9b5;
     text-align: center;
-    padding: 18px 10px;
-    font-weight: 600;
-    font-size: 0.95rem;
+    padding: 1.2rem 1rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.8px;
   }
 </style>
 </head>
 <body>
 <header>
-  Bella Pizza - Пиццерия
+  <h1>AromaCafé</h1>
+  <nav>
+    <a href="#about">О нас</a>
+    <a href="#menu">Меню</a>
+    <a href="#contacts">Контакты</a>
+  </nav>
 </header>
-<nav>
-  <a href="#menu">Меню</a>
-  <a href="#about">О нас</a>
-  <a href="#contacts">Контакты</a>
-</nav>
+<section class="hero" role="img" aria-label="Фото чашки кофе с красивой пенкой">
+  <div class="hero-text">
+    <h2>Настоящий аромат кофе</h2>
+    <p>Современная кофейня в сердце города</p>
+  </div>
+</section>
 <main>
+  <section id="about">
+    <h3>О кофейне AromaCafé</h3>
+    <p>Мы создаём идеальный кофе с душой и страстью, используя только свежие кофейные зерна и натуральные ингредиенты. Уютная атмосфера и современный стиль — лучшие условия для приятного времяпрепровождения.</p>
+  </section>
   <section id="menu">
-    <h2>Наше меню</h2>
-    <div class="pizza-menu">
-      <article class="pizza-item">
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Пицца Маргарита" />
-        <div class="pizza-info">
-          <h3>Маргарита</h3>
-          <p>Классическая пицца с томатным соусом, моцареллой и свежим базиликом.</p>
-          <div class="price">2 500 ₸</div>
+    <h3>Наше меню</h3>
+    <div class="menu-grid">
+      <article class="menu-item">
+        <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=400&q=80" alt="Эспрессо">
+        <div class="menu-item-details">
+          <h4>Эспрессо</h4>
+          <p>Классический крепкий кофе с насыщенным вкусом и ароматом.</p>
+          <div class="price">900 ₸</div>
         </div>
       </article>
-      <article class="pizza-item">
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Пицца Пепперони" />
-        <div class="pizza-info">
-          <h3>Пепперони</h3>
-          <p>Пикантная пицца с томатным соусом, моцареллой и острыми колбасками пепперони.</p>
-          <div class="price">3 200 ₸</div>
+      <article class="menu-item">
+        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=400&q=80" alt="Капучино">
+        <div class="menu-item-details">
+          <h4>Капучино</h4>
+          <p>Кофе с нежной молочной пенкой, идеально сбалансированный вкус.</p>
+          <div class="price">1200 ₸</div>
         </div>
       </article>
-      <article class="pizza-item">
-        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80" alt="Пицца Четыре сыра" />
-        <div class="pizza-info">
-          <h3>Четыре сыра</h3>
-          <p>Насыщенная пицца с моцареллой, пармезаном, горгонзолой и качоттой.</p>
-          <div class="price">3 700 ₸</div>
+      <article class="menu-item">
+        <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=400&q=80" alt="Латте">
+        <div class="menu-item-details">
+          <h4>Латте</h4>
+          <p>Мягкий кофе с большим количеством молока и красивой пеной.</p>
+          <div class="price">1300 ₸</div>
+        </div>
+      </article>
+      <article class="menu-item">
+        <img src="https://images.unsplash.com/photo-1559822920-7bcaf8b74104?auto=format&fit=crop&w=400&q=80" alt="Американо">
+        <div class="menu-item-details">
+          <h4>Американо</h4>
+          <p>Кофе, разбавленный горячей водой, с насыщенным вкусом и бодрящим эффектом.</p>
+          <div class="price">950 ₸</div>
+        </div>
+      </article>
+      <article class="menu-item">
+        <img src="https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&w=400&q=80" alt="Мокачино">
+        <div class="menu-item-details">
+          <h4>Мокачино</h4>
+          <p>Кофе с шоколадным сиропом и молочной пеной — десерт в каждой чашке.</p>
+          <div class="price">1400 ₸</div>
+        </div>
+      </article>
+      <article class="menu-item">
+        <img src="https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=400&q=80" alt="Свежая выпечка">
+        <div class="menu-item-details">
+          <h4>Свежая выпечка</h4>
+          <p>Вкусные круассаны, маффины и печенье к вашему кофе.</p>
+          <div class="price">от 600 ₸</div>
         </div>
       </article>
     </div>
   </section>
-  <section id="about" style="margin-top: 60px;">
-    <h2>О нас</h2>
-    <p style="max-width: 800px; margin: 0 auto; font-size: 1.1rem; line-height: 1.6; color: #5a2700;">
-      Bella Pizza - это пиццерия с настоящим итальянским вкусом в сердце вашего города! Мы используем только свежие натуральные ингредиенты и традиционные рецепты, чтобы каждая пицца получалась идеальной. Уютная атмосфера, быстрое обслуживание и качественный сервис — наши главные приоритеты.
-    </p>
-  </section>
-  <section id="contacts" style="margin-top: 60px; text-align: center;">
-    <h2>Контакты</h2>
-    <p style="font-size: 1.1rem; color: #6a3200;">Телефон: <a href="tel:+71234567890" style="color:#d94f00; font-weight: 700; text-decoration: none;">+7 (123) 456-78-90</a></p>
-    <p style="font-size: 1.1rem; color: #6a3200;">Адрес: г. Алматы, ул. Пушкина, 12</p>
-    <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80" alt="Интерьер пиццерии" style="margin-top: 25px; max-width: 100%; border-radius: 10px; box-shadow: 0 4px 12px rgb(217 79 0 / 0.25);" />
+  <section id="contacts">
+    <h3>Контакты</h3>
+    <p>Мы находимся по адресу:</p>
+    <address>
+      г. Алматы, пр. Достык, 125<br>
+      Телефон: +7 (727) 123-45-67<br>
+      Email: info@aromacafe.kz
+    </address>
   </section>
 </main>
 <footer>
-  © 2024 Bella Pizza — Все права защищены
+  &copy; 2024 AromaCafé — Кофейня. Все права защищены.
 </footer>
 </body>
 </html>
