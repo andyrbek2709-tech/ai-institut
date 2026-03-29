@@ -3,209 +3,257 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Шиномонтаж</title>
+<title>Жёлтый сайт</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
-  * {
-    box-sizing: border-box;
+:root {
+  --color-primary: #FFD700;
+  --color-accent: #FFC107;
+  --color-bg: #FFF9E6;
+  --color-surface: #FFF5D1;
+  --color-border: #FFE066;
+  --color-accent-dark: #8C6B00;
+  --color-text: #333333;
+  --color-on-primary: #ffffff;
+  --font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Общие */
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ссылка */
+a {
+  color: var(--color-accent-dark);
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+a:hover,
+a:focus {
+  color: var(--color-primary);
+  outline: none;
+  text-decoration: underline;
+}
+
+/* Хедер */
+header, .site-header {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  color: var(--color-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.site-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  user-select: none;
+}
+.navbar {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+.navbar a {
+  font-weight: 600;
+  padding: 0.4rem 0.2rem;
+  border-bottom: 2px solid transparent;
+}
+.navbar a:hover,
+.navbar a:focus {
+  border-bottom-color: var(--color-on-primary);
+}
+
+/* Кнопки */
+button, .btn {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  border: 1px solid var(--color-border);
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.08s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+button:hover,
+button:focus-visible,
+.btn:hover,
+.btn:focus-visible {
+  background-color: var(--color-accent);
+  transform: translateY(-1px);
+  outline-offset: 2px;
+  outline: 2px solid var(--color-accent-dark);
+}
+button:disabled,
+.btn:disabled {
+  background-color: var(--color-border);
+  color: var(--color-accent-dark);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+  transform: none;
+  outline: none;
+}
+
+/* Карточки и поверхности */
+.card, .surface {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-accent-dark);
+}
+.card h2 {
+  margin-top: 0;
+  color: var(--color-accent-dark);
+}
+.card p {
+  margin-bottom: 0;
+}
+
+/* Формы */
+form {
+  max-width: 450px;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+input, textarea, select {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-family: var(--font-family);
+  color: var(--color-text);
+  font-size: 1rem;
+  transition: border-color 0.25s ease;
+  resize: vertical;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 3px solid rgba(255, 215, 0, 0.25);
+  border-color: var(--color-primary);
+}
+label {
+  font-weight: 600;
+  color: var(--color-accent-dark);
+}
+
+/* Footer */
+footer, .site-footer {
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 1.5rem 2rem;
+  margin-top: auto;
+  text-align: center;
+  font-size: 0.9rem;
+  user-select: none;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Контейнер */
+.container {
+  width: 95%;
+  max-width: 1024px;
+  margin: 2rem auto;
+}
+
+/* Адаптивность */
+@media (max-width: 650px) {
+  header, .site-header {
+    padding: 1rem;
   }
-  body {
-    margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    background-color: #f9f9f9;
-    color: #333;
-  }
-  header {
-    background: #111;
-    padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-  }
-  header h1 {
-    color: #fff;
-    font-weight: 700;
-    font-size: 1.5rem;
-    margin: 0;
-  }
-  nav ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    gap: 1.5rem;
-  }
-  nav a {
-    color: #ddd;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s ease;
-  }
-  nav a:hover,
-  nav a:focus {
-    color: #ffa500;
-    outline: none;
-  }
-  main {
-    max-width: 1200px;
-    margin: 2rem auto 4rem;
-    padding: 0 1rem;
-  }
-  .hero {
-    position: relative;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 8px 20px rgb(0 0 0 / 0.2);
-  }
-  .hero img {
+  .navbar {
     width: 100%;
-    height: 400px;
-    object-fit: cover;
-    display: block;
-    filter: brightness(0.7);
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.75rem;
   }
-  .hero-text {
-    position: absolute;
-    top: 50%;
-    left: 2rem;
-    transform: translateY(-50%);
-    color: #fff;
-    max-width: 600px;
+  .container {
+    margin: 1rem auto;
   }
-  .hero-text h2 {
-    margin: 0 0 1rem;
-    font-size: 3rem;
-    font-weight: 700;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  form {
+    max-width: 100%;
   }
-  .hero-text p {
-    font-size: 1.25rem;
-    font-weight: 400;
-    text-shadow: 0 1px 5px rgba(0,0,0,0.6);
-  }
-  section.services {
-    margin-top: 3rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-    gap: 2rem;
-  }
-  .service-card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgb(0 0 0 / 0.1);
-    padding: 2rem;
-    text-align: center;
-    transition: transform 0.3s ease;
-  }
-  .service-card:hover,
-  .service-card:focus-within {
-    transform: translateY(-8px);
-    box-shadow: 0 10px 30px rgb(0 0 0 / 0.15);
-  }
-  .service-card img {
-    width: 80px;
-    margin-bottom: 1rem;
-  }
-  .service-card h3 {
-    margin: 0 0 1rem;
-    font-size: 1.5rem;
-    color: #111;
-  }
-  .service-card p {
-    color: #666;
-    font-size: 1rem;
-    line-height: 1.5;
-  }
-  .contact {
-    margin-top: 4rem;
-    background: #fff;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 15px rgb(0 0 0 / 0.05);
-  }
-  .contact h2 {
-    margin-top: 0;
-    font-size: 2rem;
-    color: #111;
-  }
-  .contact p {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-  }
-  .contact a {
-    color: #ffa500;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  footer {
-    background: #111;
-    color: #888;
-    text-align: center;
-    padding: 1.5rem 2rem;
-    font-size: 0.9rem;
-  }
-  @media (max-width: 480px) {
-    .hero-text h2 {
-      font-size: 2rem;
-    }
-    .hero-text p {
-      font-size: 1rem;
-    }
-  }
+}
 </style>
 </head>
 <body>
-<header>
-  <h1>Шиномонтаж</h1>
-  <nav>
-    <ul>
-      <li><a href="#services" tabindex="0">Услуги</a></li>
-      <li><a href="#contact" tabindex="0">Контакты</a></li>
-    </ul>
+<header class="site-header" role="banner">
+  <div class="site-title">Жёлтый Сайт</div>
+  <nav class="navbar" role="navigation" aria-label="Главное меню">
+    <a href="#" tabindex="0">Главная</a>
+    <a href="#" tabindex="0">О Нас</a>
+    <a href="#" tabindex="0">Услуги</a>
+    <a href="#" tabindex="0">Контакты</a>
   </nav>
 </header>
-<main>
-  <section class="hero" aria-label="Основное изображение шиномонтажа">
-    <img src="https://images.unsplash.com/photo-1556741533-f6acd647d2fb?w=800" alt="Мастер занимается шиномонтажом автомобиля" />
-    <div class="hero-text">
-      <h2>Быстрый и качественный шиномонтаж</h2>
-      <p>Профессиональное обслуживание вашего автомобиля в удобное для вас время</p>
+
+<main class="container" role="main">
+  <section class="card" aria-labelledby="welcome-title">
+    <h2 id="welcome-title">Добро пожаловать на наш сайт</h2>
+    <p>Этот сайт оформлен в приятных жёлтых тонах с использованием современной палитры, обеспечивающей комфортное чтение и приятный внешний вид.</p>
+    <button type="button" aria-label="Узнать больше">Узнать больше</button>
+  </section>
+
+  <section class="card" aria-labelledby="services-title">
+    <h2 id="services-title">Наши услуги</h2>
+    <div class="surface" role="article" aria-label="Карточка услуги: Веб-разработка">
+      <h3>Веб-разработка</h3>
+      <p>Создаём современные и адаптивные сайты под любые задачи с использованием лучших технологий.</p>
+      <button class="btn" type="button" aria-label="Подробнее про веб-разработку">Подробнее</button>
+    </div>
+    <div class="surface" role="article" aria-label="Карточка услуги: Дизайн интерфейсов">
+      <h3>Дизайн интерфейсов</h3>
+      <p>Разрабатываем привлекательные и удобные пользовательские интерфейсы для любых проектов.</p>
+      <button class="btn" type="button" aria-label="Подробнее про дизайн интерфейсов">Подробнее</button>
     </div>
   </section>
-  <section class="services" id="services" aria-label="Список услуг шиномонтажа">
-    <article class="service-card" tabindex="0">
-      <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=80" alt="Замена шин" />
-      <h3>Замена шин</h3>
-      <p>Быстрая и профессиональная замена летних и зимних шин.</p>
-    </article>
-    <article class="service-card" tabindex="0">
-      <img src="https://images.unsplash.com/photo-1519669556871-03879083a517?w=80" alt="Балансировка колес" />
-      <h3>Балансировка колес</h3>
-      <p>Точная балансировка для плавного и безопасного вождения.</p>
-    </article>
-    <article class="service-card" tabindex="0">
-      <img src="https://images.unsplash.com/photo-1448087021603-375f061fcd2c?w=80" alt="Ремонт шин" />
-      <h3>Ремонт шин</h3>
-      <p>Ремонт проколов и повреждений шин с гарантией качества.</p>
-    </article>
-    <article class="service-card" tabindex="0">
-      <img src="https://images.unsplash.com/photo-1504215680853-026ed2a45def?w=80" alt="Хранение шин" />
-      <h3>Хранение шин</h3>
-      <p>Сезонное хранение шин в оптимальных условиях.</p>
-    </article>
+
+  <section class="card" aria-labelledby="contact-title">
+    <h2 id="contact-title">Связаться с нами</h2>
+    <form action="#" method="post" aria-describedby="contact-desc">
+      <p id="contact-desc">Заполните форму ниже, и мы свяжемся с вами в кратчайшие сроки.</p>
+      <label for="name">Имя:</label>
+      <input type="text" id="name" name="name" placeholder="Ваше имя" required autocomplete="name" />
+      
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" placeholder="example@mail.ru" required autocomplete="email" />
+      
+      <label for="message">Сообщение:</label>
+      <textarea id="message" name="message" rows="5" placeholder="Ваше сообщение" required></textarea>
+      
+      <button type="submit" aria-label="Отправить сообщение">Отправить</button>
+    </form>
   </section>
-  <section class="contact" id="contact" aria-label="Контактная информация">
-    <h2>Свяжитесь с нами</h2>
-    <p>Телефон: <a href="tel:+79991234567">+7 (999) 123-45-67</a></p>
-    <p>Адрес: г. Москва, ул. Примерная, д. 10</p>
-    <p>Email: <a href="mailto:info@shinomontazh.ru">info@shinomontazh.ru</a></p>
+
+  <section class="card" aria-labelledby="gallery-title">
+    <h2 id="gallery-title">Галерея</h2>
+    <div style="display:grid; gap:1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Яркое жёлтое поле подсолнухов" style="border-radius:8px; width:100%; height:auto; object-fit:cover;" />
+      <img src="https://images.unsplash.com/photo-1494526585095-c41746248156?w=800" alt="Жёлтые осенние листья на ветках" style="border-radius:8px; width:100%; height:auto; object-fit:cover;" />
+      <img src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800" alt="Современный желтый автомобиль на дороге" style="border-radius:8px; width:100%; height:auto; object-fit:cover;" />
+    </div>
   </section>
 </main>
-<footer>
-  &copy; 2024 Шиномонтаж. Все права защищены.
+
+<footer class="site-footer" role="contentinfo">
+  © 2024 Жёлтый Сайт — Все права защищены
 </footer>
 </body>
 </html>
