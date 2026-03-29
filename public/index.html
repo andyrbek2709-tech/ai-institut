@@ -1,119 +1,160 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Clear - Современный стиль</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
-  body {
-    margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    background: #f5f8fa;
-    color: #2c3e50;
-  }
-  header {
-    background: #1abc9c;
-    padding: 20px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #fff;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-  }
-  header h1 {
-    margin: 0;
-    font-weight: 700;
-    letter-spacing: 2px;
-    font-size: 1.8rem;
-  }
-  nav a {
-    color: #ecf0f1;
-    text-decoration: none;
-    margin-left: 25px;
-    font-weight: 600;
-    transition: color 0.3s ease;
-  }
-  nav a:hover {
-    color: #16a085;
-  }
-  main {
-    max-width: 960px;
-    margin: 40px auto;
-    padding: 0 20px;
-    text-align: center;
-  }
-  main h2 {
-    font-size: 2.4rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #16a085;
-  }
-  main p {
-    font-size: 1.2rem;
-    line-height: 1.6;
-    color: #34495e;
-    margin-bottom: 40px;
-  }
-  .image-container {
-    max-width: 100%;
-    overflow: hidden;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgb(22 160 133 / 0.2);
-  }
-  .image-container img {
-    width: 100%;
-    height: auto;
-    display: block;
-    transition: transform 0.6s ease;
-  }
-  .image-container:hover img {
-    transform: scale(1.05);
-  }
-  footer {
-    background: #34495e;
-    color: #bdc3c7;
-    text-align: center;
-    padding: 25px 20px;
-    font-size: 0.9rem;
-    margin-top: 60px;
-  }
-  @media (max-width: 600px) {
-    header {
-      flex-direction: column;
-      text-align: center;
-      padding: 20px;
-    }
-    nav a {
-      margin: 15px 10px 0 10px;
-      display: inline-block;
-    }
-    main h2 {
-      font-size: 2rem;
-    }
-  }
-</style>
+    <meta charset="UTF-8" />
+    <title>Bella Pizza - Пиццерия</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #fff8f0;
+            color: #4d342d;
+        }
+        header {
+            background-color: #d94e1a;
+            padding: 1rem 2rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        header h1 {
+            margin: 0;
+            font-family: 'Georgia', serif;
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+        nav a {
+            text-decoration: none;
+            color: #fff;
+            margin-left: 1.5rem;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #ffc48c;
+        }
+        main {
+            max-width: 960px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .intro {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .intro img {
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        h2 {
+            border-bottom: 3px solid #d94e1a;
+            padding-bottom: 0.3rem;
+            margin-bottom: 1.5rem;
+            font-family: 'Georgia', serif;
+        }
+        .menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+            gap: 2rem;
+        }
+        .menu-item {
+            background: #fff1e6;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 2px 4px 10px rgba(217, 78, 26, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+        .menu-item:hover {
+            transform: scale(1.05);
+        }
+        .menu-item img {
+            width: 160px;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(217, 78, 26, 0.3);
+            margin-bottom: 1rem;
+        }
+        .menu-item h3 {
+            margin: 0 0 0.5rem 0;
+            font-family: 'Georgia', serif;
+            font-weight: 700;
+            color: #b3410a;
+        }
+        .price {
+            margin-top: auto;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #8a2f04;
+            border-top: 1px solid #d94e1a;
+            padding-top: 0.8rem;
+            width: 100%;
+            text-align: center;
+        }
+        footer {
+            background-color: #d94e1a;
+            color: #fff;
+            text-align: center;
+            padding: 1rem 2rem;
+            margin-top: 3rem;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
-<header>
-  <h1>Clear</h1>
-  <nav>
-    <a href="#about">О сайте</a>
-    <a href="#gallery">Галерея</a>
-    <a href="#contacts">Контакты</a>
-  </nav>
-</header>
-<main>
-  <section id="about">
-    <h2>Современный стиль "Clear"</h2>
-    <p>Добро пожаловать на сайт, посвящённый концепции "Clear" – чистоты и простоты во всём. Современный стиль дизайна с акцентом на прозрачность, минимализм и эффективность. Здесь вы найдёте вдохновение для создания чистых и продуманных проектов, сочетающих функциональность и эстетику.</p>
-  </section>
-  <section id="gallery" class="image-container" aria-label="Фото по теме современного стиля">
-    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=960&q=80" alt="Современный интерьер с чистым и минималистичным дизайном" />
-  </section>
-</main>
-<footer id="contacts">
-  <p>© 2024 Clear. Все права защищены. Контакты: info@clearstyle.example</p>
-</footer>
+    <header>
+        <h1>Bella Pizza</h1>
+        <nav>
+            <a href="#about">О нас</a>
+            <a href="#menu">Меню</a>
+            <a href="#contacts">Контакты</a>
+        </nav>
+    </header>
+    <main>
+        <section id="about" class="intro">
+            <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=960&q=80" alt="Пицца Bella Pizza" />
+            <h2>Добро пожаловать в Bella Pizza</h2>
+            <p>Мы предлагаем настоящую итальянскую пиццу в Алматы. Натуральные ингредиенты, свежие продукты и авторские рецепты.</p>
+        </section>
+        <section id="menu">
+            <h2>Наше меню</h2>
+            <div class="menu">
+                <article class="menu-item">
+                    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=160&q=80" alt="Пицца Маргарита" />
+                    <h3>Маргарита</h3>
+                    <p>Томатный соус, моцарелла, базилик.</p>
+                    <div class="price">1 800 ₸</div>
+                </article>
+                <article class="menu-item">
+                    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=160&q=80" alt="Пицца Пепперони" />
+                    <h3>Пепперони</h3>
+                    <p>Томатный соус, моцарелла, пепперони.</p>
+                    <div class="price">2 300 ₸</div>
+                </article>
+                <article class="menu-item">
+                    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=160&q=80" alt="Пицца Четыре сыра" />
+                    <h3>Четыре сыра</h3>
+                    <p>Моцарелла, пармезан, горгонзола, эмменталь.</p>
+                    <div class="price">2 700 ₸</div>
+                </article>
+            </div>
+        </section>
+        <section id="contacts" style="margin-top: 3rem; text-align: center;">
+            <h2>Свяжитесь с нами</h2>
+            <p>Адрес: г. Алматы, ул. Абая, 123</p>
+            <p>Телефон: +7 (727) 123-45-67</p>
+            <p>Email: info@bellapizza.kz</p>
+        </section>
+    </main>
+    <footer>
+        &copy; 2024 Bella Pizza - Все права защищены
+    </footer>
 </body>
 </html>
