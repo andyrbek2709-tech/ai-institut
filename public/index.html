@@ -1,259 +1,204 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Жёлтый сайт</title>
-<style>
-:root {
-  --color-primary: #FFD700;
-  --color-accent: #FFC107;
-  --color-bg: #FFF9E6;
-  --color-surface: #FFF5D1;
-  --color-border: #FFE066;
-  --color-accent-dark: #8C6B00;
-  --color-text: #333333;
-  --color-on-primary: #ffffff;
-  --font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-
-/* Общие */
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-family);
-  line-height: 1.5;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Ссылка */
-a {
-  color: var(--color-accent-dark);
-  text-decoration: none;
-  transition: color 0.25s ease;
-}
-a:hover,
-a:focus {
-  color: var(--color-primary);
-  outline: none;
-  text-decoration: underline;
-}
-
-/* Хедер */
-header, .site-header {
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
-  color: var(--color-on-primary);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 2rem;
-  flex-wrap: wrap;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-.site-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  user-select: none;
-}
-.navbar {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-}
-.navbar a {
-  font-weight: 600;
-  padding: 0.4rem 0.2rem;
-  border-bottom: 2px solid transparent;
-}
-.navbar a:hover,
-.navbar a:focus {
-  border-bottom-color: var(--color-on-primary);
-}
-
-/* Кнопки */
-button, .btn {
-  background-color: var(--color-primary);
-  color: var(--color-on-primary);
-  border: 1px solid var(--color-border);
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.08s ease;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-button:hover,
-button:focus-visible,
-.btn:hover,
-.btn:focus-visible {
-  background-color: var(--color-accent);
-  transform: translateY(-1px);
-  outline-offset: 2px;
-  outline: 2px solid var(--color-accent-dark);
-}
-button:disabled,
-.btn:disabled {
-  background-color: var(--color-border);
-  color: var(--color-accent-dark);
-  border-color: var(--color-border);
-  cursor: not-allowed;
-  transform: none;
-  outline: none;
-}
-
-/* Карточки и поверхности */
-.card, .surface {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  color: var(--color-accent-dark);
-}
-.card h2 {
-  margin-top: 0;
-  color: var(--color-accent-dark);
-}
-.card p {
-  margin-bottom: 0;
-}
-
-/* Формы */
-form {
-  max-width: 450px;
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-input, textarea, select {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-family: var(--font-family);
-  color: var(--color-text);
-  font-size: 1rem;
-  transition: border-color 0.25s ease;
-  resize: vertical;
-}
-input:focus, textarea:focus, select:focus {
-  outline: 3px solid rgba(255, 215, 0, 0.25);
-  border-color: var(--color-primary);
-}
-label {
-  font-weight: 600;
-  color: var(--color-accent-dark);
-}
-
-/* Footer */
-footer, .site-footer {
-  background: var(--color-surface);
-  color: var(--color-text);
-  padding: 1.5rem 2rem;
-  margin-top: auto;
-  text-align: center;
-  font-size: 0.9rem;
-  user-select: none;
-  border-top: 1px solid var(--color-border);
-}
-
-/* Контейнер */
-.container {
-  width: 95%;
-  max-width: 1024px;
-  margin: 2rem auto;
-}
-
-/* Адаптивность */
-@media (max-width: 650px) {
-  header, .site-header {
-    padding: 1rem;
-  }
-  .navbar {
-    width: 100%;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 0.75rem;
-  }
-  .container {
-    margin: 1rem auto;
-  }
-  form {
-    max-width: 100%;
-  }
-}
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Современный сайт</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        header {
+            background: #282c34;
+            color: #fff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        header h1 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: 0.05em;
+        }
+        nav ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+        nav li {
+            margin-left: 1.5rem;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        nav a:hover {
+            color: #61dafb;
+        }
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            margin-bottom: 3rem;
+        }
+        .hero img {
+            width: 100%;
+            display: block;
+            border-radius: 8px;
+            object-fit: cover;
+            max-height: 400px;
+        }
+        .hero-text {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 2rem;
+            color: #fff;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            max-width: 60%;
+        }
+        .hero-text h2 {
+            margin: 0 0 0.5rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .hero-text p {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+        section {
+            margin-bottom: 3rem;
+        }
+        section h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #61dafb;
+            padding-bottom: 0.3rem;
+            font-weight: 700;
+        }
+        p {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        footer {
+            background: #282c34;
+            color: #ccc;
+            text-align: center;
+            padding: 1.5rem 2rem;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 768px) {
+            .hero-text h2 {
+                font-size: 1.8rem;
+            }
+            .hero-text {
+                max-width: 90%;
+                left: 1rem;
+                bottom: 1rem;
+            }
+            nav ul {
+                flex-direction: column;
+                background: #282c34;
+                position: absolute;
+                top: 60px;
+                right: 2rem;
+                display: none;
+                border-radius: 4px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            }
+            nav ul.show {
+                display: flex;
+            }
+            nav li {
+                margin: 0.5rem 0;
+            }
+            nav a {
+                font-size: 1.2rem;
+            }
+            header {
+                flex-wrap: wrap;
+                position: relative;
+            }
+            .menu-toggle {
+                display: block;
+                color: white;
+                background: none;
+                border: none;
+                font-size: 1.8rem;
+                cursor: pointer;
+            }
+        }
+        @media (min-width: 769px) {
+            .menu-toggle {
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
-<header class="site-header" role="banner">
-  <div class="site-title">Жёлтый Сайт</div>
-  <nav class="navbar" role="navigation" aria-label="Главное меню">
-    <a href="#" tabindex="0">Главная</a>
-    <a href="#" tabindex="0">О Нас</a>
-    <a href="#" tabindex="0">Услуги</a>
-    <a href="#" tabindex="0">Контакты</a>
-  </nav>
-</header>
-
-<main class="container" role="main">
-  <section class="card" aria-labelledby="welcome-title">
-    <h2 id="welcome-title">Добро пожаловать на наш сайт</h2>
-    <p>Этот сайт оформлен в приятных жёлтых тонах с использованием современной палитры, обеспечивающей комфортное чтение и приятный внешний вид.</p>
-    <button type="button" aria-label="Узнать больше">Узнать больше</button>
-  </section>
-
-  <section class="card" aria-labelledby="services-title">
-    <h2 id="services-title">Наши услуги</h2>
-    <div class="surface" role="article" aria-label="Карточка услуги: Веб-разработка">
-      <h3>Веб-разработка</h3>
-      <p>Создаём современные и адаптивные сайты под любые задачи с использованием лучших технологий.</p>
-      <button class="btn" type="button" aria-label="Подробнее про веб-разработку">Подробнее</button>
-    </div>
-    <div class="surface" role="article" aria-label="Карточка услуги: Дизайн интерфейсов">
-      <h3>Дизайн интерфейсов</h3>
-      <p>Разрабатываем привлекательные и удобные пользовательские интерфейсы для любых проектов.</p>
-      <button class="btn" type="button" aria-label="Подробнее про дизайн интерфейсов">Подробнее</button>
-    </div>
-  </section>
-
-  <section class="card" aria-labelledby="contact-title">
-    <h2 id="contact-title">Связаться с нами</h2>
-    <form action="#" method="post" aria-describedby="contact-desc">
-      <p id="contact-desc">Заполните форму ниже, и мы свяжемся с вами в кратчайшие сроки.</p>
-      <label for="name">Имя:</label>
-      <input type="text" id="name" name="name" placeholder="Ваше имя" required autocomplete="name" />
-      
-      <label for="email">Email:</label>
-      <input type="email" id="email" name="email" placeholder="example@mail.ru" required autocomplete="email" />
-      
-      <label for="message">Сообщение:</label>
-      <textarea id="message" name="message" rows="5" placeholder="Ваше сообщение" required></textarea>
-      
-      <button type="submit" aria-label="Отправить сообщение">Отправить</button>
-    </form>
-  </section>
-
-  <section class="card" aria-labelledby="gallery-title">
-    <h2 id="gallery-title">Галерея</h2>
-    <div style="display:grid; gap:1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Яркое жёлтое поле подсолнухов" style="border-radius:8px; width:100%; height:auto; object-fit:cover;" />
-      <img src="https://images.unsplash.com/photo-1494526585095-c41746248156?w=800" alt="Жёлтые осенние листья на ветках" style="border-radius:8px; width:100%; height:auto; object-fit:cover;" />
-      <img src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800" alt="Современный желтый автомобиль на дороге" style="border-radius:8px; width:100%; height:auto; object-fit:cover;" />
-    </div>
-  </section>
-</main>
-
-<footer class="site-footer" role="contentinfo">
-  © 2024 Жёлтый Сайт — Все права защищены
-</footer>
+    <header>
+        <h1>Современный сайт</h1>
+        <button class="menu-toggle" aria-label="Toggle navigation menu">&#9776;</button>
+        <nav>
+            <ul>
+                <li><a href="#home">Главная</a></li>
+                <li><a href="#about">О нас</a></li>
+                <li><a href="#services">Услуги</a></li>
+                <li><a href="#contact">Контакты</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section class="hero" id="home">
+            <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Красивый современный пейзаж" />
+            <div class="hero-text">
+                <h2>Добро пожаловать на наш сайт</h2>
+                <p>Качественные решения для вашего бизнеса</p>
+            </div>
+        </section>
+        <section id="about">
+            <h3>О нас</h3>
+            <p>Мы - команда профессионалов в области веб-разработки, создающая современные и функциональные сайты, которые помогают бизнесу расти и развиваться.</p>
+            <p>Используем передовые технологии и актуальные тренды дизайна для достижения наилучших результатов.</p>
+        </section>
+        <section id="services">
+            <h3>Наши услуги</h3>
+            <p>Мы предлагаем полный спектр услуг: разработка сайтов под ключ, дизайн интерфейсов, SEO оптимизация и поддержка проектов на всех этапах.</p>
+            <p>Наш опыт и профессионализм гарантируют качество и своевременное выполнение работ.</p>
+        </section>
+        <section id="contact">
+            <h3>Контакты</h3>
+            <p>Свяжитесь с нами для обсуждения вашего проекта и получения консультации.</p>
+            <p>Email: info@modernsite.ru</p>
+            <p>Телефон: +7 (999) 123-45-67</p>
+        </section>
+    </main>
+    <footer>
+        &copy; 2024 Современный сайт. Все права защищены.
+    </footer>
+    <script>
+        const toggleButton = document.querySelector('.menu-toggle');
+        const navMenu = document.querySelector('nav ul');
+        toggleButton.addEventListener('click', () => {
+            navMenu.classList.toggle('show');
+        });
+    </script>
 </body>
 </html>
