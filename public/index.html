@@ -3,236 +3,131 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Профессиональные услуги сантехника</title>
+<title>Розовый тон</title>
 <style>
-  * {
-    box-sizing: border-box;
+  :root {
+    --pink-light: #f8bbd0;
+    --pink-medium: #ec407a;
+    --pink-dark: #ad1457;
+    --pink-bg: #ffe4ec;
+    --pink-text: #880e4f;
+    --pink-accent: #f48fb1;
   }
   body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f9fafb;
-    color: #333;
+    background-color: var(--pink-bg);
+    color: var(--pink-text);
   }
   header {
-    background-color: #0275d8;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 2rem;
+    background: var(--pink-medium);
     color: white;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
   header h1 {
-    font-size: 1.5rem;
     margin: 0;
-    user-select: none;
+    font-weight: 700;
+    font-size: 1.5rem;
   }
   nav a {
     color: white;
     text-decoration: none;
     margin-left: 1.5rem;
     font-weight: 600;
-    transition: color 0.3s;
+    transition: color 0.3s ease;
   }
   nav a:hover {
-    color: #ffe;
-  }
-  .hero {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(rgba(2, 117, 216,0.8), rgba(2, 117, 216,0.8)), url('https://images.unsplash.com/photo-1504274066651-8d31a536b11a?w=800') no-repeat center center/cover;
-    color: white;
-    padding: 6rem 2rem;
-    text-align: center;
-  }
-  .hero-content {
-    max-width: 600px;
-  }
-  .hero h2 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-  }
-  .hero p {
-    font-size: 1.25rem;
-    margin-bottom: 2rem;
-  }
-  .btn-primary {
-    background-color: #ffd700;
-    color: #0275d8;
-    padding: 0.75rem 2rem;
-    font-weight: 700;
-    border: none;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    text-decoration: none;
-    display: inline-block;
-  }
-  .btn-primary:hover {
-    background-color: #e6c200;
+    color: var(--pink-light);
   }
   main {
     max-width: 1200px;
-    margin: 3rem auto;
-    padding: 0 2rem;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  .hero {
+    background: url('https://images.unsplash.com/photo-1523906630133-f6934a84b06b?w=800') center/cover no-repeat;
+    border-radius: 15px;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-shadow: 1px 1px 7px rgba(0,0,0,0.7);
+    font-size: 2.5rem;
+    font-weight: 700;
   }
   section {
-    margin-bottom: 4rem;
-  }
-  h3 {
-    font-size: 2rem;
-    margin-bottom: 1.5rem;
-    text-align: center;
-    color: #0275d8;
-  }
-  .services {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-    gap: 2rem;
-  }
-  .service-item {
+    margin-top: 3rem;
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgb(0 0 0 / 0.1);
-    overflow: hidden;
-    transition: transform 0.3s;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 6px 15px rgba(236, 64, 122, 0.3);
   }
-  .service-item:hover {
-    transform: translateY(-5px);
-  }
-  .service-item img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-  }
-  .service-content {
-    padding: 1.5rem;
-  }
-  .service-content h4 {
+  section h2 {
+    color: var(--pink-dark);
     margin-top: 0;
-    margin-bottom: 0.75rem;
-    color: #222;
-  }
-  .service-content p {
-    margin: 0;
-    color: #555;
-    line-height: 1.5;
-  }
-  .contact {
-    background-color: #0275d8;
-    color: white;
-    padding: 3rem 2rem;
-    border-radius: 12px;
-    max-width: 600px;
-    margin: 0 auto 4rem;
-    text-align: center;
-  }
-  .contact h3 {
-    margin-bottom: 1rem;
-  }
-  .contact p {
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
-  }
-  .contact a {
-    display: inline-block;
-    background-color: #ffd700;
-    color: #0275d8;
     font-weight: 700;
-    padding: 0.75rem 2rem;
-    border-radius: 30px;
-    text-decoration: none;
-    transition: background-color 0.3s;
-  }
-  .contact a:hover {
-    background-color: #e6c200;
   }
   footer {
-    background-color: #1a1a1a;
-    color: #bbb;
+    background: var(--pink-dark);
+    color: white;
     text-align: center;
-    padding: 1.5rem 2rem;
-    font-size: 0.9rem;
+    padding: 1rem 2rem;
+    margin-top: 4rem;
   }
   @media (max-width: 600px) {
-    .hero h2 {
-      font-size: 1.8rem;
+    header {
+      flex-direction: column;
+      align-items: flex-start;
     }
-    .hero p {
-      font-size: 1rem;
+    nav a {
+      margin-left: 0;
+      margin-top: 0.75rem;
+      display: inline-block;
+    }
+    .hero {
+      font-size: 1.8rem;
+      height: 250px;
     }
   }
 </style>
 </head>
 <body>
-
 <header>
-  <h1>Сантехник PRO</h1>
+  <h1>Розовый Тон</h1>
   <nav>
-    <a href="#services">Услуги</a>
+    <a href="#home">Главная</a>
     <a href="#about">О нас</a>
+    <a href="#services">Услуги</a>
     <a href="#contact">Контакты</a>
   </nav>
 </header>
-
-<section class="hero" aria-label="Главный баннер">
-  <div class="hero-content">
-    <h2>Качественные сантехнические услуги для вашего дома</h2>
-    <p>Монтаж, ремонт и обслуживание сантехники быстро и профессионально.</p>
-    <a href="#contact" class="btn-primary">Заказать звонок</a>
-  </div>
-</section>
-
 <main>
-  <section id="services" aria-labelledby="services-title">
-    <h3 id="services-title">Наши услуги</h3>
-    <div class="services">
-      <article class="service-item">
-        <img src="https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?w=800" alt="Монтаж труб и сантехники" />
-        <div class="service-content">
-          <h4>Монтаж труб и сантехники</h4>
-          <p>Профессиональная установка труб, кранов и сантехнических приборов с гарантией качества.</p>
-        </div>
-      </article>
-      <article class="service-item">
-        <img src="https://images.unsplash.com/photo-1506355681293-3c5d2d58b8c1?w=800" alt="Ремонт сантехники" />
-        <div class="service-content">
-          <h4>Ремонт сантехники</h4>
-          <p>Своевременный ремонт протечек, засоров и прочих сантехнических неисправностей.</p>
-        </div>
-      </article>
-      <article class="service-item">
-        <img src="https://images.unsplash.com/photo-1516685018646-54990e1446a0?w=800" alt="Обслуживание и профилактика" />
-        <div class="service-content">
-          <h4>Обслуживание и профилактика</h4>
-          <p>Регулярное обслуживание сантехнических систем для продления их срока службы.</p>
-        </div>
-      </article>
-    </div>
+  <div class="hero" id="home">
+    Добро пожаловать в розовый мир
+  </div>
+  <section id="about">
+    <h2>О нас</h2>
+    <p>Мы создаем современные и красивые сайты с нежной розовой палитрой, чтобы подарить вам и вашим посетителям уют и позитив.</p>
   </section>
-
-  <section id="about" aria-labelledby="about-title">
-    <h3 id="about-title">О нашей компании</h3>
-    <p style="max-width:800px; margin: 0 auto; font-size:1.1rem; color:#444; line-height:1.6;">
-      Мы — команда опытных и квалифицированных сантехников с многолетним стажем. Мы ценим качество, надежность и своевременное выполнение работ. Наша цель — сделать ваш дом комфортным, избавив от проблем с сантехникой.
-    </p>
+  <section id="services">
+    <h2>Услуги</h2>
+    <ul>
+      <li>Веб-дизайн с акцентом на розовые оттенки</li>
+      <li>Разработка адаптивных сайтов</li>
+      <li>Оптимизация UX/UI с теплой атмосферой</li>
+    </ul>
   </section>
-
-  <section id="contact" class="contact" aria-label="Контактная информация">
-    <h3>Свяжитесь с нами</h3>
-    <p>Готовы помочь 24/7. Позвоните или оставьте заявку — мы перезвоним!</p>
-    <a href="tel:+71234567890">+7 (123) 456-78-90</a>
+  <section id="contact">
+    <h2>Контакты</h2>
+    <p>Свяжитесь с нами по электронной почте: info@rozoviyton.ru</p>
   </section>
 </main>
-
 <footer>
-  &copy; 2024 Сантехник PRO. Все права защищены.
+  &copy; 2024 Розовый Тон. Все права защищены.
 </footer>
-
 </body>
 </html>
