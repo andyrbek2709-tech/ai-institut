@@ -3,220 +3,268 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Салон красоты</title>
+<title>Шиномонтаж Актау</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+  * {
+    box-sizing: border-box;
+  }
   body {
     margin: 0;
     font-family: 'Montserrat', sans-serif;
-    background: #fff8f5;
-    color: #333;
-    line-height: 1.6;
+    background: #f9f9f9;
+    color: #222;
   }
   header {
-    background: #ff6473;
-    color: white;
+    background-color: #004b8d;
     padding: 1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    color: white;
     position: sticky;
     top: 0;
     z-index: 1000;
   }
-  header h1 {
-    margin: 0;
-    font-weight: 700;
-    font-size: 1.7rem;
-    letter-spacing: 2px;
-  }
-  nav a {
-    color: white;
-    text-decoration: none;
-    margin-left: 1.8rem;
-    font-weight: 600;
-    transition: opacity 0.3s ease;
-  }
-  nav a:hover {
-    opacity: 0.8;
-  }
-  .hero {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+  .container {
     max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-    gap: 2rem;
+    margin: 0 auto;
   }
-  .hero-text {
-    flex: 1 1 400px;
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
-  .hero-text h2 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    color: #ff6473;
-  }
-  .hero-text p {
-    font-size: 1.15rem;
-    margin-bottom: 1.8rem;
-    color: #555;
-  }
-  .btn-booking {
-    background: #ff6473;
-    color: white;
-    padding: 0.9rem 2rem;
-    border: none;
-    border-radius: 30px;
+  nav .logo {
+    font-size: 1.8rem;
     font-weight: 700;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background 0.3s ease;
+    letter-spacing: 1px;
+    cursor: default;
+  }
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+  }
+  nav ul li a {
+    color: white;
     text-decoration: none;
-    display: inline-block;
+    font-weight: 600;
+    transition: color 0.3s ease;
   }
-  .btn-booking:hover {
-    background: #e55663;
-  }
-  .hero-image {
-    flex: 1 1 400px;
-    text-align: center;
-  }
-  .hero-image img {
-    width: 100%;
-    max-width: 400px;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(255,100,115,0.4);
+  nav ul li a:hover,
+  nav ul li a:focus {
+    color: #ffb600;
   }
   main {
-    max-width: 1200px;
-    margin: 3rem auto 5rem;
-    padding: 0 1rem;
-  }
-  .services {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-    gap: 2rem;
     margin-top: 2rem;
   }
-  .service-card {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.07);
+  .hero {
+    background: url('https://images.unsplash.com/photo-1568254188303-3d83496e12f8?w=1200') center/cover no-repeat;
+    height: 400px;
+    position: relative;
+    border-radius: 10px;
     overflow: hidden;
-    transition: transform 0.3s ease;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0,75,141,0.5);
+    mix-blend-mode: multiply;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    color: white;
+    max-width: 600px;
+    padding: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .hero-content h1 {
+    font-size: 2.8rem;
+    margin: 0 0 1rem 0;
+  }
+  .hero-content p {
+    font-size: 1.2rem;
+    line-height: 1.5;
+  }
+  section {
+    background: white;
+    margin: 2rem 0;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgb(0 0 0 / 0.1);
+  }
+  section h2 {
+    margin-top: 0;
+    font-size: 2rem;
+    color: #004b8d;
+  }
+  .services-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  .service-card {
+    background: #f1f8ff;
+    flex: 1 1 220px;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 2px 8px rgb(0 75 141 / 0.15);
+    transition: box-shadow 0.3s ease;
   }
   .service-card:hover {
-    transform: translateY(-8px);
+    box-shadow: 0 6px 20px rgb(0 75 141 / 0.25);
   }
-  .service-card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    border-bottom: 4px solid #ff6473;
-  }
-  .service-content {
-    padding: 1.2rem 1.5rem;
-  }
-  .service-content h3 {
+  .service-card h3 {
     margin-top: 0;
-    margin-bottom: 0.6rem;
-    color: #ff6473;
+    color: #003366;
   }
-  .service-content p {
-    color: #666;
-    font-size: 0.95rem;
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+  .contact-info, .contact-form {
+    flex: 1 1 300px;
+  }
+  .contact-info p {
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin: 0.5rem 0;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+  label {
+    font-weight: 600;
+    margin-top: 1rem;
+  }
+  input, textarea {
+    padding: 0.7rem;
+    margin-top: 0.3rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  button {
+    margin-top: 1.5rem;
+    padding: 0.9rem;
+    background-color: #004b8d;
+    border: none;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover,
+  button:focus {
+    background-color: #003366;
   }
   footer {
-    background: #ff6473;
-    color: white;
+    background-color: #222;
+    color: #ccc;
     text-align: center;
-    padding: 1.5rem 1rem;
+    padding: 1rem 2rem;
+    font-size: 0.9rem;
   }
-  footer p {
-    margin: 0;
-    font-weight: 500;
-  }
-  @media (max-width: 600px) {
-    header {
+  @media (max-width: 768px) {
+    .services-list {
       flex-direction: column;
-      align-items: flex-start;
-      gap: 0.5rem;
     }
-    nav {
-      width: 100%;
-      display: flex;
-      justify-content: flex-start;
-      flex-wrap: wrap;
+    nav ul {
+      gap: 1rem;
     }
-    nav a {
-      margin-left: 0;
-      margin-right: 1.5rem;
-      margin-bottom: 0.5rem;
+    .hero-content h1 {
+      font-size: 2rem;
+    }
+    .hero {
+      height: 300px;
     }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Beauty Salon</h1>
-  <nav>
-    <a href="#services">Услуги</a>
-    <a href="#about">О нас</a>
-    <a href="#contact">Контакты</a>
-  </nav>
+  <div class="container">
+    <nav aria-label="Главное меню">
+      <div class="logo" tabindex="0">Шиномонтаж Актау</div>
+      <ul>
+        <li><a href="#services">Услуги</a></li>
+        <li><a href="#about">О нас</a></li>
+        <li><a href="#contact">Контакты</a></li>
+      </ul>
+    </nav>
+  </div>
 </header>
-<section class="hero" aria-label="Главный баннер салона красоты">
-  <div class="hero-text">
-    <h2>Ваш идеальный образ начинается здесь</h2>
-    <p>Профессиональный уход за волосами, кожей и ногтями. Создайте стиль, который подчеркнёт вашу уникальность.</p>
-    <a href="#contact" class="btn-booking">Записаться</a>
-  </div>
-  <div class="hero-image">
-    <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800" alt="Женщина в салоне красоты" />
-  </div>
-</section>
-<main>
-  <section id="services" aria-label="Услуги салона красоты">
-    <h2>Наши услуги</h2>
-    <div class="services">
-      <article class="service-card">
-        <img src="https://images.unsplash.com/photo-1526045612212-70caf35c14df?w=800" alt="Стрижка волос" />
-        <div class="service-content">
-          <h3>Стрижка и укладка</h3>
-          <p>Современные и классические стрижки, профессиональная укладка для любого повода и типа волос.</p>
-        </div>
+<main class="container">
+  <section class="hero" role="img" aria-label="Шиномонтаж - мастер с оборудованием">
+    <div class="hero-content">
+      <h1>Профессиональный шиномонтаж в Актау</h1>
+      <p>Быстро, качественно и доступно. Обслуживание любых автомобилей и шин.</p>
+    </div>
+  </section>
+  <section id="services" aria-labelledby="services-title">
+    <h2 id="services-title">Наши услуги</h2>
+    <div class="services-list">
+      <article class="service-card" tabindex="0">
+        <h3>Балансировка колёс</h3>
+        <p>Профессиональное выравнивание баланса для комфортной и безопасной езды.</p>
       </article>
-      <article class="service-card">
-        <img src="https://images.unsplash.com/photo-1495711954306-24a9503c3d3a?w=800" alt="Маникюр" />
-        <div class="service-content">
-          <h3>Маникюр и педикюр</h3>
-          <p>Уход и дизайн ногтей с использованием качественных материалов и новых техник нейл-арта.</p>
-        </div>
+      <article class="service-card" tabindex="0">
+        <h3>Замена шин</h3>
+        <p>Быстрая и аккуратная замена летних и зимних шин с гарантией качества.</p>
       </article>
-      <article class="service-card">
-        <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800" alt="Уход за кожей лица" />
-        <div class="service-content">
-          <h3>Уход за кожей лица</h3>
-          <p>Косметологические процедуры с натуральными составами для сияющей и здоровой кожи.</p>
-        </div>
+      <article class="service-card" tabindex="0">
+        <h3>Ремонт проколов</h3>
+        <p>Восстановим вашу шину, чтобы вы снова были на дороге в кратчайшие сроки.</p>
       </article>
-      <article class="service-card">
-        <img src="https://images.unsplash.com/photo-1523983305074-94f6cc25f1e2?w=800" alt="Окрашивание волос" />
-        <div class="service-content">
-          <h3>Окрашивание волос</h3>
-          <p>Яркие и естественные оттенки с использованием щадящих красок и профессиональной техники.</p>
-        </div>
+      <article class="service-card" tabindex="0">
+        <h3>Хранение шин</h3>
+        <p>Безопасное и правильное хранение ваших шин вне сезона.</p>
       </article>
     </div>
   </section>
-  <section id="about" aria-label="Информация о салоне красоты" style="margin-top:4rem;">
-    <h2>О нас</h2>
-    <p>Салон Beauty Salon работает с 2010 года, предоставляя высококачественные услуги в сфере красоты и стиля. Наша команда — сертифицированные специалисты, которые не только выполняют процедуры, но и делают всё, чтобы вы чувствовали себя уверенно и комфортно.</p>
+  <section id="about" aria-labelledby="about-title">
+    <h2 id="about-title">О нас</h2>
+    <p>Наш шиномонтажный сервис в Актау — это команда профессионалов с многолетним опытом работы. Мы используем современное оборудование и качественные материалы. Работаем быстро, потому что ценим ваше время.</p>
+    <img src="https://images.unsplash.com/photo-1504215680853-026ed2a45def?w=800" alt="Мастер шиномонтажа работает с колесом" style="width:100%;border-radius:8px;margin-top:1rem;" />
+  </section>
+  <section id="contact" aria-labelledby="contact-title">
+    <h2 id="contact-title">Контакты</h2>
+    <div class="contact">
+      <div class="contact-info" tabindex="0">
+        <p><strong>Адрес:</strong> г. Актау, ул. Ленина 15</p>
+        <p><strong>Телефон:</strong> +7 701 123 45 67</p>
+        <p><strong>Электронная почта:</strong> info@aktau-tireservice.kz</p>
+        <p><strong>Время работы:</strong> Пн-Вс 8:00 - 20:00</p>
+      </div>
+      <form action="#" method="post" aria-label="Форма обратной связи">
+        <label for="name">Имя</label>
+        <input type="text" id="name" name="name" required placeholder="Ваше имя" />
+        <label for="phone">Телефон</label>
+        <input type="tel" id="phone" name="phone" required placeholder="+7 701 123 45 67" pattern="^\+7\s?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}$" />
+        <label for="message">Сообщение</label>
+        <textarea id="message" name="message" placeholder="Ваш вопрос или комментарий"></textarea>
+        <button type="submit">Отправить</button>
+      </form>
+    </div>
   </section>
 </main>
-<footer id="contact">
-  <p>Beauty Salon © 2024 | Москва, ул. Примерная, 123 | Телефон: +7 (999) 123-45-67</p>
+<footer>
+  <div class="container">
+    &copy; 2024 Шиномонтаж Актау. Все права защищены.
+  </div>
 </footer>
 </body>
 </html>
