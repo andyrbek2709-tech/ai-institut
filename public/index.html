@@ -1,240 +1,211 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bowling Club</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #121212;
-      color: #f0f0f0;
-      line-height: 1.6;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    header {
-      background: #2c3e50;
-      padding: 20px 40px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.7);
-    }
-    header h1 {
-      margin: 0;
-      font-weight: 700;
-      font-size: 1.8rem;
-      letter-spacing: 2px;
-      color: #e67e22;
-      cursor: default;
-    }
-    nav a {
-      color: #ecf0f1;
-      text-decoration: none;
-      margin-left: 30px;
-      font-weight: 600;
-      font-size: 1rem;
-      transition: color 0.3s ease;
-    }
-    nav a:hover,
-    nav a:focus {
-      color: #e67e22;
-      outline: none;
-    }
-    main {
-      flex-grow: 1;
-      padding: 40px 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    .hero {
-      position: relative;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 60px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.7);
-    }
-    .hero img {
-      width: 100%;
-      height: 400px;
-      object-fit: cover;
-      display: block;
-      filter: brightness(0.7);
-      transition: filter 0.3s ease;
-    }
-    .hero:hover img {
-      filter: brightness(0.9);
-    }
-    .hero-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #f39c12;
-      text-align: center;
-      font-weight: 900;
-      font-size: 3rem;
-      text-shadow: 0 0 15px #e67e22;
-      user-select: none;
-    }
-    section {
-      margin-bottom: 60px;
-    }
-    section h2 {
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Шиномонтаж</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+  }
+  header {
+    background: #111;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  header h1 {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 1.5rem;
+  }
+  nav a {
+    color: #ddd;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+  nav a:hover,
+  nav a:focus {
+    color: #ffa500;
+    outline: none;
+  }
+  main {
+    max-width: 1200px;
+    margin: 2rem auto 4rem;
+    padding: 0 1rem;
+  }
+  .hero {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.2);
+  }
+  .hero img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.7);
+  }
+  .hero-text {
+    position: absolute;
+    top: 50%;
+    left: 2rem;
+    transform: translateY(-50%);
+    color: #fff;
+    max-width: 600px;
+  }
+  .hero-text h2 {
+    margin: 0 0 1rem;
+    font-size: 3rem;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  }
+  .hero-text p {
+    font-size: 1.25rem;
+    font-weight: 400;
+    text-shadow: 0 1px 5px rgba(0,0,0,0.6);
+  }
+  section.services {
+    margin-top: 3rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 2rem;
+  }
+  .service-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgb(0 0 0 / 0.1);
+    padding: 2rem;
+    text-align: center;
+    transition: transform 0.3s ease;
+  }
+  .service-card:hover,
+  .service-card:focus-within {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.15);
+  }
+  .service-card img {
+    width: 80px;
+    margin-bottom: 1rem;
+  }
+  .service-card h3 {
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+    color: #111;
+  }
+  .service-card p {
+    color: #666;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .contact {
+    margin-top: 4rem;
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgb(0 0 0 / 0.05);
+  }
+  .contact h2 {
+    margin-top: 0;
+    font-size: 2rem;
+    color: #111;
+  }
+  .contact p {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  .contact a {
+    color: #ffa500;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  footer {
+    background: #111;
+    color: #888;
+    text-align: center;
+    padding: 1.5rem 2rem;
+    font-size: 0.9rem;
+  }
+  @media (max-width: 480px) {
+    .hero-text h2 {
       font-size: 2rem;
-      margin-bottom: 20px;
-      border-bottom: 3px solid #e67e22;
-      padding-bottom: 8px;
-      font-weight: 700;
     }
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-      gap: 30px;
-    }
-    .card {
-      background: #1c2833;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      transition: transform 0.3s ease;
-      cursor: default;
-    }
-    .card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 10px 25px rgba(230,126,34,0.7);
-    }
-    .card img {
-      width: 100%;
-      max-width: 280px;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      object-fit: cover;
-      aspect-ratio: 16 / 9;
-    }
-    .card h3 {
-      margin: 0 0 10px;
-      color: #e67e22;
-    }
-    .card p {
-      margin: 0;
-      color: #ddd;
+    .hero-text p {
       font-size: 1rem;
     }
-    footer {
-      background: #2c3e50;
-      color: #bbb;
-      text-align: center;
-      padding: 20px 40px;
-      font-size: 0.9rem;
-      margin-top: auto;
-      user-select: none;
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.7);
-    }
-    @media (max-width: 480px) {
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      nav {
-        margin-top: 10px;
-        width: 100%;
-      }
-      nav a {
-        margin-left: 0;
-        margin-right: 20px;
-      }
-      .hero-text {
-        font-size: 2rem;
-        padding: 0 10px;
-      }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
-  <header>
-    <h1>Bowling Club</h1>
-    <nav>
-      <a href="#about">О нас</a>
-      <a href="#lanes">Дорожки</a>
-      <a href="#pricing">Цены</a>
-      <a href="#contacts">Контакты</a>
-    </nav>
-  </header>
-  <main>
-    <section class="hero" aria-label="Главное изображение боулинга">
-      <img src="https://images.unsplash.com/photo-1518607486888-42e943f88ea3?w=800" alt="Боулинг дорожка вечером с подсветкой" />
-      <div class="hero-text">Добро пожаловать в Bowling Club</div>
-    </section>
-    <section id="about" aria-label="О нас">
-      <h2>О нас</h2>
-      <p>Bowling Club - это современный боулинг-центр, где уют и отличный сервис сочетаются с высокотехнологичными дорожками и развлечениями для всей семьи. Мы — место для отдыха, общения и соревнований.</p>
-    </section>
-    <section id="lanes" aria-label="Описание дорожек">
-      <h2>Наши дорожки</h2>
-      <div class="info-grid">
-        <article class="card" tabindex="0">
-          <img src="https://images.unsplash.com/photo-1571209804074-57ae46949d62?w=800" alt="Современная боулинг дорожка с современной подсветкой"/>
-          <h3>Современные дорожки</h3>
-          <p>20 профессиональных дорожек со современной системой подсветки и автоматическим подсчетом очков для комфортной игры.</p>
-        </article>
-        <article class="card" tabindex="0">
-          <img src="https://images.unsplash.com/photo-1622044970516-0abc55efc66b?w=800" alt="Семейная зона для боулинга"/>
-          <h3>Семейная зона</h3>
-          <p>Отдельная зона с пониженной сложностью и детским оборудованием для новичков и детей.</p>
-        </article>
-        <article class="card" tabindex="0">
-          <img src="https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=800" alt="VIP-зона боулинга с комфортным диваном"/>
-          <h3>VIP-зона</h3>
-          <p>Комфортная VIP-зона с мягкими диванами и эксклюзивным обслуживанием для особых гостей.</p>
-        </article>
-      </div>
-    </section>
-    <section id="pricing" aria-label="Цены">
-      <h2>Цены</h2>
-      <div class="info-grid">
-        <article class="card" tabindex="0">
-          <h3>Будние дни</h3>
-          <p>150 ₽ за игру (1 час)</p>
-        </article>
-        <article class="card" tabindex="0">
-          <h3>Выходные и праздники</h3>
-          <p>200 ₽ за игру (1 час)</p>
-        </article>
-        <article class="card" tabindex="0">
-          <h3>Аренда VIP-зоны</h3>
-          <p>2500 ₽ в час с учетом дорожек и обслуживания</p>
-        </article>
-      </div>
-    </section>
-    <section id="contacts" aria-label="Контактная информация">
-      <h2>Контакты</h2>
-      <p>Адрес: г. Москва, ул. Примерная, 12</p>
-      <p>Телефон: +7 (495) 123-45-67</p>
-      <p>Email: info@bowlingclub.ru</p>
-      <p>Мы в соцсетях:</p>
-      <p>
-        <a href="#" style="color:#e67e22; text-decoration:none;" aria-label="Facebook">Facebook</a> | 
-        <a href="#" style="color:#e67e22; text-decoration:none;" aria-label="Instagram">Instagram</a> | 
-        <a href="#" style="color:#e67e22; text-decoration:none;" aria-label="VK">ВКонтакте</a>
-      </p>
-    </section>
-  </main>
-  <footer>
-    &copy; 2024 Bowling Club. Все права защищены.
-  </footer>
+<header>
+  <h1>Шиномонтаж</h1>
+  <nav>
+    <ul>
+      <li><a href="#services" tabindex="0">Услуги</a></li>
+      <li><a href="#contact" tabindex="0">Контакты</a></li>
+    </ul>
+  </nav>
+</header>
+<main>
+  <section class="hero" aria-label="Основное изображение шиномонтажа">
+    <img src="https://images.unsplash.com/photo-1556741533-f6acd647d2fb?w=800" alt="Мастер занимается шиномонтажом автомобиля" />
+    <div class="hero-text">
+      <h2>Быстрый и качественный шиномонтаж</h2>
+      <p>Профессиональное обслуживание вашего автомобиля в удобное для вас время</p>
+    </div>
+  </section>
+  <section class="services" id="services" aria-label="Список услуг шиномонтажа">
+    <article class="service-card" tabindex="0">
+      <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=80" alt="Замена шин" />
+      <h3>Замена шин</h3>
+      <p>Быстрая и профессиональная замена летних и зимних шин.</p>
+    </article>
+    <article class="service-card" tabindex="0">
+      <img src="https://images.unsplash.com/photo-1519669556871-03879083a517?w=80" alt="Балансировка колес" />
+      <h3>Балансировка колес</h3>
+      <p>Точная балансировка для плавного и безопасного вождения.</p>
+    </article>
+    <article class="service-card" tabindex="0">
+      <img src="https://images.unsplash.com/photo-1448087021603-375f061fcd2c?w=80" alt="Ремонт шин" />
+      <h3>Ремонт шин</h3>
+      <p>Ремонт проколов и повреждений шин с гарантией качества.</p>
+    </article>
+    <article class="service-card" tabindex="0">
+      <img src="https://images.unsplash.com/photo-1504215680853-026ed2a45def?w=80" alt="Хранение шин" />
+      <h3>Хранение шин</h3>
+      <p>Сезонное хранение шин в оптимальных условиях.</p>
+    </article>
+  </section>
+  <section class="contact" id="contact" aria-label="Контактная информация">
+    <h2>Свяжитесь с нами</h2>
+    <p>Телефон: <a href="tel:+79991234567">+7 (999) 123-45-67</a></p>
+    <p>Адрес: г. Москва, ул. Примерная, д. 10</p>
+    <p>Email: <a href="mailto:info@shinomontazh.ru">info@shinomontazh.ru</a></p>
+  </section>
+</main>
+<footer>
+  &copy; 2024 Шиномонтаж. Все права защищены.
+</footer>
 </body>
 </html>
