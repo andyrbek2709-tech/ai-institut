@@ -245,7 +245,96 @@ git push origin main
 
 ---
 
+## Инструкция для следующего агента: завершение проекта (Supabase + sign-off)
+
+Кодовая база EngHub (фронт, `orchestrator`, миграции в репозитории) и roadmap **A–G** в документации закрыты. Чтобы **полностью завершить проект в целевой среде**, следующий агент или оператор должен выполнить шаги ниже **по порядку**. Не пропускать проверки существования таблиц перед `008`.
+
+### 0) Синхронизация репозитория
+
+- `git pull origin main` — работать с актуальным `README`, миграциями и кодом.
+- Рабочая директория приложения: `enghub-main/` (сборка/тесты оттуда).
+
+### 1) Убедиться, что выбран правильный проект Supabase
+
+- В [Supabase Dashboard](https://supabase.com/dashboard) открыть **тот** проект, к которому привязаны `REACT_APP_SUPABASE_URL` / деплой Vercel.
+- В **Table Editor** проверить наличие базовых сущностей приложения: как минимум `projects`, `tasks`, `app_users` (или эквивалентная схема, под которую написан клиент). Без них миграции `002+` не применить.
+
+### 2) Порядок SQL-онагулки (критично)
+
+Миграции лежат в `supabase/migrations/`. В **SQL Editor** вставлять **только содержимое файла** (весь текст из файла), **не** путь вида `supabase/migrations/...` — иначе будет синтаксическая ошибка.
+
+Рекомендуемый порядок:
+
+| Порядок | Файл | Назначение |
+|--------|------|------------|
+| (опц.) | `001_rag_setup.sql` | RAG: `normative_chunks`, `search_normative`, pgvector — если модуль нормативки используется и ещё не накатывался |
+| 1 | `002_drawings.sql` | таблица `drawings` |
+| 2 | `003_tasks_drawing_link.sql` | `tasks.drawing_id` → `drawings` |
+| 3 | `004_revisions.sql` | `revisions` |
+| 4 | `005_reviews.sql` | `reviews` |
+| 5 | `006_transmittals.sql` | `transmittals` |
+| 6 | `007_transmittal_items.sql` | `transmittal_items` |
+| 7 | `008_schema_hardening.sql` | индексы + CHECK (только если таблицы `002–007` уже существуют) |
+
+Если при выполнении `008` ошибка **`relation "reviews" does not exist`** (или другой таблицы) — **сначала** применить соответствующий файл из `002–007`, затем повторить `008`.
+
+### 3) Диагностика «таблица не существует»
+
+Выполнить в SQL Editor:
+
+```sql
+select table_name
+from information_schema.tables
+where table_schema = 'public'
+  and table_name in (
+    'drawings','tasks','revisions','reviews',
+    'transmittals','transmittal_items'
+  )
+order by table_name;
+```
+
+- Отсутствует `reviews` → выполнить `005_reviews.sql`, затем `006`, `007`, `008`.
+- Ошибка на `002` про `projects` / `app_users` / `tasks` → в этой БД нет базовой схемы EngHub: нужно найти/восстановить исходные DDL для ядра приложения (вне файлов `002–008`) или инициализировать проект согласно документации владельца.
+
+### 4) После успешного применения `008`
+
+- Пройти **Migration Verification Checklist (E.1)** и блок **Operator Sign-off Pack** в этом же `README` (запросы `pg_indexes`, `pg_constraint`, проверка `transmittal_items`).
+- Если CHECK падает из‑за старых данных — выполнить диагностические `SELECT` из предыдущих ответов/документации, исправить строки, повторить миграцию.
+
+### 5) Переменные окружения и деплой
+
+- Локально: `enghub-main/.env.local` (см. раздел **Переменные окружения** выше).
+- Vercel: те же ключи + `SUPABASE_*`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` для `orchestrator` и RAG по README.
+
+### 6) Локальные quality gates перед закрытием
+
+```bash
+cd enghub-main
+npm ci   # или npm install
+npm run build
+CI=true npm test -- --watch=false
+```
+
+### 7) Ручной финал (обязательно для production sign-off)
+
+- Прогнать сценарии `QA-GIP-01`, `QA-LEAD-01`, `QA-ENG-01`, `QA-DATA-01` (описаны в **QA/Test Coverage Plan**).
+- Заполнить **Production Sign-off Report** (шаблон + пример драфта ниже по файлу).
+- Зафиксировать дату, среду, результаты в **Agent Handover Log** (формат шаблона уже в README).
+
+### 8) Протокол при дальнейших изменениях кода
+
+- Один логический блок = один atomic commit = один `git push origin main`.
+- После шага обновлять этот `README` (`Agent Handover Log`).
+
+---
+
 ## 🧾 Agent Handover Log
+
+#### [2026-04-01] Agent update
+- Step: В `README` добавлена полная секция «Инструкция для следующего агента: завершение проекта» — порядок миграций `001–008`, запрет вставки пути файла в SQL Editor, диагностика отсутствующих таблиц, env/deploy, quality gates, manual QA и протокол commit/push для последующих правок.
+- Files: `README.md`
+- Validation: not run (документация).
+- Next: следующий агент выполняет шаги секции в целевом Supabase и заполняет Production Sign-off Report.
 
 ## 📌 Post-Phase Roadmap (после Фазы 8)
 
