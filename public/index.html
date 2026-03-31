@@ -6,140 +6,203 @@
 <title>Современный сайт</title>
 <style>
   * {
-    margin: 0; padding: 0; box-sizing: border-box;
+    box-sizing: border-box;
   }
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
+    margin: 0; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     background: #f9f9f9;
     color: #333;
+    line-height: 1.6;
   }
   header {
-    background: #2c3e50;
-    color: #fff;
+    background: #005f73;
+    color: white;
     padding: 1rem 2rem;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    align-items: center;
   }
-  header .logo {
-    font-weight: 700;
+  header h1 {
+    margin: 0;
     font-size: 1.5rem;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
   }
   nav ul {
     list-style: none;
     display: flex;
-    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+  }
+  nav ul li {
+    margin-left: 1.5rem;
   }
   nav ul li a {
     text-decoration: none;
-    color: #ecf0f1;
+    color: white;
     font-weight: 600;
     transition: color 0.3s ease;
   }
   nav ul li a:hover {
-    color: #1abc9c;
-  }
-  .hero {
-    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800') center/cover no-repeat;
-    height: 70vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    text-shadow: 0 2px 5px rgba(0,0,0,0.7);
-    text-align: center;
-    padding: 0 1rem;
-  }
-  .hero h1 {
-    font-size: 3rem;
-    max-width: 700px;
-    line-height: 1.2;
+    color: #94d2bd;
   }
   main {
-    max-width: 1200px;
-    margin: 3rem auto;
+    max-width: 1100px;
+    margin: 2rem auto;
     padding: 0 1rem;
   }
-  section {
+  .hero {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
     margin-bottom: 3rem;
   }
-  section h2 {
+  .hero img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    height: 400px;
+    filter: brightness(0.75);
+  }
+  .hero-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #e0fbfc;
+    text-align: center;
+    max-width: 80%;
+  }
+  .hero-text h2 {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+  }
+  .hero-text p {
+    font-size: 1.25rem;
+  }
+  section {
+    margin-bottom: 4rem;
+  }
+  section h3 {
     font-size: 2rem;
-    color: #2c3e50;
     margin-bottom: 1rem;
-    border-left: 5px solid #1abc9c;
-    padding-left: 0.5rem;
+    color: #0a9396;
+    border-bottom: 2px solid #94d2bd;
+    padding-bottom: 0.3rem;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+  .card-content {
+    padding: 1rem 1.5rem;
+    flex-grow: 1;
+  }
+  .card-content h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #005f73;
+  }
+  .card-content p {
+    flex-grow: 1;
+    margin: 0;
   }
   footer {
-    background: #2c3e50;
-    color: #bdc3c7;
+    background: #001219;
+    color: #94d2bd;
     text-align: center;
     padding: 1.5rem 1rem;
     font-size: 0.9rem;
   }
-  footer a {
-    color: #1abc9c;
-    text-decoration: none;
-  }
-  footer a:hover {
-    text-decoration: underline;
-  }
   @media (max-width: 600px) {
+    .hero-text h2 {
+      font-size: 2rem;
+    }
     nav ul {
       flex-direction: column;
-      gap: 0.8rem;
+      align-items: flex-start;
     }
-    .hero h1 {
-      font-size: 2rem;
+    nav ul li {
+      margin-left: 0;
+      margin-bottom: 0.8rem;
     }
   }
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">MyModernSite</div>
+  <h1>Современный Сайт</h1>
   <nav>
     <ul>
-      <li><a href="#about">О Нас</a></li>
+      <li><a href="#home">Главная</a></li>
       <li><a href="#services">Услуги</a></li>
-      <li><a href="#portfolio">Портфолио</a></li>
+      <li><a href="#about">О нас</a></li>
       <li><a href="#contact">Контакты</a></li>
     </ul>
   </nav>
 </header>
-<section class="hero" aria-label="Главный баннер">
-  <h1>Добро пожаловать на современный и красивый веб-сайт</h1>
-</section>
 <main>
-  <section id="about">
-    <h2>О Нас</h2>
-    <p>Мы предоставляем лучшие веб-решения, используя современные технологии и продуманный дизайн. Наша команда профессионалов готова помочь в реализации любых ваших идей.</p>
+  <section id="home" class="hero">
+    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Красивый пейзаж" />
+    <div class="hero-text">
+      <h2>Добро пожаловать на современный сайт</h2>
+      <p>Красота и технология объединяются для вашего удобства</p>
+    </div>
   </section>
   <section id="services">
-    <h2>Услуги</h2>
-    <ul>
-      <li>Разработка сайтов под ключ</li>
-      <li>Дизайн и UX/UI</li>
-      <li>Продвижение и SEO</li>
-      <li>Техническая поддержка</li>
-    </ul>
+    <h3>Наши услуги</h3>
+    <div class="cards">
+      <article class="card">
+        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800" alt="Веб-разработка"/>
+        <div class="card-content">
+          <h4>Веб-разработка</h4>
+          <p>Создаем современные и адаптивные сайты, которые помогают вашему бизнесу расти.</p>
+        </div>
+      </article>
+      <article class="card">
+        <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800" alt="Дизайн"/>
+        <div class="card-content">
+          <h4>Дизайн</h4>
+          <p>Разрабатываем привлекательный и интуитивно понятный дизайн для любых платформ.</p>
+        </div>
+      </article>
+      <article class="card">
+        <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800" alt="Продвижение"/>
+        <div class="card-content">
+          <h4>Продвижение</h4>
+          <p>Помогаем вашей компании выйти на новый уровень с помощью digital-маркетинга.</p>
+        </div>
+      </article>
+    </div>
   </section>
-  <section id="portfolio">
-    <h2>Портфолио</h2>
-    <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800" alt="Пример проекта 1" style="width:100%; max-width: 800px; border-radius: 8px;"/>
+  <section id="about">
+    <h3>О нас</h3>
+    <p>Мы - команда профессиональных веб-разработчиков, стремящихся создать лучшие цифровые решения для вас. Современные технологии, креативный подход и внимательное отношение к деталям — наши главные инструменты.</p>
   </section>
   <section id="contact">
-    <h2>Контакты</h2>
-    <p>Свяжитесь с нами по телефону: <a href="tel:+70000000000">+7 (000) 000-00-00</a> или по электронной почте: <a href="mailto:info@mymodernsite.ru">info@mymodernsite.ru</a></p>
+    <h3>Контакты</h3>
+    <p>Телефон: +7 123 456 7890</p>
+    <p>Email: info@modernsite.ru</p>
+    <p>Адрес: Москва, Россия</p>
   </section>
 </main>
 <footer>
-  <p>© 2024 MyModernSite. Все права защищены. | <a href="#contact">Связаться с нами</a></p>
+  &copy; 2024 Современный Сайт. Все права защищены.
 </footer>
 </body>
 </html>
