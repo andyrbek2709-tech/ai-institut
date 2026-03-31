@@ -336,6 +336,22 @@ git push origin main
 - Сделать atomic commit по протоколу (`1 блок = 1 commit = 1 push`).
 - Выполнить push в `main`.
 
+### Final Regression Smoke (F.2)
+
+Дата прогона: `2026-04-01`
+
+- Автоматические проверки
+  - [x] `npm run build` — успешно.
+  - [x] `CI=true npm test -- --watch=false` — успешно (`2` suites / `7` tests).
+  - [x] Lint diagnostics по измененному контуру — без ошибок.
+  - [x] Проверка blocked-guidance контрактов (`reason_code`, `next_step`) в коде `orchestrator`/`CopilotPanel` — присутствуют.
+- Guardrail-проверки кода
+  - [x] В критичном потоке `transmittals` нет прямого `document.getElementById` (используется controlled state).
+  - [ ] Полный end-to-end manual smoke по сценариям `QA-GIP-01`, `QA-LEAD-01`, `QA-ENG-01`, `QA-DATA-01` требует прогона в живом окружении.
+- Риск-заметки
+  - Единичный `document.getElementById` в `App.tsx` относится к кнопке открытия file input для нормативных документов и не затрагивает критичный flow `transmittals`.
+  - Final sign-off релиза должен включать ручной прогон сценариев и фиксацию статуса в этом же разделе.
+
 ### Execution Protocol
 - Один логический блок = один commit = один immediate push.
 - После каждого блока обязательно обновление `README.md` (`Agent Handover Log`).
@@ -512,6 +528,13 @@ git push origin main
   - `README.md`
 - Validation: not run (документационное обновление release readiness).
 - Next: commit+push блока F.1; затем переход к F.2 (финальный regression smoke фиксацией результатов) и G (finalization).
+
+#### [2026-04-01 12:56] Agent update
+- Step: Блок F.2 выполнен: зафиксирован финальный regression smoke в `README` с результатами автоматических проверок (`build`, `test`, lint diagnostics), проверкой guardrails (`reason_code`/`next_step`) и остатком manual e2e-сценариев для релизного sign-off.
+- Files:
+  - `README.md`
+- Validation: `npm run build` (успешно), `CI=true npm test -- --watch=false` (успешно), lint diagnostics без ошибок.
+- Next: commit+push блока F.2; затем переход к G (finalization: выпускной статус, закрытие roadmap и итоговый handover).
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
