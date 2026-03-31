@@ -6,6 +6,7 @@ import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
 import { useNotifications, ToastContainer } from './components/Notifications';
 import { CalculationView } from './calculations/CalculationView';
+import { calcRegistry } from './calculations/registry';
 import { ConferenceRoom } from './pages/ConferenceRoom';
 import { CopilotPanel } from './components/CopilotPanel';
 
@@ -76,6 +77,7 @@ export default function App() {
   // Calculation Module States
   const [calcFilter, setCalcFilter] = useState(""); // active category accordion
   const [activeCalc, setActiveCalc] = useState<string | null>(null);
+  const [calcSearch, setCalcSearch] = useState("");
 
   // Copilot AI Module States
   const [showCopilot, setShowCopilot] = useState(false);
@@ -419,14 +421,9 @@ export default function App() {
 
   const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", calculations: "Инженерные расчёты", normative: "База знаний (Нормативка)" };
 
-  const calcTemplates = [
-    { id: "tx_material_balance", name: "Материальный баланс", cat: "ТХ", desc: "Сводка массы веществ на входе и выходе" },
-    { id: "tx_heat_balance", name: "Тепловой баланс", cat: "ТХ", desc: "Вычисление тепловых потоков аппарата" },
-    { id: "tt_pressure_drop", name: "Потери давления (Дарси–Вейсбах)", cat: "ТТ", desc: "Гидравлический расчет трубопровода (потери на трение)" },
-    { id: "ov_heat_power", name: "Расчёт мощности отопления", cat: "ОВ", desc: "Укрупненный расчет теплопотерь помещения" },
-    { id: "eo_cable_section", name: "Подбор сечения кабеля", cat: "ЭО", desc: "Выбор кабеля по току и потерям напряжения" },
-    { id: "km_beam_deflection", name: "Прогиб балки", cat: "КЖ / КМ", desc: "Расчет максимального прогиба при изгибе" },
-  ];
+  const calcTemplates = Object.values(calcRegistry);
+  const calcCatLabels: Record<string, string> = { "ТХ": "ТХ — Технология", "ТТ": "ТТ — Теплотехника", "ЭО": "ЭО — Электрика", "ВК": "ВК — Водоснабжение", "ПБ": "ПБ — Пожарная безопасность", "Г": "Генплан", "КЖ / КМ": "КЖ / КМ — Конструктив", "КИПиА": "КИПиА", "ОВ": "ОВ — Отопление и вентиляция" };
+  const calcAllCats = ["ТХ", "ТТ", "ЭО", "ВК", "ПБ", "Г", "КЖ / КМ", "КИПиА", "ОВ"];
 
   if (loading) return (
     <div className="loading-screen">
@@ -1126,44 +1123,65 @@ export default function App() {
           {screen === "calculations" && (
             <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
               {/* LEFT SIDEBAR: Accordion Tree */}
-              <div style={{ width: 280, minWidth: 280, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", background: C.surface, overflowY: "auto" }}>
-                <div style={{ padding: "20px", borderBottom: `1px solid ${C.border}` }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Каталог расчётов</div>
-                  <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>Выберите дисциплину</div>
+              <div style={{ width: 300, minWidth: 300, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", background: C.surface, overflowY: "auto" }}>
+                <div style={{ padding: "16px 16px 12px", borderBottom: `1px solid ${C.border}` }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 10 }}>Каталог расчётов <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 400 }}>({calcTemplates.length})</span></div>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: C.textMuted, pointerEvents: "none" }}>🔍</span>
+                    <input
+                      placeholder="Найти расчёт..."
+                      value={calcSearch}
+                      onChange={e => setCalcSearch(e.target.value)}
+                      style={{ width: "100%", padding: "8px 28px 8px 30px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface2, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }}
+                    />
+                    {calcSearch && <button onClick={() => setCalcSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 13 }}>✕</button>}
+                  </div>
                 </div>
-                <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 4 }}>
-                  {["ТХ", "ТТ", "КЖ / КМ", "ЭО", "КИПиА", "ОВ", "ВК", "Генплан", "ПБ"].map(cat => {
-                    const catCalcs = calcTemplates.filter(t => t.cat === cat);
-                    // if (catCalcs.length === 0) return null; // We will show empty categories too for now
-                    const isExpanded = calcFilter === cat;
-                    return (
-                      <div key={cat} style={{ background: isExpanded ? C.surface2 : "transparent", borderRadius: 8, overflow: "hidden" }}>
-                        <button 
-                          style={{ width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 14, fontWeight: 600, color: C.text, border: "none", background: "transparent", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                          onClick={() => setCalcFilter(isExpanded ? "" : cat)}
-                        >
-                          <span>{cat}</span>
-                          <span style={{ fontSize: 10, color: C.textMuted }}>{isExpanded ? "▼" : "▶"}</span>
+                <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+                  {calcSearch.trim() ? (
+                    // Плоский список при поиске
+                    (() => {
+                      const q = calcSearch.toLowerCase();
+                      const filtered = calcTemplates.filter(t => t.name.toLowerCase().includes(q) || t.cat.toLowerCase().includes(q) || (t.desc || "").toLowerCase().includes(q));
+                      return filtered.length > 0 ? filtered.map(t => (
+                        <button key={t.id} onClick={() => { setActiveCalc(t.id); setCalcSearch(""); }}
+                          style={{ width: "100%", textAlign: "left", padding: "8px 12px", fontSize: 13, color: activeCalc === t.id ? C.accent : C.textDim, background: activeCalc === t.id ? C.accent + "15" : "transparent", border: "none", borderRadius: 6, cursor: "pointer", display: "flex", flexDirection: "column", gap: 3 }}>
+                          <span style={{ fontWeight: 500 }}>{t.name}</span>
+                          <span style={{ fontSize: 10, color: C.textMuted, background: C.surface2, padding: "1px 6px", borderRadius: 4, width: "fit-content" }}>{calcCatLabels[t.cat] || t.cat}</span>
                         </button>
-                        {isExpanded && (
-                          <div style={{ padding: "4px 8px 8px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
-                            {catCalcs.length > 0 ? catCalcs.map(t => (
-                              <button 
-                                key={t.id} 
-                                onClick={() => setActiveCalc(t.id)}
-                                style={{
-                                  width: "100%", textAlign: "left", padding: "8px 12px", fontSize: 13, color: activeCalc === t.id ? C.accent : C.textDim,
-                                  background: activeCalc === t.id ? C.accent + "15" : "transparent", border: "none", borderRadius: 6, cursor: "pointer"
-                                }}
-                              >
-                                {t.name}
-                              </button>
-                            )) : <div style={{ fontSize: 12, color: C.textMuted, padding: "4px 12px" }}>В разработке...</div>}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      )) : <div style={{ fontSize: 13, color: C.textMuted, padding: "24px 12px", textAlign: "center" }}>Ничего не найдено</div>;
+                    })()
+                  ) : (
+                    // Аккордеон по категориям
+                    calcAllCats.map(cat => {
+                      const catCalcs = calcTemplates.filter(t => t.cat === cat);
+                      const isExpanded = calcFilter === cat;
+                      return (
+                        <div key={cat} style={{ background: isExpanded ? C.surface2 : "transparent", borderRadius: 8, overflow: "hidden" }}>
+                          <button
+                            style={{ width: "100%", textAlign: "left", padding: "9px 12px", fontSize: 13, fontWeight: 600, color: catCalcs.length > 0 ? C.text : C.textMuted, border: "none", background: "transparent", cursor: catCalcs.length > 0 ? "pointer" : "default", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                            onClick={() => catCalcs.length > 0 && setCalcFilter(isExpanded ? "" : cat)}
+                          >
+                            <span>{calcCatLabels[cat] || cat}</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                              {catCalcs.length > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: isExpanded ? C.accent : C.textMuted, background: isExpanded ? C.accent + "20" : C.surface2, padding: "1px 7px", borderRadius: 8 }}>{catCalcs.length}</span>}
+                              <span style={{ fontSize: 9, color: C.textMuted }}>{catCalcs.length > 0 ? (isExpanded ? "▼" : "▶") : "—"}</span>
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div style={{ padding: "2px 6px 6px 6px", display: "flex", flexDirection: "column", gap: 1 }}>
+                              {catCalcs.map(t => (
+                                <button key={t.id} onClick={() => setActiveCalc(t.id)}
+                                  style={{ width: "100%", textAlign: "left", padding: "7px 12px", fontSize: 12, color: activeCalc === t.id ? C.accent : C.textDim, background: activeCalc === t.id ? C.accent + "15" : "transparent", border: "none", borderRadius: 6, cursor: "pointer" }}>
+                                  {t.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
               
