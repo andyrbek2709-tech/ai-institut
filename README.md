@@ -289,3 +289,27 @@ git push origin main
 - Files: `enghub-main/src/App.tsx`, `README.md`
 - Validation: `npm run build` (успешно), lint `App.tsx` без ошибок.
 - Next: подготовить чистый срез изменений (только релевантные файлы фич), затем сделать атомарный commit по запросу пользователя.
+
+#### [2026-03-31 17:34] Agent update
+- Step: Выполнен атомарный commit фич по фазам 1–8.
+- Files:
+  - `README.md`
+  - `enghub-main/api/orchestrator.js`
+  - `enghub-main/src/App.tsx`
+  - `enghub-main/src/api/supabase.ts`
+  - `enghub-main/src/components/CopilotPanel.tsx`
+  - `enghub-main/src/components/DrawingsPanel.tsx`
+  - `enghub-main/src/constants.ts`
+  - `supabase/migrations/002_drawings.sql`
+  - `supabase/migrations/003_tasks_drawing_link.sql`
+  - `supabase/migrations/004_revisions.sql`
+  - `supabase/migrations/005_reviews.sql`
+  - `supabase/migrations/006_transmittals.sql`
+- Validation: commit `e22eddd` создан; сборка и lint были пройдены на предыдущих шагах.
+- Next: при необходимости сделать отдельный commit только с этой новой записью README либо продолжать разработку и включить запись в следующий коммит.
+
+#### [2026-03-31 17:42] Agent update
+- Step: Добавлена серверная проверка workflow-перехода перед сменой статуса задачи: `App.tsx` вызывает `orchestrator` (`action=validate_workflow`), а `orchestrator` возвращает `blocked/success` по единому правилу переходов.
+- Files: `enghub-main/src/App.tsx`, `enghub-main/api/orchestrator.js`, `README.md`
+- Validation: `npm run build` (успешно), lint `App.tsx` и `orchestrator.js` без ошибок.
+- Next: подготовить следующий атомарный commit для пост-коммит доработок (workflow validation + журнал README).

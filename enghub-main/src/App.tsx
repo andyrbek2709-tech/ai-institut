@@ -409,6 +409,28 @@ export default function App() {
       addNotification(`Переход ${currentStatus} → ${status} запрещён workflow`, 'warning');
       return;
     }
+    if (currentStatus) {
+      try {
+        const wfRes = await fetch('/api/orchestrator', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: currentUserData?.id,
+            project_id: activeProject?.id,
+            message: 'validate workflow transition',
+            action: 'validate_workflow',
+            payload: { from_status: currentStatus, to_status: status }
+          }),
+        });
+        const wfData = await wfRes.json();
+        if (wfData?.blocked) {
+          addNotification(wfData.message || `Переход ${currentStatus} → ${status} заблокирован`, 'warning');
+          return;
+        }
+      } catch {
+        addNotification('Проверка workflow недоступна, применяю локальные правила', 'info');
+      }
+    }
     setSaving(true);
     await patch(`tasks?id=eq.${taskId}`, { status, ...(comment ? { comment } : {}) }, token!);
     const statusLabel = statusMap[status]?.label || status;

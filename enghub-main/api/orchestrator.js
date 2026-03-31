@@ -68,6 +68,20 @@ module.exports = async function handler(req, res) {
       return res.status(200).json(Array.isArray(results) ? results : []);
     }
 
+    if (action === 'validate_workflow') {
+      const fromStatus = payload.from_status;
+      const toStatus = payload.to_status;
+      const allowed = (TASK_TRANSITIONS[fromStatus] || []).includes(toStatus);
+      return res.status(200).json({
+        success: allowed,
+        agent: 'workflow_agent',
+        blocked: !allowed,
+        message: allowed
+          ? `Переход ${fromStatus} → ${toStatus} допустим.`
+          : `Переход ${fromStatus || '?'} → ${toStatus || '?'} запрещён workflow.`,
+      });
+    }
+
     if (!user_id || !project_id || !message) {
       return res.status(400).json({ error: 'Missing required fields: user_id, project_id, message' });
     }
