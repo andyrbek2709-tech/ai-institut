@@ -1118,7 +1118,6 @@ export default function App() {
                           // 2. Создать запись в normative_docs с file_path
                           const docData = await post('normative_docs', {
                             name: file.name,
-                            file_name: file.name,
                             file_type: file.type,
                             file_path: filePath,
                             status: 'pending',
