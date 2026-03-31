@@ -1129,7 +1129,6 @@ export default function App() {
                               file_type: file.type || 'application/octet-stream',
                               file_path: filePath,
                               status: 'pending',
-                              user_id: currentUserData?.id,
                             }),
                           });
                           const docData = await docInsertRes.json();
