@@ -449,6 +449,37 @@ where drawing_id is null and revision_id is null;
 - Blocking issues: `<none or list>`
 - Follow-up actions: `<list>`
 
+### Production Sign-off Report (example draft)
+
+- Environment: `prod`
+- Date: `2026-04-01 13:28 +06`
+- Operator: `TBD`
+- Release commit: `05b7eed`
+- Migration `008_schema_hardening.sql`: `pending operator apply/confirm`
+
+#### SQL Checks
+
+| Check | Query | Result | Notes |
+|---|---|---|---|
+| Indexes present | `pg_indexes` query from Operator Pack | `pending` | `Run in target Supabase project` |
+| CHECK constraints present | `pg_constraint` query from Operator Pack | `pending` | `Run in target Supabase project` |
+| `transmittal_items` integrity | invalid count query | `pending` | `Expect 0` |
+
+#### Manual Scenario Results
+
+| Scenario ID | Owner Role | Result | Notes |
+|---|---|---|---|
+| `QA-GIP-01` | gip | `pending` | `operator run required` |
+| `QA-LEAD-01` | lead | `pending` | `operator run required` |
+| `QA-ENG-01` | engineer | `pending` | `operator run required` |
+| `QA-DATA-01` | data | `pending` | `operator run required` |
+
+#### Final Decision
+
+- Production sign-off: `blocked (awaiting operator checks)`
+- Blocking issues: `manual e2e and prod DB verification not yet recorded`
+- Follow-up actions: `run SQL checks, execute QA scenarios, update report rows to pass/fail`
+
 ### Execution Protocol
 - Один логический блок = один commit = один immediate push.
 - После каждого блока обязательно обновление `README.md` (`Agent Handover Log`).
@@ -653,6 +684,13 @@ where drawing_id is null and revision_id is null;
   - `README.md`
 - Validation: not run (документационный шаблон отчета).
 - Next: commit+push шаблона; далее оператор заполняет report по факту ручного прогона.
+
+#### [2026-04-01 13:28] Agent update
+- Step: Добавлен `Production Sign-off Report (example draft)` в `README`: пример заполнения с текущим release commit и статусами `pending` для operator-only SQL/manual проверок.
+- Files:
+  - `README.md`
+- Validation: not run (документационное заполнение примера отчета).
+- Next: commit+push примера; далее оператор обновляет строки `pending` на `pass/fail`.
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
