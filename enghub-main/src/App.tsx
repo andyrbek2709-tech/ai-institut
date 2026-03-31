@@ -1332,7 +1332,36 @@ export default function App() {
                     {normSearchResults.length === 0 ? 'Ничего не найдено' : `Найдено в ${normSearchResults.length} документах:`}
                   </div>
                   {normSearchResults.map((r, i) => {
-                    const excerpt = r.content?.slice(0, 280) || '';
+                    // Smart excerpt: centre on first match in text
+                    const rawContent = r.content || '';
+                    const q = normSearchQuery.trim();
+                    const qWords = q.split(/\s+/).filter(w => w.length > 2);
+                    const lower = rawContent.toLowerCase();
+                    let excerptStart = 0;
+                    const phraseIdx = lower.indexOf(q.toLowerCase());
+                    if (phraseIdx !== -1) excerptStart = Math.max(0, phraseIdx - 60);
+                    else if (qWords.length > 0) {
+                      const wi = lower.indexOf(qWords[0].toLowerCase());
+                      if (wi !== -1) excerptStart = Math.max(0, wi - 60);
+                    }
+                    const excerptText = rawContent.slice(excerptStart, excerptStart + 320);
+
+                    // Build highlighted segments (phrase=green, word=yellow)
+                    const escRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const patterns: string[] = [];
+                    if (q.includes(' ')) patterns.push(escRe(q));
+                    patterns.push(...qWords.map(escRe));
+                    const hiRegex = patterns.length > 0 ? new RegExp(`(${patterns.join('|')})`, 'gi') : null;
+                    const segs = hiRegex ? excerptText.split(hiRegex) : [excerptText];
+                    const highlighted = segs.map((seg, si) => {
+                      const sl = seg.toLowerCase();
+                      if (hiRegex && q.includes(' ') && sl === q.toLowerCase())
+                        return <mark key={si} style={{ background: 'rgba(63,185,80,0.22)', color: '#3fb950', borderRadius: 3, padding: '1px 3px', fontWeight: 700, fontStyle: 'normal' }}>{seg}</mark>;
+                      if (hiRegex && qWords.some(w => sl === w.toLowerCase()))
+                        return <mark key={si} style={{ background: 'rgba(240,180,41,0.22)', color: '#f0b429', borderRadius: 3, padding: '1px 3px', fontWeight: 600, fontStyle: 'normal' }}>{seg}</mark>;
+                      return <span key={si}>{seg}</span>;
+                    });
+
                     const pct = r.similarity != null ? Math.round(r.similarity * 100) : null;
                     const pctColor = pct != null && pct >= 80 ? C.green : pct != null && pct >= 60 ? C.accent : C.textMuted;
                     return (
@@ -1346,8 +1375,8 @@ export default function App() {
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: 12, color: C.textMuted, fontFamily: 'monospace', lineHeight: 1.6 }}>
-                          ...{excerpt}...
+                        <div style={{ fontSize: 12, color: C.textMuted, fontFamily: 'monospace', lineHeight: 1.8 }}>
+                          {excerptStart > 0 ? '...' : ''}{highlighted}{'...'}
                         </div>
                       </div>
                     );
