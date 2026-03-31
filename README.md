@@ -375,6 +375,14 @@ git push origin main
 - Validation: not run (документационное усиление QA-контура).
 - Next: commit+push блока B.1; затем переход к Блоку B.2 (минимальные автопроверки на существующем test-стеке).
 
+#### [2026-03-31 21:02] Agent update
+- Step: Блок B.2 выполнен: добавлен минимальный автотестовый baseline на существующем `react-scripts test` стеке (`src/constants.test.ts`) с проверками workflow transitions, drawing status lifecycle и role prompts.
+- Files:
+  - `enghub-main/src/constants.test.ts`
+  - `README.md`
+- Validation: `CI=true npm test -- --watch=false` (успешно, 3/3 теста пройдено).
+- Next: commit+push блока B.2; затем переход к Блоку C (рефакторинг структуры UI модулей).
+
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
 - Files:
