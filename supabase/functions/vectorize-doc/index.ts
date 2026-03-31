@@ -6,7 +6,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_KEY')!;
+const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')!;
 
 const CHUNK_SIZE = 500; // символов на чанк
@@ -61,6 +61,7 @@ serve(async (req: Request) => {
     const fileRes = await fetch(fileUrl, {
       headers: {
         Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+        apikey: SUPABASE_SERVICE_KEY,
       },
     });
 
@@ -96,6 +97,10 @@ serve(async (req: Request) => {
       // Убираем бинарные символы
       text = text.replace(/[^\x20-\x7E\u0400-\u04FF\s]/g, ' ').replace(/\s+/g, ' ').trim();
     }
+
+    // Ограничиваем текст для соблюдения лимита Edge Function (60 сек)
+    const MAX_TEXT = 25000;
+    if (text.length > MAX_TEXT) text = text.slice(0, MAX_TEXT);
 
     if (!text || text.length < 50) {
       // Если текст не извлечён — помечаем как ready с пустым содержимым
@@ -185,13 +190,21 @@ serve(async (req: Request) => {
       }),
     });
 
+    const corsHeaders = {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'authorization, content-type',
+    };
     return new Response(
       JSON.stringify({ success: true, chunks: insertRows.length }),
-      { headers: { 'Content-Type': 'application/json' } }
+      { headers: corsHeaders }
     );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('vectorize-doc error:', message);
-    return new Response(JSON.stringify({ error: message }), { status: 500 });
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
   }
 });

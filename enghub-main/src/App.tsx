@@ -137,21 +137,31 @@ export default function App() {
     if (!query.trim()) { setNormSearchResults(null); return; }
     setNormSearching(true);
     try {
-      const enc = encodeURIComponent(`*${query.trim()}*`);
-      const res = await fetch(`${SURL}/rest/v1/normative_chunks?content=ilike.${enc}&select=id,doc_id,doc_name,content&limit=100`, {
-        headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
+      const res = await fetch('/api/orchestrator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'search_normative', query: query.trim(), match_count: 20 }),
       });
       const data = await res.json();
       if (Array.isArray(data)) {
+        // Группируем по документу, берём лучший чанк (max similarity) для превью
         const byDoc = new Map<string, any>();
         for (const c of data) {
-          if (!byDoc.has(c.doc_id)) byDoc.set(c.doc_id, { ...c, matchCount: 1 });
-          else byDoc.get(c.doc_id).matchCount++;
+          const prev = byDoc.get(c.doc_id);
+          if (!prev || c.similarity > prev.similarity) {
+            byDoc.set(c.doc_id, { ...c });
+          }
         }
-        setNormSearchResults(Array.from(byDoc.values()));
+        // Сортируем по убыванию релевантности
+        const results = Array.from(byDoc.values()).sort((a, b) => b.similarity - a.similarity);
+        setNormSearchResults(results);
       } else {
         setNormSearchResults([]);
+        addNotification('Ошибка семантического поиска', 'error');
       }
+    } catch {
+      setNormSearchResults([]);
+      addNotification('Ошибка поиска: проверьте подключение', 'error');
     } finally { setNormSearching(false); }
   };
 
@@ -1276,22 +1286,22 @@ export default function App() {
                     {normSearchResults.length === 0 ? 'Ничего не найдено' : `Найдено в ${normSearchResults.length} документах:`}
                   </div>
                   {normSearchResults.map((r, i) => {
-                    const idx = r.content.toLowerCase().indexOf(normSearchQuery.toLowerCase());
-                    const excerpt = idx >= 0
-                      ? r.content.slice(Math.max(0, idx - 60), idx + 200)
-                      : r.content.slice(0, 250);
-                    const before = idx >= 0 ? excerpt.slice(0, Math.min(60, idx)) : excerpt.slice(0, 100);
-                    const match = idx >= 0 ? excerpt.slice(Math.min(60, idx), Math.min(60, idx) + normSearchQuery.length) : '';
-                    const after = idx >= 0 ? excerpt.slice(Math.min(60, idx) + normSearchQuery.length) : excerpt.slice(100);
+                    const excerpt = r.content?.slice(0, 280) || '';
+                    const pct = r.similarity != null ? Math.round(r.similarity * 100) : null;
+                    const pctColor = pct != null && pct >= 80 ? C.green : pct != null && pct >= 60 ? C.accent : C.textMuted;
                     return (
                       <div key={r.id} style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.surface : C.surface2 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                           <span style={{ fontSize: 15 }}>{r.doc_name?.toLowerCase().endsWith('.pdf') ? '📕' : '📘'}</span>
                           <span style={{ fontWeight: 600, fontSize: 13, color: C.text, flex: 1 }}>{r.doc_name}</span>
-                          <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: '2px 8px', borderRadius: 10 }}>{r.matchCount} совпад.</span>
+                          {pct != null && (
+                            <span style={{ fontSize: 11, fontWeight: 700, color: pctColor, background: pctColor + '18', padding: '2px 10px', borderRadius: 10 }}>
+                              {pct}% релев.
+                            </span>
+                          )}
                         </div>
                         <div style={{ fontSize: 12, color: C.textMuted, fontFamily: 'monospace', lineHeight: 1.6 }}>
-                          ...{before}<mark style={{ background: '#FBBF24', color: '#000', borderRadius: 2, padding: '0 2px' }}>{match}</mark>{after}...
+                          ...{excerpt}...
                         </div>
                       </div>
                     );

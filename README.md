@@ -164,6 +164,11 @@ git push origin main
 
 ## 📝 История изменений
 
+### v6.1 — Семантический поиск в Нормативке
+- ✅ Поиск по смыслу через `orchestrator.js` (action: search_normative) — без нового деплоя Edge Functions
+- ✅ Query → OpenAI embedding → `search_normative()` RPC (pgvector cosine similarity)
+- ✅ Результаты с процентом релевантности (цветной бейдж: зелёный ≥80%, жёлтый ≥60%)
+
 ### v6.0 — RAG + Безопасность + Фикс деплоя
 - ✅ **Vercel build fix**: Добавлен `vercel.json` с явным `rootDirectory` через `@vercel/static-build`
 - ✅ **Безопасность**: API ключи вынесены в `process.env` (`.env.local` + Vercel env vars)

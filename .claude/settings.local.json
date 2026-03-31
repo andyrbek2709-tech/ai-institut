@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(ls d:/ai-site/enghub-main/README*)",
-      "Bash(ls d:/ai-site/README*)"
+      "Bash(ls d:/ai-site/README*)",
+      "Bash(grep -E \"\\\\.\\(json|yaml|yml\\)$\")",
+      "Bash(curl -s -X GET \"https://api.vercel.com/v9/projects/enghub\" -H \"Authorization: Bearer vcp_02gXakaG3CEIG04MPhALFSclwh8vCPfnI9PHnesZ1kOCO64i4P1hX66v\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\(''''id'''',''''NOT FOUND''''\\), d.get\\(''''name'''',''''''''\\), d.get\\(''''accountId'''',''''''''\\)\\)\")"
     ]
   }
 }

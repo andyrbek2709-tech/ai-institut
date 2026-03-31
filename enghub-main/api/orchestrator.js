@@ -18,7 +18,33 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { user_id, project_id, message, use_rag } = req.body;
+    const { user_id, project_id, message, use_rag, action, query } = req.body;
+
+    // --- Семантический поиск по нормативной базе (из UI Нормативки) ---
+    if (action === 'search_normative') {
+      if (!query || !query.trim()) {
+        return res.status(400).json({ error: 'query required' });
+      }
+      if (!OPENAI_API_KEY) {
+        return res.status(500).json({ error: 'OPENAI_API_KEY not configured' });
+      }
+      const embRes = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'text-embedding-3-small', input: query.trim() }),
+      });
+      if (!embRes.ok) throw new Error('OpenAI embeddings failed');
+      const embData = await embRes.json();
+      const queryEmbedding = embData.data[0].embedding;
+
+      const searchRes = await fetch(`${SURL}/rest/v1/rpc/search_normative`, {
+        method: 'POST',
+        headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+        body: JSON.stringify({ query_embedding: queryEmbedding, match_count: req.body.match_count || 20 }),
+      });
+      const results = await searchRes.json();
+      return res.status(200).json(Array.isArray(results) ? results : []);
+    }
 
     if (!user_id || !project_id || !message) {
       return res.status(400).json({ error: 'Missing required fields: user_id, project_id, message' });
