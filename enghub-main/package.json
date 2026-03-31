@@ -9,6 +9,7 @@
   ],
   "main": "src/index.tsx",
   "dependencies": {
+    "@supabase/supabase-js": "^2.38.5",
     "docx": "^9.6.1",
     "file-saver": "^2.0.5",
     "katex": "^0.16.44",

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { DARK, LIGHT, statusMap, roleLabels } from './constants';
 import { get, post, patch, del, SURL, SERVICE_KEY } from './api/supabase';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp } from './components/ui';
@@ -248,50 +249,74 @@ export default function App() {
     loadMessages(activeProject.id, taskId); 
   };
   const { notifications, addNotification, removeNotification } = useNotifications();
-  const prevTasksRef = useRef<string>("");
 
-  // Polling — проверяем изменения задач каждые 10сек
+  // ── Refs для Realtime callbacks (escape stale closures) ──
+  const activeProjectRef = useRef<any>(null);
+  const currentUserDataRef = useRef<any>(null);
+  const appUsersRef = useRef<any[]>([]);
+  const addNotifRef = useRef(addNotification);
+  const loadTasksRef = useRef(loadAllTasks);
+  useEffect(() => { activeProjectRef.current = activeProject; }, [activeProject]);
+  useEffect(() => { currentUserDataRef.current = currentUserData; }, [currentUserData]);
+  useEffect(() => { appUsersRef.current = appUsers; }, [appUsers]);
+  useEffect(() => { addNotifRef.current = addNotification; });
+  useEffect(() => { loadTasksRef.current = loadAllTasks; });
+
+  // ── Supabase Realtime: подписка на изменения задач ──
+  useEffect(() => {
+    if (!token || !currentUserData?.id) return;
+    const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
+    const channel = supa.channel('tasks:live')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload: any) => {
+        const t = payload.new;
+        const me = currentUserDataRef.current;
+        if (!me) return;
+        if (String(t.assigned_to) === String(me.id)) {
+          addNotifRef.current(`📋 Вам назначена задача: «${t.name}»`, 'info');
+        }
+        if (activeProjectRef.current?.id === t.project_id) loadTasksRef.current(t.project_id);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tasks' }, (payload: any) => {
+        const t = payload.new;
+        const me = currentUserDataRef.current;
+        if (!me) return;
+        const uid = String(me.id);
+        const myRole = me.role;
+        if (String(t.assigned_to) === uid) {
+          if (t.status === 'revision') addNotifRef.current(`⚡ Задача на доработку: «${t.name}»`, 'warning');
+          if (t.status === 'done') addNotifRef.current(`✓ Задача завершена: «${t.name}»`, 'success');
+        }
+        if (myRole === 'lead' && t.status === 'review_lead') {
+          const myEngIds = new Set(appUsersRef.current.filter((u: any) => u.dept_id === me.dept_id).map((u: any) => String(u.id)));
+          if (myEngIds.has(String(t.assigned_to)) || String(t.assigned_to) === uid) {
+            addNotifRef.current(`📋 Задача ожидает вашей проверки: «${t.name}»`, 'info');
+          }
+        }
+        if (myRole === 'gip' && t.status === 'review_gip') {
+          addNotifRef.current(`📋 Задача ожидает проверки ГИПа: «${t.name}»`, 'info');
+        }
+        if (activeProjectRef.current?.id === t.project_id) loadTasksRef.current(t.project_id);
+      })
+      .subscribe();
+    return () => { supa.removeChannel(channel); };
+  }, [currentUserData?.id]); // eslint-disable-line
+
+  // Polling — только для уведомлений о звонках (задачи обновляются через Realtime)
   useEffect(() => {
     if (!activeProject || !token) return;
     const interval = setInterval(async () => {
-      const data = await get(`tasks?project_id=eq.${activeProject.id}&order=id`, token);
-      if (Array.isArray(data)) {
-        const newHash = JSON.stringify(data.map((t: any) => ({ id: t.id, status: t.status, assigned_to: t.assigned_to })));
-        if (prevTasksRef.current && prevTasksRef.current !== newHash) {
-          const oldTasks = JSON.parse(prevTasksRef.current) as any[];
-          data.forEach((t: any) => {
-            const old = oldTasks.find((o: any) => o.id === t.id);
-            if (old && old.status !== t.status) {
-              const taskName = t.name || `#${t.id}`;
-              if (t.status === "review_lead" && isLead) addNotification(`📋 Задача "${taskName}" отправлена на проверку`, 'warning');
-              if (t.status === "review_gip" && isGip) addNotification(`📋 Задача "${taskName}" ожидает вашей проверки`, 'warning');
-              if (t.status === "inprogress" && isLead) addNotification(`▶ Задача "${taskName}" взята в работу`, 'info');
-              if (t.status === "done" && isGip) addNotification(`✓ Задача "${taskName}" завершена!`, 'success');
-              if (t.status === "revision" && isEng && String(t.assigned_to) === String(currentUserData?.id)) addNotification(`⚡ Задача "${taskName}" возвращена на доработку`, 'warning');
-            }
-            if (old && old.assigned_to !== t.assigned_to && String(t.assigned_to) === String(currentUserData?.id)) {
-              addNotification(`📋 Вам назначена задача "${t.name || '#' + t.id}"`, 'info');
-            }
-          });
-          loadTasks(activeProject.id);
-        }
-        prevTasksRef.current = newHash;
-      }
-
-      // GLOBAL CALL NOTIFICATION POLLING
       const msgData = await get(`messages?project_id=eq.${activeProject.id}&type=eq.call_start&order=created_at.desc&limit=1`, token);
       if (Array.isArray(msgData) && msgData.length > 0) {
-          const call = msgData[0];
-          const callTime = new Date(call.created_at).getTime();
-          const now = Date.now();
-          if (now - callTime < 30000 && sideTab !== 'conference') {
-              const initiator = getUserById(call.user_id);
-              setIncomingCall({ project_id: activeProject.id, project_name: activeProject.name, initiator_name: initiator?.full_name || "ГИП" });
-          }
+        const call = msgData[0];
+        const callTime = new Date(call.created_at).getTime();
+        if (Date.now() - callTime < 30000 && sideTab !== 'conference') {
+          const initiator = getUserById(call.user_id);
+          setIncomingCall({ project_id: activeProject.id, project_name: activeProject.name, initiator_name: initiator?.full_name || "ГИП" });
+        }
       }
     }, 10000);
     return () => clearInterval(interval);
-  }, [activeProject, token, currentUserData?.id, sideTab]);
+  }, [activeProject, token, sideTab]);
 
   const createProject = async () => { if (!newProject.name || !newProject.code) return; setSaving(true); await post("projects", { ...newProject, progress: 0, archived: false }, token!); setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(false); setSaving(false); loadProjects(); addNotification(`Проект "${newProject.name}" создан`, 'success'); };
   
@@ -725,7 +750,7 @@ export default function App() {
                 const overdueProjects = projects.filter(p => p.deadline && new Date(p.deadline) < now).length;
                 return (
                   <div className="stats-row">
-                    {(isGip || isAdmin) ? [
+                    {((isGip || isAdmin) ? [
                       { label: "Проектов", value: projects.length, color: C.accent },
                       { label: "Активных задач", value: allTasks.filter(t => t.status !== "done").length, color: C.blue },
                       { label: "На проверке ГИПа", value: allTasks.filter(t => t.status === "review_gip").length, color: C.purple },
@@ -740,7 +765,7 @@ export default function App() {
                       { label: "В работе", value: baseTasks.filter(t => t.status === "inprogress").length, color: C.blue },
                       { label: "На проверке", value: baseTasks.filter(t => t.status === "review_lead" || t.status === "review_gip").length, color: C.purple },
                       { label: "Завершено", value: baseTasks.filter(t => t.status === "done").length, color: C.green },
-                    ].map(s => (
+                    ]).map(s => (
                       <div key={s.label} className="stat-card">
                         <div className="stat-card-header"><span className="stat-card-dot" style={{ background: s.color }} /><span className="stat-card-label">{s.label}</span></div>
                         <div className="stat-card-value" style={{ color: s.color }}>{s.value}</div>
