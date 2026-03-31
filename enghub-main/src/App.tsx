@@ -1357,7 +1357,11 @@ export default function App() {
                             </span>
                             {(isGip || isAdmin) && (
                               <button style={{ marginLeft: 'auto', fontSize: 11, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
-                                onClick={() => del(`normative_docs?id=eq.${doc.id}`, token!).then(loadNormativeDocs)}>✕</button>
+                                onClick={() => {
+                                  if (!window.confirm(`Удалить документ "${doc.name}"?`)) return;
+                                  if (!window.confirm('Подтвердите ещё раз: документ и все его данные будут удалены безвозвратно.')) return;
+                                  del(`normative_docs?id=eq.${doc.id}`, token!).then(loadNormativeDocs);
+                                }}>✕</button>
                             )}
                           </div>
                         </div>
