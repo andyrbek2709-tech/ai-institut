@@ -253,10 +253,21 @@ git push origin main
 - Phase 2 (Drawing Agent): DONE
 - Phase 3 (Workflow Agent): DONE
 - Phase 4 (Task-Drawing Link): DONE
-- Phase 5: Implemented
+- Phase 5 (Revisions): DONE
 - Phase 6: Implemented
 - Phase 7: Implemented
 - Phase 8: Implemented
+
+#### [2026-03-31 19:16] Agent update
+- Step: Формально закрыта Фаза 5 как завершенная: выделен отдельный контур `Revision Agent` (action `create_revision`) в `orchestrator`, сохранена обратная совместимость с `create_drawing_revision`, обновлена обработка в `CopilotPanel`, добавлен API-хелпер `listRevisions`, а UI-история ревизий расширена отображением исполнителя и счетчика записей.
+- Files:
+  - `enghub-main/api/orchestrator.js`
+  - `enghub-main/src/components/CopilotPanel.tsx`
+  - `enghub-main/src/api/supabase.ts`
+  - `enghub-main/src/App.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint по измененным файлам без ошибок.
+- Next: по команде пользователя — переход к Фазе 6 (Reviews) с тем же протоколом: README отчет -> commit -> immediate push.
 
 #### [2026-03-31 19:01] Agent update
 - Step: Формально закрыта Фаза 4 как завершенная: связь `tasks.drawing_id` подтверждена миграцией и интеграцией чтения/записи; добавлены API-хелперы для задач и возможность менять связанный чертеж прямо в карточке задачи (Lead/GIP), плюс отображение связи в списке/деталях.

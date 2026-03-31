@@ -82,21 +82,22 @@ function buildDrawingAction(actionType, project_id, user_id, payload = {}) {
     };
   }
 
-  if (actionType === 'create_drawing_revision') {
+  if (actionType === 'create_drawing_revision' || actionType === 'create_revision') {
     if (!payload.drawing_id) {
       return { ok: false, blocked: true, message: 'Для выпуска ревизии нужен payload.drawing_id' };
     }
+    const normalizedAction = actionType === 'create_revision' ? 'create_revision' : 'create_drawing_revision';
     return {
       ok: true,
       insertData: {
         project_id,
         user_id,
-        action_type: 'create_drawing_revision',
-        agent_type: 'drawing_agent',
+        action_type: normalizedAction,
+        agent_type: 'revision_agent',
         payload: { drawing_id: payload.drawing_id, note: payload.note || 'Ревизия по запросу Copilot' },
         status: 'pending',
       },
-      message: 'Drawing Agent подготовил выпуск новой ревизии.',
+      message: 'Revision Agent подготовил выпуск новой ревизии.',
     };
   }
 
@@ -193,12 +194,12 @@ module.exports = async function handler(req, res) {
     }
 
     // Explicit action contract for Copilot/clients
-    if (action === 'create_drawing' || action === 'update_drawing' || action === 'create_drawing_revision') {
+    if (action === 'create_drawing' || action === 'update_drawing' || action === 'create_drawing_revision' || action === 'create_revision') {
       const result = buildDrawingAction(action, project_id, user_id, payload);
       if (!result.ok) {
         return res.status(200).json({
           success: false,
-          agent: 'drawing_agent',
+          agent: action === 'create_revision' || action === 'create_drawing_revision' ? 'revision_agent' : 'drawing_agent',
           blocked: !!result.blocked,
           message: result.message || 'Drawing action blocked',
         });
@@ -211,7 +212,7 @@ module.exports = async function handler(req, res) {
       const inserted = await insertRes.json();
       return res.status(200).json({
         success: true,
-        agent: 'drawing_agent',
+        agent: result.insertData.agent_type,
         action_id: inserted?.[0]?.id,
         action_type: result.insertData.action_type,
         message: result.message,
@@ -273,12 +274,12 @@ module.exports = async function handler(req, res) {
       insertData = { project_id, user_id, action_type: 'create_tasks', agent_type: 'task_manager', payload: { tasks }, status: 'pending' };
       responseMessage = 'Task Manager подготовил пакет задач на утверждение.';
     } else if (intent === 'create_drawing' || intent === 'update_drawing' || intent === 'drawing_revision') {
-      const drawingActionType = intent === 'drawing_revision' ? 'create_drawing_revision' : intent;
+      const drawingActionType = intent === 'drawing_revision' ? 'create_revision' : intent;
       const result = buildDrawingAction(drawingActionType, project_id, user_id, payload);
       if (!result.ok) {
         return res.status(200).json({
           success: false,
-          agent: 'drawing_agent',
+          agent: drawingActionType === 'create_revision' ? 'revision_agent' : 'drawing_agent',
           blocked: !!result.blocked,
           message: result.message || 'Drawing action blocked',
         });

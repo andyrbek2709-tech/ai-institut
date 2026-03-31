@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions } from './constants';
-import { get, post, patch, del, SURL, SERVICE_KEY, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink } from './api/supabase';
+import { get, post, patch, del, SURL, SERVICE_KEY, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions } from './api/supabase';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
@@ -152,7 +152,7 @@ export default function App() {
     if (Array.isArray(data)) setDrawings(data);
   };
   const loadRevisions = async (pid: number) => {
-    const data = await get(`revisions?project_id=eq.${pid}&order=created_at.desc`, token!);
+    const data = await listRevisions(pid, token!);
     if (Array.isArray(data)) setRevisions(data);
   };
   const loadReviews = async (pid: number) => {
@@ -1317,6 +1317,9 @@ export default function App() {
                 <div>
                   <div className="task-list-header">
                     <div className="task-list-title">История ревизий</div>
+                    <div style={{ fontSize: 12, color: C.textMuted }}>
+                      Всего записей: {revisions.length}
+                    </div>
                   </div>
                   <div className="task-list" style={{ marginBottom: 16 }}>
                     {drawings.map((d) => (
@@ -1336,7 +1339,15 @@ export default function App() {
                     <div className="page-label" style={{ marginBottom: 10 }}>Журнал</div>
                     {revisions.length === 0 ? <div className="empty-state">Записей ревизий пока нет</div> : revisions.map((r) => {
                       const d = drawings.find(dr => String(dr.id) === String(r.drawing_id));
-                      return <div key={r.id} className="task-row"><span style={{ color: C.text }}>{d?.code || '—'}</span><span style={{ color: C.textMuted }}>{r.from_revision} → {r.to_revision}</span><span style={{ marginLeft: 'auto', fontSize: 12, color: C.textMuted }}>{new Date(r.created_at).toLocaleString()}</span></div>;
+                      const issuer = appUsers.find(u => String(u.id) === String(r.issued_by));
+                      return (
+                        <div key={r.id} className="task-row">
+                          <span style={{ color: C.text }}>{d?.code || '—'}</span>
+                          <span style={{ color: C.textMuted }}>{r.from_revision} → {r.to_revision}</span>
+                          <span style={{ color: C.textMuted }}>{issuer?.full_name || 'Система'}</span>
+                          <span style={{ marginLeft: 'auto', fontSize: 12, color: C.textMuted }}>{new Date(r.created_at).toLocaleString()}</span>
+                        </div>
+                      );
                     })}
                   </div>
                 </div>

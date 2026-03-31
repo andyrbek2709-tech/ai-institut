@@ -70,6 +70,9 @@ export const updateDrawing = (id: string, payload: any, token?: string) =>
 export const createRevisionRecord = (payload: any, token?: string) =>
   post('revisions', payload, token);
 
+export const listRevisions = (projectId: number, token?: string) =>
+  get(`revisions?project_id=eq.${projectId}&order=created_at.desc`, token);
+
 export const listReviews = (projectId: number, token?: string) =>
   get(`reviews?project_id=eq.${projectId}&order=created_at.desc`, token);
 

@@ -107,7 +107,7 @@ export function CopilotPanel({
         setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить update_drawing: отсутствует drawing_id.' }]);
         return;
       }
-      if (approved && action.action_type === 'create_drawing_revision' && !action.payload?.drawing_id) {
+      if (approved && (action.action_type === 'create_drawing_revision' || action.action_type === 'create_revision') && !action.payload?.drawing_id) {
         setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить ревизию: отсутствует drawing_id.' }]);
         return;
       }
@@ -155,7 +155,7 @@ export function CopilotPanel({
         onDataChanged?.();
       }
 
-      if (approved && action.action_type === 'create_drawing_revision' && payload?.drawing_id) {
+      if (approved && (action.action_type === 'create_drawing_revision' || action.action_type === 'create_revision') && payload?.drawing_id) {
         const drawingRows = await get(`drawings?id=eq.${payload.drawing_id}&select=id,revision,project_id`, token || '');
         const drawing = Array.isArray(drawingRows) ? drawingRows[0] : null;
         const revNum = Number(String(drawing?.revision || 'R0').replace('R', '')) + 1;
@@ -306,7 +306,7 @@ export function CopilotPanel({
               </div>
             )}
 
-            {action.action_type === 'create_drawing_revision' && (
+            {(action.action_type === 'create_drawing_revision' || action.action_type === 'create_revision') && (
               <div style={{ background: C.surface2, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 13, color: C.text }}>
                 <div><b>Drawing ID:</b> {action.payload?.drawing_id || '—'}</div>
                 <div><b>Комментарий:</b> {action.payload?.note || '—'}</div>
