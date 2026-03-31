@@ -289,6 +289,11 @@ git push origin main
 - Release notes + обновление runbook в `README`.
 - Финальный regression smoke.
 
+### Блок G — Finalization
+- Зафиксировать итоговый статус roadmap и handover.
+- Обновить финальный operational статус релиза.
+- Закрыть post-phase execution цикл.
+
 ### Release Notes (F.1)
 
 Дата: `2026-04-01`
@@ -351,6 +356,23 @@ git push origin main
 - Риск-заметки
   - Единичный `document.getElementById` в `App.tsx` относится к кнопке открытия file input для нормативных документов и не затрагивает критичный flow `transmittals`.
   - Final sign-off релиза должен включать ручной прогон сценариев и фиксацию статуса в этом же разделе.
+
+### Finalization Status (G)
+
+Дата закрытия цикла: `2026-04-01`
+
+- Статус roadmap
+  - [x] Блок A — Stabilization Sprint
+  - [x] Блок B — QA & Test Coverage
+  - [x] Блок C — Refactor Sprint
+  - [x] Блок D — Copilot Hardening v2
+  - [x] Блок E — Data/Migration Hardening (E.1 baseline подготовлен, миграция `008` требует применения в целевой БД оператором)
+  - [x] Блок F — Release Readiness (F.1 + F.2)
+  - [x] Блок G — Finalization
+- Operational итог
+  - Кодовая база стабилизирована, ключевые автоматические quality gates (build/tests/lint diagnostics) в зелёном состоянии.
+  - Релизный контур documented: есть release notes, runbook, migration checklist, smoke результаты и handover-лог.
+  - Для production sign-off остаётся операторский шаг: выполнить manual e2e smoke сценарии и применить/подтвердить миграцию `008` в целевой Supabase среде.
 
 ### Execution Protocol
 - Один логический блок = один commit = один immediate push.
@@ -535,6 +557,13 @@ git push origin main
   - `README.md`
 - Validation: `npm run build` (успешно), `CI=true npm test -- --watch=false` (успешно), lint diagnostics без ошибок.
 - Next: commit+push блока F.2; затем переход к G (finalization: выпускной статус, закрытие roadmap и итоговый handover).
+
+#### [2026-04-01 13:06] Agent update
+- Step: Блок G выполнен: roadmap после фаз 1–8 закрыт финальным статусом (`Finalization Status`), добавлена сводка operational готовности и явно отмечены оставшиеся operator-only шаги для production sign-off (manual e2e smoke + подтверждение применения миграции `008`).
+- Files:
+  - `README.md`
+- Validation: not run (финальное документационное закрытие execution-цикла).
+- Next: commit+push блока G; roadmap execution cycle закрыт.
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
