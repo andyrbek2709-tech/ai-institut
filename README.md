@@ -416,6 +416,39 @@ where drawing_id is null and revision_id is null;
 - `QA-GIP-01`, `QA-LEAD-01`, `QA-ENG-01`, `QA-DATA-01`.
 - Зафиксировать результаты в этом `README` (дата, среда, pass/fail).
 
+### Production Sign-off Report (template)
+
+Заполнить после ручного прогона в целевой среде.
+
+- Environment: `<prod/stage>`
+- Date: `<YYYY-MM-DD HH:mm TZ>`
+- Operator: `<name>`
+- Release commit: `<git sha>`
+- Migration `008_schema_hardening.sql`: `<applied / already applied / failed>`
+
+#### SQL Checks
+
+| Check | Query | Result | Notes |
+|---|---|---|---|
+| Indexes present | `pg_indexes` query from Operator Pack | `<pass/fail>` | `<details>` |
+| CHECK constraints present | `pg_constraint` query from Operator Pack | `<pass/fail>` | `<details>` |
+| `transmittal_items` integrity | invalid count query | `<pass/fail>` | `<count>` |
+
+#### Manual Scenario Results
+
+| Scenario ID | Owner Role | Result | Notes |
+|---|---|---|---|
+| `QA-GIP-01` | gip | `<pass/fail>` | `<details>` |
+| `QA-LEAD-01` | lead | `<pass/fail>` | `<details>` |
+| `QA-ENG-01` | engineer | `<pass/fail>` | `<details>` |
+| `QA-DATA-01` | data | `<pass/fail>` | `<details>` |
+
+#### Final Decision
+
+- Production sign-off: `<approved / blocked>`
+- Blocking issues: `<none or list>`
+- Follow-up actions: `<list>`
+
 ### Execution Protocol
 - Один логический блок = один commit = один immediate push.
 - После каждого блока обязательно обновление `README.md` (`Agent Handover Log`).
@@ -613,6 +646,13 @@ where drawing_id is null and revision_id is null;
   - `README.md`
 - Validation: not run (документационный operator-pack).
 - Next: commit+push operator-pack; далее ожидание результатов ручного прогона от оператора.
+
+#### [2026-04-01 13:21] Agent update
+- Step: Добавлен шаблон `Production Sign-off Report` в `README` (environment/date/operator/release commit, SQL checks, manual scenario matrix, final decision) для формального закрытия релиза оператором.
+- Files:
+  - `README.md`
+- Validation: not run (документационный шаблон отчета).
+- Next: commit+push шаблона; далее оператор заполняет report по факту ручного прогона.
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
