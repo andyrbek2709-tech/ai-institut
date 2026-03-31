@@ -243,6 +243,29 @@ git push origin main
 
 ## 🧾 Agent Handover Log
 
+### Phase Status Snapshot
+
+- Phase 1 (Drawings foundation): DONE
+- Phase 2: Implemented
+- Phase 3: Implemented
+- Phase 4: Implemented
+- Phase 5: Implemented
+- Phase 6: Implemented
+- Phase 7: Implemented
+- Phase 8: Implemented
+
+#### [2026-03-31 18:18] Agent update
+- Step: Формально закрыта Фаза 1 как завершенная: выполнен полный чеклист по таблице `drawings`, обновлению `constants.ts`, реализации `DrawingsPanel`, интеграции в `App.tsx` и CRUD через `src/api/supabase.ts`.
+- Files:
+  - `supabase/migrations/002_drawings.sql`
+  - `enghub-main/src/constants.ts`
+  - `enghub-main/src/components/DrawingsPanel.tsx`
+  - `enghub-main/src/App.tsx`
+  - `enghub-main/src/api/supabase.ts`
+  - `README.md`
+- Validation: `npm run build` (успешно).
+- Next: приоритет пользователя определяет следующий фокус: или фиксируем отдельный commit “Phase 1 done record”, или продолжаем стабилизацию/итерации.
+
 #### [2026-03-31] Agent update
 - Step: Реализованы фазы 1–8 из плана (drawings, workflow, drawing-task link, revisions, reviews, transmittals, copilot/orchestrator).
 - Files:
