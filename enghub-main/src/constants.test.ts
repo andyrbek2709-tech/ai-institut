@@ -1,4 +1,5 @@
 import { drawingStatusMap, taskWorkflowTransitions, copilotRolePrompts } from './constants';
+import { describe, test, expect } from '@jest/globals';
 
 describe('EngHub constants baseline', () => {
   test('workflow transitions include required production gates', () => {

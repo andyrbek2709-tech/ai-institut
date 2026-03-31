@@ -383,6 +383,16 @@ git push origin main
 - Validation: `CI=true npm test -- --watch=false` (успешно, 3/3 теста пройдено).
 - Next: commit+push блока B.2; затем переход к Блоку C (рефакторинг структуры UI модулей).
 
+#### [2026-03-31 21:17] Agent update
+- Step: Блок C.1 выполнен: вкладка Transmittals вынесена из `App.tsx` в отдельный компонент `TransmittalsTab` без изменения бизнес-логики. Дополнительно устранен build-регресс тестового baseline (`constants.test.ts`) через явный импорт `@jest/globals`.
+- Files:
+  - `enghub-main/src/components/TransmittalsTab.tsx`
+  - `enghub-main/src/App.tsx`
+  - `enghub-main/src/constants.test.ts`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint по измененным файлам без ошибок.
+- Next: commit+push блока C.1; затем переход к Блоку C.2 (декомпозиция Reviews/Drawings tabs).
+
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
 - Files:
