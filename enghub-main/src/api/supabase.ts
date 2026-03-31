@@ -85,6 +85,15 @@ export const updateReviewStatus = (reviewId: string, status: string, token?: str
 export const createTransmittal = (payload: any, token?: string) =>
   post('transmittals', payload, token);
 
+export const updateTransmittalStatus = (transmittalId: string, status: string, token?: string) =>
+  patch(`transmittals?id=eq.${transmittalId}`, { status, updated_at: new Date().toISOString() }, token);
+
+export const listTransmittalItems = (transmittalId: string, token?: string) =>
+  get(`transmittal_items?transmittal_id=eq.${transmittalId}&order=created_at.desc`, token);
+
+export const createTransmittalItem = (payload: any, token?: string) =>
+  post('transmittal_items', payload, token);
+
 export const listProjectTasks = (projectId: number, token?: string) =>
   get(`tasks?project_id=eq.${projectId}&order=id`, token);
 

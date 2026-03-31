@@ -127,6 +127,10 @@ export function CopilotPanel({
         setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить update_review_status: нужен review_id и status.' }]);
         return;
       }
+      if (approved && action.action_type === 'update_transmittal_status' && (!payload.transmittal_id || !payload.status)) {
+        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить update_transmittal_status: нужен transmittal_id и status.' }]);
+        return;
+      }
       
       if (approved && action.action_type === 'create_tasks') {
         for (const t of payload.tasks) {
@@ -196,13 +200,32 @@ export function CopilotPanel({
       }
 
       if (approved && action.action_type === 'create_transmittal') {
-        await post('transmittals', {
+        const createdRows = await post('transmittals', {
           project_id: projectId,
           number: payload?.number || `TR-${projectId}-${Date.now()}`,
           recipient: payload?.recipient || null,
           note: payload?.note || null,
           status: 'draft',
           issued_by: userId
+        }, token || '');
+        const created = Array.isArray(createdRows) ? createdRows[0] : null;
+        if (created?.id && Array.isArray(payload?.items)) {
+          for (const item of payload.items) {
+            await post('transmittal_items', {
+              transmittal_id: created.id,
+              drawing_id: item?.drawing_id || null,
+              revision_id: item?.revision_id || null,
+              note: item?.note || null,
+            }, token || '');
+          }
+        }
+        onDataChanged?.();
+      }
+
+      if (approved && action.action_type === 'update_transmittal_status') {
+        await patch(`transmittals?id=eq.${payload.transmittal_id}`, {
+          status: payload.status,
+          updated_at: new Date().toISOString(),
         }, token || '');
         onDataChanged?.();
       }
@@ -346,6 +369,14 @@ export function CopilotPanel({
                 <div><b>Номер:</b> {action.payload?.number || '(авто)'}</div>
                 <div><b>Получатель:</b> {action.payload?.recipient || '—'}</div>
                 <div><b>Примечание:</b> {action.payload?.note || '—'}</div>
+                <div><b>Позиции:</b> {Array.isArray(action.payload?.items) ? action.payload.items.length : 0}</div>
+              </div>
+            )}
+
+            {action.action_type === 'update_transmittal_status' && (
+              <div style={{ background: C.surface2, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 13, color: C.text }}>
+                <div><b>Transmittal ID:</b> {action.payload?.transmittal_id || '—'}</div>
+                <div><b>Новый статус:</b> {action.payload?.status || '—'}</div>
               </div>
             )}
 

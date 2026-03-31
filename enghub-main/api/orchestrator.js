@@ -156,6 +156,54 @@ function buildReviewAction(actionType, project_id, user_id, payload = {}) {
   return { ok: false, blocked: true, message: 'Неподдерживаемое review действие' };
 }
 
+function buildTransmittalAction(actionType, project_id, user_id, payload = {}) {
+  if (actionType === 'create_transmittal') {
+    return {
+      ok: true,
+      insertData: {
+        project_id,
+        user_id,
+        action_type: 'create_transmittal',
+        agent_type: 'register_agent',
+        payload: {
+          number: payload.number || null,
+          recipient: payload.recipient || null,
+          note: payload.note || null,
+          items: Array.isArray(payload.items) ? payload.items : [],
+        },
+        status: 'pending',
+      },
+      message: 'Register Agent подготовил трансмиттал.',
+    };
+  }
+
+  if (actionType === 'update_transmittal_status') {
+    if (!payload.transmittal_id) {
+      return { ok: false, blocked: true, message: 'Для обновления трансмиттала нужен payload.transmittal_id' };
+    }
+    if (!payload.status) {
+      return { ok: false, blocked: true, message: 'Для обновления трансмиттала нужен payload.status' };
+    }
+    return {
+      ok: true,
+      insertData: {
+        project_id,
+        user_id,
+        action_type: 'update_transmittal_status',
+        agent_type: 'register_agent',
+        payload: {
+          transmittal_id: payload.transmittal_id,
+          status: payload.status,
+        },
+        status: 'pending',
+      },
+      message: 'Register Agent подготовил изменение статуса трансмиттала.',
+    };
+  }
+
+  return { ok: false, blocked: true, message: 'Неподдерживаемое transmittal действие' };
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -296,6 +344,31 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (action === 'create_transmittal' || action === 'update_transmittal_status') {
+      const result = buildTransmittalAction(action, project_id, user_id, payload);
+      if (!result.ok) {
+        return res.status(200).json({
+          success: false,
+          agent: 'register_agent',
+          blocked: !!result.blocked,
+          message: result.message || 'Transmittal action blocked',
+        });
+      }
+      const insertRes = await fetch(`${SURL}/rest/v1/ai_actions`, {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'return=representation' },
+        body: JSON.stringify(result.insertData),
+      });
+      const inserted = await insertRes.json();
+      return res.status(200).json({
+        success: true,
+        agent: 'register_agent',
+        action_id: inserted?.[0]?.id,
+        action_type: result.insertData.action_type,
+        message: result.message,
+      });
+    }
+
     const intent = detectIntent(message);
 
     if (intent === 'workflow_transition') {
@@ -376,15 +449,17 @@ module.exports = async function handler(req, res) {
       insertData = result.insertData;
       responseMessage = result.message;
     } else if (intent === 'create_transmittal') {
-      insertData = {
-        project_id,
-        user_id,
-        action_type: 'create_transmittal',
-        agent_type: 'register_agent',
-        payload: { number: payload.number || null, recipient: payload.recipient || null, note: payload.note || null },
-        status: 'pending',
-      };
-      responseMessage = 'Register Agent подготовил трансмиттал.';
+      const result = buildTransmittalAction('create_transmittal', project_id, user_id, payload);
+      if (!result.ok) {
+        return res.status(200).json({
+          success: false,
+          agent: 'register_agent',
+          blocked: !!result.blocked,
+          message: result.message || 'Transmittal action blocked',
+        });
+      }
+      insertData = result.insertData;
+      responseMessage = result.message;
     }
 
     if (!insertData) {
