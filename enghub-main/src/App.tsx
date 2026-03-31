@@ -1111,7 +1111,7 @@ export default function App() {
                           );
 
                           if (!uploadRes.ok) {
-                            addNotification(`Ошибка загрузки "${file.name}": Storage недоступен`, 'error');
+                            addNotification(`Ошибка загрузки "${file.name}": Storage недоступен`, 'warning');
                             continue;
                           }
 
@@ -1149,7 +1149,7 @@ export default function App() {
                             addNotification(`"${file.name}" загружен, векторизация отложена`, 'warning');
                           }
                         } catch {
-                          addNotification(`Ошибка при загрузке "${file.name}"`, 'error');
+                          addNotification(`Ошибка при загрузке "${file.name}"`, 'warning');
                         }
                       }
 
