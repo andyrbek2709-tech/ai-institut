@@ -289,6 +289,53 @@ git push origin main
 - Release notes + обновление runbook в `README`.
 - Финальный regression smoke.
 
+### Release Notes (F.1)
+
+Дата: `2026-04-01`
+
+Релиз фиксирует завершение фаз `1–8` и post-phase блоков `A–E.1`.
+
+- Core delivery
+  - Завершены фазы 1–8: Drawings, Drawing/Workflow/Review/Register Agents, Task-Drawing link, Revisions, Reviews, Transmittals, Copilot role hardening.
+  - Реализованы блоки стабилизации/качества: smoke-checklist, QA matrix, baseline unit tests.
+- Refactor delivery
+  - Декомпозиция `App.tsx`: выделены `TransmittalsTab`, `ReviewsTab`, `RevisionsTab`, `AssignmentsTab`.
+- Copilot hardening
+  - Единый валидатор apply payload (`validateCopilotApply`).
+  - Идемпотентность apply: защита от двойного клика и проверка актуального статуса action перед применением.
+  - Blocked-ответы с `reason_code` и `next_step` guidance.
+- Data hardening
+  - Миграция `008_schema_hardening.sql`: составные индексы и CHECK-ограничения по доменным статусам/ссылочной целостности.
+- Known limitations
+  - Накат миграций в production зависит от фактического состояния данных в Supabase (возможны конфликтные статусы до очистки).
+  - Regression smoke частично manual (см. QA scenario IDs и checklist).
+
+### Release Runbook (F.1)
+
+1) Pre-flight
+- Убедиться, что локальная ветка синхронизирована с `origin/main`.
+- Проверить, что нет незакоммиченных изменений, кроме текущего блока.
+
+2) Build/Test gate
+- `cd enghub-main`
+- `npm ci` (или `npm install`, если lockfile уже согласован)
+- `npm run build`
+- `CI=true npm test -- --watch=false`
+
+3) Migration gate (Supabase)
+- Применить миграции до актуальной версии, включая `008_schema_hardening.sql`.
+- Проверить checklist `Migration Verification Checklist (E.1)`.
+- При падении CHECK-ограничений: устранить legacy-данные и повторить применение.
+
+4) Functional smoke gate
+- Прогнать минимум: `QA-GIP-01`, `QA-LEAD-01`, `QA-ENG-01`, `QA-DATA-01`.
+- Отдельно проверить blocked guidance (`reason_code` + `next_step`) в Copilot.
+
+5) Release sign-off
+- Обновить `Agent Handover Log` с фактом прогона и результатами.
+- Сделать atomic commit по протоколу (`1 блок = 1 commit = 1 push`).
+- Выполнить push в `main`.
+
 ### Execution Protocol
 - Один логический блок = один commit = один immediate push.
 - После каждого блока обязательно обновление `README.md` (`Agent Handover Log`).
@@ -458,6 +505,13 @@ git push origin main
   - `README.md`
 - Validation: `npm run build` (успешно), lint `App.tsx` без ошибок; SQL применяется оператором в Supabase по чеклисту.
 - Next: commit+push блока E.1; затем переход к E.2 или F.1 по roadmap (документирование known limitations / release readiness).
+
+#### [2026-04-01 12:47] Agent update
+- Step: Блок F.1 выполнен: в `README.md` добавлены формальные Release Notes и Release Runbook (pre-flight, build/test gate, migration gate, functional smoke gate, sign-off), плюс зафиксированы known limitations релизного контура.
+- Files:
+  - `README.md`
+- Validation: not run (документационное обновление release readiness).
+- Next: commit+push блока F.1; затем переход к F.2 (финальный regression smoke фиксацией результатов) и G (finalization).
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
