@@ -10,6 +10,7 @@ import { CalculationView } from './calculations/CalculationView';
 import { calcRegistry } from './calculations/registry';
 import { ConferenceRoom } from './pages/ConferenceRoom';
 import { CopilotPanel } from './components/CopilotPanel';
+import { saveAs } from 'file-saver';
 
 export default function App() {
   const [dark, setDark] = useState(false); // Светлая тема по умолчанию
@@ -411,6 +412,22 @@ export default function App() {
 
   const getAutoProgress = (pid: number): number => { const pt = allTasks.filter(t => t.project_id === pid); if (pt.length === 0) return 0; return Math.round((pt.filter(t => t.status === "done").length / pt.length) * 100); };
   const activeProjectProgress = activeProject ? getAutoProgress(activeProject.id) : 0;
+
+  const exportProjectXls = () => {
+    if (!activeProject) return;
+    const statusLabels: Record<string, string> = { todo: 'В очереди', inprogress: 'В работе', review_lead: 'Проверка руководителя', review_gip: 'Проверка ГИПа', revision: 'На доработку', done: 'Завершено' };
+    const priorityLabels: Record<string, string> = { low: 'Низкий', medium: 'Средний', high: 'Высокий', critical: 'Критический' };
+    const esc = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const cell = (v: string, bold = false) => `<Cell${bold ? ' ss:StyleID="h"' : ''}><Data ss:Type="String">${esc(v)}</Data></Cell>`;
+    const rows = allTasks.filter(t => t.project_id === activeProject.id).map(t => {
+      const u = getUserById(t.assigned_to);
+      return `<Row>${cell(t.name)}${cell(statusLabels[t.status] || t.status)}${cell(priorityLabels[t.priority] || t.priority)}${cell(u ? u.full_name : '')}${cell(t.dept || '')}${cell(t.deadline || '')}${cell(t.revision_count > 0 ? String(t.revision_count) : '')}</Row>`;
+    }).join('');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="h"><Font ss:Bold="1"/></Style></Styles><Worksheet ss:Name="Задачи"><Table><Row>${cell('Название', true)}${cell('Статус', true)}${cell('Приоритет', true)}${cell('Исполнитель', true)}${cell('Отдел', true)}${cell('Дедлайн', true)}${cell('Ревизий', true)}</Row>${rows}</Table></Worksheet><Worksheet ss:Name="Проект"><Table><Row>${cell('Параметр', true)}${cell('Значение', true)}</Row><Row>${cell('Название')}${cell(activeProject.name)}</Row><Row>${cell('Код')}${cell(activeProject.code)}</Row><Row>${cell('Статус')}${cell(activeProject.status === 'active' ? 'В работе' : activeProject.status)}</Row><Row>${cell('Дедлайн')}${cell(activeProject.deadline || '—')}</Row><Row>${cell('Прогресс')}${cell(activeProjectProgress + '%')}</Row><Row>${cell('Всего задач')}${cell(String(allTasks.filter(t => t.project_id === activeProject.id).length))}</Row></Table></Worksheet></Workbook>`;
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    saveAs(blob, `${activeProject.code}_${activeProject.name}.xls`);
+    addNotification(`Экспорт "${activeProject.name}" готов`, 'success');
+  };
 
   if (!token) return <LoginPage onLogin={handleLogin} dark={dark} setDark={setDark} />;
   if (isAdmin) return <AdminPanel token={token} onLogout={handleLogout} dark={dark} setDark={setDark} />;
@@ -1001,8 +1018,17 @@ export default function App() {
                 {activeProject.department && <span style={{ fontSize: 12, color: C.textMuted }}>{activeProject.department}</span>}
                 <div style={{ flex: 1 }}></div>
                 
+                {/* EXPORT BUTTON */}
+                <button
+                  onClick={exportProjectXls}
+                  title="Экспорт задач в Excel"
+                  style={{ background: C.surface, color: C.textMuted, border: `1px solid ${C.border}`, padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <span style={{ fontSize: 14 }}>⬇</span> Excel
+                </button>
+
                 {/* COPILOT BUTTON */}
-                <button 
+                <button
                   onClick={() => setShowCopilot(!showCopilot)}
                   style={{ background: showCopilot ? C.accent : C.surface, color: showCopilot ? '#fff' : C.accent, border: `1px solid ${C.accent}`, padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
                 >
