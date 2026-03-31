@@ -530,6 +530,10 @@ export default function App() {
   };
   const addTransmittalItem = async (transmittalId: string, drawingId?: string, revisionId?: string) => {
     if (!activeProject) return;
+    if (!drawingId && !revisionId) {
+      addNotification('Выберите чертёж и/или ревизию для позиции трансмиттала', 'warning');
+      return;
+    }
     await createTransmittalItem({
       transmittal_id: transmittalId,
       drawing_id: drawingId || null,

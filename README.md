@@ -274,6 +274,17 @@ git push origin main
 - Проверка индексов, ограничений и статусов.
 - Финальный migration verification checklist.
 
+### Migration Verification Checklist (E.1)
+
+Статус: baseline для миграции `008_schema_hardening.sql`.
+
+- [ ] В Supabase применена миграция `supabase/migrations/008_schema_hardening.sql` (SQL Editor или CI pipeline).
+- [ ] Индексы видны на `reviews(project_id, status)`, `transmittals(project_id, status)`, `revisions(drawing_id, created_at desc)`.
+- [ ] Ограничения `*_chk` на `drawings.status`, `reviews.severity`/`reviews.status`, `transmittals.status`, `transmittal_items` (хотя бы один из `drawing_id` / `revision_id`).
+- [ ] Если применение `008` падает из‑за старых строк с «левыми» статусами — почистить данные или ослабить CHECK (не игнорировать ошибку).
+- [ ] UI: кнопка «+ Позиция» в трансмиттале без выбора чертежа/ревизии не создаёт пустую строку (согласовано с `transmittal_items_link_chk`).
+- [ ] Smoke: создать трансмиттал → добавить позицию с чертежом или ревизией → убедиться, что запись создаётся.
+
 ### Блок F — Release Readiness
 - Release notes + обновление runbook в `README`.
 - Финальный regression smoke.
@@ -438,6 +449,15 @@ git push origin main
   - `README.md`
 - Validation: `npm run build` (успешно), `CI=true npm test -- --watch=false` (успешно), lint по изменённым файлам без ошибок.
 - Next: commit+push блока D.2; затем переход к E.1 (Data/Migration Hardening: проверка индексов/ограничений и migration verification checklist).
+
+#### [2026-04-01 12:35] Agent update
+- Step: Блок E.1 выполнен: миграция `008_schema_hardening.sql` (составные индексы под фильтры по проекту/статусу, журнал ревизий по чертежу, доменные CHECK для статусов drawings/reviews/transmittals и целостности связи `transmittal_items`); в UI добавлена блокировка добавления пустой позиции трансмиттала; в `README` зафиксирован чеклист верификации миграций E.1.
+- Files:
+  - `supabase/migrations/008_schema_hardening.sql`
+  - `enghub-main/src/App.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint `App.tsx` без ошибок; SQL применяется оператором в Supabase по чеклисту.
+- Next: commit+push блока E.1; затем переход к E.2 или F.1 по roadmap (документирование known limitations / release readiness).
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
