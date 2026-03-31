@@ -133,35 +133,54 @@ export default function App() {
     if (Array.isArray(data)) setNormativeDocs(data);
   };
 
+  // Запасной текстовый поиск через ilike (когда нет эмбеддингов)
+  const searchNormativeIlike = async (query: string): Promise<any[]> => {
+    const enc = encodeURIComponent(`*${query.trim()}*`);
+    const res = await fetch(`${SURL}/rest/v1/normative_chunks?content=ilike.${enc}&select=id,doc_id,doc_name,content&limit=100`, {
+      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
+    });
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    const byDoc = new Map<string, any>();
+    for (const c of data) {
+      if (!byDoc.has(c.doc_id)) byDoc.set(c.doc_id, { ...c, similarity: null });
+      else byDoc.get(c.doc_id).matchCount = (byDoc.get(c.doc_id).matchCount || 1) + 1;
+    }
+    return Array.from(byDoc.values());
+  };
+
   const searchNormative = async (query: string) => {
     if (!query.trim()) { setNormSearchResults(null); return; }
     setNormSearching(true);
     try {
-      const res = await fetch('/api/orchestrator', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'search_normative', query: query.trim(), match_count: 20 }),
-      });
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        // Группируем по документу, берём лучший чанк (max similarity) для превью
-        const byDoc = new Map<string, any>();
-        for (const c of data) {
-          const prev = byDoc.get(c.doc_id);
-          if (!prev || c.similarity > prev.similarity) {
-            byDoc.set(c.doc_id, { ...c });
+      // Пробуем семантический поиск
+      let semanticResults: any[] = [];
+      try {
+        const res = await fetch('/api/orchestrator', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'search_normative', query: query.trim(), match_count: 20 }),
+        });
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const byDoc = new Map<string, any>();
+          for (const c of data) {
+            const prev = byDoc.get(c.doc_id);
+            if (!prev || c.similarity > prev.similarity) byDoc.set(c.doc_id, { ...c });
           }
+          semanticResults = Array.from(byDoc.values()).sort((a, b) => b.similarity - a.similarity);
         }
-        // Сортируем по убыванию релевантности
-        const results = Array.from(byDoc.values()).sort((a, b) => b.similarity - a.similarity);
-        setNormSearchResults(results);
+      } catch { /* семантический поиск недоступен */ }
+
+      if (semanticResults.length > 0) {
+        setNormSearchResults(semanticResults);
       } else {
-        setNormSearchResults([]);
-        addNotification('Ошибка семантического поиска', 'warning');
+        // Запасной вариант: поиск по тексту
+        const ilikeResults = await searchNormativeIlike(query);
+        setNormSearchResults(ilikeResults);
       }
     } catch {
       setNormSearchResults([]);
-      addNotification('Ошибка поиска: проверьте подключение', 'warning');
     } finally { setNormSearching(false); }
   };
 
