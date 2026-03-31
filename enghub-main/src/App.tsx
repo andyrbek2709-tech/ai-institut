@@ -157,11 +157,11 @@ export default function App() {
         setNormSearchResults(results);
       } else {
         setNormSearchResults([]);
-        addNotification('Ошибка семантического поиска', 'error');
+        addNotification('Ошибка семантического поиска', 'warning');
       }
     } catch {
       setNormSearchResults([]);
-      addNotification('Ошибка поиска: проверьте подключение', 'error');
+      addNotification('Ошибка поиска: проверьте подключение', 'warning');
     } finally { setNormSearching(false); }
   };
 
