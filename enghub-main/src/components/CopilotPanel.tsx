@@ -18,6 +18,7 @@ interface ChatMsg {
 export function CopilotPanel({ 
   projectId, 
   userId, 
+  userRole,
   C, 
   onClose,
   onTaskCreated // Callback to refresh Kanban when AI creates tasks
@@ -70,7 +71,8 @@ export function CopilotPanel({
           user_id: userId,
           project_id: projectId,
           message: userText,
-          use_rag: useKB
+          use_rag: useKB,
+          role: userRole || 'engineer'
         })
       });
 
@@ -82,7 +84,7 @@ export function CopilotPanel({
         setMessages(prev => [...prev, { role: 'ai', text: 'Запрос обработан.' }]);
       }
       
-      if (data.action_id || data.agent === 'task_manager') {
+      if (data.action_id || data.agent === 'task_manager' || data.agent === 'drawing_agent' || data.agent === 'review_agent' || data.agent === 'register_agent') {
           // Refresh feed to show the newly inserted pending action
           fetchActions();
       }
@@ -97,20 +99,79 @@ export function CopilotPanel({
   const applyAction = async (action: AIAction, approved: boolean) => {
     try {
       const token = localStorage.getItem('enghub_token');
+      if (approved && action.action_type === 'update_drawing' && !action.payload?.drawing_id) {
+        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить update_drawing: отсутствует drawing_id.' }]);
+        return;
+      }
+      if (approved && action.action_type === 'create_drawing_revision' && !action.payload?.drawing_id) {
+        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить ревизию: отсутствует drawing_id.' }]);
+        return;
+      }
       
       if (approved && action.action_type === 'create_tasks') {
-         // Apply to actual DB
-         for (const t of action.payload.tasks) {
-           await post('tasks', {
-             project_id: projectId,
-             title: t.title,
-             priority: t.priority,
-             status: 'todo',
-             dept_id: t.dept_id, // defaulting to dept 1 if not passed
-             assignee_id: null
-           }, token || '');
-         }
-         onTaskCreated();
+        for (const t of action.payload.tasks) {
+          await post('tasks', {
+            project_id: projectId,
+            name: t.title,
+            priority: t.priority,
+            status: 'todo',
+            assigned_to: null
+          }, token || '');
+        }
+        onTaskCreated();
+      }
+
+      if (approved && action.action_type === 'create_drawing') {
+        await post('drawings', {
+          project_id: projectId,
+          code: action.payload.code,
+          title: action.payload.title,
+          discipline: action.payload.discipline || null,
+          status: 'draft',
+          revision: 'R0',
+          created_by: userId
+        }, token || '');
+      }
+
+      if (approved && action.action_type === 'update_drawing' && action.payload?.drawing_id) {
+        await patch(`drawings?id=eq.${action.payload.drawing_id}`, action.payload.updates || {}, token || '');
+      }
+
+      if (approved && action.action_type === 'create_drawing_revision' && action.payload?.drawing_id) {
+        const drawingRows = await get(`drawings?id=eq.${action.payload.drawing_id}&select=id,revision,project_id`, token || '');
+        const drawing = Array.isArray(drawingRows) ? drawingRows[0] : null;
+        const revNum = Number(String(drawing?.revision || 'R0').replace('R', '')) + 1;
+        const nextRev = `R${Number.isFinite(revNum) ? revNum : 1}`;
+        await post('revisions', {
+          project_id: drawing?.project_id || projectId,
+          drawing_id: action.payload.drawing_id,
+          from_revision: drawing?.revision || 'R0',
+          to_revision: nextRev,
+          issued_by: userId
+        }, token || '');
+        await patch(`drawings?id=eq.${action.payload.drawing_id}`, { revision: nextRev, status: 'in_work' }, token || '');
+      }
+
+      if (approved && action.action_type === 'create_review') {
+        await post('reviews', {
+          project_id: projectId,
+          drawing_id: action.payload?.drawing_id || null,
+          title: action.payload?.title || 'Замечание',
+          severity: action.payload?.severity || 'major',
+          status: 'open',
+          author_id: userId
+        }, token || '');
+      }
+
+      if (approved && action.action_type === 'create_transmittal') {
+        await post('transmittals', {
+          project_id: projectId,
+          number: action.payload?.number || `TR-${projectId}-${Date.now()}`,
+          recipient: action.payload?.recipient || null,
+          note: action.payload?.note || null,
+          status: 'draft',
+          issued_by: userId
+        }, token || '');
       }
 
       // Update action status
@@ -206,6 +267,44 @@ export function CopilotPanel({
                     <span style={{ color: C.textMuted }}>•</span> {t.title} <span style={{ fontSize: 10, padding: '2px 6px', background: C.surface, borderRadius: 4, color: C.textMuted }}>{t.priority}</span>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {action.action_type === 'create_drawing' && (
+              <div style={{ background: C.surface2, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 13, color: C.text }}>
+                <div><b>Код:</b> {action.payload?.code || '—'}</div>
+                <div><b>Название:</b> {action.payload?.title || '—'}</div>
+                <div><b>Дисциплина:</b> {action.payload?.discipline || '—'}</div>
+              </div>
+            )}
+
+            {action.action_type === 'update_drawing' && (
+              <div style={{ background: C.surface2, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 13, color: C.text }}>
+                <div><b>Drawing ID:</b> {action.payload?.drawing_id || '—'}</div>
+                <div><b>Изменения:</b> {JSON.stringify(action.payload?.updates || {})}</div>
+              </div>
+            )}
+
+            {action.action_type === 'create_drawing_revision' && (
+              <div style={{ background: C.surface2, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 13, color: C.text }}>
+                <div><b>Drawing ID:</b> {action.payload?.drawing_id || '—'}</div>
+                <div><b>Комментарий:</b> {action.payload?.note || '—'}</div>
+              </div>
+            )}
+
+            {action.action_type === 'create_review' && (
+              <div style={{ background: C.surface2, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 13, color: C.text }}>
+                <div><b>Текст:</b> {action.payload?.title || '—'}</div>
+                <div><b>Severity:</b> {action.payload?.severity || 'major'}</div>
+                <div><b>Drawing ID:</b> {action.payload?.drawing_id || '—'}</div>
+              </div>
+            )}
+
+            {action.action_type === 'create_transmittal' && (
+              <div style={{ background: C.surface2, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 13, color: C.text }}>
+                <div><b>Номер:</b> {action.payload?.number || '(авто)'}</div>
+                <div><b>Получатель:</b> {action.payload?.recipient || '—'}</div>
+                <div><b>Примечание:</b> {action.payload?.note || '—'}</div>
               </div>
             )}
 

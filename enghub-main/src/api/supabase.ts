@@ -57,4 +57,26 @@ export const updateUserPassword = (uid: string, newPassword: string) =>
     body: JSON.stringify({ password: newPassword }),
   }).then(r => r.json());
 
+// Domain helpers for engineering workflow
+export const listDrawings = (projectId: number, token?: string) =>
+  get(`drawings?project_id=eq.${projectId}&order=created_at.desc`, token);
+
+export const createDrawing = (payload: any, token?: string) =>
+  post('drawings', payload, token);
+
+export const updateDrawing = (id: string, payload: any, token?: string) =>
+  patch(`drawings?id=eq.${id}`, payload, token);
+
+export const createRevisionRecord = (payload: any, token?: string) =>
+  post('revisions', payload, token);
+
+export const listReviews = (projectId: number, token?: string) =>
+  get(`reviews?project_id=eq.${projectId}&order=created_at.desc`, token);
+
+export const createReview = (payload: any, token?: string) =>
+  post('reviews', payload, token);
+
+export const createTransmittal = (payload: any, token?: string) =>
+  post('transmittals', payload, token);
+
 export { SURL, SERVICE_KEY };

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { DARK, LIGHT, statusMap, roleLabels } from './constants';
-import { get, post, patch, del, SURL, SERVICE_KEY } from './api/supabase';
+import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions } from './constants';
+import { get, post, patch, del, SURL, SERVICE_KEY, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal } from './api/supabase';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
@@ -10,6 +10,7 @@ import { CalculationView } from './calculations/CalculationView';
 import { calcRegistry } from './calculations/registry';
 import { ConferenceRoom } from './pages/ConferenceRoom';
 import { CopilotPanel } from './components/CopilotPanel';
+import { DrawingsPanel } from './components/DrawingsPanel';
 import { saveAs } from 'file-saver';
 
 export default function App() {
@@ -27,6 +28,10 @@ export default function App() {
   const [appUsers, setAppUsers] = useState<any[]>([]);
   const [depts, setDepts] = useState<any[]>([]);
   const [activeProject, setActiveProject] = useState<any>(null);
+  const [drawings, setDrawings] = useState<any[]>([]);
+  const [revisions, setRevisions] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [transmittals, setTransmittals] = useState<any[]>([]);
   const [normativeDocs, setNormativeDocs] = useState<any[]>([]);
   const [normSearchQuery, setNormSearchQuery] = useState("");
   const [normSearchResults, setNormSearchResults] = useState<any[] | null>(null);
@@ -47,13 +52,14 @@ export default function App() {
   const [newProject, setNewProject] = useState<any>({ name: "", code: "", deadline: "", status: "active", depts: [] });
   const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
-  const [newTask, setNewTask] = useState({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "" });
+  const [newTask, setNewTask] = useState({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "" });
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskComment, setTaskComment] = useState("");
 
   const [showNewAssignment, setShowNewAssignment] = useState(false);
   const [newAssignment, setNewAssignment] = useState({ name: "", target_dept: "", priority: "high", deadline: "" });
+  const [newReview, setNewReview] = useState({ title: "", severity: "major", drawing_id: "" });
 
   // Поиск и фильтры
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,7 +77,16 @@ export default function App() {
   const getDeptName = (id: any) => depts.find(d => d.id === id)?.name || "";
 
   useEffect(() => { if (token && !isAdmin) { loadAppUsers(); loadDepts(); loadProjects(); loadNormativeDocs(); } }, [token]);
-  useEffect(() => { if (activeProject && token) { loadAllTasks(activeProject.id); loadMessages(activeProject.id); } }, [activeProject]);
+  useEffect(() => {
+    if (activeProject && token) {
+      loadAllTasks(activeProject.id);
+      loadMessages(activeProject.id);
+      loadDrawings(activeProject.id);
+      loadRevisions(activeProject.id);
+      loadReviews(activeProject.id);
+      loadTransmittals(activeProject.id);
+    }
+  }, [activeProject]);
   useEffect(() => { document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light'); }, [dark]);
   useEffect(() => { localStorage.setItem('enghub_screen', screen); }, [screen]);
   useEffect(() => { localStorage.setItem('enghub_sidetab', sideTab); }, [sideTab]);
@@ -130,6 +145,22 @@ export default function App() {
     const query = taskId ? `messages?task_id=eq.${taskId}&order=created_at` : `messages?project_id=eq.${pid}&task_id=is.null&order=created_at`;
     const data = await get(query, token!); 
     if (Array.isArray(data)) setMsgs(data); 
+  };
+  const loadDrawings = async (pid: number) => {
+    const data = await listDrawings(pid, token!);
+    if (Array.isArray(data)) setDrawings(data);
+  };
+  const loadRevisions = async (pid: number) => {
+    const data = await get(`revisions?project_id=eq.${pid}&order=created_at.desc`, token!);
+    if (Array.isArray(data)) setRevisions(data);
+  };
+  const loadReviews = async (pid: number) => {
+    const data = await listReviews(pid, token!);
+    if (Array.isArray(data)) setReviews(data);
+  };
+  const loadTransmittals = async (pid: number) => {
+    const data = await get(`transmittals?project_id=eq.${pid}&order=created_at.desc`, token!);
+    if (Array.isArray(data)) setTransmittals(data);
   };
 
   const loadNormativeDocs = async () => {
@@ -333,9 +364,9 @@ export default function App() {
     if (!newTask.name || !activeProject) return;
     setSaving(true);
     const leadUser = getUserById(newTask.assigned_to);
-    await post("tasks", { name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id }, token!);
+    await post("tasks", { name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id, drawing_id: newTask.drawing_id || null }, token!);
     addNotification(`Задача "${newTask.name}" создана${leadUser ? ` → ${leadUser.full_name}` : ''}`, 'success');
-    setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "" }); setShowNewTask(false); setSaving(false); loadTasks(activeProject.id);
+    setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "" }); setShowNewTask(false); setSaving(false); loadTasks(activeProject.id);
   };
   
   const createAssignment = async () => {
@@ -372,11 +403,74 @@ export default function App() {
       if(activeProject) loadTasks(activeProject.id);
   };
   const updateTaskStatus = async (taskId: number, status: string, comment?: string) => {
+    const targetTask = allTasks.find(t => t.id === taskId);
+    const currentStatus = targetTask?.status;
+    if (currentStatus && !((taskWorkflowTransitions[currentStatus] || []).includes(status))) {
+      addNotification(`Переход ${currentStatus} → ${status} запрещён workflow`, 'warning');
+      return;
+    }
     setSaving(true);
     await patch(`tasks?id=eq.${taskId}`, { status, ...(comment ? { comment } : {}) }, token!);
     const statusLabel = statusMap[status]?.label || status;
     addNotification(`Статус задачи изменён → "${statusLabel}"`, status === 'done' ? 'success' : 'info');
     setSaving(false); setShowTaskDetail(false); setTaskComment(""); if (activeProject) loadTasks(activeProject.id);
+  };
+  const isTransitionAllowed = (task: any, nextStatus: string) => {
+    const fromStatus = task?.status;
+    if (!fromStatus) return false;
+    return (taskWorkflowTransitions[fromStatus] || []).includes(nextStatus);
+  };
+  const createProjectDrawing = async (payload: any) => {
+    if (!activeProject) return;
+    await createDrawing({ ...payload, project_id: activeProject.id, created_by: currentUserData?.id }, token!);
+    addNotification('Чертеж добавлен в реестр', 'success');
+    loadDrawings(activeProject.id);
+  };
+  const updateProjectDrawing = async (id: string, payload: any) => {
+    if (!activeProject) return;
+    await updateDrawing(id, { ...payload, updated_at: new Date().toISOString() }, token!);
+    addNotification('Карточка чертежа обновлена', 'info');
+    loadDrawings(activeProject.id);
+  };
+  const submitReview = async () => {
+    if (!activeProject || !newReview.title.trim()) return;
+    await createReview({
+      project_id: activeProject.id,
+      drawing_id: newReview.drawing_id || null,
+      title: newReview.title.trim(),
+      severity: newReview.severity,
+      status: 'open',
+      author_id: currentUserData?.id
+    }, token!);
+    setNewReview({ title: "", severity: "major", drawing_id: "" });
+    addNotification('Замечание добавлено', 'success');
+    loadReviews(activeProject.id);
+  };
+  const issueDrawingRevision = async (drawing: any) => {
+    if (!activeProject || !drawing) return;
+    const revNum = Number(String(drawing.revision || 'R0').replace('R', '')) + 1;
+    const nextRevision = `R${Number.isFinite(revNum) ? revNum : 1}`;
+    await createRevisionRecord({
+      project_id: activeProject.id,
+      drawing_id: drawing.id,
+      from_revision: drawing.revision || 'R0',
+      to_revision: nextRevision,
+      issued_by: currentUserData?.id
+    }, token!);
+    await updateProjectDrawing(drawing.id, { revision: nextRevision, status: 'in_work' });
+    loadRevisions(activeProject.id);
+  };
+  const createProjectTransmittal = async () => {
+    if (!activeProject) return;
+    const draftNo = `TR-${activeProject.code}-${String(transmittals.length + 1).padStart(3, '0')}`;
+    await createTransmittal({
+      project_id: activeProject.id,
+      number: draftNo,
+      status: 'draft',
+      issued_by: currentUserData?.id
+    }, token!);
+    addNotification('Трансмиттал создан', 'success');
+    loadTransmittals(activeProject.id);
   };
   const assignTask = async (taskId: number, assignedTo: string) => {
     const eng = getUserById(assignedTo);
@@ -503,6 +597,12 @@ export default function App() {
           <div className="form-stack">
             <Field label="НАЗВАНИЕ *" C={C}><input value={newTask.name} onChange={e => setNewTask({ ...newTask, name: e.target.value })} placeholder="Расчёт нагрузок" style={getInp(C)} /></Field>
             <Field label="НАЗНАЧИТЬ РУКОВОДИТЕЛЮ" C={C}><select value={newTask.assigned_to} onChange={e => { const lead = appUsers.find(u => String(u.id) === e.target.value); setNewTask({ ...newTask, assigned_to: e.target.value, dept_id: lead?.dept_id || "" }); }} style={getInp(C)}><option value="">— Выбрать —</option>{myLeads.map(u => <option key={u.id} value={u.id}>{u.full_name} ({getDeptName(u.dept_id)})</option>)}</select></Field>
+            <Field label="ЧЕРТЕЖ (ОПЦИОНАЛЬНО)" C={C}>
+              <select value={newTask.drawing_id} onChange={e => setNewTask({ ...newTask, drawing_id: e.target.value })} style={getInp(C)}>
+                <option value="">— Без привязки —</option>
+                {drawings.map(d => <option key={d.id} value={d.id}>{d.code} — {d.title}</option>)}
+              </select>
+            </Field>
             <Field label="ПРИОРИТЕТ" C={C}><select value={newTask.priority} onChange={e => setNewTask({ ...newTask, priority: e.target.value })} style={getInp(C)}><option value="high">🔴 Высокий</option><option value="medium">🟡 Средний</option><option value="low">⚪ Низкий</option></select></Field>
             <Field label="ДЕДЛАЙН" C={C}><input type="date" value={newTask.deadline} onChange={e => setNewTask({ ...newTask, deadline: e.target.value })} style={getInp(C)} /></Field>
             <button className="btn btn-primary" onClick={createTask} disabled={saving || !newTask.name} style={{ width: "100%", opacity: !newTask.name ? 0.5 : 1 }}>{saving ? "Создаётся..." : "Создать задачу"}</button>
@@ -537,6 +637,10 @@ export default function App() {
                 <BadgeComp status={selectedTask.status} C={C} />
                 <PriorityDot p={selectedTask.priority} C={C} />
                 {selectedTask.dept && <span style={{ fontSize: 11, color: C.textMuted, background: C.surface, padding: "3px 8px", borderRadius: 6 }}>{selectedTask.dept}</span>}
+                {selectedTask.drawing_id && (() => {
+                  const d = drawings.find(dr => String(dr.id) === String(selectedTask.drawing_id));
+                  return d ? <span style={{ fontSize: 11, color: C.textMuted, background: C.surface, padding: "3px 8px", borderRadius: 6 }}>📐 {d.code}</span> : null;
+                })()}
                 {selectedTask.deadline && <span style={{ fontSize: 11, color: C.textMuted }}>до {selectedTask.deadline}</span>}
               </div>
             </div>
@@ -546,6 +650,16 @@ export default function App() {
               </div>
             )}
             {selectedTask.assigned_to && (() => { const u = getUserById(selectedTask.assigned_to); return u ? (<div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}><AvatarComp user={u} size={28} C={C} /><span style={{ color: C.textDim, fontWeight: 500 }}>{u.full_name}</span><span style={{ fontSize: 11, color: C.textMuted }}>{u.position || roleLabels[u.role]}</span></div>) : null; })()}
+            {selectedTask.drawing_id && (() => {
+              const d = drawings.find(dr => String(dr.id) === String(selectedTask.drawing_id));
+              return d ? (
+                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 10, fontSize: 12 }}>
+                  <div style={{ color: C.textMuted, marginBottom: 4 }}>Связанный чертеж</div>
+                  <div style={{ color: C.text, fontWeight: 600 }}>{d.code} — {d.title}</div>
+                  <div style={{ color: C.textMuted, marginTop: 2 }}>Ревизия: {d.revision || 'R0'} · Статус: {d.status || 'draft'}</div>
+                </div>
+              ) : null;
+            })()}
             {selectedTask.comment && (<div style={{ background: C.red + "10", border: `1px solid ${C.red}25`, borderRadius: 10, padding: 14 }}><div style={{ fontSize: 10, color: C.red, fontWeight: 600, marginBottom: 4 }}>КОММЕНТАРИЙ К ДОРАБОТКЕ</div><div style={{ fontSize: 13, color: C.textDim }}>{selectedTask.comment}</div></div>)}
             {isLead && selectedTask.status === "todo" && String(selectedTask.assigned_to) === String(currentUserData?.id) && (
               <Field label="НАЗНАЧИТЬ ИНЖЕНЕРУ" C={C}><select onChange={e => { if (e.target.value) assignTask(selectedTask.id, e.target.value); }} defaultValue="" style={getInp(C)}><option value="">— Выбрать инженера —</option>{myEngineers.map(u => <option key={u.id} value={u.id}>{u.full_name} — {getEngLoad(u.id)}% загрузка</option>)}</select></Field>
@@ -560,6 +674,13 @@ export default function App() {
                     <button key={i} onClick={() => updateTaskStatus(selectedTask.id, action.status, taskComment)} disabled={saving}
                       style={{ background: action.color + "15", border: `1px solid ${action.color}30`, color: action.color, borderRadius: 10, padding: "11px", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit" }}>{action.label}</button>
                   ))}
+                  {getTaskActions(selectedTask).length > 0 && (
+                    <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+                      {getTaskActions(selectedTask).every((a: any) => isTransitionAllowed(selectedTask, a.status))
+                        ? '✓ Все доступные кнопки соответствуют workflow.'
+                        : '⚠ Есть действия вне workflow. Проверьте переходы.'}
+                    </div>
+                  )}
                   {isGip && selectedTask.status === "done" && (
                     <button onClick={() => issueRevision(selectedTask)} disabled={saving}
                       style={{ background: C.accent + "15", border: `1px dashed ${C.accent}`, color: C.accent, borderRadius: 10, padding: "11px", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", marginTop: 8 }}>⚡ Выпустить новую ревизию (R{(selectedTask.revision_num || 0) + 1})</button>
@@ -1055,6 +1176,7 @@ export default function App() {
               {showCopilot && (
                 <CopilotPanel 
                   userId={currentUserData?.id} 
+                  userRole={currentUserData?.role}
                   projectId={activeProject.id} 
                   C={C} 
                   onClose={() => setShowCopilot(false)} 
@@ -1070,9 +1192,9 @@ export default function App() {
 
               {/* Tabs */}
               <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-                {["tasks", "assignments", "conference"].map(t => (
+                {["tasks", "drawings", "revisions", "reviews", "transmittals", "assignments", "conference"].map(t => (
                   <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)}>
-                    {t === "tasks" ? "⊙ Задачи" : t === "assignments" ? "✉ Увязка" : "⊕ Конференц-зал"}
+                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : "⊕ Конференц-зал"}
                   </button>
                 ))}
               </div>
@@ -1105,6 +1227,10 @@ export default function App() {
                             </div>
                             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                               {deptName && <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: "3px 10px", borderRadius: 6, fontWeight: 500 }}>{deptName}</span>}
+                              {t.drawing_id && (() => {
+                                const d = drawings.find(dr => String(dr.id) === String(t.drawing_id));
+                                return d ? <span style={{ fontSize: 11, color: C.textMuted }}>📐 {d.code}</span> : null;
+                              })()}
                               {t.deadline && <span style={{ fontSize: 11, color: C.textMuted }}>📅 {t.deadline}</span>}
                               <span style={{ fontSize: 11, color: t.priority === "high" ? C.red : t.priority === "medium" ? C.orange : C.green, fontWeight: 600 }}>● {t.priority === "high" ? "Высокий" : t.priority === "medium" ? "Средний" : "Низкий"}</span>
                             </div>
@@ -1114,6 +1240,104 @@ export default function App() {
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+
+              {sideTab === "drawings" && (
+                <DrawingsPanel
+                  C={C}
+                  canEdit={isGip || isLead}
+                  drawings={drawings}
+                  onCreate={createProjectDrawing}
+                  onUpdate={updateProjectDrawing}
+                />
+              )}
+
+              {sideTab === "revisions" && (
+                <div>
+                  <div className="task-list-header">
+                    <div className="task-list-title">История ревизий</div>
+                  </div>
+                  <div className="task-list" style={{ marginBottom: 16 }}>
+                    {drawings.map((d) => (
+                      <div key={d.id} className="task-row">
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{d.code} — {d.title}</div>
+                          <div style={{ fontSize: 12, color: C.textMuted }}>Текущая ревизия: {d.revision || 'R0'}</div>
+                        </div>
+                        {(isGip || isLead) && (
+                          <button className="btn btn-ghost btn-sm" onClick={() => issueDrawingRevision(d)}>+ Ревизия</button>
+                        )}
+                      </div>
+                    ))}
+                    {drawings.length === 0 && <div className="empty-state">Нет чертежей для ревизии</div>}
+                  </div>
+                  <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14 }}>
+                    <div className="page-label" style={{ marginBottom: 10 }}>Журнал</div>
+                    {revisions.length === 0 ? <div className="empty-state">Записей ревизий пока нет</div> : revisions.map((r) => {
+                      const d = drawings.find(dr => String(dr.id) === String(r.drawing_id));
+                      return <div key={r.id} className="task-row"><span style={{ color: C.text }}>{d?.code || '—'}</span><span style={{ color: C.textMuted }}>{r.from_revision} → {r.to_revision}</span><span style={{ marginLeft: 'auto', fontSize: 12, color: C.textMuted }}>{new Date(r.created_at).toLocaleString()}</span></div>;
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {sideTab === "reviews" && (
+                <div>
+                  {(isGip || isLead) && (
+                    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8 }}>
+                        <input value={newReview.title} onChange={(e) => setNewReview({ ...newReview, title: e.target.value })} placeholder="Текст замечания" style={getInp(C)} />
+                        <select value={newReview.severity} onChange={(e) => setNewReview({ ...newReview, severity: e.target.value })} style={getInp(C)}>
+                          <option value="minor">minor</option>
+                          <option value="major">major</option>
+                          <option value="critical">critical</option>
+                        </select>
+                        <select value={newReview.drawing_id} onChange={(e) => setNewReview({ ...newReview, drawing_id: e.target.value })} style={getInp(C)}>
+                          <option value="">Без привязки</option>
+                          {drawings.map(d => <option key={d.id} value={d.id}>{d.code}</option>)}
+                        </select>
+                        <button className="btn btn-primary" onClick={submitReview}>+ Замечание</button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="task-list">
+                    {reviews.length === 0 && <div className="empty-state">Замечаний пока нет</div>}
+                    {reviews.map((r) => {
+                      const d = drawings.find(dr => String(dr.id) === String(r.drawing_id));
+                      return (
+                        <div key={r.id} className="task-row" style={{ borderLeft: `4px solid ${r.severity === 'critical' ? C.red : r.severity === 'major' ? C.orange : C.blue}` }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 14, color: C.text }}>{r.title}</div>
+                            <div style={{ fontSize: 12, color: C.textMuted }}>{d ? `${d.code} — ${d.title}` : 'Без чертежа'}</div>
+                          </div>
+                          <span className="badge">{r.severity}</span>
+                          <span style={{ fontSize: 12, color: C.textMuted }}>{r.status || 'open'}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {sideTab === "transmittals" && (
+                <div>
+                  <div className="task-list-header">
+                    <div className="task-list-title">Реестр трансмитталов</div>
+                    {(isGip || isLead) && <button className="btn btn-primary" onClick={createProjectTransmittal}>+ Новый трансмиттал</button>}
+                  </div>
+                  <div className="task-list">
+                    {transmittals.length === 0 && <div className="empty-state">Трансмитталов пока нет</div>}
+                    {transmittals.map((t) => (
+                      <div key={t.id} className="task-row">
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{t.number}</div>
+                          <div style={{ fontSize: 12, color: C.textMuted }}>{new Date(t.created_at).toLocaleString()}</div>
+                        </div>
+                        <span className="badge">{t.status || 'draft'}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

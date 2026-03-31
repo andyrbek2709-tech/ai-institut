@@ -84,3 +84,29 @@ export const navIcons: Record<string, string> = {
   tasks: "≡",
   team: "◎",
 };
+
+// Статусы чертежей
+export const drawingStatusMap: Record<string, { label: string; color: string; bg: string }> = {
+  draft: { label: "Черновик", color: "#8896a8", bg: "#8896a815" },
+  in_work: { label: "В работе", color: "#4a9eff", bg: "#4a9eff15" },
+  review: { label: "На проверке", color: "#a855f7", bg: "#a855f715" },
+  approved: { label: "Утвержден", color: "#2ac769", bg: "#2ac76915" },
+  issued: { label: "Выдан", color: "#f5a623", bg: "#f5a62315" },
+};
+
+// Допустимые переходы workflow задач
+export const taskWorkflowTransitions: Record<string, string[]> = {
+  todo: ["inprogress"],
+  inprogress: ["review_lead"],
+  review_lead: ["review_gip", "revision"],
+  review_gip: ["done", "revision"],
+  revision: ["inprogress"],
+  done: ["revision"],
+};
+
+// Ролевые системные инструкции для Copilot (Phase 8)
+export const copilotRolePrompts: Record<string, string> = {
+  gip: "Приоритизируй сроки, междисциплинарные коллизии и контроль выдачи документации.",
+  lead: "Фокусируйся на загрузке инженеров, качестве проверок и возвратах на доработку.",
+  engineer: "Фокусируйся на конкретных шагах выполнения, входных данных и критериях готовности.",
+};

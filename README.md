@@ -213,3 +213,79 @@ git push origin main
 
 - **Live**: [https://enghub.vercel.app](https://enghub.vercel.app)
 - **GitHub**: [andyrbek2709-tech/enghub](https://github.com/andyrbek2709-tech/enghub)
+
+---
+
+## 📒 Agent Continuity Protocol (обязательно)
+
+Этот раздел обязателен для любого агента, который вносит изменения в проект.
+
+- После каждого завершенного шага обновлять `README.md`.
+- Фиксировать минимум:
+  - что изменено;
+  - какие файлы затронуты;
+  - что проверено (build/lint/manual);
+  - что осталось сделать следующим шагом.
+- Не удалять предыдущие записи handover-журнала, только добавлять новые.
+- В случае незавершенной работы явно пометить, где остановка и как безопасно продолжить.
+
+### Формат записи (шаблон)
+
+```md
+#### [YYYY-MM-DD HH:MM] Agent update
+- Step: <кратко>
+- Files: `<path1>`, `<path2>`
+- Validation: <build/lint/manual или not run>
+- Next: <следующий конкретный шаг>
+```
+
+---
+
+## 🧾 Agent Handover Log
+
+#### [2026-03-31] Agent update
+- Step: Реализованы фазы 1–8 из плана (drawings, workflow, drawing-task link, revisions, reviews, transmittals, copilot/orchestrator).
+- Files:
+  - `supabase/migrations/002_drawings.sql`
+  - `supabase/migrations/003_tasks_drawing_link.sql`
+  - `supabase/migrations/004_revisions.sql`
+  - `supabase/migrations/005_reviews.sql`
+  - `supabase/migrations/006_transmittals.sql`
+  - `enghub-main/src/components/DrawingsPanel.tsx`
+  - `enghub-main/src/constants.ts`
+  - `enghub-main/src/api/supabase.ts`
+  - `enghub-main/src/App.tsx`
+  - `enghub-main/src/components/CopilotPanel.tsx`
+  - `enghub-main/api/orchestrator.js`
+- Validation: `npm run build` (успешно), lint по измененным файлам без ошибок.
+- Next: при следующем шаге делать атомарные коммиты по согласованному процессу и дописывать этот журнал после каждого завершенного действия.
+
+#### [2026-03-31 16:55] Agent update
+- Step: Возобновлена работа; начат аудит интеграции после фаз 1–8 для выявления расхождений между UI/API/миграциями.
+- Files: `README.md`
+- Validation: not run (логовый шаг, без изменения runtime-кода).
+- Next: проверить `App.tsx`, `CopilotPanel.tsx`, `api/orchestrator.js` и SQL-миграции на контрактные несоответствия.
+
+#### [2026-03-31 17:02] Agent update
+- Step: Исправлен контракт создания задач из Copilot: удалено поле `dept_id` из payload вставки в `tasks` (во избежание несовместимости со схемой задач в текущем UI).
+- Files: `enghub-main/src/components/CopilotPanel.tsx`, `README.md`
+- Validation: `npm run build` (успешно), lint `CopilotPanel.tsx` без ошибок.
+- Next: продолжить аудит сценариев apply для новых action_type (`drawing/review/transmittal`) и проверить согласованность с `orchestrator`.
+
+#### [2026-03-31 17:10] Agent update
+- Step: Усилен `orchestrator` для Drawing Agent: авто-генерация уникального кода чертежа при пустом `payload.code`; добавлены защитные блокировки для `update_drawing` и `create_drawing_revision` при отсутствии `payload.drawing_id`.
+- Files: `enghub-main/api/orchestrator.js`, `README.md`
+- Validation: `npm run build` (успешно), lint `orchestrator.js` без ошибок.
+- Next: синхронизировать UI-подтверждение в `CopilotPanel` (видимость payload и валидация apply) для новых action_type.
+
+#### [2026-03-31 17:18] Agent update
+- Step: Улучшен `CopilotPanel` для новых action-типов: добавлены превью payload (`create_drawing`, `update_drawing`, `create_drawing_revision`, `create_review`, `create_transmittal`), расширен автorefresh по agent-типам и добавлены мягкие UI-блокировки apply при отсутствии `drawing_id`.
+- Files: `enghub-main/src/components/CopilotPanel.tsx`, `README.md`
+- Validation: `npm run build` (успешно), lint `CopilotPanel.tsx` без ошибок.
+- Next: пройтись по `App.tsx` и добавить финальную пользовательскую индикацию блокировок workflow и связей drawing/task в модальных формах.
+
+#### [2026-03-31 17:25] Agent update
+- Step: Улучшена UX-индикация в модалке задачи: добавлен блок связанного чертежа (`code/title/revision/status`) и визуальный индикатор корректности доступных переходов статуса относительно workflow.
+- Files: `enghub-main/src/App.tsx`, `README.md`
+- Validation: `npm run build` (успешно), lint `App.tsx` без ошибок.
+- Next: подготовить чистый срез изменений (только релевантные файлы фич), затем сделать атомарный commit по запросу пользователя.
