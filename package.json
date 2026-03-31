@@ -1,5 +1,7 @@
 {
-  "dependencies": {
-    "is-even": "^1.0.0"
-  }
+  "scripts": {
+    "build": "cd enghub-main && npm install && npm run build",
+    "start": "cd enghub-main && npm start"
+  },
+  "dependencies": {}
 }

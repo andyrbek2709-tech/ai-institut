@@ -1,8 +1,8 @@
 // Supabase API helpers — прямые fetch запросы без SDK
 
-const SURL = 'https://jbdljdwlfimvmqybzynv.supabase.co';
-const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpiZGxqZHdsZmltdm1xeWJ6eW52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDE4OTksImV4cCI6MjA5MDM3Nzg5OX0.HYn_-qGrRwwrkkKWE-xXlVGKpb2kTSCCgmbGmrV-lt0';
-const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpiZGxqZHdsZmltdm1xeWJ6eW52Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDgwMTg5OSwiZXhwIjoyMDkwMzc3ODk5fQ.1lMpCV8kiMmswYAlKSrFpsPGwPd_dXFZ5LUQktfVeeY';
+const SURL = process.env.REACT_APP_SUPABASE_URL || '';
+const KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || '';
 
 const H = (token?: string) => ({
   'apikey': KEY,
@@ -57,3 +57,4 @@ export const updateUserPassword = (uid: string, newPassword: string) =>
     body: JSON.stringify({ password: newPassword }),
   }).then(r => r.json());
 
+export { SURL, SERVICE_KEY };

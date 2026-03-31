@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { DARK, LIGHT, statusMap, roleLabels } from './constants';
-import { get, post, patch, del } from './api/supabase';
+import { get, post, patch, del, SURL, SERVICE_KEY } from './api/supabase';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
@@ -1086,35 +1086,95 @@ export default function App() {
                 </div>
                 {(isGip || isAdmin) && (
                   <div style={{ display: 'flex', gap: 12 }}>
-                    <input type="file" id="normative-upload" multiple style={{ display: 'none' }} onChange={async (e) => {
+                    <input type="file" id="normative-upload" multiple accept=".pdf,.docx,.doc,.txt" style={{ display: 'none' }} onChange={async (e) => {
                       const files = e.target.files;
                       if (!files || files.length === 0) return;
-                      
+
                       addNotification(`Начинаю пакетную загрузку (${files.length} шт.)...`, 'info');
                       let successCount = 0;
-                      
+
                       for (let i = 0; i < files.length; i++) {
                         const file = files[i];
-                        const { data } = await post("normative_docs", { 
-                          name: file.name, 
-                          file_type: file.type, 
-                          status: 'processing',
-                          user_id: currentUserData?.id
-                        }, token!);
-                        if (data) successCount++;
+                        try {
+                          // 1. Загрузить файл в Supabase Storage
+                          const filePath = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+                          const uploadRes = await fetch(
+                            `${SURL}/storage/v1/object/normative-docs/${filePath}`,
+                            {
+                              method: 'POST',
+                              headers: {
+                                'Authorization': `Bearer ${SERVICE_KEY}`,
+                                'Content-Type': file.type || 'application/octet-stream',
+                              },
+                              body: file,
+                            }
+                          );
+
+                          if (!uploadRes.ok) {
+                            addNotification(`Ошибка загрузки "${file.name}": Storage недоступен`, 'error');
+                            continue;
+                          }
+
+                          // 2. Создать запись в normative_docs с file_path
+                          const docData = await post('normative_docs', {
+                            name: file.name,
+                            file_name: file.name,
+                            file_type: file.type,
+                            file_path: filePath,
+                            status: 'pending',
+                            user_id: currentUserData?.id,
+                          }, token!);
+
+                          const docId = Array.isArray(docData) ? docData[0]?.id : docData?.id;
+                          if (!docId) continue;
+
+                          // 3. Запустить Edge Function для векторизации
+                          const vectorizeRes = await fetch(
+                            `${SURL}/functions/v1/vectorize-doc`,
+                            {
+                              method: 'POST',
+                              headers: {
+                                'Authorization': `Bearer ${SERVICE_KEY}`,
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({ doc_id: docId }),
+                            }
+                          );
+
+                          if (vectorizeRes.ok) {
+                            successCount++;
+                          } else {
+                            // Даже если векторизация не удалась — документ загружен
+                            successCount++;
+                            addNotification(`"${file.name}" загружен, векторизация отложена`, 'warning');
+                          }
+                        } catch {
+                          addNotification(`Ошибка при загрузке "${file.name}"`, 'error');
+                        }
                       }
-                      
-                      loadNormativeDocs();
-                      if (successCount === files.length) {
-                        addNotification(`Успешно загружено ${successCount} документов`, 'success');
-                      } else {
-                        addNotification(`Загружено ${successCount} из ${files.length}. Возможно, проблемы с сетью или SQL миграцией.`, 'warning');
+
+                      await loadNormativeDocs();
+                      if (successCount > 0) {
+                        addNotification(`Загружено ${successCount} из ${files.length} документов. Идёт векторизация...`, 'success');
                       }
-                      
-                      e.target.value = ""; // Сбрасываем input
+
+                      e.target.value = '';
                     }} />
                     <button className="btn btn-primary" onClick={() => document.getElementById('normative-upload')?.click()}>+ Загрузить PDF/DOCX</button>
-                    <button className="btn btn-secondary" onClick={() => addNotification('Синхронизация RAG-индекса запущена', 'info')}>🔄 Синхронизировать индекс</button>
+                    <button className="btn btn-secondary" onClick={async () => {
+                      const pending = normativeDocs.filter(d => d.status === 'pending' || d.status === 'processing');
+                      if (pending.length === 0) { addNotification('Все документы уже обработаны', 'info'); return; }
+                      addNotification(`Запускаю векторизацию для ${pending.length} документов...`, 'info');
+                      for (const doc of pending) {
+                        await fetch(`${SURL}/functions/v1/vectorize-doc`, {
+                          method: 'POST',
+                          headers: { 'Authorization': `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ doc_id: doc.id }),
+                        }).catch(() => null);
+                      }
+                      await loadNormativeDocs();
+                      addNotification('Синхронизация запущена', 'success');
+                    }}>🔄 Синхронизировать индекс</button>
                   </div>
                 )}
               </div>
@@ -1137,7 +1197,7 @@ export default function App() {
                       <div style={{ fontSize: 24, marginBottom: 12 }}>{doc.file_type?.includes('pdf') ? '📕' : '📘'}</div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doc.name}</div>
                       <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 16 }}>
-                        {new Date(doc.created_at).toLocaleDateString()} · {doc.status === 'processing' ? '⚙️ Обработка...' : '✅ Готов к поиску'}
+                        {new Date(doc.created_at).toLocaleDateString()} · {doc.status === 'processing' ? '⚙️ Векторизация...' : doc.status === 'pending' ? '🕐 В очереди...' : doc.status === 'ready' ? '✅ Готов к поиску' : '⚙️ Обработка...'}
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
                           <button className="btn btn-secondary" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => addNotification('Открытие временно недоступно', 'info')}>Открыть</button>
