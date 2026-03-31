@@ -256,7 +256,16 @@ git push origin main
 - Phase 5 (Revisions): DONE
 - Phase 6 (Reviews): DONE
 - Phase 7 (Transmittals): DONE
-- Phase 8: Implemented
+- Phase 8 (Copilot Role Hardening): DONE
+
+#### [2026-03-31 20:02] Agent update
+- Step: Формально закрыта Фаза 8 как завершенная: в `orchestrator` добавлены ролевые ограничения по intent/action (ГИП/Lead/Инженер) с блокировками недоступных операций и ролевыми сообщениями; в `CopilotPanel` добавлена явная ролевая индикация и role-aware placeholder запросов.
+- Files:
+  - `enghub-main/api/orchestrator.js`
+  - `enghub-main/src/components/CopilotPanel.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint `orchestrator.js` и `CopilotPanel.tsx` без ошибок.
+- Next: фазы 1–8 закрыты полностью; далее — только стабилизация/оптимизация по приоритету пользователя.
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.

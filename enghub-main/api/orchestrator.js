@@ -18,6 +18,18 @@ const ROLE_PROMPTS = {
   engineer: 'Ты помощник инженера: конкретные шаги выполнения, входные данные и критерии готовности.',
 };
 
+const ROLE_ALLOWED_INTENTS = {
+  gip: ['create_tasks', 'create_drawing', 'update_drawing', 'drawing_revision', 'create_review', 'create_transmittal', 'workflow_transition', 'unknown'],
+  lead: ['create_tasks', 'create_drawing', 'update_drawing', 'drawing_revision', 'create_review', 'create_transmittal', 'workflow_transition', 'unknown'],
+  engineer: ['create_tasks', 'create_review', 'workflow_transition', 'unknown'],
+};
+
+const ROLE_ALLOWED_ACTIONS = {
+  gip: ['search_normative', 'validate_workflow', 'create_drawing', 'update_drawing', 'create_drawing_revision', 'create_revision', 'create_review', 'update_review_status', 'create_transmittal', 'update_transmittal_status'],
+  lead: ['search_normative', 'validate_workflow', 'create_drawing', 'update_drawing', 'create_drawing_revision', 'create_revision', 'create_review', 'update_review_status', 'create_transmittal', 'update_transmittal_status'],
+  engineer: ['search_normative', 'validate_workflow', 'create_review', 'update_review_status'],
+};
+
 async function createEmbedding(input) {
   const embRes = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
@@ -215,6 +227,8 @@ module.exports = async function handler(req, res) {
   try {
     const { user_id, project_id, message, use_rag, action, query, role = 'engineer', payload = {} } = req.body;
     const headers = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
+    const currentRole = ['gip', 'lead', 'engineer'].includes(role) ? role : 'engineer';
+    const rolePrompt = ROLE_PROMPTS[currentRole] || ROLE_PROMPTS.engineer;
 
     if (action === 'search_normative') {
       if (!query || !query.trim()) return res.status(400).json({ error: 'query required' });
@@ -227,6 +241,18 @@ module.exports = async function handler(req, res) {
       });
       const results = await searchRes.json();
       return res.status(200).json(Array.isArray(results) ? results : []);
+    }
+
+    if (action && action !== 'search_normative' && action !== 'validate_workflow') {
+      const allowedActions = ROLE_ALLOWED_ACTIONS[currentRole] || ROLE_ALLOWED_ACTIONS.engineer;
+      if (!allowedActions.includes(action)) {
+        return res.status(200).json({
+          success: false,
+          blocked: true,
+          agent: 'router',
+          message: `${rolePrompt} Операция "${action}" недоступна для роли ${currentRole}.`,
+        });
+      }
     }
 
     if (action === 'validate_workflow') {
@@ -370,6 +396,15 @@ module.exports = async function handler(req, res) {
     }
 
     const intent = detectIntent(message);
+    const allowedIntents = ROLE_ALLOWED_INTENTS[currentRole] || ROLE_ALLOWED_INTENTS.engineer;
+    if (!allowedIntents.includes(intent)) {
+      return res.status(200).json({
+        success: false,
+        blocked: true,
+        agent: 'router',
+        message: `${rolePrompt} Намерение "${intent}" недоступно для роли ${currentRole}.`,
+      });
+    }
 
     if (intent === 'workflow_transition') {
       const fromStatus = payload.from_status;
@@ -409,7 +444,7 @@ module.exports = async function handler(req, res) {
     const depts = pData?.[0]?.depts || [];
 
     let insertData = null;
-    let responseMessage = `${ROLE_PROMPTS[role] || ROLE_PROMPTS.engineer} Запрос принят.`;
+    let responseMessage = `${rolePrompt} Запрос принят.`;
 
     if (intent === 'create_tasks') {
       const tasks = depts.length > 0
@@ -466,7 +501,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({
         success: true,
         agent: 'router',
-        message: `${ROLE_PROMPTS[role] || ROLE_PROMPTS.engineer} Уточните операцию: задачи, чертежи, ревизии, замечания или трансмитталы.`,
+        message: `${rolePrompt} Уточните операцию: задачи, чертежи, ревизии, замечания или трансмитталы.`,
       });
     }
 

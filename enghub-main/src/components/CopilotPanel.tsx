@@ -15,6 +15,18 @@ interface ChatMsg {
   text: string;
 }
 
+const roleTitleMap: Record<string, string> = {
+  gip: 'Роль: ГИП',
+  lead: 'Роль: Руководитель отдела',
+  engineer: 'Роль: Инженер',
+};
+
+const rolePlaceholderMap: Record<string, string> = {
+  gip: "Напр.: 'Проверь риски по срокам и подготовь план задач'",
+  lead: "Напр.: 'Сформируй задачи и замечания по моему отделу'",
+  engineer: "Напр.: 'Создай замечание по чертежу и шаги исправления'",
+};
+
 export function CopilotPanel({ 
   projectId, 
   userId, 
@@ -254,7 +266,7 @@ export function CopilotPanel({
           <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #FF3366, #FF9933)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>AI</div>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>AI Copilot</div>
-            <div style={{ fontSize: 12, color: C.textMuted }}>Orchestrator v1.0</div>
+            <div style={{ fontSize: 12, color: C.textMuted }}>Orchestrator v1.0 · {roleTitleMap[userRole || 'engineer']}</div>
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 20 }}>✕</button>
@@ -403,7 +415,7 @@ export function CopilotPanel({
         <form onSubmit={e => { e.preventDefault(); handleSend(); }} style={{ display: 'flex', gap: 8 }}>
           <input 
             value={input} onChange={e => setInput(e.target.value)}
-            placeholder="Опишите задачу (напр. 'Создай задачи на проверку')"
+            placeholder={rolePlaceholderMap[userRole || 'engineer'] || "Опишите задачу"}
             style={{ flex: 1, background: C.surface2, border: `1px solid ${C.border}`, color: C.text, padding: '10px 14px', borderRadius: 20, fontSize: 14, outline: 'none' }}
           />
           <button type="submit" disabled={!input.trim() || loading} style={{ width: 40, height: 40, borderRadius: 20, background: input.trim() ? C.accent : C.surface2, color: '#fff', border: 'none', cursor: input.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
