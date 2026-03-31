@@ -298,6 +298,37 @@ git push origin main
 - [x] Transmittals UI: добавление позиции работает через controlled state (без прямого DOM access)
 - [x] Ролевые guardrails: недоступные действия блокируются для роли Engineer
 
+### QA/Test Coverage Plan (B.1)
+
+Цель: повторяемая проверка без смены технологического стека.
+
+#### Role-based QA Matrix
+
+- `gip`
+  - Проверка `project_insights` (после внедрения), workflow-блокировок и выпусков.
+  - Проверка вкладок: Drawings, Revisions, Reviews, Transmittals.
+- `lead`
+  - Проверка назначения задач, статусов замечаний, сборки трансмитталов.
+  - Проверка ролевых ограничений Copilot (допустимые и блокируемые действия).
+- `engineer`
+  - Проверка ограниченного набора действий Copilot.
+  - Проверка корректного отображения блокировок и next-step подсказок.
+
+#### Regression Checklist (каждый релизный прогон)
+
+- [ ] `npm run build` успешен.
+- [ ] `npm test` запускается без критических ошибок среды.
+- [ ] Copilot `blocked` ответы содержат причину и понятный next step.
+- [ ] Не нарушены связи: `tasks -> drawings`, `revisions -> drawings`, `transmittal_items -> drawings/revisions`.
+- [ ] UI не использует прямые DOM-селекторы в критичных flow.
+
+#### Manual Scenario IDs
+
+- `QA-GIP-01`: approve flow + transmittal issue.
+- `QA-LEAD-01`: review status lifecycle (`open -> in_progress -> resolved`).
+- `QA-ENG-01`: blocked action visibility + guidance.
+- `QA-DATA-01`: referential integrity check for new records.
+
 ### Phase Status Snapshot
 
 - Phase 1 (Drawings foundation): DONE
@@ -337,6 +368,12 @@ git push origin main
 - Files: `README.md`
 - Validation: чеклист зафиксирован как baseline текущего состояния.
 - Next: commit+push блока A.2; затем переход к Блоку B (QA/Test Coverage).
+
+#### [2026-03-31 20:51] Agent update
+- Step: Блок B.1 выполнен: добавлен формальный QA/Test Coverage план (role-based matrix, regression checklist, scenario IDs) для повторяемых прогонов качества без изменения стека.
+- Files: `README.md`
+- Validation: not run (документационное усиление QA-контура).
+- Next: commit+push блока B.1; затем переход к Блоку B.2 (минимальные автопроверки на существующем test-стеке).
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
