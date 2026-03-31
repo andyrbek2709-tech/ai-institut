@@ -1115,14 +1115,28 @@ export default function App() {
                             continue;
                           }
 
-                          // 2. Создать запись в normative_docs с file_path
-                          const docData = await post('normative_docs', {
-                            name: file.name,
-                            file_type: file.type,
-                            file_path: filePath,
-                            status: 'pending',
-                            user_id: currentUserData?.id,
-                          }, token!);
+                          // 2. Создать запись в normative_docs с file_path (service key bypasses RLS)
+                          const docInsertRes = await fetch(`${SURL}/rest/v1/normative_docs`, {
+                            method: 'POST',
+                            headers: {
+                              'apikey': SERVICE_KEY,
+                              'Authorization': `Bearer ${SERVICE_KEY}`,
+                              'Content-Type': 'application/json',
+                              'Prefer': 'return=representation',
+                            },
+                            body: JSON.stringify({
+                              name: file.name,
+                              file_type: file.type || 'application/octet-stream',
+                              file_path: filePath,
+                              status: 'pending',
+                              user_id: currentUserData?.id,
+                            }),
+                          });
+                          const docData = await docInsertRes.json();
+                          if (!docInsertRes.ok) {
+                            addNotification(`Ошибка записи "${file.name}": ${docData?.message || docInsertRes.status}`, 'warning');
+                            continue;
+                          }
 
                           const docId = Array.isArray(docData) ? docData[0]?.id : docData?.id;
                           if (!docId) continue;
