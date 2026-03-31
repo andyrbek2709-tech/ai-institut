@@ -25,6 +25,13 @@ export default function App() {
   const [depts, setDepts] = useState<any[]>([]);
   const [activeProject, setActiveProject] = useState<any>(null);
   const [normativeDocs, setNormativeDocs] = useState<any[]>([]);
+  const [normSearchQuery, setNormSearchQuery] = useState("");
+  const [normSearchResults, setNormSearchResults] = useState<any[] | null>(null);
+  const [normSearching, setNormSearching] = useState(false);
+  const [showDupModal, setShowDupModal] = useState(false);
+  const [dupConflicts, setDupConflicts] = useState<{file: File, existing: any}[]>([]);
+  const [dupDecisions, setDupDecisions] = useState<Record<string, 'overwrite' | 'skip'>>({});
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [showArchive, setShowArchive] = useState(false);
   const [archivedProjects, setArchivedProjects] = useState<any[]>([]);
   const [sideTab, setSideTab] = useState(localStorage.getItem('enghub_sidetab') || "tasks");
@@ -124,6 +131,76 @@ export default function App() {
   const loadNormativeDocs = async () => {
     const data = await get("normative_docs?order=created_at.desc", token!);
     if (Array.isArray(data)) setNormativeDocs(data);
+  };
+
+  const searchNormative = async (query: string) => {
+    if (!query.trim()) { setNormSearchResults(null); return; }
+    setNormSearching(true);
+    try {
+      const enc = encodeURIComponent(`*${query.trim()}*`);
+      const res = await fetch(`${SURL}/rest/v1/normative_chunks?content=ilike.${enc}&select=id,doc_id,doc_name,content&limit=100`, {
+        headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        const byDoc = new Map<string, any>();
+        for (const c of data) {
+          if (!byDoc.has(c.doc_id)) byDoc.set(c.doc_id, { ...c, matchCount: 1 });
+          else byDoc.get(c.doc_id).matchCount++;
+        }
+        setNormSearchResults(Array.from(byDoc.values()));
+      } else {
+        setNormSearchResults([]);
+      }
+    } finally { setNormSearching(false); }
+  };
+
+  const doUpload = async (files: File[], decisions: Record<string, 'overwrite' | 'skip'> = {}) => {
+    let successCount = 0;
+    for (const file of files) {
+      if (decisions[file.name] === 'skip') continue;
+      try {
+        // Overwrite: удалить существующий документ
+        if (decisions[file.name] === 'overwrite') {
+          const existing = normativeDocs.find(d => d.name === file.name);
+          if (existing) {
+            await fetch(`${SURL}/rest/v1/normative_docs?id=eq.${existing.id}`, {
+              method: 'DELETE',
+              headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
+            });
+          }
+        }
+        const filePath = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const uploadRes = await fetch(`${SURL}/storage/v1/object/normative-docs/${filePath}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': file.type || 'application/octet-stream' },
+          body: file,
+        });
+        if (!uploadRes.ok) { addNotification(`Ошибка загрузки "${file.name}": Storage недоступен`, 'warning'); continue; }
+
+        const docInsertRes = await fetch(`${SURL}/rest/v1/normative_docs`, {
+          method: 'POST',
+          headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+          body: JSON.stringify({ name: file.name, file_type: file.type || 'application/octet-stream', file_path: filePath, status: 'pending' }),
+        });
+        const docData = await docInsertRes.json();
+        if (!docInsertRes.ok) { addNotification(`Ошибка записи "${file.name}": ${docData?.message || docInsertRes.status}`, 'warning'); continue; }
+
+        const docId = Array.isArray(docData) ? docData[0]?.id : docData?.id;
+        if (!docId) continue;
+
+        fetch(`${SURL}/functions/v1/vectorize-doc`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ doc_id: docId }),
+        }).catch(() => {});
+        successCount++;
+      } catch {
+        addNotification(`Ошибка загрузки "${file.name}"`, 'warning');
+      }
+    }
+    await loadNormativeDocs();
+    if (successCount > 0) addNotification(`Загружено ${successCount} документов. Идёт векторизация...`, 'success');
   };
 
   const sendMsg = async (taskId?: number, type: string = "text", customText?: string) => { 
@@ -1078,7 +1155,54 @@ export default function App() {
 
           {/* ===== NORMATIVE KB (Phase 7) ===== */}
           {screen === "normative" && (
-            <div style={{ padding: 40, display: "flex", flexDirection: "column", gap: 30, height: '100%', overflow: 'auto' }}>
+            <div style={{ padding: 40, display: "flex", flexDirection: "column", gap: 24, height: '100%', overflow: 'auto' }}>
+              {/* Duplicate conflict modal */}
+              {showDupModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ background: C.surface, borderRadius: 16, padding: 32, width: 520, maxHeight: '80vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: C.text, marginBottom: 6 }}>Обнаружены дубликаты</div>
+                    <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 20 }}>Следующие документы уже существуют в базе. Выберите действие для каждого:</div>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                      <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={() => {
+                        const all: Record<string, 'overwrite' | 'skip'> = {};
+                        dupConflicts.forEach(c => { all[c.file.name] = 'skip'; });
+                        setDupDecisions(all);
+                      }}>Пропустить все</button>
+                      <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={() => {
+                        const all: Record<string, 'overwrite' | 'skip'> = {};
+                        dupConflicts.forEach(c => { all[c.file.name] = 'overwrite'; });
+                        setDupDecisions(all);
+                      }}>Перезаписать все</button>
+                    </div>
+                    {dupConflicts.map(({ file }) => (
+                      <div key={file.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: `1px solid ${C.border}` }}>
+                        <div style={{ flex: 1, fontSize: 13, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</div>
+                        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                          <button onClick={() => setDupDecisions(d => ({ ...d, [file.name]: 'skip' }))}
+                            style={{ padding: '4px 12px', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 12, cursor: 'pointer', background: dupDecisions[file.name] === 'skip' ? C.accent : C.surface2, color: dupDecisions[file.name] === 'skip' ? '#fff' : C.text }}>
+                            Пропустить
+                          </button>
+                          <button onClick={() => setDupDecisions(d => ({ ...d, [file.name]: 'overwrite' }))}
+                            style={{ padding: '4px 12px', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 12, cursor: 'pointer', background: dupDecisions[file.name] === 'overwrite' ? '#EF4444' : C.surface2, color: dupDecisions[file.name] === 'overwrite' ? '#fff' : C.text }}>
+                            Перезаписать
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
+                      <button className="btn btn-secondary" onClick={() => { setShowDupModal(false); setPendingFiles([]); }}>Отмена</button>
+                      <button className="btn btn-primary" onClick={async () => {
+                        setShowDupModal(false);
+                        const conflictFiles = dupConflicts.map(c => c.file);
+                        addNotification(`Обрабатываю ${conflictFiles.length} файлов...`, 'info');
+                        await doUpload(conflictFiles, dupDecisions);
+                        setPendingFiles([]);
+                      }}>Продолжить</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="page-header">
                 <div>
                   <div className="page-label">Нормативная база (RAG)</div>
@@ -1087,80 +1211,27 @@ export default function App() {
                 {(isGip || isAdmin) && (
                   <div style={{ display: 'flex', gap: 12 }}>
                     <input type="file" id="normative-upload" multiple accept=".pdf,.docx,.doc,.txt" style={{ display: 'none' }} onChange={async (e) => {
-                      const files = e.target.files;
-                      if (!files || files.length === 0) return;
-
-                      addNotification(`Начинаю пакетную загрузку (${files.length} шт.)...`, 'info');
-                      let successCount = 0;
-
-                      for (let i = 0; i < files.length; i++) {
-                        const file = files[i];
-                        try {
-                          // 1. Загрузить файл в Supabase Storage
-                          const filePath = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-                          const uploadRes = await fetch(
-                            `${SURL}/storage/v1/object/normative-docs/${filePath}`,
-                            {
-                              method: 'POST',
-                              headers: {
-                                'Authorization': `Bearer ${SERVICE_KEY}`,
-                                'Content-Type': file.type || 'application/octet-stream',
-                              },
-                              body: file,
-                            }
-                          );
-
-                          if (!uploadRes.ok) {
-                            addNotification(`Ошибка загрузки "${file.name}": Storage недоступен`, 'warning');
-                            continue;
-                          }
-
-                          // 2. Создать запись в normative_docs с file_path (service key bypasses RLS)
-                          const docInsertRes = await fetch(`${SURL}/rest/v1/normative_docs`, {
-                            method: 'POST',
-                            headers: {
-                              'apikey': SERVICE_KEY,
-                              'Authorization': `Bearer ${SERVICE_KEY}`,
-                              'Content-Type': 'application/json',
-                              'Prefer': 'return=representation',
-                            },
-                            body: JSON.stringify({
-                              name: file.name,
-                              file_type: file.type || 'application/octet-stream',
-                              file_path: filePath,
-                              status: 'pending',
-                            }),
-                          });
-                          const docData = await docInsertRes.json();
-                          if (!docInsertRes.ok) {
-                            addNotification(`Ошибка записи "${file.name}": ${docData?.message || docInsertRes.status}`, 'warning');
-                            continue;
-                          }
-
-                          const docId = Array.isArray(docData) ? docData[0]?.id : docData?.id;
-                          if (!docId) continue;
-
-                          // 3. Запустить Edge Function (fire-and-forget, векторизация идёт в фоне)
-                          fetch(`${SURL}/functions/v1/vectorize-doc`, {
-                            method: 'POST',
-                            headers: {
-                              'Authorization': `Bearer ${SERVICE_KEY}`,
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ doc_id: docId }),
-                          }).catch(() => {});
-                          successCount++;
-                        } catch {
-                          addNotification(`Ошибка загрузки "${file.name}"`, 'warning');
-                        }
-                      }
-
-                      await loadNormativeDocs();
-                      if (successCount > 0) {
-                        addNotification(`Загружено ${successCount} из ${files.length} документов. Идёт векторизация...`, 'success');
-                      }
-
+                      const fileList = e.target.files;
+                      if (!fileList || fileList.length === 0) return;
+                      const files = Array.from(fileList);
                       e.target.value = '';
+                      const conflicts = files.filter(f => normativeDocs.some(d => d.name === f.name));
+                      const noConflict = files.filter(f => !normativeDocs.some(d => d.name === f.name));
+                      if (conflicts.length > 0) {
+                        setPendingFiles(files);
+                        setDupConflicts(conflicts.map(f => ({ file: f, existing: normativeDocs.find(d => d.name === f.name)! })));
+                        const defaults: Record<string, 'overwrite' | 'skip'> = {};
+                        conflicts.forEach(f => { defaults[f.name] = 'skip'; });
+                        setDupDecisions(defaults);
+                        setShowDupModal(true);
+                        if (noConflict.length > 0) {
+                          addNotification(`Загружаю ${noConflict.length} новых файлов...`, 'info');
+                          await doUpload(noConflict, {});
+                        }
+                      } else {
+                        addNotification(`Начинаю загрузку (${files.length} шт.)...`, 'info');
+                        await doUpload(files, {});
+                      }
                     }} />
                     <button className="btn btn-primary" onClick={() => document.getElementById('normative-upload')?.click()}>+ Загрузить PDF/DOCX</button>
                     <button className="btn btn-secondary" onClick={async () => {
@@ -1170,7 +1241,7 @@ export default function App() {
                       for (const doc of pending) {
                         await fetch(`${SURL}/functions/v1/vectorize-doc`, {
                           method: 'POST',
-                          headers: { 'Authorization': `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+                          headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
                           body: JSON.stringify({ doc_id: doc.id }),
                         }).catch(() => null);
                       }
@@ -1180,35 +1251,121 @@ export default function App() {
                   </div>
                 )}
               </div>
-              
-              <div style={{ display: 'flex', gap: 20, background: C.surface2, padding: 12, borderRadius: 14 }}>
-                 <input placeholder="Поиск по базе знаний (Semantic Search)..." style={{ ...getInp(C), flex: 1, height: 44, fontSize: 14 }} />
-                 <button className="btn btn-primary" style={{ width: 44, padding: 0 }} onClick={() => addNotification('Семантический поиск будет доступен после генерации эмбеддингов', 'info')}>🔍</button>
+
+              {/* Search bar */}
+              <div style={{ display: 'flex', gap: 12, background: C.surface2, padding: 10, borderRadius: 12 }}>
+                <input
+                  placeholder="Поиск по тексту документов..."
+                  value={normSearchQuery}
+                  onChange={e => { setNormSearchQuery(e.target.value); if (!e.target.value.trim()) setNormSearchResults(null); }}
+                  onKeyDown={e => { if (e.key === 'Enter') searchNormative(normSearchQuery); }}
+                  style={{ ...getInp(C), flex: 1, height: 40, fontSize: 14 }}
+                />
+                {normSearchResults !== null && (
+                  <button className="btn btn-secondary" style={{ height: 40, fontSize: 13 }} onClick={() => { setNormSearchQuery(''); setNormSearchResults(null); }}>✕ Сбросить</button>
+                )}
+                <button className="btn btn-primary" style={{ height: 40, width: 40, padding: 0 }} onClick={() => searchNormative(normSearchQuery)} disabled={normSearching}>
+                  {normSearching ? '…' : '🔍'}
+                </button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-                {normativeDocs.length === 0 ? (
-                  <div style={{ gridColumn: '1/-1', background: C.surface, padding: 60, borderRadius: 20, border: `1px dashed ${C.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 15, textAlign: 'center' }}>
-                    <div style={{ fontSize: 48 }}>📚</div>
-                    <div style={{ fontWeight: 700, color: C.text }}>База знаний пуста</div>
-                    <div style={{ fontSize: 13, color: C.textMuted }}>Загрузите проектную документацию, стандарты или ГОСТы.<br/>ИИ-агент сможет анализировать их и давать ответы с гиперссылками.</div>
+              {/* Search results */}
+              {normSearchResults !== null ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                  <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 12 }}>
+                    {normSearchResults.length === 0 ? 'Ничего не найдено' : `Найдено в ${normSearchResults.length} документах:`}
                   </div>
-                ) : (
-                  Array.isArray(normativeDocs) && normativeDocs.map(doc => (
-                    <div key={doc.id} className="card" style={{ padding: 20, position: 'relative' }}>
-                      <div style={{ fontSize: 24, marginBottom: 12 }}>{doc.file_type?.includes('pdf') ? '📕' : '📘'}</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doc.name}</div>
-                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 16 }}>
-                        {new Date(doc.created_at).toLocaleDateString()} · {doc.status === 'processing' ? '⚙️ Векторизация...' : doc.status === 'pending' ? '🕐 В очереди...' : doc.status === 'ready' ? '✅ Готов к поиску' : '⚙️ Обработка...'}
+                  {normSearchResults.map((r, i) => {
+                    const idx = r.content.toLowerCase().indexOf(normSearchQuery.toLowerCase());
+                    const excerpt = idx >= 0
+                      ? r.content.slice(Math.max(0, idx - 60), idx + 200)
+                      : r.content.slice(0, 250);
+                    const before = idx >= 0 ? excerpt.slice(0, Math.min(60, idx)) : excerpt.slice(0, 100);
+                    const match = idx >= 0 ? excerpt.slice(Math.min(60, idx), Math.min(60, idx) + normSearchQuery.length) : '';
+                    const after = idx >= 0 ? excerpt.slice(Math.min(60, idx) + normSearchQuery.length) : excerpt.slice(100);
+                    return (
+                      <div key={r.id} style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.surface : C.surface2 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                          <span style={{ fontSize: 15 }}>{r.doc_name?.toLowerCase().endsWith('.pdf') ? '📕' : '📘'}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13, color: C.text, flex: 1 }}>{r.doc_name}</span>
+                          <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: '2px 8px', borderRadius: 10 }}>{r.matchCount} совпад.</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: C.textMuted, fontFamily: 'monospace', lineHeight: 1.6 }}>
+                          ...{before}<mark style={{ background: '#FBBF24', color: '#000', borderRadius: 2, padding: '0 2px' }}>{match}</mark>{after}...
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                          <button className="btn btn-secondary" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => addNotification('Открытие временно недоступно', 'info')}>Открыть</button>
-                          {(isGip || isAdmin) && <button className="btn" style={{ fontSize: 11, padding: '4px 10px', color: '#EF4444' }} onClick={() => del(`normative_docs?id=eq.${doc.id}`, token!).then(loadNormativeDocs)}>Удалить</button>}
-                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* All docs list — compact rows */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+                  {normativeDocs.length === 0 ? (
+                    <div style={{ padding: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+                      <div style={{ fontSize: 40 }}>📚</div>
+                      <div style={{ fontWeight: 700, color: C.text }}>База знаний пуста</div>
+                      <div style={{ fontSize: 13, color: C.textMuted }}>Загрузите PDF, DOCX или TXT. ИИ-агент сможет искать по ним и давать ответы с источниками.</div>
                     </div>
-                  ))
-                )}
-              </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 120px 100px 130px', gap: 0, padding: '8px 16px', background: C.surface2, borderBottom: `1px solid ${C.border}`, fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <div></div><div>Документ</div><div>Дата</div><div>Тип</div><div>Статус</div>
+                      </div>
+                      {normativeDocs.map((doc, i) => (
+                        <div key={doc.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 120px 100px 130px', gap: 0, padding: '10px 16px', alignItems: 'center', background: i % 2 === 0 ? C.surface : C.surface2, borderBottom: `1px solid ${C.border}` }}>
+                          <div style={{ fontSize: 16 }}>{doc.file_type?.includes('pdf') ? '📕' : '📘'}</div>
+                          <div
+                            style={{ fontSize: 13, color: C.accent, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 12, cursor: 'pointer', textDecoration: 'underline' }}
+                            title={doc.name}
+                            onClick={async () => {
+                              if (!doc.file_path) { addNotification('Путь к файлу не найден', 'warning'); return; }
+                              const isPdf = doc.file_type?.includes('pdf') || doc.name?.toLowerCase().endsWith('.pdf');
+                              if (isPdf) {
+                                // Получить подписанный URL для PDF и открыть в новой вкладке
+                                const signRes = await fetch(`${SURL}/storage/v1/object/sign/normative-docs/${doc.file_path}`, {
+                                  method: 'POST',
+                                  headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ expiresIn: 3600 }),
+                                });
+                                const signData = await signRes.json();
+                                const signedUrl = signData?.signedURL ? `${SURL}/storage/v1${signData.signedURL}` : signData?.signedUrl;
+                                if (signedUrl) window.open(signedUrl, '_blank');
+                                else addNotification('Не удалось получить ссылку на файл', 'warning');
+                              } else {
+                                // DOCX/DOC — скачать через подписанный URL
+                                const signRes = await fetch(`${SURL}/storage/v1/object/sign/normative-docs/${doc.file_path}`, {
+                                  method: 'POST',
+                                  headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ expiresIn: 3600 }),
+                                });
+                                const signData = await signRes.json();
+                                const signedUrl = signData?.signedURL ? `${SURL}/storage/v1${signData.signedURL}` : signData?.signedUrl;
+                                if (signedUrl) {
+                                  const a = document.createElement('a');
+                                  a.href = signedUrl;
+                                  a.download = doc.name;
+                                  a.click();
+                                } else addNotification('Не удалось получить ссылку на файл', 'warning');
+                              }
+                            }}
+                          >{doc.name}</div>
+                          <div style={{ fontSize: 12, color: C.textMuted }}>{new Date(doc.created_at).toLocaleDateString('ru-RU')}</div>
+                          <div style={{ fontSize: 11, color: C.textMuted }}>{doc.file_type?.includes('pdf') ? 'PDF' : doc.file_type?.includes('word') ? 'DOCX' : 'DOC'}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 11, color: C.textMuted }}>
+                              {doc.status === 'ready' ? '✅ Готов' : doc.status === 'processing' ? '⚙️ Обработка...' : '🕐 В очереди'}
+                            </span>
+                            {(isGip || isAdmin) && (
+                              <button style={{ marginLeft: 'auto', fontSize: 11, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
+                                onClick={() => del(`normative_docs?id=eq.${doc.id}`, token!).then(loadNormativeDocs)}>✕</button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
