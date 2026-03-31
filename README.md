@@ -247,6 +247,42 @@ git push origin main
 
 ## 🧾 Agent Handover Log
 
+## 📌 Post-Phase Roadmap (после Фазы 8)
+
+Этот план зафиксирован как официальный execution roadmap после завершения фаз 1–8.
+
+### Блок A — Stabilization Sprint
+- Убрать хрупкие места UI/flow (в первую очередь `transmittals` без прямого доступа к DOM).
+- Закрыть потенциальные runtime-регрессии в apply-потоках Copilot.
+- Подтвердить стабильность через build/lint/smoke.
+
+### Блок B — QA & Test Coverage
+- Выполнить smoke-checklist по ролям: `gip`, `lead`, `engineer`.
+- Добавить минимальные автопроверки ключевых сценариев (workflow/reviews/transmittals).
+- Зафиксировать known limitations.
+
+### Блок C — Refactor Sprint
+- Декомпозировать `App.tsx` на доменные вкладки/компоненты.
+- Унифицировать API helper-слой и naming.
+
+### Блок D — Copilot Hardening v2
+- Единый schema/validator для action payload.
+- Идемпотентность apply.
+- Улучшение сообщений блокировок и “next step” подсказок.
+
+### Блок E — Data/Migration Hardening
+- Проверка индексов, ограничений и статусов.
+- Финальный migration verification checklist.
+
+### Блок F — Release Readiness
+- Release notes + обновление runbook в `README`.
+- Финальный regression smoke.
+
+### Execution Protocol
+- Один логический блок = один commit = один immediate push.
+- После каждого блока обязательно обновление `README.md` (`Agent Handover Log`).
+- Текущее состояние: планы записаны, можно переходить к реализации.
+
 ### Phase Status Snapshot
 
 - Phase 1 (Drawings foundation): DONE
@@ -266,6 +302,12 @@ git push origin main
   - `README.md`
 - Validation: `npm run build` (успешно), lint `orchestrator.js` и `CopilotPanel.tsx` без ошибок.
 - Next: фазы 1–8 закрыты полностью; далее — только стабилизация/оптимизация по приоритету пользователя.
+
+#### [2026-03-31 20:20] Agent update
+- Step: Зафиксирован полный post-phase execution roadmap (блоки A–F) и подтвержден протокол “1 логический блок = 1 commit = 1 push”. Планы записаны, старт реализации разрешен.
+- Files: `README.md`
+- Validation: not run (документационное обновление плана).
+- Next: приступить к Блоку A (stabilization) — убрать DOM-зависимость в `transmittals` UI и зафиксировать отдельным commit+push.
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
