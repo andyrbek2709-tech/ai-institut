@@ -56,6 +56,7 @@ export default function App() {
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskComment, setTaskComment] = useState("");
+  const [workflowBlockInfo, setWorkflowBlockInfo] = useState<string>("");
 
   const [showNewAssignment, setShowNewAssignment] = useState(false);
   const [newAssignment, setNewAssignment] = useState({ name: "", target_dept: "", priority: "high", deadline: "" });
@@ -406,7 +407,10 @@ export default function App() {
     const targetTask = allTasks.find(t => t.id === taskId);
     const currentStatus = targetTask?.status;
     if (currentStatus && !((taskWorkflowTransitions[currentStatus] || []).includes(status))) {
-      addNotification(`Переход ${currentStatus} → ${status} запрещён workflow`, 'warning');
+      const localAllowed = taskWorkflowTransitions[currentStatus] || [];
+      const localMessage = `Переход ${currentStatus} → ${status} запрещён workflow. Допустимо: ${localAllowed.join(', ') || 'нет переходов'}.`;
+      setWorkflowBlockInfo(localMessage);
+      addNotification(localMessage, 'warning');
       return;
     }
     if (currentStatus) {
@@ -424,9 +428,12 @@ export default function App() {
         });
         const wfData = await wfRes.json();
         if (wfData?.blocked) {
-          addNotification(wfData.message || `Переход ${currentStatus} → ${status} заблокирован`, 'warning');
+          const msg = wfData.message || `Переход ${currentStatus} → ${status} заблокирован`;
+          setWorkflowBlockInfo(msg);
+          addNotification(msg, 'warning');
           return;
         }
+        setWorkflowBlockInfo("");
       } catch {
         addNotification('Проверка workflow недоступна, применяю локальные правила', 'info');
       }
@@ -435,6 +442,7 @@ export default function App() {
     await patch(`tasks?id=eq.${taskId}`, { status, ...(comment ? { comment } : {}) }, token!);
     const statusLabel = statusMap[status]?.label || status;
     addNotification(`Статус задачи изменён → "${statusLabel}"`, status === 'done' ? 'success' : 'info');
+    setWorkflowBlockInfo("");
     setSaving(false); setShowTaskDetail(false); setTaskComment(""); if (activeProject) loadTasks(activeProject.id);
   };
   const isTransitionAllowed = (task: any, nextStatus: string) => {
@@ -648,7 +656,7 @@ export default function App() {
         </Modal>
       )}
       {showTaskDetail && selectedTask && (
-        <Modal title="Задача" onClose={() => { setShowTaskDetail(false); setSelectedTask(null); setTaskComment(""); loadMessages(activeProject.id); }} C={C}>
+        <Modal title="Задача" onClose={() => { setShowTaskDetail(false); setSelectedTask(null); setTaskComment(""); setWorkflowBlockInfo(""); loadMessages(activeProject.id); }} C={C}>
           <div className="form-stack">
             <div style={{ background: C.surface2, borderRadius: 10, padding: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -683,6 +691,12 @@ export default function App() {
               ) : null;
             })()}
             {selectedTask.comment && (<div style={{ background: C.red + "10", border: `1px solid ${C.red}25`, borderRadius: 10, padding: 14 }}><div style={{ fontSize: 10, color: C.red, fontWeight: 600, marginBottom: 4 }}>КОММЕНТАРИЙ К ДОРАБОТКЕ</div><div style={{ fontSize: 13, color: C.textDim }}>{selectedTask.comment}</div></div>)}
+            {workflowBlockInfo && (
+              <div style={{ background: C.red + "12", border: `1px solid ${C.red}30`, borderRadius: 10, padding: 12 }}>
+                <div style={{ fontSize: 11, color: C.red, fontWeight: 700, marginBottom: 4 }}>БЛОКИРОВКА WORKFLOW</div>
+                <div style={{ fontSize: 12, color: C.textDim }}>{workflowBlockInfo}</div>
+              </div>
+            )}
             {isLead && selectedTask.status === "todo" && String(selectedTask.assigned_to) === String(currentUserData?.id) && (
               <Field label="НАЗНАЧИТЬ ИНЖЕНЕРУ" C={C}><select onChange={e => { if (e.target.value) assignTask(selectedTask.id, e.target.value); }} defaultValue="" style={getInp(C)}><option value="">— Выбрать инженера —</option>{myEngineers.map(u => <option key={u.id} value={u.id}>{u.full_name} — {getEngLoad(u.id)}% загрузка</option>)}</select></Field>
             )}

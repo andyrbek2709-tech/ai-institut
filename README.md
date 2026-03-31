@@ -247,12 +247,21 @@ git push origin main
 
 - Phase 1 (Drawings foundation): DONE
 - Phase 2 (Drawing Agent): DONE
-- Phase 3: Implemented
+- Phase 3 (Workflow Agent): DONE
 - Phase 4: Implemented
 - Phase 5: Implemented
 - Phase 6: Implemented
 - Phase 7: Implemented
 - Phase 8: Implemented
+
+#### [2026-03-31 18:47] Agent update
+- Step: Формально закрыта Фаза 3 как завершенная: Workflow Agent в `orchestrator` теперь отдает расширенные причины блокировки (`reason_code`) и список допустимых переходов (`allowed_next`), а UI в `App.tsx` показывает явный блок “БЛОКИРОВКА WORKFLOW” с текстом причины отказа.
+- Files:
+  - `enghub-main/api/orchestrator.js`
+  - `enghub-main/src/App.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint `orchestrator.js` и `App.tsx` без ошибок.
+- Next: по команде пользователя — переход к Фазе 4 с тем же режимом непрерывного выполнения и фиксации в `README.md`.
 
 #### [2026-03-31 18:31] Agent update
 - Step: Формально закрыта Фаза 2 как завершенная: для Drawing Agent добавлен явный action-контракт (`create_drawing`, `update_drawing`, `create_drawing_revision`) в `orchestrator`, унифицированы валидации payload и fallback-блокировки, а `CopilotPanel` теперь корректно показывает `blocked`-ответы пользователю.

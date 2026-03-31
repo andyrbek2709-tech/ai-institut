@@ -131,14 +131,26 @@ module.exports = async function handler(req, res) {
     if (action === 'validate_workflow') {
       const fromStatus = payload.from_status;
       const toStatus = payload.to_status;
+      if (!fromStatus || !toStatus) {
+        return res.status(200).json({
+          success: false,
+          agent: 'workflow_agent',
+          blocked: true,
+          reason_code: 'missing_status',
+          message: 'Для проверки workflow нужны from_status и to_status.',
+        });
+      }
+      const allowedNext = TASK_TRANSITIONS[fromStatus] || [];
       const allowed = (TASK_TRANSITIONS[fromStatus] || []).includes(toStatus);
       return res.status(200).json({
         success: allowed,
         agent: 'workflow_agent',
         blocked: !allowed,
+        reason_code: allowed ? 'ok' : 'invalid_transition',
+        allowed_next: allowedNext,
         message: allowed
           ? `Переход ${fromStatus} → ${toStatus} допустим.`
-          : `Переход ${fromStatus || '?'} → ${toStatus || '?'} запрещён workflow.`,
+          : `Переход ${fromStatus} → ${toStatus} запрещён workflow. Допустимо: ${allowedNext.join(', ') || 'нет переходов'}.`,
       });
     }
 
@@ -211,18 +223,32 @@ module.exports = async function handler(req, res) {
     if (intent === 'workflow_transition') {
       const fromStatus = payload.from_status;
       const toStatus = payload.to_status;
+      if (!fromStatus || !toStatus) {
+        return res.status(200).json({
+          success: false,
+          agent: 'workflow_agent',
+          blocked: true,
+          reason_code: 'missing_status',
+          message: 'Для проверки workflow нужны from_status и to_status.',
+        });
+      }
+      const allowedNext = TASK_TRANSITIONS[fromStatus] || [];
       const allowed = (TASK_TRANSITIONS[fromStatus] || []).includes(toStatus);
       if (!allowed) {
         return res.status(200).json({
           success: false,
           agent: 'workflow_agent',
           blocked: true,
-          message: `Переход ${fromStatus || '?'} → ${toStatus || '?'} запрещён workflow.`,
+          reason_code: 'invalid_transition',
+          allowed_next: allowedNext,
+          message: `Переход ${fromStatus} → ${toStatus} запрещён workflow. Допустимо: ${allowedNext.join(', ') || 'нет переходов'}.`,
         });
       }
       return res.status(200).json({
         success: true,
         agent: 'workflow_agent',
+        reason_code: 'ok',
+        allowed_next: allowedNext,
         message: `Переход ${fromStatus} → ${toStatus} допустим.`,
       });
     }
