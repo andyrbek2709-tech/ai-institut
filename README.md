@@ -254,9 +254,20 @@ git push origin main
 - Phase 3 (Workflow Agent): DONE
 - Phase 4 (Task-Drawing Link): DONE
 - Phase 5 (Revisions): DONE
-- Phase 6: Implemented
+- Phase 6 (Reviews): DONE
 - Phase 7: Implemented
 - Phase 8: Implemented
+
+#### [2026-03-31 19:32] Agent update
+- Step: Формально закрыта Фаза 6 как завершенная: в `orchestrator` добавлен явный action-контракт Review Agent (`create_review`, `update_review_status`) с валидацией и safe fallback; в `CopilotPanel` добавлено применение и превью `update_review_status`; в UI вкладки Reviews добавлено изменение статуса замечаний (Lead/GIP) через API-хелпер `updateReviewStatus`.
+- Files:
+  - `enghub-main/api/orchestrator.js`
+  - `enghub-main/src/components/CopilotPanel.tsx`
+  - `enghub-main/src/api/supabase.ts`
+  - `enghub-main/src/App.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint по измененным файлам без ошибок.
+- Next: по команде пользователя — переход к Фазе 7 (Transmittals) с тем же протоколом: README отчет -> commit -> immediate push.
 
 #### [2026-03-31 19:16] Agent update
 - Step: Формально закрыта Фаза 5 как завершенная: выделен отдельный контур `Revision Agent` (action `create_revision`) в `orchestrator`, сохранена обратная совместимость с `create_drawing_revision`, обновлена обработка в `CopilotPanel`, добавлен API-хелпер `listRevisions`, а UI-история ревизий расширена отображением исполнителя и счетчика записей.

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions } from './constants';
-import { get, post, patch, del, SURL, SERVICE_KEY, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions } from './api/supabase';
+import { get, post, patch, del, SURL, SERVICE_KEY, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus } from './api/supabase';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
@@ -474,6 +474,12 @@ export default function App() {
     }, token!);
     setNewReview({ title: "", severity: "major", drawing_id: "" });
     addNotification('Замечание добавлено', 'success');
+    loadReviews(activeProject.id);
+  };
+  const changeReviewStatus = async (reviewId: string, status: string) => {
+    if (!activeProject) return;
+    await updateReviewStatus(reviewId, status, token!);
+    addNotification(`Статус замечания изменён: ${status}`, 'info');
     loadReviews(activeProject.id);
   };
   const issueDrawingRevision = async (drawing: any) => {
@@ -1384,6 +1390,18 @@ export default function App() {
                           </div>
                           <span className="badge">{r.severity}</span>
                           <span style={{ fontSize: 12, color: C.textMuted }}>{r.status || 'open'}</span>
+                          {(isLead || isGip) && (
+                            <select
+                              value={r.status || 'open'}
+                              onChange={(e) => changeReviewStatus(r.id, e.target.value)}
+                              style={{ ...getInp(C), height: 30, fontSize: 12, width: 130 }}
+                            >
+                              <option value="open">open</option>
+                              <option value="in_progress">in_progress</option>
+                              <option value="resolved">resolved</option>
+                              <option value="rejected">rejected</option>
+                            </select>
+                          )}
                         </div>
                       );
                     })}

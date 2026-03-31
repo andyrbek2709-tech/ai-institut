@@ -79,6 +79,9 @@ export const listReviews = (projectId: number, token?: string) =>
 export const createReview = (payload: any, token?: string) =>
   post('reviews', payload, token);
 
+export const updateReviewStatus = (reviewId: string, status: string, token?: string) =>
+  patch(`reviews?id=eq.${reviewId}`, { status, updated_at: new Date().toISOString() }, token);
+
 export const createTransmittal = (payload: any, token?: string) =>
   post('transmittals', payload, token);
 

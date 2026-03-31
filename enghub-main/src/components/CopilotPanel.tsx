@@ -123,6 +123,10 @@ export function CopilotPanel({
         setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить create_review: отсутствует title.' }]);
         return;
       }
+      if (approved && action.action_type === 'update_review_status' && (!payload.review_id || !payload.status)) {
+        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить update_review_status: нужен review_id и status.' }]);
+        return;
+      }
       
       if (approved && action.action_type === 'create_tasks') {
         for (const t of payload.tasks) {
@@ -179,6 +183,14 @@ export function CopilotPanel({
           severity: payload?.severity || 'major',
           status: 'open',
           author_id: userId
+        }, token || '');
+        onDataChanged?.();
+      }
+
+      if (approved && action.action_type === 'update_review_status') {
+        await patch(`reviews?id=eq.${payload.review_id}`, {
+          status: payload.status,
+          updated_at: new Date().toISOString(),
         }, token || '');
         onDataChanged?.();
       }
@@ -318,6 +330,14 @@ export function CopilotPanel({
                 <div><b>Текст:</b> {action.payload?.title || '—'}</div>
                 <div><b>Severity:</b> {action.payload?.severity || 'major'}</div>
                 <div><b>Drawing ID:</b> {action.payload?.drawing_id || '—'}</div>
+              </div>
+            )}
+
+            {action.action_type === 'update_review_status' && (
+              <div style={{ background: C.surface2, borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 13, color: C.text }}>
+                <div><b>Review ID:</b> {action.payload?.review_id || '—'}</div>
+                <div><b>Новый статус:</b> {action.payload?.status || '—'}</div>
+                <div><b>Комментарий:</b> {action.payload?.note || '—'}</div>
               </div>
             )}
 

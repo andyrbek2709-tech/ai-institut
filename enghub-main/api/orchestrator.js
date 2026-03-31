@@ -104,6 +104,58 @@ function buildDrawingAction(actionType, project_id, user_id, payload = {}) {
   return { ok: false, blocked: true, message: 'Неподдерживаемое drawing действие' };
 }
 
+function buildReviewAction(actionType, project_id, user_id, payload = {}) {
+  if (actionType === 'create_review') {
+    if (!payload.title || !String(payload.title).trim()) {
+      return { ok: false, blocked: true, message: 'Для замечания нужен payload.title' };
+    }
+    return {
+      ok: true,
+      insertData: {
+        project_id,
+        user_id,
+        action_type: 'create_review',
+        agent_type: 'review_agent',
+        payload: {
+          title: String(payload.title).trim(),
+          severity: payload.severity || 'major',
+          drawing_id: payload.drawing_id || null,
+          assignee_id: payload.assignee_id || null,
+        },
+        status: 'pending',
+      },
+      message: 'Review Agent подготовил замечание на подтверждение.',
+    };
+  }
+
+  if (actionType === 'update_review_status') {
+    if (!payload.review_id) {
+      return { ok: false, blocked: true, message: 'Для обновления замечания нужен payload.review_id' };
+    }
+    if (!payload.status) {
+      return { ok: false, blocked: true, message: 'Для обновления замечания нужен payload.status' };
+    }
+    return {
+      ok: true,
+      insertData: {
+        project_id,
+        user_id,
+        action_type: 'update_review_status',
+        agent_type: 'review_agent',
+        payload: {
+          review_id: payload.review_id,
+          status: payload.status,
+          note: payload.note || null,
+        },
+        status: 'pending',
+      },
+      message: 'Review Agent подготовил изменение статуса замечания.',
+    };
+  }
+
+  return { ok: false, blocked: true, message: 'Неподдерживаемое review действие' };
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -219,6 +271,31 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (action === 'create_review' || action === 'update_review_status') {
+      const result = buildReviewAction(action, project_id, user_id, payload);
+      if (!result.ok) {
+        return res.status(200).json({
+          success: false,
+          agent: 'review_agent',
+          blocked: !!result.blocked,
+          message: result.message || 'Review action blocked',
+        });
+      }
+      const insertRes = await fetch(`${SURL}/rest/v1/ai_actions`, {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'return=representation' },
+        body: JSON.stringify(result.insertData),
+      });
+      const inserted = await insertRes.json();
+      return res.status(200).json({
+        success: true,
+        agent: 'review_agent',
+        action_id: inserted?.[0]?.id,
+        action_type: result.insertData.action_type,
+        message: result.message,
+      });
+    }
+
     const intent = detectIntent(message);
 
     if (intent === 'workflow_transition') {
@@ -287,15 +364,17 @@ module.exports = async function handler(req, res) {
       insertData = result.insertData;
       responseMessage = result.message;
     } else if (intent === 'create_review') {
-      insertData = {
-        project_id,
-        user_id,
-        action_type: 'create_review',
-        agent_type: 'review_agent',
-        payload: { title: payload.title || message, severity: payload.severity || 'major', drawing_id: payload.drawing_id || null },
-        status: 'pending',
-      };
-      responseMessage = 'Review Agent подготовил замечание на подтверждение.';
+      const result = buildReviewAction('create_review', project_id, user_id, { ...payload, title: payload.title || message });
+      if (!result.ok) {
+        return res.status(200).json({
+          success: false,
+          agent: 'review_agent',
+          blocked: !!result.blocked,
+          message: result.message || 'Review action blocked',
+        });
+      }
+      insertData = result.insertData;
+      responseMessage = result.message;
     } else if (intent === 'create_transmittal') {
       insertData = {
         project_id,
