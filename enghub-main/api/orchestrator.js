@@ -55,6 +55,18 @@ function detectIntent(message = '') {
   return 'unknown';
 }
 
+function blockedResponse({ agent = 'router', message, reason_code = 'blocked', next_step = null, extra = {} }) {
+  return {
+    success: false,
+    blocked: true,
+    agent,
+    reason_code,
+    message,
+    next_step,
+    ...extra,
+  };
+}
+
 function buildDrawingAction(actionType, project_id, user_id, payload = {}) {
   if (actionType === 'create_drawing') {
     const autoCode = `AI-${String(project_id)}-${Date.now().toString().slice(-6)}`;
@@ -78,7 +90,7 @@ function buildDrawingAction(actionType, project_id, user_id, payload = {}) {
 
   if (actionType === 'update_drawing') {
     if (!payload.drawing_id) {
-      return { ok: false, blocked: true, message: 'Для обновления чертежа нужен payload.drawing_id' };
+      return { ok: false, blocked: true, reason_code: 'missing_drawing_id', message: 'Для обновления чертежа нужен payload.drawing_id', next_step: 'Передайте drawing_id существующего чертежа и объект updates.' };
     }
     return {
       ok: true,
@@ -96,7 +108,7 @@ function buildDrawingAction(actionType, project_id, user_id, payload = {}) {
 
   if (actionType === 'create_drawing_revision' || actionType === 'create_revision') {
     if (!payload.drawing_id) {
-      return { ok: false, blocked: true, message: 'Для выпуска ревизии нужен payload.drawing_id' };
+      return { ok: false, blocked: true, reason_code: 'missing_drawing_id', message: 'Для выпуска ревизии нужен payload.drawing_id', next_step: 'Передайте drawing_id чертежа, для которого требуется новая ревизия.' };
     }
     const normalizedAction = actionType === 'create_revision' ? 'create_revision' : 'create_drawing_revision';
     return {
@@ -113,13 +125,13 @@ function buildDrawingAction(actionType, project_id, user_id, payload = {}) {
     };
   }
 
-  return { ok: false, blocked: true, message: 'Неподдерживаемое drawing действие' };
+  return { ok: false, blocked: true, reason_code: 'unsupported_action', message: 'Неподдерживаемое drawing действие', next_step: 'Используйте create_drawing, update_drawing, create_drawing_revision или create_revision.' };
 }
 
 function buildReviewAction(actionType, project_id, user_id, payload = {}) {
   if (actionType === 'create_review') {
     if (!payload.title || !String(payload.title).trim()) {
-      return { ok: false, blocked: true, message: 'Для замечания нужен payload.title' };
+      return { ok: false, blocked: true, reason_code: 'missing_title', message: 'Для замечания нужен payload.title', next_step: 'Передайте непустой title для карточки замечания.' };
     }
     return {
       ok: true,
@@ -142,10 +154,10 @@ function buildReviewAction(actionType, project_id, user_id, payload = {}) {
 
   if (actionType === 'update_review_status') {
     if (!payload.review_id) {
-      return { ok: false, blocked: true, message: 'Для обновления замечания нужен payload.review_id' };
+      return { ok: false, blocked: true, reason_code: 'missing_review_id', message: 'Для обновления замечания нужен payload.review_id', next_step: 'Передайте review_id записи и целевой status.' };
     }
     if (!payload.status) {
-      return { ok: false, blocked: true, message: 'Для обновления замечания нужен payload.status' };
+      return { ok: false, blocked: true, reason_code: 'missing_status', message: 'Для обновления замечания нужен payload.status', next_step: 'Укажите status: open, in_progress, resolved или rejected.' };
     }
     return {
       ok: true,
@@ -165,7 +177,7 @@ function buildReviewAction(actionType, project_id, user_id, payload = {}) {
     };
   }
 
-  return { ok: false, blocked: true, message: 'Неподдерживаемое review действие' };
+  return { ok: false, blocked: true, reason_code: 'unsupported_action', message: 'Неподдерживаемое review действие', next_step: 'Используйте create_review или update_review_status.' };
 }
 
 function buildTransmittalAction(actionType, project_id, user_id, payload = {}) {
@@ -191,10 +203,10 @@ function buildTransmittalAction(actionType, project_id, user_id, payload = {}) {
 
   if (actionType === 'update_transmittal_status') {
     if (!payload.transmittal_id) {
-      return { ok: false, blocked: true, message: 'Для обновления трансмиттала нужен payload.transmittal_id' };
+      return { ok: false, blocked: true, reason_code: 'missing_transmittal_id', message: 'Для обновления трансмиттала нужен payload.transmittal_id', next_step: 'Передайте transmittal_id и целевой status.' };
     }
     if (!payload.status) {
-      return { ok: false, blocked: true, message: 'Для обновления трансмиттала нужен payload.status' };
+      return { ok: false, blocked: true, reason_code: 'missing_status', message: 'Для обновления трансмиттала нужен payload.status', next_step: 'Укажите status: draft, issued или cancelled.' };
     }
     return {
       ok: true,
@@ -213,7 +225,7 @@ function buildTransmittalAction(actionType, project_id, user_id, payload = {}) {
     };
   }
 
-  return { ok: false, blocked: true, message: 'Неподдерживаемое transmittal действие' };
+  return { ok: false, blocked: true, reason_code: 'unsupported_action', message: 'Неподдерживаемое transmittal действие', next_step: 'Используйте create_transmittal или update_transmittal_status.' };
 }
 
 module.exports = async function handler(req, res) {
@@ -246,12 +258,12 @@ module.exports = async function handler(req, res) {
     if (action && action !== 'search_normative' && action !== 'validate_workflow') {
       const allowedActions = ROLE_ALLOWED_ACTIONS[currentRole] || ROLE_ALLOWED_ACTIONS.engineer;
       if (!allowedActions.includes(action)) {
-        return res.status(200).json({
-          success: false,
-          blocked: true,
+        return res.status(200).json(blockedResponse({
           agent: 'router',
+          reason_code: 'action_not_allowed',
           message: `${rolePrompt} Операция "${action}" недоступна для роли ${currentRole}.`,
-        });
+          next_step: `Доступные операции для роли ${currentRole}: ${allowedActions.join(', ')}.`,
+        }));
       }
     }
 
@@ -259,13 +271,12 @@ module.exports = async function handler(req, res) {
       const fromStatus = payload.from_status;
       const toStatus = payload.to_status;
       if (!fromStatus || !toStatus) {
-        return res.status(200).json({
-          success: false,
+        return res.status(200).json(blockedResponse({
           agent: 'workflow_agent',
-          blocked: true,
           reason_code: 'missing_status',
           message: 'Для проверки workflow нужны from_status и to_status.',
-        });
+          next_step: 'Передайте payload.from_status и payload.to_status.',
+        }));
       }
       const allowedNext = TASK_TRANSITIONS[fromStatus] || [];
       const allowed = (TASK_TRANSITIONS[fromStatus] || []).includes(toStatus);
@@ -275,6 +286,7 @@ module.exports = async function handler(req, res) {
         blocked: !allowed,
         reason_code: allowed ? 'ok' : 'invalid_transition',
         allowed_next: allowedNext,
+        next_step: allowed ? null : `Выберите один из допустимых переходов: ${allowedNext.join(', ') || 'нет переходов'}.`,
         message: allowed
           ? `Переход ${fromStatus} → ${toStatus} допустим.`
           : `Переход ${fromStatus} → ${toStatus} запрещён workflow. Допустимо: ${allowedNext.join(', ') || 'нет переходов'}.`,
@@ -323,12 +335,12 @@ module.exports = async function handler(req, res) {
     if (action === 'create_drawing' || action === 'update_drawing' || action === 'create_drawing_revision' || action === 'create_revision') {
       const result = buildDrawingAction(action, project_id, user_id, payload);
       if (!result.ok) {
-        return res.status(200).json({
-          success: false,
+        return res.status(200).json(blockedResponse({
           agent: action === 'create_revision' || action === 'create_drawing_revision' ? 'revision_agent' : 'drawing_agent',
-          blocked: !!result.blocked,
+          reason_code: result.reason_code || 'drawing_action_blocked',
           message: result.message || 'Drawing action blocked',
-        });
+          next_step: result.next_step || null,
+        }));
       }
       const insertRes = await fetch(`${SURL}/rest/v1/ai_actions`, {
         method: 'POST',
@@ -348,12 +360,12 @@ module.exports = async function handler(req, res) {
     if (action === 'create_review' || action === 'update_review_status') {
       const result = buildReviewAction(action, project_id, user_id, payload);
       if (!result.ok) {
-        return res.status(200).json({
-          success: false,
+        return res.status(200).json(blockedResponse({
           agent: 'review_agent',
-          blocked: !!result.blocked,
+          reason_code: result.reason_code || 'review_action_blocked',
           message: result.message || 'Review action blocked',
-        });
+          next_step: result.next_step || null,
+        }));
       }
       const insertRes = await fetch(`${SURL}/rest/v1/ai_actions`, {
         method: 'POST',
@@ -373,12 +385,12 @@ module.exports = async function handler(req, res) {
     if (action === 'create_transmittal' || action === 'update_transmittal_status') {
       const result = buildTransmittalAction(action, project_id, user_id, payload);
       if (!result.ok) {
-        return res.status(200).json({
-          success: false,
+        return res.status(200).json(blockedResponse({
           agent: 'register_agent',
-          blocked: !!result.blocked,
+          reason_code: result.reason_code || 'transmittal_action_blocked',
           message: result.message || 'Transmittal action blocked',
-        });
+          next_step: result.next_step || null,
+        }));
       }
       const insertRes = await fetch(`${SURL}/rest/v1/ai_actions`, {
         method: 'POST',
@@ -398,37 +410,35 @@ module.exports = async function handler(req, res) {
     const intent = detectIntent(message);
     const allowedIntents = ROLE_ALLOWED_INTENTS[currentRole] || ROLE_ALLOWED_INTENTS.engineer;
     if (!allowedIntents.includes(intent)) {
-      return res.status(200).json({
-        success: false,
-        blocked: true,
+      return res.status(200).json(blockedResponse({
         agent: 'router',
+        reason_code: 'intent_not_allowed',
         message: `${rolePrompt} Намерение "${intent}" недоступно для роли ${currentRole}.`,
-      });
+        next_step: `Разрешенные намерения: ${allowedIntents.join(', ')}.`,
+      }));
     }
 
     if (intent === 'workflow_transition') {
       const fromStatus = payload.from_status;
       const toStatus = payload.to_status;
       if (!fromStatus || !toStatus) {
-        return res.status(200).json({
-          success: false,
+        return res.status(200).json(blockedResponse({
           agent: 'workflow_agent',
-          blocked: true,
           reason_code: 'missing_status',
           message: 'Для проверки workflow нужны from_status и to_status.',
-        });
+          next_step: 'Передайте payload.from_status и payload.to_status.',
+        }));
       }
       const allowedNext = TASK_TRANSITIONS[fromStatus] || [];
       const allowed = (TASK_TRANSITIONS[fromStatus] || []).includes(toStatus);
       if (!allowed) {
-        return res.status(200).json({
-          success: false,
+        return res.status(200).json(blockedResponse({
           agent: 'workflow_agent',
-          blocked: true,
           reason_code: 'invalid_transition',
-          allowed_next: allowedNext,
           message: `Переход ${fromStatus} → ${toStatus} запрещён workflow. Допустимо: ${allowedNext.join(', ') || 'нет переходов'}.`,
-        });
+          next_step: `Выберите один из допустимых переходов: ${allowedNext.join(', ') || 'нет переходов'}.`,
+          extra: { allowed_next: allowedNext },
+        }));
       }
       return res.status(200).json({
         success: true,
@@ -462,36 +472,36 @@ module.exports = async function handler(req, res) {
       const drawingActionType = intent === 'drawing_revision' ? 'create_revision' : intent;
       const result = buildDrawingAction(drawingActionType, project_id, user_id, payload);
       if (!result.ok) {
-        return res.status(200).json({
-          success: false,
+        return res.status(200).json(blockedResponse({
           agent: drawingActionType === 'create_revision' ? 'revision_agent' : 'drawing_agent',
-          blocked: !!result.blocked,
+          reason_code: result.reason_code || 'drawing_action_blocked',
           message: result.message || 'Drawing action blocked',
-        });
+          next_step: result.next_step || null,
+        }));
       }
       insertData = result.insertData;
       responseMessage = result.message;
     } else if (intent === 'create_review') {
       const result = buildReviewAction('create_review', project_id, user_id, { ...payload, title: payload.title || message });
       if (!result.ok) {
-        return res.status(200).json({
-          success: false,
+        return res.status(200).json(blockedResponse({
           agent: 'review_agent',
-          blocked: !!result.blocked,
+          reason_code: result.reason_code || 'review_action_blocked',
           message: result.message || 'Review action blocked',
-        });
+          next_step: result.next_step || null,
+        }));
       }
       insertData = result.insertData;
       responseMessage = result.message;
     } else if (intent === 'create_transmittal') {
       const result = buildTransmittalAction('create_transmittal', project_id, user_id, payload);
       if (!result.ok) {
-        return res.status(200).json({
-          success: false,
+        return res.status(200).json(blockedResponse({
           agent: 'register_agent',
-          blocked: !!result.blocked,
+          reason_code: result.reason_code || 'transmittal_action_blocked',
           message: result.message || 'Transmittal action blocked',
-        });
+          next_step: result.next_step || null,
+        }));
       }
       insertData = result.insertData;
       responseMessage = result.message;

@@ -94,7 +94,8 @@ export function CopilotPanel({
       const data = await res.json();
       
       if (data.blocked) {
-        setMessages(prev => [...prev, { role: 'ai', text: `⛔ ${data.message || 'Действие заблокировано правилами.'}` }]);
+        const nextStepText = data.next_step ? `\n➡ ${data.next_step}` : '';
+        setMessages(prev => [...prev, { role: 'ai', text: `⛔ ${data.message || 'Действие заблокировано правилами.'}${nextStepText}` }]);
       } else if (data.message) {
         setMessages(prev => [...prev, { role: 'ai', text: data.message }]);
       } else {
@@ -131,6 +132,21 @@ export function CopilotPanel({
     if (approved) applyInFlightRef.current.add(action.id);
 
     try {
+      if (approved) {
+        const latestRows = await get(`ai_actions?id=eq.${action.id}&select=id,status`, token || '');
+        const latest = Array.isArray(latestRows) ? latestRows[0] : null;
+        if (!latest) {
+          setMessages(prev => [...prev, { role: 'ai', text: 'Действие не найдено: возможно, уже обработано другим пользователем.' }]);
+          fetchActions();
+          return;
+        }
+        if (latest.status !== 'pending') {
+          setMessages(prev => [...prev, { role: 'ai', text: `Действие уже обработано (статус: ${latest.status}). Повторное применение пропущено.` }]);
+          fetchActions();
+          return;
+        }
+      }
+
       if (approved && action.action_type === 'create_tasks') {
         for (const t of payload.tasks as Array<{ title?: string; priority?: string }>) {
           await post('tasks', {

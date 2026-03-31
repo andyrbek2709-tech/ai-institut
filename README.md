@@ -430,6 +430,15 @@ git push origin main
 - Validation: `npm run build` (успешно), `CI=true npm test -- --watch=false` (успешно), lint по изменённым файлам без ошибок.
 - Next: commit+push блока D.1; затем переход к D.2 (расширение идемпотентности/сообщений блокировок на стороне orchestrator или клиентских “next step” подсказок).
 
+#### [2026-04-01 12:18] Agent update
+- Step: Блок D.2 выполнен: на стороне `orchestrator` добавлен единый формат blocked-ответов с `reason_code` и `next_step`; для role/intent guardrails и workflow invalid transitions возвращаются явные подсказки. На стороне `CopilotPanel` добавлено отображение `next_step` в чате и межвкладочная идемпотентность apply (проверка актуального статуса `ai_actions` перед применением).
+- Files:
+  - `enghub-main/api/orchestrator.js`
+  - `enghub-main/src/components/CopilotPanel.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), `CI=true npm test -- --watch=false` (успешно), lint по изменённым файлам без ошибок.
+- Next: commit+push блока D.2; затем переход к E.1 (Data/Migration Hardening: проверка индексов/ограничений и migration verification checklist).
+
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
 - Files:
