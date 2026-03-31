@@ -374,6 +374,48 @@ git push origin main
   - Релизный контур documented: есть release notes, runbook, migration checklist, smoke результаты и handover-лог.
   - Для production sign-off остаётся операторский шаг: выполнить manual e2e smoke сценарии и применить/подтвердить миграцию `008` в целевой Supabase среде.
 
+### Operator Sign-off Pack (post-G)
+
+Готовый набор для ручного финального подтверждения в production.
+
+1) Применение миграции `008` (если еще не применена)
+- Открыть Supabase SQL Editor.
+- Выполнить SQL из `supabase/migrations/008_schema_hardening.sql`.
+
+2) Проверка индексов (пример запроса)
+```sql
+select schemaname, tablename, indexname
+from pg_indexes
+where tablename in ('reviews', 'transmittals', 'revisions')
+order by tablename, indexname;
+```
+
+3) Проверка CHECK-ограничений
+```sql
+select conname, conrelid::regclass as table_name, pg_get_constraintdef(oid) as def
+from pg_constraint
+where conname in (
+  'drawings_status_domain_chk',
+  'reviews_severity_domain_chk',
+  'reviews_status_domain_chk',
+  'transmittals_status_domain_chk',
+  'transmittal_items_link_chk'
+)
+order by conname;
+```
+
+4) Быстрый smoke по данным
+```sql
+-- Пустых связей в transmittal_items быть не должно
+select count(*) as invalid_transmittal_items
+from transmittal_items
+where drawing_id is null and revision_id is null;
+```
+
+5) Manual e2e сценарии (UI)
+- `QA-GIP-01`, `QA-LEAD-01`, `QA-ENG-01`, `QA-DATA-01`.
+- Зафиксировать результаты в этом `README` (дата, среда, pass/fail).
+
 ### Execution Protocol
 - Один логический блок = один commit = один immediate push.
 - После каждого блока обязательно обновление `README.md` (`Agent Handover Log`).
@@ -564,6 +606,13 @@ git push origin main
   - `README.md`
 - Validation: not run (финальное документационное закрытие execution-цикла).
 - Next: commit+push блока G; roadmap execution cycle закрыт.
+
+#### [2026-04-01 13:14] Agent update
+- Step: Добавлен post-G `Operator Sign-off Pack` в `README` с готовыми SQL-проверками индексов/ограничений и финальным списком manual e2e сценариев для production sign-off.
+- Files:
+  - `README.md`
+- Validation: not run (документационный operator-pack).
+- Next: commit+push operator-pack; далее ожидание результатов ручного прогона от оператора.
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
