@@ -325,3 +325,9 @@ git push origin main
 - Files: `enghub-main/src/components/CopilotPanel.tsx`, `enghub-main/src/App.tsx`, `README.md`
 - Validation: `npm run build` (успешно), lint `CopilotPanel.tsx` и `App.tsx` без ошибок.
 - Next: сделать атомарный commit текущего шага (с включением этой записи README) или продолжить следующую итерацию по команде пользователя.
+
+#### [2026-03-31 18:09] Agent update
+- Step: Усилена надежность `CopilotPanel` при apply: добавлены payload-guards для `create_tasks`, `create_drawing`, `update_drawing`, `create_drawing_revision`, `create_review`; унифицировано чтение payload через локальную переменную для безопасной обработки.
+- Files: `enghub-main/src/components/CopilotPanel.tsx`, `README.md`
+- Validation: `npm run build` (успешно), lint `CopilotPanel.tsx` без ошибок.
+- Next: подготовить атомарный commit этого шага (Copilot hardening + запись handover).

@@ -100,6 +100,7 @@ export function CopilotPanel({
   const applyAction = async (action: AIAction, approved: boolean) => {
     try {
       const token = localStorage.getItem('enghub_token');
+      const payload = action.payload || {};
       if (approved && action.action_type === 'update_drawing' && !action.payload?.drawing_id) {
         setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить update_drawing: отсутствует drawing_id.' }]);
         return;
@@ -108,9 +109,21 @@ export function CopilotPanel({
         setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить ревизию: отсутствует drawing_id.' }]);
         return;
       }
+      if (approved && action.action_type === 'create_tasks' && !Array.isArray(payload.tasks)) {
+        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить create_tasks: payload.tasks отсутствует.' }]);
+        return;
+      }
+      if (approved && action.action_type === 'create_drawing' && (!payload.code || !payload.title)) {
+        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить create_drawing: отсутствует code или title.' }]);
+        return;
+      }
+      if (approved && action.action_type === 'create_review' && !payload.title) {
+        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить create_review: отсутствует title.' }]);
+        return;
+      }
       
       if (approved && action.action_type === 'create_tasks') {
-        for (const t of action.payload.tasks) {
+        for (const t of payload.tasks) {
           await post('tasks', {
             project_id: projectId,
             name: t.title,
@@ -125,9 +138,9 @@ export function CopilotPanel({
       if (approved && action.action_type === 'create_drawing') {
         await post('drawings', {
           project_id: projectId,
-          code: action.payload.code,
-          title: action.payload.title,
-          discipline: action.payload.discipline || null,
+          code: payload.code,
+          title: payload.title,
+          discipline: payload.discipline || null,
           status: 'draft',
           revision: 'R0',
           created_by: userId
@@ -135,33 +148,33 @@ export function CopilotPanel({
         onDataChanged?.();
       }
 
-      if (approved && action.action_type === 'update_drawing' && action.payload?.drawing_id) {
-        await patch(`drawings?id=eq.${action.payload.drawing_id}`, action.payload.updates || {}, token || '');
+      if (approved && action.action_type === 'update_drawing' && payload?.drawing_id) {
+        await patch(`drawings?id=eq.${payload.drawing_id}`, payload.updates || {}, token || '');
         onDataChanged?.();
       }
 
-      if (approved && action.action_type === 'create_drawing_revision' && action.payload?.drawing_id) {
-        const drawingRows = await get(`drawings?id=eq.${action.payload.drawing_id}&select=id,revision,project_id`, token || '');
+      if (approved && action.action_type === 'create_drawing_revision' && payload?.drawing_id) {
+        const drawingRows = await get(`drawings?id=eq.${payload.drawing_id}&select=id,revision,project_id`, token || '');
         const drawing = Array.isArray(drawingRows) ? drawingRows[0] : null;
         const revNum = Number(String(drawing?.revision || 'R0').replace('R', '')) + 1;
         const nextRev = `R${Number.isFinite(revNum) ? revNum : 1}`;
         await post('revisions', {
           project_id: drawing?.project_id || projectId,
-          drawing_id: action.payload.drawing_id,
+          drawing_id: payload.drawing_id,
           from_revision: drawing?.revision || 'R0',
           to_revision: nextRev,
           issued_by: userId
         }, token || '');
-        await patch(`drawings?id=eq.${action.payload.drawing_id}`, { revision: nextRev, status: 'in_work' }, token || '');
+        await patch(`drawings?id=eq.${payload.drawing_id}`, { revision: nextRev, status: 'in_work' }, token || '');
         onDataChanged?.();
       }
 
       if (approved && action.action_type === 'create_review') {
         await post('reviews', {
           project_id: projectId,
-          drawing_id: action.payload?.drawing_id || null,
-          title: action.payload?.title || 'Замечание',
-          severity: action.payload?.severity || 'major',
+          drawing_id: payload?.drawing_id || null,
+          title: payload?.title || 'Замечание',
+          severity: payload?.severity || 'major',
           status: 'open',
           author_id: userId
         }, token || '');
@@ -171,9 +184,9 @@ export function CopilotPanel({
       if (approved && action.action_type === 'create_transmittal') {
         await post('transmittals', {
           project_id: projectId,
-          number: action.payload?.number || `TR-${projectId}-${Date.now()}`,
-          recipient: action.payload?.recipient || null,
-          note: action.payload?.note || null,
+          number: payload?.number || `TR-${projectId}-${Date.now()}`,
+          recipient: payload?.recipient || null,
+          note: payload?.note || null,
           status: 'draft',
           issued_by: userId
         }, token || '');
