@@ -79,7 +79,9 @@ export function CopilotPanel({
 
       const data = await res.json();
       
-      if (data.message) {
+      if (data.blocked) {
+        setMessages(prev => [...prev, { role: 'ai', text: `⛔ ${data.message || 'Действие заблокировано правилами.'}` }]);
+      } else if (data.message) {
         setMessages(prev => [...prev, { role: 'ai', text: data.message }]);
       } else {
         setMessages(prev => [...prev, { role: 'ai', text: 'Запрос обработан.' }]);

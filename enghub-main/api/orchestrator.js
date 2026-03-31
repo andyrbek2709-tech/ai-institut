@@ -43,6 +43,66 @@ function detectIntent(message = '') {
   return 'unknown';
 }
 
+function buildDrawingAction(actionType, project_id, user_id, payload = {}) {
+  if (actionType === 'create_drawing') {
+    const autoCode = `AI-${String(project_id)}-${Date.now().toString().slice(-6)}`;
+    return {
+      ok: true,
+      insertData: {
+        project_id,
+        user_id,
+        action_type: 'create_drawing',
+        agent_type: 'drawing_agent',
+        payload: {
+          code: payload.code || autoCode,
+          title: payload.title || 'Новый чертеж',
+          discipline: payload.discipline || null,
+        },
+        status: 'pending',
+      },
+      message: 'Drawing Agent подготовил карточку нового чертежа.',
+    };
+  }
+
+  if (actionType === 'update_drawing') {
+    if (!payload.drawing_id) {
+      return { ok: false, blocked: true, message: 'Для обновления чертежа нужен payload.drawing_id' };
+    }
+    return {
+      ok: true,
+      insertData: {
+        project_id,
+        user_id,
+        action_type: 'update_drawing',
+        agent_type: 'drawing_agent',
+        payload: { drawing_id: payload.drawing_id, updates: payload.updates || {} },
+        status: 'pending',
+      },
+      message: 'Drawing Agent подготовил обновление чертежа.',
+    };
+  }
+
+  if (actionType === 'create_drawing_revision') {
+    if (!payload.drawing_id) {
+      return { ok: false, blocked: true, message: 'Для выпуска ревизии нужен payload.drawing_id' };
+    }
+    return {
+      ok: true,
+      insertData: {
+        project_id,
+        user_id,
+        action_type: 'create_drawing_revision',
+        agent_type: 'drawing_agent',
+        payload: { drawing_id: payload.drawing_id, note: payload.note || 'Ревизия по запросу Copilot' },
+        status: 'pending',
+      },
+      message: 'Drawing Agent подготовил выпуск новой ревизии.',
+    };
+  }
+
+  return { ok: false, blocked: true, message: 'Неподдерживаемое drawing действие' };
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -120,6 +180,32 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // Explicit action contract for Copilot/clients
+    if (action === 'create_drawing' || action === 'update_drawing' || action === 'create_drawing_revision') {
+      const result = buildDrawingAction(action, project_id, user_id, payload);
+      if (!result.ok) {
+        return res.status(200).json({
+          success: false,
+          agent: 'drawing_agent',
+          blocked: !!result.blocked,
+          message: result.message || 'Drawing action blocked',
+        });
+      }
+      const insertRes = await fetch(`${SURL}/rest/v1/ai_actions`, {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'return=representation' },
+        body: JSON.stringify(result.insertData),
+      });
+      const inserted = await insertRes.json();
+      return res.status(200).json({
+        success: true,
+        agent: 'drawing_agent',
+        action_id: inserted?.[0]?.id,
+        action_type: result.insertData.action_type,
+        message: result.message,
+      });
+    }
+
     const intent = detectIntent(message);
 
     if (intent === 'workflow_transition') {
@@ -160,53 +246,19 @@ module.exports = async function handler(req, res) {
           ];
       insertData = { project_id, user_id, action_type: 'create_tasks', agent_type: 'task_manager', payload: { tasks }, status: 'pending' };
       responseMessage = 'Task Manager подготовил пакет задач на утверждение.';
-    } else if (intent === 'create_drawing') {
-      const autoCode = `AI-${String(project_id)}-${Date.now().toString().slice(-6)}`;
-      insertData = {
-        project_id,
-        user_id,
-        action_type: 'create_drawing',
-        agent_type: 'drawing_agent',
-        payload: { code: payload.code || autoCode, title: payload.title || 'Новый чертеж', discipline: payload.discipline || null },
-        status: 'pending',
-      };
-      responseMessage = 'Drawing Agent подготовил карточку нового чертежа.';
-    } else if (intent === 'update_drawing') {
-      if (!payload.drawing_id) {
+    } else if (intent === 'create_drawing' || intent === 'update_drawing' || intent === 'drawing_revision') {
+      const drawingActionType = intent === 'drawing_revision' ? 'create_drawing_revision' : intent;
+      const result = buildDrawingAction(drawingActionType, project_id, user_id, payload);
+      if (!result.ok) {
         return res.status(200).json({
           success: false,
           agent: 'drawing_agent',
-          blocked: true,
-          message: 'Для обновления чертежа нужен payload.drawing_id',
+          blocked: !!result.blocked,
+          message: result.message || 'Drawing action blocked',
         });
       }
-      insertData = {
-        project_id,
-        user_id,
-        action_type: 'update_drawing',
-        agent_type: 'drawing_agent',
-        payload: { drawing_id: payload.drawing_id, updates: payload.updates || {} },
-        status: 'pending',
-      };
-      responseMessage = 'Drawing Agent подготовил обновление чертежа.';
-    } else if (intent === 'drawing_revision') {
-      if (!payload.drawing_id) {
-        return res.status(200).json({
-          success: false,
-          agent: 'drawing_agent',
-          blocked: true,
-          message: 'Для выпуска ревизии нужен payload.drawing_id',
-        });
-      }
-      insertData = {
-        project_id,
-        user_id,
-        action_type: 'create_drawing_revision',
-        agent_type: 'drawing_agent',
-        payload: { drawing_id: payload.drawing_id, note: payload.note || 'Ревизия по запросу Copilot' },
-        status: 'pending',
-      };
-      responseMessage = 'Drawing Agent подготовил выпуск новой ревизии.';
+      insertData = result.insertData;
+      responseMessage = result.message;
     } else if (intent === 'create_review') {
       insertData = {
         project_id,

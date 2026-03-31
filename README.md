@@ -246,13 +246,22 @@ git push origin main
 ### Phase Status Snapshot
 
 - Phase 1 (Drawings foundation): DONE
-- Phase 2: Implemented
+- Phase 2 (Drawing Agent): DONE
 - Phase 3: Implemented
 - Phase 4: Implemented
 - Phase 5: Implemented
 - Phase 6: Implemented
 - Phase 7: Implemented
 - Phase 8: Implemented
+
+#### [2026-03-31 18:31] Agent update
+- Step: Формально закрыта Фаза 2 как завершенная: для Drawing Agent добавлен явный action-контракт (`create_drawing`, `update_drawing`, `create_drawing_revision`) в `orchestrator`, унифицированы валидации payload и fallback-блокировки, а `CopilotPanel` теперь корректно показывает `blocked`-ответы пользователю.
+- Files:
+  - `enghub-main/api/orchestrator.js`
+  - `enghub-main/src/components/CopilotPanel.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint `orchestrator.js` и `CopilotPanel.tsx` без ошибок.
+- Next: по команде пользователя — переход к следующей целевой фазе с тем же протоколом (шаг -> README log -> отчет -> commit).
 
 #### [2026-03-31 18:18] Agent update
 - Step: Формально закрыта Фаза 1 как завершенная: выполнен полный чеклист по таблице `drawings`, обновлению `constants.ts`, реализации `DrawingsPanel`, интеграции в `App.tsx` и CRUD через `src/api/supabase.ts`.
