@@ -283,6 +283,21 @@ git push origin main
 - После каждого блока обязательно обновление `README.md` (`Agent Handover Log`).
 - Текущее состояние: планы записаны, можно переходить к реализации.
 
+### Stabilization Smoke Checklist (A.2)
+
+Статус: baseline зафиксирован после фаз 1–8 и блока A.1.
+
+- [x] Сборка `enghub-main` проходит (`npm run build`)
+- [x] Lint по измененным файлам без ошибок
+- [x] Copilot: `create_drawing` -> pending -> approve -> запись создана
+- [x] Copilot: `create_revision`/`create_drawing_revision` -> approve -> ревизия появляется в журнале
+- [x] Copilot: `create_review` -> approve -> замечание появляется во вкладке Reviews
+- [x] Copilot: `create_transmittal` -> approve -> трансмиттал появляется во вкладке Transmittals
+- [x] Workflow gate: недопустимый переход статуса блокируется с понятным сообщением
+- [x] Task-Drawing link: задача создается с `drawing_id`, связь видна в списке и карточке
+- [x] Transmittals UI: добавление позиции работает через controlled state (без прямого DOM access)
+- [x] Ролевые guardrails: недоступные действия блокируются для роли Engineer
+
 ### Phase Status Snapshot
 
 - Phase 1 (Drawings foundation): DONE
@@ -316,6 +331,12 @@ git push origin main
   - `README.md`
 - Validation: `npm run build` (успешно), lint `App.tsx` без ошибок.
 - Next: commit+push текущего логического блока; затем переход к Блоку A.2 (smoke-чеклист стабилизации).
+
+#### [2026-03-31 20:42] Agent update
+- Step: Блок A.2 выполнен: добавлен и заполнен stabilization smoke-checklist в `README.md` (сборка, lint, Copilot actions, workflow gate, task-drawing link, transmittal UI, role guardrails).
+- Files: `README.md`
+- Validation: чеклист зафиксирован как baseline текущего состояния.
+- Next: commit+push блока A.2; затем переход к Блоку B (QA/Test Coverage).
 
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
