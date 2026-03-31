@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions } from './constants';
-import { get, post, patch, del, SURL, SERVICE_KEY, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal } from './api/supabase';
+import { get, post, patch, del, SURL, SERVICE_KEY, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink } from './api/supabase';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
@@ -123,7 +123,7 @@ export default function App() {
   const loadProjects = async () => { const data = await get("projects?archived=eq.false&order=id", token!); if (Array.isArray(data)) { setProjects(data); if (data.length > 0) setActiveProject(data[0]); } setLoading(false); };
   const loadArchived = async () => { const data = await get("projects?archived=eq.true&order=id", token!); if (Array.isArray(data)) setArchivedProjects(data); };
   const loadAllTasks = async (pid: number) => {
-    const data = await get(`tasks?project_id=eq.${pid}&order=id`, token!);
+    const data = await listProjectTasks(pid, token!);
     if (Array.isArray(data)) {
       setAllTasks(data);
       // Фильтрация по роли
@@ -365,7 +365,7 @@ export default function App() {
     if (!newTask.name || !activeProject) return;
     setSaving(true);
     const leadUser = getUserById(newTask.assigned_to);
-    await post("tasks", { name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id, drawing_id: newTask.drawing_id || null }, token!);
+    await createProjectTask({ name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id, drawing_id: newTask.drawing_id || null }, token!);
     addNotification(`Задача "${newTask.name}" создана${leadUser ? ` → ${leadUser.full_name}` : ''}`, 'success');
     setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "" }); setShowNewTask(false); setSaving(false); loadTasks(activeProject.id);
   };
@@ -701,6 +701,23 @@ export default function App() {
               <Field label="НАЗНАЧИТЬ ИНЖЕНЕРУ" C={C}><select onChange={e => { if (e.target.value) assignTask(selectedTask.id, e.target.value); }} defaultValue="" style={getInp(C)}><option value="">— Выбрать инженера —</option>{myEngineers.map(u => <option key={u.id} value={u.id}>{u.full_name} — {getEngLoad(u.id)}% загрузка</option>)}</select></Field>
             )}
             {isLead && (<Field label="ПРИОРИТЕТ" C={C}><select value={selectedTask.priority} onChange={async e => { await patch(`tasks?id=eq.${selectedTask.id}`, { priority: e.target.value }, token!); setSelectedTask({ ...selectedTask, priority: e.target.value }); if (activeProject) loadTasks(activeProject.id); }} style={getInp(C)}><option value="high">🔴 Высокий</option><option value="medium">🟡 Средний</option><option value="low">⚪ Низкий</option></select></Field>)}
+            {(isLead || isGip) && (
+              <Field label="СВЯЗАННЫЙ ЧЕРТЕЖ" C={C}>
+                <select
+                  value={selectedTask.drawing_id || ""}
+                  onChange={async (e) => {
+                    const value = e.target.value || null;
+                    await updateTaskDrawingLink(selectedTask.id, value, token!);
+                    setSelectedTask({ ...selectedTask, drawing_id: value });
+                    if (activeProject) loadTasks(activeProject.id);
+                  }}
+                  style={getInp(C)}
+                >
+                  <option value="">— Без привязки —</option>
+                  {drawings.map((d) => <option key={d.id} value={d.id}>{d.code} — {d.title}</option>)}
+                </select>
+              </Field>
+            )}
             {getTaskActions(selectedTask).length > 0 && (
               <div>
                 <div className="field-label" style={{ marginBottom: 8 }}>ДЕЙСТВИЯ</div>

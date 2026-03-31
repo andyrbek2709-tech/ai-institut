@@ -252,11 +252,21 @@ git push origin main
 - Phase 1 (Drawings foundation): DONE
 - Phase 2 (Drawing Agent): DONE
 - Phase 3 (Workflow Agent): DONE
-- Phase 4: Implemented
+- Phase 4 (Task-Drawing Link): DONE
 - Phase 5: Implemented
 - Phase 6: Implemented
 - Phase 7: Implemented
 - Phase 8: Implemented
+
+#### [2026-03-31 19:01] Agent update
+- Step: Формально закрыта Фаза 4 как завершенная: связь `tasks.drawing_id` подтверждена миграцией и интеграцией чтения/записи; добавлены API-хелперы для задач и возможность менять связанный чертеж прямо в карточке задачи (Lead/GIP), плюс отображение связи в списке/деталях.
+- Files:
+  - `supabase/migrations/003_tasks_drawing_link.sql`
+  - `enghub-main/src/api/supabase.ts`
+  - `enghub-main/src/App.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint `App.tsx` и `supabase.ts` без ошибок.
+- Next: по команде пользователя — переход к Фазе 5 с тем же протоколом (README отчет -> commit -> immediate push).
 
 #### [2026-03-31 18:47] Agent update
 - Step: Формально закрыта Фаза 3 как завершенная: Workflow Agent в `orchestrator` теперь отдает расширенные причины блокировки (`reason_code`) и список допустимых переходов (`allowed_next`), а UI в `App.tsx` показывает явный блок “БЛОКИРОВКА WORKFLOW” с текстом причины отказа.

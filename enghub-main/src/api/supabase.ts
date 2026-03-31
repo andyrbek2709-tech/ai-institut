@@ -79,4 +79,13 @@ export const createReview = (payload: any, token?: string) =>
 export const createTransmittal = (payload: any, token?: string) =>
   post('transmittals', payload, token);
 
+export const listProjectTasks = (projectId: number, token?: string) =>
+  get(`tasks?project_id=eq.${projectId}&order=id`, token);
+
+export const createProjectTask = (payload: any, token?: string) =>
+  post('tasks', payload, token);
+
+export const updateTaskDrawingLink = (taskId: number, drawingId: string | null, token?: string) =>
+  patch(`tasks?id=eq.${taskId}`, { drawing_id: drawingId }, token);
+
 export { SURL, SERVICE_KEY };
