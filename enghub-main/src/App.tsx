@@ -1140,28 +1140,18 @@ export default function App() {
                           const docId = Array.isArray(docData) ? docData[0]?.id : docData?.id;
                           if (!docId) continue;
 
-                          // 3. Запустить Edge Function для векторизации
-                          const vectorizeRes = await fetch(
-                            `${SURL}/functions/v1/vectorize-doc`,
-                            {
-                              method: 'POST',
-                              headers: {
-                                'Authorization': `Bearer ${SERVICE_KEY}`,
-                                'Content-Type': 'application/json',
-                              },
-                              body: JSON.stringify({ doc_id: docId }),
-                            }
-                          );
-
-                          if (vectorizeRes.ok) {
-                            successCount++;
-                          } else {
-                            // Даже если векторизация не удалась — документ загружен
-                            successCount++;
-                            addNotification(`"${file.name}" загружен, векторизация отложена`, 'warning');
-                          }
+                          // 3. Запустить Edge Function (fire-and-forget, векторизация идёт в фоне)
+                          fetch(`${SURL}/functions/v1/vectorize-doc`, {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${SERVICE_KEY}`,
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ doc_id: docId }),
+                          }).catch(() => {});
+                          successCount++;
                         } catch {
-                          addNotification(`Ошибка при загрузке "${file.name}"`, 'warning');
+                          addNotification(`Ошибка загрузки "${file.name}"`, 'warning');
                         }
                       }
 
