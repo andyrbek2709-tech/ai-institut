@@ -10,199 +10,174 @@
   }
   body {
     margin: 0; 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-    background: #f9f9f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f5f7fa;
     color: #333;
-    line-height: 1.6;
   }
   header {
-    background: #005f73;
-    color: white;
+    background: #003366;
+    color: #fff;
     padding: 1rem 2rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
   }
   header h1 {
+    font-weight: 700;
     margin: 0;
     font-size: 1.5rem;
-    letter-spacing: 1px;
   }
   nav ul {
     list-style: none;
     display: flex;
+    gap: 1.5rem;
     margin: 0;
     padding: 0;
   }
-  nav ul li {
-    margin-left: 1.5rem;
-  }
   nav ul li a {
+    color: #fff;
     text-decoration: none;
-    color: white;
     font-weight: 600;
     transition: color 0.3s ease;
   }
   nav ul li a:hover {
-    color: #94d2bd;
+    color: #f0a500;
   }
   main {
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 2rem auto;
     padding: 0 1rem;
   }
   .hero {
-    position: relative;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+    text-align: center;
   }
   .hero img {
     width: 100%;
-    display: block;
-    object-fit: cover;
-    height: 400px;
-    filter: brightness(0.75);
+    max-width: 800px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
   }
-  .hero-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #e0fbfc;
-    text-align: center;
-    max-width: 80%;
+  .hero h2 {
+    font-size: 2.5rem;
+    margin: 0;
+    color: #003366;
   }
-  .hero-text h2 {
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
-  }
-  .hero-text p {
-    font-size: 1.25rem;
+  .hero p {
+    font-size: 1.125rem;
+    max-width: 700px;
+    color: #555;
   }
   section {
-    margin-bottom: 4rem;
-  }
-  section h3 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-    color: #0a9396;
-    border-bottom: 2px solid #94d2bd;
-    padding-bottom: 0.3rem;
-  }
-  .cards {
+    margin-top: 4rem;
     display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+    gap: 2rem;
   }
   .card {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
-  .card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
+  .card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
   }
-  .card-content {
-    padding: 1rem 1.5rem;
-    flex-grow: 1;
-  }
-  .card-content h4 {
+  .card h3 {
     margin-top: 0;
-    margin-bottom: 0.5rem;
-    color: #005f73;
+    color: #003366;
   }
-  .card-content p {
-    flex-grow: 1;
-    margin: 0;
+  .card p {
+    color: #666;
+    font-size: 1rem;
   }
   footer {
-    background: #001219;
-    color: #94d2bd;
+    background: #003366;
+    color: #fff;
     text-align: center;
     padding: 1.5rem 1rem;
     font-size: 0.9rem;
+    margin-top: 4rem;
   }
   @media (max-width: 600px) {
-    .hero-text h2 {
+    .hero h2 {
       font-size: 2rem;
     }
     nav ul {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    nav ul li {
-      margin-left: 0;
-      margin-bottom: 0.8rem;
+      gap: 0.8rem;
     }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Современный Сайт</h1>
+  <h1>Современный сайт</h1>
   <nav>
     <ul>
-      <li><a href="#home">Главная</a></li>
-      <li><a href="#services">Услуги</a></li>
-      <li><a href="#about">О нас</a></li>
-      <li><a href="#contact">Контакты</a></li>
+      <li><a href="#home" aria-label="Главная">Главная</a></li>
+      <li><a href="#services" aria-label="Услуги">Услуги</a></li>
+      <li><a href="#about" aria-label="О нас">О нас</a></li>
+      <li><a href="#contact" aria-label="Контакты">Контакты</a></li>
     </ul>
   </nav>
 </header>
 <main>
-  <section id="home" class="hero">
-    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Красивый пейзаж" />
-    <div class="hero-text">
-      <h2>Добро пожаловать на современный сайт</h2>
-      <p>Красота и технология объединяются для вашего удобства</p>
+  <section class="hero" id="home" role="banner">
+    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Красивый современный пейзаж" />
+    <h2>Добро пожаловать на наш современный сайт</h2>
+    <p>Мы создаём красивые и современные веб-решения, которые помогают вашему бизнесу расти и процветать.</p>
+  </section>
+
+  <section id="services" aria-label="Услуги">
+    <div class="card">
+      <h3>Веб-разработка</h3>
+      <p>Создаём адаптивные и функциональные сайты, которые работают на всех устройствах.</p>
+    </div>
+    <div class="card">
+      <h3>Дизайн</h3>
+      <p>Разрабатываем стильные и современные интерфейсы, ориентированные на пользователя.</p>
+    </div>
+    <div class="card">
+      <h3>SEO Оптимизация</h3>
+      <p>Повышаем видимость вашего сайта в поисковиках, привлекая больше клиентов.</p>
+    </div>
+    <div class="card">
+      <h3>Поддержка</h3>
+      <p>Обеспечиваем техническую поддержку и обновления для стабильной работы сайта.</p>
     </div>
   </section>
-  <section id="services">
-    <h3>Наши услуги</h3>
-    <div class="cards">
-      <article class="card">
-        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800" alt="Веб-разработка"/>
-        <div class="card-content">
-          <h4>Веб-разработка</h4>
-          <p>Создаем современные и адаптивные сайты, которые помогают вашему бизнесу расти.</p>
-        </div>
-      </article>
-      <article class="card">
-        <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800" alt="Дизайн"/>
-        <div class="card-content">
-          <h4>Дизайн</h4>
-          <p>Разрабатываем привлекательный и интуитивно понятный дизайн для любых платформ.</p>
-        </div>
-      </article>
-      <article class="card">
-        <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800" alt="Продвижение"/>
-        <div class="card-content">
-          <h4>Продвижение</h4>
-          <p>Помогаем вашей компании выйти на новый уровень с помощью digital-маркетинга.</p>
-        </div>
-      </article>
-    </div>
+
+  <section id="about" aria-label="О нас" style="margin-top:4rem; text-align:center; max-width:700px; margin-left:auto; margin-right:auto;">
+    <h2>О нашей компании</h2>
+    <p>Мы — команда профессионалов с многолетним опытом в веб-разработке и дизайне. Наш приоритет — качество и удовлетворённость клиентов.</p>
   </section>
-  <section id="about">
-    <h3>О нас</h3>
-    <p>Мы - команда профессиональных веб-разработчиков, стремящихся создать лучшие цифровые решения для вас. Современные технологии, креативный подход и внимательное отношение к деталям — наши главные инструменты.</p>
-  </section>
-  <section id="contact">
-    <h3>Контакты</h3>
-    <p>Телефон: +7 123 456 7890</p>
-    <p>Email: info@modernsite.ru</p>
-    <p>Адрес: Москва, Россия</p>
+
+  <section id="contact" aria-label="Контакты" style="margin-top:4rem; max-width:700px; margin-left:auto; margin-right:auto;">
+    <h2>Свяжитесь с нами</h2>
+    <p>Если у вас есть вопросы или вы хотите обсудить проект — напишите нам.</p>
+    <form>
+      <label for="name" style="display:block; margin-top:1rem;">Имя</label>
+      <input type="text" id="name" name="name" required style="width:100%; padding:0.5rem; border-radius:6px; border:1px solid #ccc;" />
+      <label for="email" style="display:block; margin-top:1rem;">Email</label>
+      <input type="email" id="email" name="email" required style="width:100%; padding:0.5rem; border-radius:6px; border:1px solid #ccc;" />
+      <label for="message" style="display:block; margin-top:1rem;">Сообщение</label>
+      <textarea id="message" name="message" rows="5" required style="width:100%; padding:0.5rem; border-radius:6px; border:1px solid #ccc;"></textarea>
+      <button type="submit" style="margin-top:1rem; background:#003366; color:#fff; padding:0.75rem 1.5rem; border:none; border-radius:6px; cursor:pointer; font-size:1rem;">
+        Отправить
+      </button>
+    </form>
   </section>
 </main>
 <footer>
-  &copy; 2024 Современный Сайт. Все права защищены.
+  &copy; 2024 Современный сайт. Все права защищены.
 </footer>
 </body>
 </html>
