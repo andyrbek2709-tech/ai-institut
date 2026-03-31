@@ -28,6 +28,7 @@ export function CopilotPanel({
   const [input, setInput] = useState('');
   const [actions, setActions] = useState<AIAction[]>([]);
   const [loading, setLoading] = useState(false);
+  const [useKB, setUseKB] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Polling ai_actions
@@ -68,7 +69,8 @@ export function CopilotPanel({
         body: JSON.stringify({
           user_id: userId,
           project_id: projectId,
-          message: userText
+          message: userText,
+          use_rag: useKB
         })
       });
 
@@ -139,6 +141,25 @@ export function CopilotPanel({
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 20 }}>✕</button>
+      </div>
+
+      {/* RAG Toggle */}
+      <div style={{ padding: '10px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: useKB ? C.accent + '10' : 'transparent' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: useKB ? C.accent : C.textDim }}>
+          <span>{useKB ? '🔍 Поиск по базе знаний ВКЛ' : '🌐 Обычный режим'}</span>
+        </div>
+        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: 44, height: 22 }}>
+            <input type="checkbox" checked={useKB} onChange={() => setUseKB(!useKB)} style={{ opacity: 0, width: 0, height: 0 }} />
+            <span style={{ 
+                position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, 
+                backgroundColor: useKB ? C.accent : C.border, transition: '.4s', borderRadius: 34 
+            }}>
+                <span style={{ 
+                    position: 'absolute', content: '""', height: 16, width: 16, left: useKB ? 25 : 3, bottom: 3, 
+                    backgroundColor: 'white', transition: '.4s', borderRadius: '50%' 
+                }}></span>
+            </span>
+        </label>
       </div>
 
       {/* Action Feed & Chat Area */}

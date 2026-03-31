@@ -24,6 +24,7 @@ export default function App() {
   const [appUsers, setAppUsers] = useState<any[]>([]);
   const [depts, setDepts] = useState<any[]>([]);
   const [activeProject, setActiveProject] = useState<any>(null);
+  const [normativeDocs, setNormativeDocs] = useState<any[]>([]);
   const [showArchive, setShowArchive] = useState(false);
   const [archivedProjects, setArchivedProjects] = useState<any[]>([]);
   const [sideTab, setSideTab] = useState(localStorage.getItem('enghub_sidetab') || "tasks");
@@ -41,6 +42,9 @@ export default function App() {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskComment, setTaskComment] = useState("");
 
+  const [showNewAssignment, setShowNewAssignment] = useState(false);
+  const [newAssignment, setNewAssignment] = useState({ name: "", target_dept: "", priority: "high", deadline: "" });
+
   // Поиск и фильтры
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -56,7 +60,7 @@ export default function App() {
   const getUserById = (id: any) => appUsers.find(u => String(u.id) === String(id));
   const getDeptName = (id: any) => depts.find(d => d.id === id)?.name || "";
 
-  useEffect(() => { if (token && !isAdmin) { loadAppUsers(); loadDepts(); loadProjects(); } }, [token]);
+  useEffect(() => { if (token && !isAdmin) { loadAppUsers(); loadDepts(); loadProjects(); loadNormativeDocs(); } }, [token]);
   useEffect(() => { if (activeProject && token) { loadAllTasks(activeProject.id); loadMessages(activeProject.id); } }, [activeProject]);
   useEffect(() => { document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light'); }, [dark]);
   useEffect(() => { localStorage.setItem('enghub_screen', screen); }, [screen]);
@@ -69,10 +73,25 @@ export default function App() {
   // Copilot AI Module States
   const [showCopilot, setShowCopilot] = useState(false);
 
+  const [incomingCall, setIncomingCall] = useState<any>(null); // { project_id, project_name, initiator_name }
+
   // Перезагружаем задачи когда currentUserData загрузился
   useEffect(() => { if (activeProject && token && currentUserData) { loadAllTasks(activeProject.id); } }, [currentUserData?.id]);
 
-  const loadAppUsers = async () => { const data = await get("app_users?order=id", token!); if (Array.isArray(data)) { setAppUsers(data); const me = data.find((u: any) => u.email === userEmail); if (me) setCurrentUserData(me); } };
+  const loadAppUsers = async () => { 
+    const data = await get("app_users?order=id", token!); 
+    if (Array.isArray(data)) { 
+      setAppUsers(data); 
+      let me = data.find((u: any) => u.email === userEmail); 
+      if (!me && userEmail && !isAdmin) {
+         // Fallback: create public profile if missing for authed user
+         const fallbackRole = userEmail.includes('gip') ? 'gip' : (userEmail.includes('lead') ? 'lead' : 'engineer');
+         const { data: newMe } = await post("app_users", { email: userEmail, full_name: userEmail.split('@')[0], role: fallbackRole }, token!);
+         if (newMe) me = newMe;
+      }
+      if (me) setCurrentUserData(me); 
+    } 
+  };
   const loadDepts = async () => { const data = await get("departments?order=name", token!); if (Array.isArray(data)) setDepts(data); };
   const loadProjects = async () => { const data = await get("projects?archived=eq.false&order=id", token!); if (Array.isArray(data)) { setProjects(data); if (data.length > 0) setActiveProject(data[0]); } setLoading(false); };
   const loadArchived = async () => { const data = await get("projects?archived=eq.true&order=id", token!); if (Array.isArray(data)) setArchivedProjects(data); };
@@ -96,9 +115,30 @@ export default function App() {
   };
   // Keep loadTasks as alias
   const loadTasks = loadAllTasks;
-  const loadMessages = async (pid: number) => { const data = await get(`messages?project_id=eq.${pid}&order=created_at`, token!); if (Array.isArray(data)) setMsgs(data); };
+  const loadMessages = async (pid: number, taskId?: number) => { 
+    const query = taskId ? `messages?task_id=eq.${taskId}&order=created_at` : `messages?project_id=eq.${pid}&task_id=is.null&order=created_at`;
+    const data = await get(query, token!); 
+    if (Array.isArray(data)) setMsgs(data); 
+  };
 
-  const sendMsg = async () => { if (!chatInput.trim() || !activeProject) return; await post("messages", { text: chatInput, user_id: currentUserData?.id, project_id: activeProject.id, type: "text" }, token!); setChatInput(""); loadMessages(activeProject.id); };
+  const loadNormativeDocs = async () => {
+    const data = await get("normative_docs?order=created_at.desc", token!);
+    if (Array.isArray(data)) setNormativeDocs(data);
+  };
+
+  const sendMsg = async (taskId?: number, type: string = "text", customText?: string) => { 
+    const finalTxt = customText || chatInput;
+    if (!finalTxt.trim() || !activeProject) return; 
+    await post("messages", { 
+      text: finalTxt, 
+      user_id: currentUserData?.id, 
+      project_id: activeProject.id, 
+      type,
+      task_id: taskId || null
+    }, token!); 
+    if (!customText) setChatInput(""); 
+    loadMessages(activeProject.id, taskId); 
+  };
   const { notifications, addNotification, removeNotification } = useNotifications();
   const prevTasksRef = useRef<string>("");
 
@@ -110,13 +150,11 @@ export default function App() {
       if (Array.isArray(data)) {
         const newHash = JSON.stringify(data.map((t: any) => ({ id: t.id, status: t.status, assigned_to: t.assigned_to })));
         if (prevTasksRef.current && prevTasksRef.current !== newHash) {
-          // Сравним что изменилось
           const oldTasks = JSON.parse(prevTasksRef.current) as any[];
           data.forEach((t: any) => {
             const old = oldTasks.find((o: any) => o.id === t.id);
             if (old && old.status !== t.status) {
               const taskName = t.name || `#${t.id}`;
-              const statusLabel = statusMap[t.status]?.label || t.status;
               if (t.status === "review_lead" && isLead) addNotification(`📋 Задача "${taskName}" отправлена на проверку`, 'warning');
               if (t.status === "review_gip" && isGip) addNotification(`📋 Задача "${taskName}" ожидает вашей проверки`, 'warning');
               if (t.status === "inprogress" && isLead) addNotification(`▶ Задача "${taskName}" взята в работу`, 'info');
@@ -131,9 +169,21 @@ export default function App() {
         }
         prevTasksRef.current = newHash;
       }
+
+      // GLOBAL CALL NOTIFICATION POLLING
+      const msgData = await get(`messages?project_id=eq.${activeProject.id}&type=eq.call_start&order=created_at.desc&limit=1`, token);
+      if (Array.isArray(msgData) && msgData.length > 0) {
+          const call = msgData[0];
+          const callTime = new Date(call.created_at).getTime();
+          const now = Date.now();
+          if (now - callTime < 30000 && sideTab !== 'conference') {
+              const initiator = getUserById(call.user_id);
+              setIncomingCall({ project_id: activeProject.id, project_name: activeProject.name, initiator_name: initiator?.full_name || "ГИП" });
+          }
+      }
     }, 10000);
     return () => clearInterval(interval);
-  }, [activeProject, token, currentUserData?.id]);
+  }, [activeProject, token, currentUserData?.id, sideTab]);
 
   const createProject = async () => { if (!newProject.name || !newProject.code) return; setSaving(true); await post("projects", { ...newProject, progress: 0, archived: false }, token!); setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(false); setSaving(false); loadProjects(); addNotification(`Проект "${newProject.name}" создан`, 'success'); };
   
@@ -153,6 +203,40 @@ export default function App() {
     addNotification(`Задача "${newTask.name}" создана${leadUser ? ` → ${leadUser.full_name}` : ''}`, 'success');
     setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "" }); setShowNewTask(false); setSaving(false); loadTasks(activeProject.id);
   };
+  
+  const createAssignment = async () => {
+    if (!newAssignment.name || !newAssignment.target_dept || !activeProject) return;
+    setSaving(true);
+    await post("tasks", { 
+        name: newAssignment.name, 
+        dept: getDeptNameById(newAssignment.target_dept), 
+        priority: newAssignment.priority, 
+        deadline: newAssignment.deadline, 
+        status: "todo", 
+        project_id: activeProject.id,
+        is_assignment: true,
+        source_dept: currentUserData?.dept_id,
+        assignment_status: 'pending_accept'
+    }, token!);
+    addNotification(`Задание смежникам отправлено`, 'success');
+    setNewAssignment({ name: "", target_dept: "", priority: "high", deadline: "" }); 
+    setShowNewAssignment(false); 
+    setSaving(false); 
+    loadTasks(activeProject.id);
+  };
+
+  const handleAssignmentResponse = async (taskId: number, accept: boolean, comment?: string) => {
+      setSaving(true);
+      if (accept) {
+          await patch(`tasks?id=eq.${taskId}`, { assignment_status: 'accepted' }, token!);
+          addNotification('Задание принято в работу', 'success');
+      } else {
+          await patch(`tasks?id=eq.${taskId}`, { assignment_status: 'rejected', comment: comment || 'Отклонено без комментария' }, token!);
+          addNotification('Задание возвращено', 'warning');
+      }
+      setSaving(false);
+      if(activeProject) loadTasks(activeProject.id);
+  };
   const updateTaskStatus = async (taskId: number, status: string, comment?: string) => {
     setSaving(true);
     await patch(`tasks?id=eq.${taskId}`, { status, ...(comment ? { comment } : {}) }, token!);
@@ -165,6 +249,29 @@ export default function App() {
     await patch(`tasks?id=eq.${taskId}`, { assigned_to: assignedTo, status: "todo" }, token!);
     addNotification(`Задача назначена → ${eng?.full_name || 'инженер'}`, 'info');
     setShowTaskDetail(false); if (activeProject) loadTasks(activeProject.id);
+  };
+  const issueRevision = async (task: any) => {
+    if (!task || !activeProject) return;
+    setSaving(true);
+    const newRevNum = (task.revision_num || 0) + 1;
+    await post("tasks", {
+      name: task.name,
+      project_id: task.project_id,
+      dept: task.dept,
+      priority: task.priority,
+      status: "todo",
+      assigned_to: task.assigned_to,
+      deadline: task.deadline,
+      revision_num: newRevNum,
+      parent_task_id: task.id,
+      is_assignment: task.is_assignment || false,
+      source_dept: task.source_dept || null,
+      assignment_status: task.assignment_status || null
+    }, token!);
+    addNotification(`Выпущена ревизия R${newRevNum} для задачи "${task.name}"`, 'success');
+    setSaving(false);
+    setShowTaskDetail(false);
+    loadTasks(activeProject.id);
   };
   const handleLogin = async (accessToken: string, email: string) => { setToken(accessToken); setUserEmail(email); localStorage.setItem('enghub_token', accessToken); localStorage.setItem('enghub_email', email); if (email !== "admin@enghub.com") setLoading(true); else setLoading(false); };
   const handleLogout = () => { setToken(null); setUserEmail(""); setCurrentUserData(null); setProjects([]); setTasks([]); setMsgs([]); localStorage.removeItem('enghub_token'); localStorage.removeItem('enghub_email'); };
@@ -200,10 +307,11 @@ export default function App() {
     { id: "dashboard", icon: "⬡", label: "Обзор" },
     { id: "projects_list", icon: "◈", label: "Проекты" },
     { id: "tasks", icon: "≡", label: "Задачи" },
-    { id: "calculations", icon: "⎍", label: "Расчёты" }
+    { id: "calculations", icon: "⎍", label: "Расчёты" },
+    { id: "normative", icon: "📄", label: "Нормативка" }
   ];
 
-  const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", calculations: "Инженерные расчёты" };
+  const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", calculations: "Инженерные расчёты", normative: "База знаний (Нормативка)" };
 
   const calcTemplates = [
     { id: "tx_material_balance", name: "Материальный баланс", cat: "ТХ", desc: "Сводка массы веществ на входе и выходе" },
@@ -256,18 +364,42 @@ export default function App() {
           </div>
         </Modal>
       )}
+      {showNewAssignment && (
+        <Modal title="Задание смежнику" onClose={() => setShowNewAssignment(false)} C={C}>
+          <div className="form-stack">
+            <Field label="СУТЬ ЗАДАНИЯ *" C={C}><input value={newAssignment.name} onChange={e => setNewAssignment({ ...newAssignment, name: e.target.value })} placeholder="Выдать нагрузки на фундамент..." style={getInp(C)} /></Field>
+            <Field label="ОТДЕЛ-ПОЛУЧАТЕЛЬ *" C={C}>
+              <select value={newAssignment.target_dept} onChange={e => setNewAssignment({ ...newAssignment, target_dept: e.target.value })} style={getInp(C)}>
+                <option value="">— Выбрать отдел —</option>
+                {activeProject?.depts?.filter((d:number) => String(d) !== String(currentUserData?.dept_id)).map((dId: number) => <option key={dId} value={dId}>{getDeptNameById(dId)}</option>)}
+              </select>
+            </Field>
+            <Field label="ПРИОРИТЕТ" C={C}><select value={newAssignment.priority} onChange={e => setNewAssignment({ ...newAssignment, priority: e.target.value })} style={getInp(C)}><option value="high">🔴 Высокий</option><option value="medium">🟡 Средний</option><option value="low">⚪ Низкий</option></select></Field>
+            <Field label="ТРЕБУЕМЫЙ ДЕДЛАЙН" C={C}><input type="date" value={newAssignment.deadline} onChange={e => setNewAssignment({ ...newAssignment, deadline: e.target.value })} style={getInp(C)} /></Field>
+            <button className="btn btn-primary" onClick={createAssignment} disabled={saving || !newAssignment.name || !newAssignment.target_dept} style={{ width: "100%", opacity: (!newAssignment.name || !newAssignment.target_dept) ? 0.5 : 1 }}>{saving ? "Отправка..." : "Отправить задание"}</button>
+          </div>
+        </Modal>
+      )}
       {showTaskDetail && selectedTask && (
-        <Modal title="Задача" onClose={() => { setShowTaskDetail(false); setSelectedTask(null); setTaskComment(""); }} C={C}>
+        <Modal title="Задача" onClose={() => { setShowTaskDetail(false); setSelectedTask(null); setTaskComment(""); loadMessages(activeProject.id); }} C={C}>
           <div className="form-stack">
             <div style={{ background: C.surface2, borderRadius: 10, padding: 16 }}>
-              <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 8, color: C.text }}>{selectedTask.name}</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontWeight: 600, fontSize: 15, color: C.text }}>{selectedTask.name}</div>
+                <div style={{ background: C.accent + '20', color: C.accent, fontWeight: 700, fontSize: 12, padding: '3px 8px', borderRadius: 6 }}>R{selectedTask.revision_num || 0}</div>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
                 <BadgeComp status={selectedTask.status} C={C} />
                 <PriorityDot p={selectedTask.priority} C={C} />
                 {selectedTask.dept && <span style={{ fontSize: 11, color: C.textMuted, background: C.surface, padding: "3px 8px", borderRadius: 6 }}>{selectedTask.dept}</span>}
                 {selectedTask.deadline && <span style={{ fontSize: 11, color: C.textMuted }}>до {selectedTask.deadline}</span>}
               </div>
             </div>
+            {selectedTask.parent_task_id && (
+              <div style={{ fontSize: 11, color: C.textMuted, display: 'flex', alignItems: 'center', gap: 4 }}>
+                🔗 Предыдущая ревизия: <span style={{ color: C.accent, cursor: 'pointer' }} onClick={() => { const p = allTasks.find(t => t.id === selectedTask.parent_task_id); if (p) setSelectedTask(p); }}>#{String(selectedTask.parent_task_id).slice(0, 4)}</span>
+              </div>
+            )}
             {selectedTask.assigned_to && (() => { const u = getUserById(selectedTask.assigned_to); return u ? (<div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}><AvatarComp user={u} size={28} C={C} /><span style={{ color: C.textDim, fontWeight: 500 }}>{u.full_name}</span><span style={{ fontSize: 11, color: C.textMuted }}>{u.position || roleLabels[u.role]}</span></div>) : null; })()}
             {selectedTask.comment && (<div style={{ background: C.red + "10", border: `1px solid ${C.red}25`, borderRadius: 10, padding: 14 }}><div style={{ fontSize: 10, color: C.red, fontWeight: 600, marginBottom: 4 }}>КОММЕНТАРИЙ К ДОРАБОТКЕ</div><div style={{ fontSize: 13, color: C.textDim }}>{selectedTask.comment}</div></div>)}
             {isLead && selectedTask.status === "todo" && String(selectedTask.assigned_to) === String(currentUserData?.id) && (
@@ -283,12 +415,56 @@ export default function App() {
                     <button key={i} onClick={() => updateTaskStatus(selectedTask.id, action.status, taskComment)} disabled={saving}
                       style={{ background: action.color + "15", border: `1px solid ${action.color}30`, color: action.color, borderRadius: 10, padding: "11px", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit" }}>{action.label}</button>
                   ))}
+                  {isGip && selectedTask.status === "done" && (
+                    <button onClick={() => issueRevision(selectedTask)} disabled={saving}
+                      style={{ background: C.accent + "15", border: `1px dashed ${C.accent}`, color: C.accent, borderRadius: 10, padding: "11px", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", marginTop: 8 }}>⚡ Выпустить новую ревизию (R{(selectedTask.revision_num || 0) + 1})</button>
+                  )}
                 </div>
               </div>
             )}
+            
+            <div style={{ marginTop: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Замечания и обсуждение</div>
+              <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', height: 250 }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {msgs.filter(m => String(m.task_id) === String(selectedTask.id)).length === 0 && <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 12, marginTop: 40 }}>Пока нет замечаний</div>}
+                  {msgs.filter(m => String(m.task_id) === String(selectedTask.id)).map(m => {
+                    const mu = getUserById(m.user_id);
+                    return (
+                      <div key={m.id} style={{ alignSelf: mu?.id === currentUserData?.id ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 2, justifyContent: mu?.id === currentUserData?.id ? 'flex-end' : 'flex-start' }}>
+                          <span style={{ fontSize: 10, fontWeight: 600, color: C.textDim }}>{mu?.full_name?.split(' ')[0]}</span>
+                          <span style={{ fontSize: 9, color: C.textMuted }}>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <div style={{ background: mu?.id === currentUserData?.id ? C.accent : C.surface2, color: mu?.id === currentUserData?.id ? '#fff' : C.text, padding: '8px 12px', borderRadius: 10, fontSize: 13 }}>{m.text}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ padding: 10, borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8 }}>
+                  <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMsg(selectedTask.id)} placeholder="Написать замечание..." style={{ ...getInp(C), borderRadius: 8, height: 36, fontSize: 12 }} />
+                  <button onClick={() => sendMsg(selectedTask.id)} style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 8, width: 36, height: 36, cursor: 'pointer' }}>↑</button>
+                </div>
+              </div>
+            </div>
           </div>
         </Modal>
       )}
+      
+      {incomingCall && (
+          <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 10001, background: C.surface, border: `2px solid ${C.accent}`, borderRadius: 16, padding: '20px 30px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: 20, animation: 'slideDown 0.4s ease-out' }}>
+              <div style={{ background: C.accent, color: '#fff', width: 50, height: 50, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, animation: 'pulse 1.5s infinite' }}>📞</div>
+              <div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: C.text }}>Входящий вызов</div>
+                  <div style={{ fontSize: 13, color: C.textDim }}>{incomingCall.initiator_name} приглашает вас в проект "{incomingCall.project_name}"</div>
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                  <button className="btn btn-primary" onClick={() => { setScreen('project'); setSideTab('conference'); setIncomingCall(null); }}>Подключиться</button>
+                  <button className="btn btn-ghost" onClick={() => setIncomingCall(null)}>Позже</button>
+              </div>
+          </div>
+      )}
+
       {showArchive && (
         <Modal title="📦 Архив проектов" onClose={() => setShowArchive(false)} C={C}>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -558,9 +734,9 @@ export default function App() {
 
               {/* Tabs */}
               <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-                {["tasks", "conference"].map(t => (
+                {["tasks", "assignments", "conference"].map(t => (
                   <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)}>
-                    {t === "tasks" ? "⊙ Задачи" : "⊕ Конференц-зал"}
+                    {t === "tasks" ? "⊙ Задачи" : t === "assignments" ? "✉ Увязка" : "⊕ Конференц-зал"}
                   </button>
                 ))}
               </div>
@@ -585,9 +761,12 @@ export default function App() {
                       const deptName = t.dept || (u ? getDeptName(u.dept_id) : "");
                       const st = statusMap[t.status] || statusMap.todo;
                       return (
-                        <div key={t.id} className="task-row" data-priority={t.priority} onClick={() => { setSelectedTask(t); setShowTaskDetail(true); }}>
+                        <div key={t.id} className="task-row" data-priority={t.priority} onClick={() => { setSelectedTask(t); setShowTaskDetail(true); loadMessages(activeProject.id, t.id); }}>
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 4 }}>{t.name}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{t.name}</div>
+                                <div style={{ background: C.accent + '15', color: C.accent, fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 4 }}>R{t.revision_num || 0}</div>
+                            </div>
                             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                               {deptName && <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: "3px 10px", borderRadius: 6, fontWeight: 500 }}>{deptName}</span>}
                               {t.deadline && <span style={{ fontSize: 11, color: C.textMuted }}>📅 {t.deadline}</span>}
@@ -603,6 +782,96 @@ export default function App() {
                 </div>
               )}
 
+              {sideTab === "assignments" && (
+                <div>
+                  <div className="task-list-header">
+                    <div className="task-list-title">Межотдельские задания (Увязка)</div>
+                    {isLead && <button className="btn btn-primary" style={{ borderRadius: 20, padding: "10px 22px" }} onClick={() => setShowNewAssignment(true)}>+ Выдать задание</button>}
+                  </div>
+                  
+                  {isGip ? (
+                    <div style={{ background: C.surface, padding: 24, borderRadius: 12, border: `1px solid ${C.border}` }}>
+                      <div className="page-label" style={{ marginBottom: 16 }}>Матрица увязки проекта (GIP View)</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: 13 }}>
+                          <thead>
+                            <tr>
+                              <th style={{ padding: 10, borderBottom: `2px solid ${C.border}`, color: C.textMuted, textAlign: 'left' }}>Выдает \ Получает</th>
+                              {activeProject.depts?.map((d: number) => <th key={d} style={{ padding: 10, borderBottom: `2px solid ${C.border}`, color: C.text }}>{getDeptNameById(d)}</th>)}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {activeProject.depts?.map((rD: number) => (
+                              <tr key={`r${rD}`}>
+                                <td style={{ padding: 10, borderBottom: `1px solid ${C.border}`, color: C.text, textAlign: 'left', fontWeight: 600 }}>{getDeptNameById(rD)}</td>
+                                {activeProject.depts?.map((cD: number) => {
+                                  if (rD === cD) return <td key={cD} style={{ background: C.surface2, borderBottom: `1px solid ${C.border}` }}>—</td>;
+                                  const cellTasks = tasks.filter(t => t.is_assignment && String(t.source_dept) === String(rD) && t.dept === getDeptNameById(cD));
+                                  return (
+                                    <td key={cD} style={{ padding: 10, borderBottom: `1px solid ${C.border}` }}>
+                                      {cellTasks.length > 0 ? (
+                                        <div style={{ display: 'inline-flex', padding: '4px 8px', borderRadius: 12, background: C.accent + '20', color: C.accent, fontWeight: 700 }}>
+                                          {cellTasks.length}
+                                        </div>
+                                      ) : <span style={{ color: C.textMuted }}>0</span>}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 20 }}>
+                      <div style={{ flex: 1 }}>
+                        <div className="page-label" style={{ marginBottom: 16 }}>Входящие задания</div>
+                        <div className="task-list">
+                          {tasks.filter(t => t.is_assignment && t.dept === getDeptName(currentUserData?.dept_id)).length === 0 && <div className="empty-state">Нет входящих заданий</div>}
+                          {tasks.filter(t => t.is_assignment && t.dept === getDeptName(currentUserData?.dept_id)).map(t => (
+                            <div key={t.id} className="task-row" style={{ flexDirection: 'column', alignItems: 'flex-start', borderLeft: `4px solid ${t.assignment_status === 'accepted' ? C.green : t.assignment_status === 'rejected' ? C.red : C.orange}` }}>
+                              <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
+                                <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{t.name}</div>
+                                <span style={{ fontSize: 11, background: C.surface2, padding: '4px 8px', borderRadius: 6, color: C.textDim }}>От: {getDeptNameById(t.source_dept)}</span>
+                              </div>
+                              <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ fontSize: 12, color: C.textMuted }}>Статус: {t.assignment_status === 'accepted' ? 'В работе' : t.assignment_status === 'rejected' ? 'Отклонено' : 'Ожидает решения'}</div>
+                                {isLead && t.assignment_status === 'pending_accept' && (
+                                  <div style={{ display: 'flex', gap: 8 }}>
+                                    <button onClick={() => handleAssignmentResponse(t.id, true)} style={{ background: C.green, color: '#fff', border: 'none', padding: '4px 12px', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>✓ Принять</button>
+                                    <button onClick={() => { const c = prompt('Причина отклонения?'); if (c) handleAssignmentResponse(t.id, false, c); }} style={{ background: 'transparent', color: C.red, border: `1px solid ${C.red}`, padding: '3px 12px', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>✗ Завернуть</button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div style={{ flex: 1 }}>
+                        <div className="page-label" style={{ marginBottom: 16 }}>Выданные задания (Смежникам)</div>
+                        <div className="task-list">
+                          {tasks.filter(t => t.is_assignment && String(t.source_dept) === String(currentUserData?.dept_id)).length === 0 && <div className="empty-state">Вы ничего не выдавали</div>}
+                          {tasks.filter(t => t.is_assignment && String(t.source_dept) === String(currentUserData?.dept_id)).map(t => (
+                            <div key={t.id} className="task-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                              <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
+                                <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{t.name}</div>
+                                <span style={{ fontSize: 11, background: C.surface2, padding: '4px 8px', borderRadius: 6, color: C.textDim }}>Кому: {t.dept}</span>
+                              </div>
+                              <div style={{ fontSize: 12, color: t.assignment_status === 'accepted' ? C.green : t.assignment_status === 'rejected' ? C.red : C.orange }}>
+                                • {t.assignment_status === 'accepted' ? 'Взято в работу' : t.assignment_status === 'rejected' ? 'Отклонено' : 'Ожидает рассмотрения'}
+                              </div>
+                              {t.comment && <div style={{ fontSize: 12, color: C.red, marginTop: 4 }}>Замечание: {t.comment}</div>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {sideTab === "conference" && (
                 <ConferenceRoom
                   project={activeProject}
@@ -611,7 +880,7 @@ export default function App() {
                   msgs={msgs}
                   C={C}
                   token={token!}
-                  onSendMsg={(text: string) => { post("messages", { text, user_id: currentUserData?.id, project_id: activeProject.id, type: "text" }, token!).then(() => loadMessages(activeProject.id)); }}
+                  onSendMsg={(text: string, type: string = "text") => sendMsg(undefined, type, text)}
                   getUserById={getUserById}
                 />
               )}
@@ -715,7 +984,7 @@ export default function App() {
                         {colTasks.map(t => {
                           const u = getUserById(t.assigned_to);
                           return (
-                            <div key={t.id} className="kanban-card" onClick={() => { setSelectedTask(t); setShowTaskDetail(true); }}>
+                            <div key={t.id} className="kanban-card" onClick={() => { setSelectedTask(t); setShowTaskDetail(true); loadMessages(activeProject.id, t.id); }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                                 <PriorityDot p={t.priority} C={C} />
                                 <span style={{ fontSize: 13, flex: 1, color: C.text, fontWeight: 500 }}>{t.name}</span>
@@ -807,6 +1076,79 @@ export default function App() {
             </div>
           )}
 
+          {/* ===== NORMATIVE KB (Phase 7) ===== */}
+          {screen === "normative" && (
+            <div style={{ padding: 40, display: "flex", flexDirection: "column", gap: 30, height: '100%', overflow: 'auto' }}>
+              <div className="page-header">
+                <div>
+                  <div className="page-label">Нормативная база (RAG)</div>
+                  <div className="page-title">Локальные регламенты и ГОСТы</div>
+                </div>
+                {(isGip || isAdmin) && (
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <input type="file" id="normative-upload" multiple style={{ display: 'none' }} onChange={async (e) => {
+                      const files = e.target.files;
+                      if (!files || files.length === 0) return;
+                      
+                      addNotification(`Начинаю пакетную загрузку (${files.length} шт.)...`, 'info');
+                      let successCount = 0;
+                      
+                      for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        const { data } = await post("normative_docs", { 
+                          name: file.name, 
+                          file_type: file.type, 
+                          status: 'processing',
+                          user_id: currentUserData?.id
+                        }, token!);
+                        if (data) successCount++;
+                      }
+                      
+                      loadNormativeDocs();
+                      if (successCount === files.length) {
+                        addNotification(`Успешно загружено ${successCount} документов`, 'success');
+                      } else {
+                        addNotification(`Загружено ${successCount} из ${files.length}. Возможно, проблемы с сетью или SQL миграцией.`, 'warning');
+                      }
+                      
+                      e.target.value = ""; // Сбрасываем input
+                    }} />
+                    <button className="btn btn-primary" onClick={() => document.getElementById('normative-upload')?.click()}>+ Загрузить PDF/DOCX</button>
+                    <button className="btn btn-secondary" onClick={() => addNotification('Синхронизация RAG-индекса запущена', 'info')}>🔄 Синхронизировать индекс</button>
+                  </div>
+                )}
+              </div>
+              
+              <div style={{ display: 'flex', gap: 20, background: C.surface2, padding: 12, borderRadius: 14 }}>
+                 <input placeholder="Поиск по базе знаний (Semantic Search)..." style={{ ...getInp(C), flex: 1, height: 44, fontSize: 14 }} />
+                 <button className="btn btn-primary" style={{ width: 44, padding: 0 }} onClick={() => addNotification('Семантический поиск будет доступен после генерации эмбеддингов', 'info')}>🔍</button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+                {normativeDocs.length === 0 ? (
+                  <div style={{ gridColumn: '1/-1', background: C.surface, padding: 60, borderRadius: 20, border: `1px dashed ${C.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 15, textAlign: 'center' }}>
+                    <div style={{ fontSize: 48 }}>📚</div>
+                    <div style={{ fontWeight: 700, color: C.text }}>База знаний пуста</div>
+                    <div style={{ fontSize: 13, color: C.textMuted }}>Загрузите проектную документацию, стандарты или ГОСТы.<br/>ИИ-агент сможет анализировать их и давать ответы с гиперссылками.</div>
+                  </div>
+                ) : (
+                  Array.isArray(normativeDocs) && normativeDocs.map(doc => (
+                    <div key={doc.id} className="card" style={{ padding: 20, position: 'relative' }}>
+                      <div style={{ fontSize: 24, marginBottom: 12 }}>{doc.file_type?.includes('pdf') ? '📕' : '📘'}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doc.name}</div>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 16 }}>
+                        {new Date(doc.created_at).toLocaleDateString()} · {doc.status === 'processing' ? '⚙️ Обработка...' : '✅ Готов к поиску'}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="btn btn-secondary" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => addNotification('Открытие временно недоступно', 'info')}>Открыть</button>
+                          {(isGip || isAdmin) && <button className="btn" style={{ fontSize: 11, padding: '4px 10px', color: '#EF4444' }} onClick={() => del(`normative_docs?id=eq.${doc.id}`, token!).then(loadNormativeDocs)}>Удалить</button>}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
 
         </div>
       </div>

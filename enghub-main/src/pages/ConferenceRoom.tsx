@@ -7,7 +7,7 @@ interface ConferenceProps {
   msgs: any[];
   C: any;
   token: string;
-  onSendMsg: (text: string) => void;
+  onSendMsg: (text: string, type?: string) => void;
   getUserById: (id: any) => any;
 }
 
@@ -59,7 +59,11 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
     setChatInput("");
   };
 
-  const joinRoom = () => setIsInRoom(true);
+  const joinRoom = () => {
+    setIsInRoom(true);
+    // Trigger the incoming call notification for others
+    onSendMsg("📞 Начинается видеовстреча...", "call_start"); 
+  };
   const leaveRoom = () => { setIsInRoom(false); setMicEnabled(false); setScreenSharing(false); };
 
   const getInitials = (name: string) => {
