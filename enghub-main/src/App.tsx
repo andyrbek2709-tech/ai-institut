@@ -33,6 +33,7 @@ export default function App() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [transmittals, setTransmittals] = useState<any[]>([]);
   const [transmittalItems, setTransmittalItems] = useState<Record<string, any[]>>({});
+  const [transmittalDraftLinks, setTransmittalDraftLinks] = useState<Record<string, { drawingId: string; revisionId: string }>>({});
   const [normativeDocs, setNormativeDocs] = useState<any[]>([]);
   const [normSearchQuery, setNormSearchQuery] = useState("");
   const [normSearchResults, setNormSearchResults] = useState<any[] | null>(null);
@@ -531,6 +532,7 @@ export default function App() {
       revision_id: revisionId || null,
     }, token!);
     addNotification('Позиция добавлена в трансмиттал', 'success');
+    setTransmittalDraftLinks((prev) => ({ ...prev, [transmittalId]: { drawingId: '', revisionId: '' } }));
     loadTransmittals(activeProject.id);
   };
   const assignTask = async (taskId: number, assignedTo: string) => {
@@ -1481,19 +1483,39 @@ export default function App() {
                         )}
                         {(isLead || isGip) && (
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            <select id={`drawing-${t.id}`} defaultValue="" style={{ ...getInp(C), height: 30, fontSize: 12, width: 200 }}>
+                            <select
+                              value={transmittalDraftLinks[t.id]?.drawingId || ''}
+                              onChange={(e) => {
+                                const nextDrawingId = e.target.value;
+                                setTransmittalDraftLinks((prev) => ({
+                                  ...prev,
+                                  [t.id]: { drawingId: nextDrawingId, revisionId: prev[t.id]?.revisionId || '' },
+                                }));
+                              }}
+                              style={{ ...getInp(C), height: 30, fontSize: 12, width: 200 }}
+                            >
                               <option value="">Выбрать чертеж</option>
                               {drawings.map((d) => <option key={d.id} value={d.id}>{d.code}</option>)}
                             </select>
-                            <select id={`revision-${t.id}`} defaultValue="" style={{ ...getInp(C), height: 30, fontSize: 12, width: 220 }}>
+                            <select
+                              value={transmittalDraftLinks[t.id]?.revisionId || ''}
+                              onChange={(e) => {
+                                const nextRevisionId = e.target.value;
+                                setTransmittalDraftLinks((prev) => ({
+                                  ...prev,
+                                  [t.id]: { drawingId: prev[t.id]?.drawingId || '', revisionId: nextRevisionId },
+                                }));
+                              }}
+                              style={{ ...getInp(C), height: 30, fontSize: 12, width: 220 }}
+                            >
                               <option value="">Выбрать ревизию</option>
                               {revisions.map((r) => <option key={r.id} value={r.id}>{r.from_revision}→{r.to_revision}</option>)}
                             </select>
                             <button
                               className="btn btn-ghost btn-sm"
                               onClick={() => {
-                                const dSel = (document.getElementById(`drawing-${t.id}`) as HTMLSelectElement | null)?.value || '';
-                                const rSel = (document.getElementById(`revision-${t.id}`) as HTMLSelectElement | null)?.value || '';
+                                const dSel = transmittalDraftLinks[t.id]?.drawingId || '';
+                                const rSel = transmittalDraftLinks[t.id]?.revisionId || '';
                                 addTransmittalItem(t.id, dSel || undefined, rSel || undefined);
                               }}
                             >

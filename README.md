@@ -309,6 +309,14 @@ git push origin main
 - Validation: not run (документационное обновление плана).
 - Next: приступить к Блоку A (stabilization) — убрать DOM-зависимость в `transmittals` UI и зафиксировать отдельным commit+push.
 
+#### [2026-03-31 20:31] Agent update
+- Step: Блок A.1 выполнен: в `transmittals` UI убран прямой доступ к DOM (`document.getElementById`), выбор чертежа/ревизии переведен на controlled state `transmittalDraftLinks`, добавлен сброс draft-связки после добавления позиции.
+- Files:
+  - `enghub-main/src/App.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint `App.tsx` без ошибок.
+- Next: commit+push текущего логического блока; затем переход к Блоку A.2 (smoke-чеклист стабилизации).
+
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
 - Files:
