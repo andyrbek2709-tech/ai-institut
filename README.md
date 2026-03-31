@@ -411,6 +411,15 @@ git push origin main
 - Validation: `npm run build` (успешно), lint `App.tsx` и `RevisionsTab.tsx` без ошибок.
 - Next: commit+push блока C.3; затем переход к C.4 (декомпозиция Drawings tab или связанных UI-блоков в `App.tsx`).
 
+#### [2026-03-31 21:52] Agent update
+- Step: Блок C.4 выполнен: вкладка Assignments вынесена из `App.tsx` в отдельный компонент `AssignmentsTab` без изменения бизнес-логики (GIP-матрица, входящие/исходящие задания, accept/reject для Lead).
+- Files:
+  - `enghub-main/src/components/AssignmentsTab.tsx`
+  - `enghub-main/src/App.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint `App.tsx` и `AssignmentsTab.tsx` без ошибок.
+- Next: commit+push блока C.4; затем переход к D.1 (Copilot Hardening v2: унификация apply-валидаций/контрактов по action payload).
+
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
 - Files:
