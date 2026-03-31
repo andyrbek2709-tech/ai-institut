@@ -5,141 +5,97 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Современный сайт</title>
 <style>
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
   body {
-    margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f7f9fc;
+    line-height: 1.6;
+    background: #f9f9f9;
     color: #333;
   }
   header {
-    background-color: #005f73;
+    background: #2c3e50;
     color: #fff;
     padding: 1rem 2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
   }
-  header nav a {
-    color: #fff;
+  header .logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+  }
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+  }
+  nav ul li a {
     text-decoration: none;
-    margin-left: 1.5rem;
+    color: #ecf0f1;
     font-weight: 600;
     transition: color 0.3s ease;
   }
-  header nav a:hover {
-    color: #94d2bd;
+  nav ul li a:hover {
+    color: #1abc9c;
   }
-  .logo {
-    font-size: 1.5rem;
-    font-weight: 700;
+  .hero {
+    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800') center/cover no-repeat;
+    height: 70vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.7);
+    text-align: center;
+    padding: 0 1rem;
+  }
+  .hero h1 {
+    font-size: 3rem;
+    max-width: 700px;
+    line-height: 1.2;
   }
   main {
     max-width: 1200px;
-    margin: 2rem auto;
+    margin: 3rem auto;
     padding: 0 1rem;
   }
-  .hero {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 2rem;
-    background-color: #e9ecef;
-    border-radius: 10px;
-    padding: 2rem;
+  section {
+    margin-bottom: 3rem;
   }
-  .hero-text {
-    flex: 1 1 350px;
-  }
-  .hero-text h1 {
-    font-size: 2.8rem;
+  section h2 {
+    font-size: 2rem;
+    color: #2c3e50;
     margin-bottom: 1rem;
-    color: #0a9396;
-  }
-  .hero-text p {
-    font-size: 1.25rem;
-    line-height: 1.5;
-    margin-bottom: 1.5rem;
-  }
-  .hero-text a {
-    display: inline-block;
-    background-color: #0a9396;
-    color: #fff;
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgb(10 147 150 / 0.3);
-    transition: background-color 0.3s ease;
-  }
-  .hero-text a:hover {
-    background-color: #005f73;
-  }
-  .hero-image {
-    flex: 1 1 350px;
-  }
-  .hero-image img {
-    width: 100%;
-    height: auto;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgb(0 0 0 / 0.15);
-  }
-  section.features {
-    display: flex;
-    gap: 2rem;
-    margin-top: 3rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .feature {
-    background: white;
-    flex: 1 1 280px;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 14px rgb(0 0 0 / 0.1);
-    text-align: center;
-  }
-  .feature img {
-    width: 64px;
-    margin-bottom: 1rem;
-  }
-  .feature h3 {
-    margin-bottom: 0.75rem;
-    color: #005f73;
-  }
-  .feature p {
-    color: #555;
-    line-height: 1.4;
+    border-left: 5px solid #1abc9c;
+    padding-left: 0.5rem;
   }
   footer {
-    background-color: #001219;
-    color: #94d2bd;
+    background: #2c3e50;
+    color: #bdc3c7;
     text-align: center;
-    padding: 1rem 2rem;
-    margin-top: 3rem;
+    padding: 1.5rem 1rem;
     font-size: 0.9rem;
   }
   footer a {
-    color: #94d2bd;
+    color: #1abc9c;
     text-decoration: none;
   }
   footer a:hover {
     text-decoration: underline;
   }
-  @media(max-width: 768px) {
-    .hero {
+  @media (max-width: 600px) {
+    nav ul {
       flex-direction: column;
+      gap: 0.8rem;
     }
-    header {
-      flex-wrap: wrap;
-    }
-    header nav {
-      margin-top: 0.5rem;
-      flex-basis: 100%;
-      text-align: center;
-    }
-    header nav a {
-      margin: 0 0.75rem;
+    .hero h1 {
+      font-size: 2rem;
     }
   }
 </style>
@@ -148,42 +104,42 @@
 <header>
   <div class="logo">MyModernSite</div>
   <nav>
-    <a href="#home">Главная</a>
-    <a href="#features">Особенности</a>
-    <a href="#contact">Контакты</a>
+    <ul>
+      <li><a href="#about">О Нас</a></li>
+      <li><a href="#services">Услуги</a></li>
+      <li><a href="#portfolio">Портфолио</a></li>
+      <li><a href="#contact">Контакты</a></li>
+    </ul>
   </nav>
 </header>
+<section class="hero" aria-label="Главный баннер">
+  <h1>Добро пожаловать на современный и красивый веб-сайт</h1>
+</section>
 <main>
-  <section class="hero" id="home">
-    <div class="hero-text">
-      <h1>Современный и красивый веб-сайт</h1>
-      <p>Создайте профессиональный онлайн-присутствие с современным дизайном и удобной навигацией.</p>
-      <a href="#features">Узнать больше</a>
-    </div>
-    <div class="hero-image">
-      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный дизайн" />
-    </div>
+  <section id="about">
+    <h2>О Нас</h2>
+    <p>Мы предоставляем лучшие веб-решения, используя современные технологии и продуманный дизайн. Наша команда профессионалов готова помочь в реализации любых ваших идей.</p>
   </section>
-  <section class="features" id="features">
-    <div class="feature">
-      <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=64" alt="Адаптивный" />
-      <h3>Адаптивный дизайн</h3>
-      <p>Отличный опыт на всех устройствах: десктопы, планшеты и мобильные телефоны.</p>
-    </div>
-    <div class="feature">
-      <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=64" alt="Навигация" />
-      <h3>Удобная навигация</h3>
-      <p>Простое и понятное меню, позволяющее быстро найти нужную информацию.</p>
-    </div>
-    <div class="feature">
-      <img src="https://images.unsplash.com/photo-1492724441997-5dc865305da7?w=64" alt="Доступность" />
-      <h3>Современные технологии</h3>
-      <p>Оптимизирован для скорости и поисковых систем, использует лучшие практики.</p>
-    </div>
+  <section id="services">
+    <h2>Услуги</h2>
+    <ul>
+      <li>Разработка сайтов под ключ</li>
+      <li>Дизайн и UX/UI</li>
+      <li>Продвижение и SEO</li>
+      <li>Техническая поддержка</li>
+    </ul>
+  </section>
+  <section id="portfolio">
+    <h2>Портфолио</h2>
+    <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800" alt="Пример проекта 1" style="width:100%; max-width: 800px; border-radius: 8px;"/>
+  </section>
+  <section id="contact">
+    <h2>Контакты</h2>
+    <p>Свяжитесь с нами по телефону: <a href="tel:+70000000000">+7 (000) 000-00-00</a> или по электронной почте: <a href="mailto:info@mymodernsite.ru">info@mymodernsite.ru</a></p>
   </section>
 </main>
-<footer id="contact">
-  <p>© 2024 MyModernSite. Все права защищены. | <a href="mailto:info@mymodernsite.com">Связаться с нами</a></p>
+<footer>
+  <p>© 2024 MyModernSite. Все права защищены. | <a href="#contact">Связаться с нами</a></p>
 </footer>
 </body>
 </html>
