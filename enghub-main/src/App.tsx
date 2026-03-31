@@ -1282,18 +1282,27 @@ export default function App() {
                     }} />
                     <button className="btn btn-primary" onClick={() => document.getElementById('normative-upload')?.click()}>+ Загрузить PDF/DOCX</button>
                     <button className="btn btn-secondary" onClick={async () => {
-                      const pending = normativeDocs.filter(d => d.status === 'pending' || d.status === 'processing');
-                      if (pending.length === 0) { addNotification('Все документы уже обработаны', 'info'); return; }
-                      addNotification(`Запускаю векторизацию для ${pending.length} документов...`, 'info');
-                      for (const doc of pending) {
-                        await fetch(`${SURL}/functions/v1/vectorize-doc`, {
-                          method: 'POST',
-                          headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ doc_id: doc.id }),
-                        }).catch(() => null);
+                      const pending = normativeDocs.filter(d => d.status === 'pending' || d.status === 'processing' || d.status === 'error');
+                      if (pending.length === 0) { addNotification('Все документы уже проиндексированы', 'info'); return; }
+                      addNotification(`Запускаю индексацию для ${pending.length} документов...`, 'info');
+                      // Параллельная обработка батчами по 3 документа
+                      const BATCH = 3;
+                      let done = 0;
+                      for (let i = 0; i < pending.length; i += BATCH) {
+                        const batch = pending.slice(i, i + BATCH);
+                        await Promise.all(batch.map(doc =>
+                          fetch(`${SURL}/functions/v1/vectorize-doc`, {
+                            method: 'POST',
+                            headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ doc_id: doc.id }),
+                          }).catch(() => null)
+                        ));
+                        done += batch.length;
+                        addNotification(`Проиндексировано: ${done} / ${pending.length}`, 'info');
+                        await loadNormativeDocs();
                       }
                       await loadNormativeDocs();
-                      addNotification('Синхронизация запущена', 'success');
+                      addNotification('Индексация завершена', 'success');
                     }}>🔄 Синхронизировать индекс</button>
                   </div>
                 )}
@@ -1400,7 +1409,7 @@ export default function App() {
                           <div style={{ fontSize: 11, color: C.textMuted }}>{doc.file_type?.includes('pdf') ? 'PDF' : doc.file_type?.includes('word') ? 'DOCX' : 'DOC'}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ fontSize: 11, color: C.textMuted }}>
-                              {doc.status === 'ready' ? '✅ Готов' : doc.status === 'processing' ? '⚙️ Обработка...' : '🕐 В очереди'}
+                              {doc.status === 'ready' ? '✅ Готов' : doc.status === 'processing' ? '⚙️ Обработка...' : doc.status === 'error' ? '❌ Ошибка (скан?)' : '🕐 В очереди'}
                             </span>
                             {(isGip || isAdmin) && (
                               <button style={{ marginLeft: 'auto', fontSize: 11, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
