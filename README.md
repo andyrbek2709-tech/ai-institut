@@ -313,3 +313,15 @@ git push origin main
 - Files: `enghub-main/src/App.tsx`, `enghub-main/api/orchestrator.js`, `README.md`
 - Validation: `npm run build` (успешно), lint `App.tsx` и `orchestrator.js` без ошибок.
 - Next: подготовить следующий атомарный commit для пост-коммит доработок (workflow validation + журнал README).
+
+#### [2026-03-31 17:52] Agent update
+- Step: Подтвержден рабочий протокол: после каждого выполненного шага обязательно обновлять `README.md` (`Agent Handover Log`) и отправлять отдельный отчет пользователю.
+- Files: `README.md`
+- Validation: not run (документационное обновление процесса).
+- Next: продолжать реализацию задач с обязательной фиксацией каждого шага в handover log.
+
+#### [2026-03-31 18:01] Agent update
+- Step: Улучшена связка Copilot → UI: после apply действий по `drawings/revisions/reviews/transmittals` теперь выполняется единый callback обновления данных проекта, чтобы изменения появлялись сразу без ручного рефреша.
+- Files: `enghub-main/src/components/CopilotPanel.tsx`, `enghub-main/src/App.tsx`, `README.md`
+- Validation: `npm run build` (успешно), lint `CopilotPanel.tsx` и `App.tsx` без ошибок.
+- Next: сделать атомарный commit текущего шага (с включением этой записи README) или продолжить следующую итерацию по команде пользователя.

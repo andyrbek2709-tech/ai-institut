@@ -21,7 +21,8 @@ export function CopilotPanel({
   userRole,
   C, 
   onClose,
-  onTaskCreated // Callback to refresh Kanban when AI creates tasks
+  onTaskCreated, // Callback to refresh Kanban when AI creates tasks
+  onDataChanged // Callback to refresh drawings/reviews/revisions/transmittals
 }: any) {
   const [messages, setMessages] = useState<ChatMsg[]>([
     { role: 'ai', text: 'Привет! Я AI-Оркестратор. Могу проанализировать проект, распределить задачи или проверить сроки. Чем могу помочь?' }
@@ -131,10 +132,12 @@ export function CopilotPanel({
           revision: 'R0',
           created_by: userId
         }, token || '');
+        onDataChanged?.();
       }
 
       if (approved && action.action_type === 'update_drawing' && action.payload?.drawing_id) {
         await patch(`drawings?id=eq.${action.payload.drawing_id}`, action.payload.updates || {}, token || '');
+        onDataChanged?.();
       }
 
       if (approved && action.action_type === 'create_drawing_revision' && action.payload?.drawing_id) {
@@ -150,6 +153,7 @@ export function CopilotPanel({
           issued_by: userId
         }, token || '');
         await patch(`drawings?id=eq.${action.payload.drawing_id}`, { revision: nextRev, status: 'in_work' }, token || '');
+        onDataChanged?.();
       }
 
       if (approved && action.action_type === 'create_review') {
@@ -161,6 +165,7 @@ export function CopilotPanel({
           status: 'open',
           author_id: userId
         }, token || '');
+        onDataChanged?.();
       }
 
       if (approved && action.action_type === 'create_transmittal') {
@@ -172,6 +177,7 @@ export function CopilotPanel({
           status: 'draft',
           issued_by: userId
         }, token || '');
+        onDataChanged?.();
       }
 
       // Update action status

@@ -1202,7 +1202,13 @@ export default function App() {
                   projectId={activeProject.id} 
                   C={C} 
                   onClose={() => setShowCopilot(false)} 
-                  onTaskCreated={() => loadTasks(activeProject.id)} 
+                  onTaskCreated={() => loadTasks(activeProject.id)}
+                  onDataChanged={() => {
+                    loadDrawings(activeProject.id);
+                    loadRevisions(activeProject.id);
+                    loadReviews(activeProject.id);
+                    loadTransmittals(activeProject.id);
+                  }}
                 />
               )}
 
