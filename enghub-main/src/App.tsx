@@ -813,7 +813,7 @@ export default function App() {
 
               {/* ── АНАЛИТИКА ДЛЯ ГИПа / АДМИНИСТРАТОРА ── */}
               {(isGip || isAdmin) && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                <div className="analytics-grid-2">
                   {/* Загрузка отделов */}
                   <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20 }}>
                     <div className="page-label" style={{ marginBottom: 14 }}>Загрузка отделов</div>
@@ -1694,6 +1694,16 @@ export default function App() {
         </div>
       </div>
       <ToastContainer notifications={notifications} onRemove={removeNotification} />
+
+      {/* ── Mobile Bottom Navigation ── */}
+      <nav className="mobile-nav">
+        {navItems.map(n => (
+          <button key={n.id} className={`mobile-nav-btn ${screen === n.id || (screen === 'project' && n.id === 'projects_list') ? 'active' : ''}`} onClick={() => setScreen(n.id)}>
+            <span className="mnav-icon">{n.icon}</span>
+            <span>{n.label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
