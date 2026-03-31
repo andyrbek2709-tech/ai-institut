@@ -129,7 +129,7 @@ export default function App() {
   };
 
   const loadNormativeDocs = async () => {
-    const data = await get("normative_docs?order=created_at.desc", token!);
+    const data = await get("normative_docs?order=name.asc", token!);
     if (Array.isArray(data)) setNormativeDocs(data);
   };
 
