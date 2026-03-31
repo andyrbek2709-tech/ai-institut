@@ -718,25 +718,39 @@ export default function App() {
                 {searchQuery && <button className="search-clear" onClick={() => setSearchQuery("")}>✕</button>}
               </div>
 
-              {/* Стат-карточки */}
-              <div className="stats-row">
-                {[
-                  { label: "Проектов", value: projects.length, color: C.accent },
-                  { label: "Активных задач", value: tasks.filter(t => t.status !== "done").length, color: C.blue },
-                  { label: "На проверке", value: tasks.filter(t => t.status === "review_lead" || t.status === "review_gip").length, color: C.purple },
-                  { label: "Завершено", value: tasks.filter(t => t.status === "done").length, color: C.green },
-                ].map(s => (
-                  <div key={s.label} className="stat-card">
-                    <div className="stat-card-header">
-                      <span className="stat-card-dot" style={{ background: s.color }} />
-                      <span className="stat-card-label">{s.label}</span>
-                    </div>
-                    <div className="stat-card-value" style={{ color: s.color }}>{s.value}</div>
+              {/* ── KPI карточки ── */}
+              {(() => {
+                const now = new Date();
+                const baseTasks = (isGip || isAdmin) ? allTasks : tasks;
+                const overdueProjects = projects.filter(p => p.deadline && new Date(p.deadline) < now).length;
+                return (
+                  <div className="stats-row">
+                    {(isGip || isAdmin) ? [
+                      { label: "Проектов", value: projects.length, color: C.accent },
+                      { label: "Активных задач", value: allTasks.filter(t => t.status !== "done").length, color: C.blue },
+                      { label: "На проверке ГИПа", value: allTasks.filter(t => t.status === "review_gip").length, color: C.purple },
+                      { label: "Просроченных проектов", value: overdueProjects, color: overdueProjects > 0 ? C.red : C.green },
+                    ] : isLead ? [
+                      { label: "Задач в отделе", value: baseTasks.length, color: C.accent },
+                      { label: "В работе", value: baseTasks.filter(t => t.status === "inprogress").length, color: C.blue },
+                      { label: "На проверке", value: baseTasks.filter(t => t.status === "review_lead" || t.status === "review_gip").length, color: C.purple },
+                      { label: "Завершено", value: baseTasks.filter(t => t.status === "done").length, color: C.green },
+                    ] : [
+                      { label: "Мои задачи", value: baseTasks.length, color: C.accent },
+                      { label: "В работе", value: baseTasks.filter(t => t.status === "inprogress").length, color: C.blue },
+                      { label: "На проверке", value: baseTasks.filter(t => t.status === "review_lead" || t.status === "review_gip").length, color: C.purple },
+                      { label: "Завершено", value: baseTasks.filter(t => t.status === "done").length, color: C.green },
+                    ].map(s => (
+                      <div key={s.label} className="stat-card">
+                        <div className="stat-card-header"><span className="stat-card-dot" style={{ background: s.color }} /><span className="stat-card-label">{s.label}</span></div>
+                        <div className="stat-card-value" style={{ color: s.color }}>{s.value}</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
 
-              {/* Результаты поиска по задачам */}
+              {/* Результаты поиска */}
               {searchQuery && (() => {
                 const sq = searchQuery.toLowerCase();
                 const matchedTasks = tasks.filter(t => t.name.toLowerCase().includes(sq) || (t.dept || "").toLowerCase().includes(sq));
@@ -755,7 +769,175 @@ export default function App() {
                 ); else return null;
               })()}
 
-              {/* Проекты */}
+              {/* ── АНАЛИТИКА ДЛЯ ГИПа / АДМИНИСТРАТОРА ── */}
+              {(isGip || isAdmin) && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                  {/* Загрузка отделов */}
+                  <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20 }}>
+                    <div className="page-label" style={{ marginBottom: 14 }}>Загрузка отделов</div>
+                    {(() => {
+                      const deptLoad: Record<string, { total: number; done: number; review: number }> = {};
+                      for (const t of allTasks) {
+                        const dn = t.dept || 'Без отдела';
+                        if (!deptLoad[dn]) deptLoad[dn] = { total: 0, done: 0, review: 0 };
+                        deptLoad[dn].total++;
+                        if (t.status === 'done') deptLoad[dn].done++;
+                        if (t.status === 'review_gip' || t.status === 'review_lead') deptLoad[dn].review++;
+                      }
+                      const entries = Object.entries(deptLoad).sort((a, b) => b[1].total - a[1].total);
+                      const maxVal = entries[0]?.[1].total || 1;
+                      return entries.length > 0 ? entries.map(([name, d]) => (
+                        <div key={name} style={{ marginBottom: 12 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
+                            <span style={{ color: C.text, fontWeight: 500 }}>{name}</span>
+                            <span style={{ color: C.textMuted }}>{d.total} задач · {d.done} готово</span>
+                          </div>
+                          <div style={{ height: 7, background: C.surface2, borderRadius: 4, overflow: 'hidden', display: 'flex' }}>
+                            <div style={{ height: '100%', width: `${(d.done / maxVal) * 100}%`, background: C.green, transition: 'width 0.4s' }} />
+                            <div style={{ height: '100%', width: `${((d.total - d.done) / maxVal) * 100}%`, background: C.accent + '60', transition: 'width 0.4s' }} />
+                          </div>
+                        </div>
+                      )) : <div style={{ fontSize: 13, color: C.textMuted }}>Нет данных</div>;
+                    })()}
+                  </div>
+
+                  {/* Дедлайны проектов */}
+                  <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20 }}>
+                    <div className="page-label" style={{ marginBottom: 14 }}>Дедлайны проектов</div>
+                    {[...projects].sort((a, b) => new Date(a.deadline || '9999').getTime() - new Date(b.deadline || '9999').getTime()).map(p => {
+                      const now = new Date();
+                      const dl = p.deadline ? new Date(p.deadline) : null;
+                      const daysLeft = dl ? Math.ceil((dl.getTime() - now.getTime()) / 86400000) : null;
+                      const color = daysLeft === null ? C.textMuted : daysLeft < 0 ? C.red : daysLeft < 14 ? C.orange : C.green;
+                      const label = daysLeft === null ? '—' : daysLeft < 0 ? `Просрочен ${-daysLeft} д.` : daysLeft === 0 ? 'Сегодня!' : `${daysLeft} дн.`;
+                      const progress = getAutoProgress(p.id);
+                      return (
+                        <div key={p.id} onClick={() => { setActiveProject(p); setScreen('project'); setSideTab('tasks'); }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: `1px solid ${C.border}`, cursor: 'pointer' }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12, color: C.text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                            <div style={{ fontSize: 10, color: C.textMuted }}>{p.code}</div>
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div style={{ fontSize: 11, color, fontWeight: 700 }}>{label}</div>
+                            <div style={{ fontSize: 10, color: C.textMuted }}>{progress}%</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Очередь на проверку ГИПа */}
+              {(isGip || isAdmin) && (() => {
+                const reviewTasks = allTasks.filter(t => t.status === 'review_gip');
+                if (reviewTasks.length === 0) return null;
+                return (
+                  <div style={{ background: C.surface, border: `1px solid ${C.purple}30`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <div className="page-label" style={{ color: C.purple }}>Ожидают проверки ГИПа</div>
+                      <span style={{ fontSize: 12, color: C.purple, background: C.purple + '20', padding: '2px 10px', borderRadius: 10, fontWeight: 700 }}>{reviewTasks.length}</span>
+                    </div>
+                    <div className="task-list">
+                      {reviewTasks.map(t => {
+                        const u = getUserById(t.assigned_to);
+                        const proj = projects.find(p => p.id === t.project_id);
+                        return (
+                          <div key={t.id} className="task-row" onClick={() => { setSelectedTask(t); setShowTaskDetail(true); }}>
+                            <PriorityDot p={t.priority} C={C} />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{t.name}</div>
+                              <div style={{ fontSize: 11, color: C.textMuted }}>{proj?.code} · {t.dept}</div>
+                            </div>
+                            {u && <span style={{ fontSize: 11, color: C.textMuted }}>{u.full_name.split(' ')[0]}</span>}
+                            <BadgeComp status={t.status} C={C} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── АНАЛИТИКА ДЛЯ РУКОВОДИТЕЛЯ ОТДЕЛА ── */}
+              {isLead && (() => {
+                const myDeptId = currentUserData?.dept_id;
+                const myEngineers = appUsers.filter(u => u.dept_id === myDeptId && u.role === 'engineer');
+                const myDeptTasks = tasks; // уже отфильтровано по отделу
+                return (
+                  <div style={{ marginBottom: 20 }}>
+                    {/* Загрузка инженеров */}
+                    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                      <div className="page-label" style={{ marginBottom: 14 }}>Загрузка инженеров отдела</div>
+                      {myEngineers.length === 0 ? (
+                        <div style={{ fontSize: 13, color: C.textMuted }}>Инженеры не назначены в отдел</div>
+                      ) : myEngineers.map(eng => {
+                        const engTasks = myDeptTasks.filter(t => String(t.assigned_to) === String(eng.id));
+                        const done = engTasks.filter(t => t.status === 'done').length;
+                        const inprog = engTasks.filter(t => t.status === 'inprogress').length;
+                        const review = engTasks.filter(t => t.status === 'review_lead' || t.status === 'review_gip').length;
+                        const todo = engTasks.filter(t => t.status === 'todo').length;
+                        const total = engTasks.length;
+                        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                        return (
+                          <div key={eng.id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                            <AvatarComp user={eng} size={32} C={C} />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                                <span style={{ color: C.text, fontWeight: 600 }}>{eng.full_name}</span>
+                                <span style={{ color: C.textMuted }}>{total} задач · {pct}% готово</span>
+                              </div>
+                              <div style={{ height: 7, background: C.surface2, borderRadius: 4, overflow: 'hidden', display: 'flex' }}>
+                                <div title="Завершено" style={{ width: `${total > 0 ? (done/total)*100 : 0}%`, background: C.green, height: '100%' }} />
+                                <div title="На проверке" style={{ width: `${total > 0 ? (review/total)*100 : 0}%`, background: C.purple, height: '100%' }} />
+                                <div title="В работе" style={{ width: `${total > 0 ? (inprog/total)*100 : 0}%`, background: C.blue, height: '100%' }} />
+                                <div title="В очереди" style={{ width: `${total > 0 ? (todo/total)*100 : 0}%`, background: C.accent + '50', height: '100%' }} />
+                              </div>
+                              <div style={{ display: 'flex', gap: 10, marginTop: 4, fontSize: 10, color: C.textMuted }}>
+                                {done > 0 && <span style={{ color: C.green }}>✓ {done} готово</span>}
+                                {review > 0 && <span style={{ color: C.purple }}>◎ {review} проверка</span>}
+                                {inprog > 0 && <span style={{ color: C.blue }}>▶ {inprog} в работе</span>}
+                                {todo > 0 && <span>☐ {todo} в очереди</span>}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Задачи ожидающие проверки руководителя */}
+                    {(() => {
+                      const waitReview = myDeptTasks.filter(t => t.status === 'review_lead');
+                      if (waitReview.length === 0) return null;
+                      return (
+                        <div style={{ background: C.surface, border: `1px solid ${C.purple}30`, borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                            <div className="page-label" style={{ color: C.purple }}>Ожидают вашей проверки</div>
+                            <span style={{ fontSize: 12, color: C.purple, background: C.purple + '20', padding: '2px 10px', borderRadius: 10, fontWeight: 700 }}>{waitReview.length}</span>
+                          </div>
+                          <div className="task-list">
+                            {waitReview.map(t => {
+                              const u = getUserById(t.assigned_to);
+                              return (
+                                <div key={t.id} className="task-row" onClick={() => { setSelectedTask(t); setShowTaskDetail(true); }}>
+                                  <PriorityDot p={t.priority} C={C} />
+                                  <span style={{ flex: 1, fontSize: 13, color: C.text, fontWeight: 500 }}>{t.name}</span>
+                                  {u && <span style={{ fontSize: 11, color: C.textMuted }}>{u.full_name.split(' ')[0]}</span>}
+                                  <BadgeComp status={t.status} C={C} />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                );
+              })()}
+
+              {/* ── Проекты ── */}
               <div className="page-label" style={{ marginBottom: 12 }}>Проекты</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {projects.filter(p => { if (!searchQuery) return true; const sq = searchQuery.toLowerCase(); return p.name.toLowerCase().includes(sq) || p.code.toLowerCase().includes(sq); }).map(p => {
