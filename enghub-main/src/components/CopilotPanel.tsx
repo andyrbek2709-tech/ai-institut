@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { get, post, patch } from '../api/supabase';
+import { validateCopilotApply } from '../copilot/validateApplyAction';
 
 interface AIAction {
   id: string;
@@ -44,6 +45,7 @@ export function CopilotPanel({
   const [loading, setLoading] = useState(false);
   const [useKB, setUseKB] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const applyInFlightRef = useRef<Set<string>>(new Set());
 
   // Polling ai_actions
   const fetchActions = async () => {
@@ -112,40 +114,25 @@ export function CopilotPanel({
   };
 
   const applyAction = async (action: AIAction, approved: boolean) => {
+    const token = localStorage.getItem('enghub_token');
+    const payload = (action.payload && typeof action.payload === 'object' ? action.payload : {}) as Record<string, unknown>;
+
+    if (approved && applyInFlightRef.current.has(action.id)) {
+      setMessages(prev => [...prev, { role: 'ai', text: 'Это действие уже выполняется — дождитесь завершения.' }]);
+      return;
+    }
+
+    const validation = validateCopilotApply(action.action_type, payload, approved);
+    if (validation.ok === false) {
+      setMessages(prev => [...prev, { role: 'ai', text: validation.error }]);
+      return;
+    }
+
+    if (approved) applyInFlightRef.current.add(action.id);
+
     try {
-      const token = localStorage.getItem('enghub_token');
-      const payload = action.payload || {};
-      if (approved && action.action_type === 'update_drawing' && !action.payload?.drawing_id) {
-        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить update_drawing: отсутствует drawing_id.' }]);
-        return;
-      }
-      if (approved && (action.action_type === 'create_drawing_revision' || action.action_type === 'create_revision') && !action.payload?.drawing_id) {
-        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить ревизию: отсутствует drawing_id.' }]);
-        return;
-      }
-      if (approved && action.action_type === 'create_tasks' && !Array.isArray(payload.tasks)) {
-        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить create_tasks: payload.tasks отсутствует.' }]);
-        return;
-      }
-      if (approved && action.action_type === 'create_drawing' && (!payload.code || !payload.title)) {
-        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить create_drawing: отсутствует code или title.' }]);
-        return;
-      }
-      if (approved && action.action_type === 'create_review' && !payload.title) {
-        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить create_review: отсутствует title.' }]);
-        return;
-      }
-      if (approved && action.action_type === 'update_review_status' && (!payload.review_id || !payload.status)) {
-        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить update_review_status: нужен review_id и status.' }]);
-        return;
-      }
-      if (approved && action.action_type === 'update_transmittal_status' && (!payload.transmittal_id || !payload.status)) {
-        setMessages(prev => [...prev, { role: 'ai', text: 'Невозможно применить update_transmittal_status: нужен transmittal_id и status.' }]);
-        return;
-      }
-      
       if (approved && action.action_type === 'create_tasks') {
-        for (const t of payload.tasks) {
+        for (const t of payload.tasks as Array<{ title?: string; priority?: string }>) {
           await post('tasks', {
             project_id: projectId,
             name: t.title,
@@ -160,8 +147,8 @@ export function CopilotPanel({
       if (approved && action.action_type === 'create_drawing') {
         await post('drawings', {
           project_id: projectId,
-          code: payload.code,
-          title: payload.title,
+          code: payload.code as string,
+          title: payload.title as string,
           discipline: payload.discipline || null,
           status: 'draft',
           revision: 'R0',
@@ -171,7 +158,7 @@ export function CopilotPanel({
       }
 
       if (approved && action.action_type === 'update_drawing' && payload?.drawing_id) {
-        await patch(`drawings?id=eq.${payload.drawing_id}`, payload.updates || {}, token || '');
+        await patch(`drawings?id=eq.${payload.drawing_id}`, (payload.updates || {}) as Record<string, unknown>, token || '');
         onDataChanged?.();
       }
 
@@ -182,7 +169,7 @@ export function CopilotPanel({
         const nextRev = `R${Number.isFinite(revNum) ? revNum : 1}`;
         await post('revisions', {
           project_id: drawing?.project_id || projectId,
-          drawing_id: payload.drawing_id,
+          drawing_id: payload.drawing_id as string,
           from_revision: drawing?.revision || 'R0',
           to_revision: nextRev,
           issued_by: userId
@@ -194,9 +181,9 @@ export function CopilotPanel({
       if (approved && action.action_type === 'create_review') {
         await post('reviews', {
           project_id: projectId,
-          drawing_id: payload?.drawing_id || null,
-          title: payload?.title || 'Замечание',
-          severity: payload?.severity || 'major',
+          drawing_id: (payload?.drawing_id as string | null | undefined) || null,
+          title: (payload?.title as string) || 'Замечание',
+          severity: (payload?.severity as string) || 'major',
           status: 'open',
           author_id: userId
         }, token || '');
@@ -205,7 +192,7 @@ export function CopilotPanel({
 
       if (approved && action.action_type === 'update_review_status') {
         await patch(`reviews?id=eq.${payload.review_id}`, {
-          status: payload.status,
+          status: payload.status as string,
           updated_at: new Date().toISOString(),
         }, token || '');
         onDataChanged?.();
@@ -214,7 +201,7 @@ export function CopilotPanel({
       if (approved && action.action_type === 'create_transmittal') {
         const createdRows = await post('transmittals', {
           project_id: projectId,
-          number: payload?.number || `TR-${projectId}-${Date.now()}`,
+          number: (payload?.number as string) || `TR-${projectId}-${Date.now()}`,
           recipient: payload?.recipient || null,
           note: payload?.note || null,
           status: 'draft',
@@ -222,7 +209,7 @@ export function CopilotPanel({
         }, token || '');
         const created = Array.isArray(createdRows) ? createdRows[0] : null;
         if (created?.id && Array.isArray(payload?.items)) {
-          for (const item of payload.items) {
+          for (const item of payload.items as Array<{ drawing_id?: string; revision_id?: string; note?: string }>) {
             await post('transmittal_items', {
               transmittal_id: created.id,
               drawing_id: item?.drawing_id || null,
@@ -236,7 +223,7 @@ export function CopilotPanel({
 
       if (approved && action.action_type === 'update_transmittal_status') {
         await patch(`transmittals?id=eq.${payload.transmittal_id}`, {
-          status: payload.status,
+          status: payload.status as string,
           updated_at: new Date().toISOString(),
         }, token || '');
         onDataChanged?.();
@@ -250,6 +237,9 @@ export function CopilotPanel({
       fetchActions();
     } catch (e) {
       console.error(e);
+      setMessages(prev => [...prev, { role: 'ai', text: 'Ошибка при применении действия. Проверьте консоль и повторите попытку.' }]);
+    } finally {
+      if (approved) applyInFlightRef.current.delete(action.id);
     }
   };
 

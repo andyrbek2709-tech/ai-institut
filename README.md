@@ -420,6 +420,16 @@ git push origin main
 - Validation: `npm run build` (успешно), lint `App.tsx` и `AssignmentsTab.tsx` без ошибок.
 - Next: commit+push блока C.4; затем переход к D.1 (Copilot Hardening v2: унификация apply-валидаций/контрактов по action payload).
 
+#### [2026-04-01 12:00] Agent update
+- Step: Блок D.1 выполнен: единый контракт/валидатор для подтверждения действий Copilot (`validateCopilotApply`), защита от двойного клика по одному `ai_actions.id`, ужесточение проверок `create_tasks`/`update_drawing`/`create_transmittal.items`, сообщение пользователю при ошибке apply; минимальные unit-тесты на валидатор.
+- Files:
+  - `enghub-main/src/copilot/validateApplyAction.ts`
+  - `enghub-main/src/copilot/validateApplyAction.test.ts`
+  - `enghub-main/src/components/CopilotPanel.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), `CI=true npm test -- --watch=false` (успешно), lint по изменённым файлам без ошибок.
+- Next: commit+push блока D.1; затем переход к D.2 (расширение идемпотентности/сообщений блокировок на стороне orchestrator или клиентских “next step” подсказок).
+
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
 - Files:
