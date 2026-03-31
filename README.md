@@ -393,6 +393,15 @@ git push origin main
 - Validation: `npm run build` (успешно), lint по измененным файлам без ошибок.
 - Next: commit+push блока C.1; затем переход к Блоку C.2 (декомпозиция Reviews/Drawings tabs).
 
+#### [2026-03-31 21:28] Agent update
+- Step: Блок C.2 выполнен: вкладка Reviews вынесена из `App.tsx` в отдельный компонент `ReviewsTab` без изменения поведения (создание замечаний, фильтр по роли, смена статуса замечаний).
+- Files:
+  - `enghub-main/src/components/ReviewsTab.tsx`
+  - `enghub-main/src/App.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint `App.tsx` и `ReviewsTab.tsx` без ошибок.
+- Next: commit+push блока C.2; затем переход к C.3 (декомпозиция Revisions tab).
+
 #### [2026-03-31 19:49] Agent update
 - Step: Формально закрыта Фаза 7 как завершенная: добавлен связующий слой `transmittal_items` (привязка к `drawings/revisions`), в `orchestrator` реализован явный Register Agent контракт (`create_transmittal`, `update_transmittal_status`), в `CopilotPanel` добавлено применение этих действий, а в UI трансмитталов добавлены управление статусом, список позиций и добавление позиций из чертежей/ревизий.
 - Files:
