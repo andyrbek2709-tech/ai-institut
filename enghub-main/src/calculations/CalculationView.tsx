@@ -4,6 +4,150 @@ import Latex from 'react-latex-next';
 import { calcRegistry } from './registry';
 import { exportToDocx } from './DocxExporter';
 
+// =====================================================================
+// Реестр конвертеров единиц
+// keywords — подстроки unit'а, при совпадении показываем этот конвертер
+// =====================================================================
+const UNIT_CONVERTERS: Record<string, {
+  label: string;
+  icon: string;
+  baseUnit: string;
+  keywords: string[];
+  rows: (v: number) => Array<[string, string]>;
+}> = {
+  length: {
+    label: "Длина", icon: "📏", baseUnit: "м",
+    keywords: ["м", "мм", "см", "км"],
+    rows: (v) => [
+      ["мм", (v * 1000).toFixed(2)],
+      ["см", (v * 100).toFixed(3)],
+      ["м", v.toFixed(4)],
+      ["км", (v / 1000).toFixed(6)],
+    ]
+  },
+  pressure: {
+    label: "Давление", icon: "🔵", baseUnit: "МПа",
+    keywords: ["МПа", "кПа", "Па", "бар", "атм", "кгс/см"],
+    rows: (v) => [
+      ["Па", (v * 1e6).toFixed(0)],
+      ["кПа", (v * 1000).toFixed(3)],
+      ["МПа", v.toFixed(5)],
+      ["бар", (v * 10).toFixed(4)],
+      ["атм", (v * 9.8692).toFixed(4)],
+      ["кгс/см²", (v * 10.197).toFixed(4)],
+    ]
+  },
+  temperature: {
+    label: "Температура", icon: "🌡️", baseUnit: "°C",
+    keywords: ["°C", "°к", "°f", "кельвин", "dT", "ΔT"],
+    rows: (v) => [
+      ["°C", v.toFixed(2)],
+      ["K", (v + 273.15).toFixed(2)],
+      ["°F", (v * 9 / 5 + 32).toFixed(2)],
+    ]
+  },
+  power: {
+    label: "Мощность / Теплота", icon: "⚡", baseUnit: "кВт",
+    keywords: ["кВт", "Вт", "МВт", "ккал", "Гкал"],
+    rows: (v) => [
+      ["Вт", (v * 1000).toFixed(1)],
+      ["кВт", v.toFixed(4)],
+      ["МВт", (v / 1000).toFixed(6)],
+      ["ккал/ч", (v * 860.2).toFixed(2)],
+      ["Гкал/ч", (v * 860.2e-6).toFixed(8)],
+    ]
+  },
+  mass: {
+    label: "Масса", icon: "⚖️", baseUnit: "кг",
+    keywords: ["кг", "т", "тонн"],
+    rows: (v) => [
+      ["г", (v * 1000).toFixed(1)],
+      ["кг", v.toFixed(3)],
+      ["т", (v / 1000).toFixed(6)],
+    ]
+  },
+  flow_mass: {
+    label: "Массовый расход", icon: "🌊", baseUnit: "кг/с",
+    keywords: ["кг/с", "т/ч", "кг/ч", "кг/мин"],
+    rows: (v) => [
+      ["кг/с", v.toFixed(4)],
+      ["кг/мин", (v * 60).toFixed(3)],
+      ["кг/ч", (v * 3600).toFixed(2)],
+      ["т/ч", (v * 3.6).toFixed(4)],
+    ]
+  },
+  velocity: {
+    label: "Скорость", icon: "💨", baseUnit: "м/с",
+    keywords: ["м/с", "км/ч"],
+    rows: (v) => [
+      ["м/с", v.toFixed(3)],
+      ["км/ч", (v * 3.6).toFixed(2)],
+      ["м/мин", (v * 60).toFixed(2)],
+    ]
+  },
+  density: {
+    label: "Плотность", icon: "💧", baseUnit: "кг/м³",
+    keywords: ["кг/м³", "г/л", "г/см³"],
+    rows: (v) => [
+      ["кг/м³", v.toFixed(3)],
+      ["г/л", v.toFixed(3)],
+      ["г/см³", (v / 1000).toFixed(6)],
+    ]
+  },
+  force: {
+    label: "Сила / Нагрузка", icon: "🔩", baseUnit: "кН",
+    keywords: ["кН", "МН", "кгс", "тс"],
+    rows: (v) => [
+      ["Н", (v * 1000).toFixed(1)],
+      ["кН", v.toFixed(3)],
+      ["МН", (v / 1000).toFixed(6)],
+      ["кгс", (v * 101.97).toFixed(2)],
+      ["тс", (v * 0.10197).toFixed(4)],
+    ]
+  },
+  area_section: {
+    label: "Сечение (площадь)", icon: "📐", baseUnit: "мм²",
+    keywords: ["мм²", "см²", "мм2", "см2"],
+    rows: (v) => [
+      ["мм²", v.toFixed(2)],
+      ["см²", (v / 100).toFixed(4)],
+      ["м²", (v / 1e6).toFixed(8)],
+    ]
+  },
+  current: {
+    label: "Электрический ток", icon: "⚡", baseUnit: "А",
+    keywords: ["А", "мА", "кА"],
+    rows: (v) => [
+      ["мА", (v * 1000).toFixed(1)],
+      ["А", v.toFixed(3)],
+      ["кА", (v / 1000).toFixed(6)],
+    ]
+  },
+  voltage: {
+    label: "Напряжение", icon: "🔋", baseUnit: "В",
+    keywords: ["В", "кВ"],
+    rows: (v) => [
+      ["мВ", (v * 1000).toFixed(1)],
+      ["В", v.toFixed(2)],
+      ["кВ", (v / 1000).toFixed(5)],
+    ]
+  },
+};
+
+// Определяем, какие конвертеры нужны для данного набора units
+function detectConverters(units: string[]): string[] {
+  const found: string[] = [];
+  for (const [key, def] of Object.entries(UNIT_CONVERTERS)) {
+    const needed = units.some(u =>
+      def.keywords.some(kw => u.toLowerCase().includes(kw.toLowerCase()))
+    );
+    if (needed) found.push(key);
+  }
+  return found;
+}
+
+// =====================================================================
+
 export const CalculationView = ({ calcId, C }: { calcId: string, C: any }) => {
   const template = calcRegistry[calcId];
   const [inputs, setInputs] = useState<Record<string, number>>(() => {
@@ -11,29 +155,26 @@ export const CalculationView = ({ calcId, C }: { calcId: string, C: any }) => {
     if (template) template.inputs.forEach(inp => init[inp.id] = inp.defaultValue ?? 0);
     return init;
   });
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [calcResult, setCalcResult] = useState<any>(null);
-
-  // Global unit converter state for this calculation
   const [showConverter, setShowConverter] = useState(false);
-  const [convValue, setConvValue] = useState(1);
-  const [convType, setConvType] = useState("length"); // length, pressure, power
+  const [convValues, setConvValues] = useState<Record<string, number>>({});
 
   if (!template) return <div style={{ padding: 40, color: C.textDim, textAlign: "center" }}>Выберите расчет из списка слева</div>;
+
+  // Определяем применимые конвертеры на основе единиц входных данных
+  const inputUnits = template.inputs.map(inp => inp.unit || "").filter(Boolean);
+  const applicableConverters = detectConverters(inputUnits);
 
   const handleInputChange = (id: string, value: string) => {
     const num = parseFloat(value);
     setInputs(prev => ({ ...prev, [id]: isNaN(num) ? 0 : num }));
-    
-    // Validate live
     const inpDef = template.inputs.find(i => i.id === id);
     if (!inpDef) return;
-    
     let err = "";
     if (inpDef.min !== undefined && num < inpDef.min) err = `Мин: ${inpDef.min}. ${inpDef.hint || ""}`;
     if (inpDef.max !== undefined && num > inpDef.max) err = `Макс: ${inpDef.max}. ${inpDef.hint || ""}`;
-    
     setErrors(prev => ({ ...prev, [id]: err }));
   };
 
@@ -42,8 +183,7 @@ export const CalculationView = ({ calcId, C }: { calcId: string, C: any }) => {
       alert("Исправьте ошибки в исходных данных перед расчетом.");
       return;
     }
-    const result = template.calculate(inputs);
-    setCalcResult(result);
+    setCalcResult(template.calculate(inputs));
   };
 
   const handleExport = () => {
@@ -53,41 +193,62 @@ export const CalculationView = ({ calcId, C }: { calcId: string, C: any }) => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", position: "relative" }}>
+      {/* HEADER */}
       <div style={{ padding: "24px 32px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>{template.name}</div>
           <div style={{ fontSize: 13, color: C.textMuted, marginTop: 4 }}>{template.desc} | {template.normativeReference}</div>
         </div>
-        <button className="btn btn-ghost" onClick={() => setShowConverter(!showConverter)} style={{ background: showConverter ? C.surface2 : "transparent" }}>
-          🔄 Конвертер величин
-        </button>
+        {applicableConverters.length > 0 && (
+          <button className="btn btn-ghost" onClick={() => setShowConverter(!showConverter)}
+            style={{ background: showConverter ? C.surface2 : "transparent" }}>
+            🔄 Конвертер ({applicableConverters.length})
+          </button>
+        )}
       </div>
-      
-      {/* GLOBAL UNIT CONVERTER PANE */}
-      {showConverter && (
-        <div style={{ background: C.surface2, padding: "16px 32px", borderBottom: `1px solid ${C.border}`, display: "flex", gap: 20, alignItems: "center" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Быстрый перевод:</div>
-          <select value={convType} onChange={e => setConvType(e.target.value)} style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text }}>
-            <option value="length">Длина (м ↔ мм)</option>
-            <option value="pressure">Давление (МПа ↔ кПа ↔ бар)</option>
-            <option value="power">Мощность (кВт ↔ Вт)</option>
-            <option value="mass">Масса (т ↔ кг)</option>
-          </select>
-          <input type="number" value={convValue} onChange={e => setConvValue(parseFloat(e.target.value) || 0)} style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, width: 100 }} />
-          
-          <div style={{ display: "flex", gap: 12, alignItems: "center", color: C.text, fontSize: 14 }}>
-            <span>=</span>
-            {convType === "length" && <span style={{ fontWeight: 600 }}>{convValue * 1000} мм (или {convValue / 1000} км)</span>}
-            {convType === "pressure" && <span style={{ fontWeight: 600 }}>{convValue * 1000} кПа / {convValue * 10} бар / {convValue * 10197.16} кгс/м²</span>}
-            {convType === "power" && <span style={{ fontWeight: 600 }}>{convValue * 1000} Вт</span>}
-            {convType === "mass" && <span style={{ fontWeight: 600 }}>{convValue * 1000} кг</span>}
+
+      {/* УМНЫЙ КОНВЕРТЕР — только нужные единицы */}
+      {showConverter && applicableConverters.length > 0 && (
+        <div style={{ background: C.surface2, padding: "16px 32px", borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Конвертер для этого расчёта:</div>
+            <button style={{ background: "transparent", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 15 }} onClick={() => setShowConverter(false)}>✕</button>
           </div>
-          <button style={{ marginLeft: "auto", background: "transparent", border: "none", color: C.textMuted, cursor: "pointer" }} onClick={() => setShowConverter(false)}>✕</button>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+            {applicableConverters.map(key => {
+              const def = UNIT_CONVERTERS[key];
+              const v = convValues[key] ?? 1;
+              return (
+                <div key={key} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 10 }}>
+                    {def.icon} {def.label}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <input
+                      type="number"
+                      value={v}
+                      onChange={e => setConvValues(prev => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+                      style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface2, color: C.text, fontSize: 14, outline: "none" }}
+                    />
+                    <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 600 }}>{def.baseUnit}</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {def.rows(v).map(([unit, val]) => (
+                      <div key={unit} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: C.text }}>
+                        <span style={{ color: C.textMuted }}>{unit}</span>
+                        <span style={{ fontWeight: 600 }}>{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
-      
+
       <div style={{ padding: 32, display: "flex", flexDirection: "column", gap: 32, maxWidth: 1000 }}>
-        
+
         {/* INPUT FORM */}
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, padding: 24, borderRadius: 12 }}>
           <div style={{ fontSize: 16, fontWeight: 600, color: C.text, marginBottom: 20 }}>1. Исходные данные</div>
@@ -97,19 +258,16 @@ export const CalculationView = ({ calcId, C }: { calcId: string, C: any }) => {
                 <label style={{ fontSize: 13, color: C.textDim, fontWeight: 500 }}>
                   {inp.name} {inp.unit ? `[${inp.unit}]` : ""}
                 </label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input 
-                    type="number" 
-                    value={inputs[inp.id] ?? 0} 
-                    onChange={e => handleInputChange(inp.id, e.target.value)}
-                    style={{ 
-                      flex: 1, padding: "10px 14px", borderRadius: 8, 
-                      border: `1.5px solid ${errors[inp.id] ? C.red : C.border}`, 
-                      background: C.surface2, color: C.text, outline: "none",
-                      fontSize: 15
-                    }} 
-                  />
-                </div>
+                <input
+                  type="number"
+                  value={inputs[inp.id] ?? 0}
+                  onChange={e => handleInputChange(inp.id, e.target.value)}
+                  style={{
+                    flex: 1, padding: "10px 14px", borderRadius: 8,
+                    border: `1.5px solid ${errors[inp.id] ? C.red : C.border}`,
+                    background: C.surface2, color: C.text, outline: "none", fontSize: 15
+                  }}
+                />
                 {errors[inp.id] && <div style={{ fontSize: 11, color: C.red }}>{errors[inp.id]}</div>}
               </div>
             ))}
@@ -121,7 +279,7 @@ export const CalculationView = ({ calcId, C }: { calcId: string, C: any }) => {
           </div>
         </div>
 
-        {/* RESULTS DISPLAY */}
+        {/* RESULTS */}
         {calcResult && (
           <div style={{ background: C.green + "08", border: `1px solid ${C.green}30`, padding: 24, borderRadius: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
