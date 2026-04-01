@@ -1,137 +1,161 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Компания - Доставка</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f9f9f9;
-            color: #333;
-            line-height: 1.6;
-        }
-        header {
-            background: #004aad;
-            color: #fff;
-            padding: 1rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        header h1 {
-            margin: 0;
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-        nav a {
-            color: #eef2f7;
-            text-decoration: none;
-            margin-left: 1.5rem;
-            font-weight: 600;
-            transition: color 0.3s;
-        }
-        nav a:hover,
-        nav a.active {
-            color: #ffd600;
-        }
-        main {
-            max-width: 960px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgb(0 0 0 / 0.05);
-        }
-        section {
-            margin-bottom: 3rem;
-        }
-        section h2 {
-            margin-top: 0;
-            color: #004aad;
-            border-bottom: 3px solid #004aad;
-            padding-bottom: 0.5rem;
-            font-weight: 700;
-            font-size: 2rem;
-        }
-        section p {
-            font-size: 1.1rem;
-            margin-top: 0.5rem;
-        }
-        .delivery-image {
-            width: 100%;
-            border-radius: 8px;
-            margin-top: 1rem;
-            box-shadow: 0 4px 10px rgb(0 0 0 / 0.1);
-            object-fit: cover;
-            height: 300px;
-        }
-        footer {
-            background: #222;
-            color: #aaa;
-            text-align: center;
-            padding: 1.5rem 1rem;
-            font-size: 0.9rem;
-            letter-spacing: 0.05em;
-            user-select: none;
-        }
-        @media (max-width: 600px) {
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            nav a {
-                margin: 0.5rem 0 0 0;
-                display: inline-block;
-            }
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Современный сайт</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+  }
+  header {
+    background: #24292e;
+    color: #fff;
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+  }
+  .nav-links li {
+    margin-left: 1.5rem;
+  }
+  .nav-links a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+  .nav-links a:hover {
+    color: #4fc3f7;
+  }
+  main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  .hero {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: center;
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  }
+  .hero-content {
+    flex: 1 1 400px;
+  }
+  .hero-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #24292e;
+  }
+  .hero-content p {
+    font-size: 1.125rem;
+    margin-bottom: 1.5rem;
+    color: #555;
+  }
+  .hero-content a {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #4fc3f7;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.3s ease;
+  }
+  .hero-content a:hover {
+    background: #3a9bd8;
+  }
+  .hero-image {
+    flex: 1 1 350px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .hero-image img {
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+    object-fit: cover;
+    height: 100%;
+    max-height: 350px;
+  }
+  footer {
+    background: #24292e;
+    color: #bbb;
+    text-align: center;
+    padding: 1.5rem 2rem;
+    margin-top: 4rem;
+  }
+  footer a {
+    color: #4fc3f7;
+    text-decoration: none;
+  }
+  footer a:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 768px) {
+    .hero {
+      flex-direction: column;
+    }
+    .hero-image {
+      max-height: 300px;
+    }
+  }
+</style>
 </head>
 <body>
-    <header>
-        <h1>Компания</h1>
-        <nav>
-            <a href="#about">О нас</a>
-            <a href="#services">Услуги</a>
-            <a href="#delivery" class="active">Доставка</a>
-            <a href="#contact">Контакты</a>
-        </nav>
-    </header>
-    <main>
-        <section id="about">
-            <h2>О нас</h2>
-            <p>Мы предоставляем качественные товары и услуги, ориентируясь на потребности наших клиентов.</p>
-        </section>
-        <section id="services">
-            <h2>Услуги</h2>
-            <p>Предлагаем широкий спектр услуг, включая консультации, поддержку и индивидуальные решения.</p>
-        </section>
-        <section id="delivery">
-            <h2>Доставка</h2>
-            <p>Мы организуем быструю и надежную доставку по всей стране. Заказы обрабатываются в течение 24 часов, а доставка занимает от 2 до 5 рабочих дней в зависимости от региона.</p>
-            <p>Стоимость доставки рассчитывается автоматически при оформлении заказа и зависит от веса и объема товара. Мы сотрудничаем с ведущими службами доставки для обеспечения высокого уровня сервиса.</p>
-            <img
-                src="https://images.unsplash.com/photo-1506617420156-8e4536971650?w=800"
-                alt="Доставка"
-                class="delivery-image"
-                loading="lazy"
-            />
-        </section>
-        <section id="contact">
-            <h2>Контакты</h2>
-            <p>Свяжитесь с нами для получения дополнительной информации и поддержки.</p>
-        </section>
-    </main>
-    <footer>
-        &copy; 2024 Компания. Все права защищены.
-    </footer>
+<header>
+  <nav>
+    <div class="logo">MySite</div>
+    <ul class="nav-links">
+      <li><a href="#home">Главная</a></li>
+      <li><a href="#about">О нас</a></li>
+      <li><a href="#services">Услуги</a></li>
+      <li><a href="#contact">Контакты</a></li>
+    </ul>
+  </nav>
+</header>
+<main>
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <h1>Добро пожаловать на современный сайт</h1>
+      <p>Создавайте красивые и современные веб-сайты легко и быстро с нашим профессиональным подходом.</p>
+      <a href="#about">Узнать больше</a>
+    </div>
+    <div class="hero-image">
+      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный дизайн" />
+    </div>
+  </section>
+</main>
+<footer>
+  &copy; 2024 MySite. Все права защищены. | <a href="#home">Наверх</a>
+</footer>
 </body>
 </html>
