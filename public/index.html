@@ -1,168 +1,137 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Современный сайт</title>
-<style>
-  * {
-    box-sizing: border-box;
-  }
-  body {
-    margin: 0; 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    background: #f5f7fa;
-    color: #333;
-  }
-  header {
-    background: #0d6efd;
-    color: #fff;
-    padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  header h1 {
-    margin: 0;
-    font-size: 1.5rem;
-  }
-  nav ul {
-    list-style: none;
-    display: flex;
-    margin: 0; padding: 0;
-  }
-  nav ul li {
-    margin-left: 1.5rem;
-  }
-  nav ul li a {
-    color: #fff;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s;
-  }
-  nav ul li a:hover,
-  nav ul li a:focus {
-    color: #ffd43b;
-    outline: none;
-  }
-  main {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-  }
-  .hero {
-    display: flex;
-    flex-wrap: wrap;
-    background: #fff;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
-  }
-  .hero-text {
-    flex: 1 1 400px;
-    padding: 2rem;
-  }
-  .hero-text h2 {
-    margin-top: 0;
-    font-size: 2rem;
-    color: #0d6efd;
-  }
-  .hero-text p {
-    font-size: 1.1rem;
-    margin: 1rem 0 0 0;
-    color: #555;
-  }
-  .hero-img {
-    flex: 1 1 400px;
-    min-height: 300px;
-    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800') center center/cover no-repeat;
-  }
-  footer {
-    background: #212529;
-    color: #adb5bd;
-    text-align: center;
-    padding: 1rem;
-    font-size: 0.9rem;
-  }
-  @media (max-width: 768px) {
-    .hero {
-      flex-direction: column;
-    }
-    nav ul {
-      flex-direction: column;
-      background: #0d6efd;
-      position: absolute;
-      top: 60px;
-      right: 0;
-      width: 150px;
-      display: none;
-    }
-    nav ul.show {
-      display: flex;
-    }
-    nav ul li {
-      margin: 1rem 0;
-      text-align: center;
-    }
-    nav button {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 1.5rem;
-      cursor: pointer;
-      display: block;
-    }
-  }
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Компания - Доставка</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        header {
+            background: #004aad;
+            color: #fff;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        header h1 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        nav a {
+            color: #eef2f7;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+        nav a:hover,
+        nav a.active {
+            color: #ffd600;
+        }
+        main {
+            max-width: 960px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgb(0 0 0 / 0.05);
+        }
+        section {
+            margin-bottom: 3rem;
+        }
+        section h2 {
+            margin-top: 0;
+            color: #004aad;
+            border-bottom: 3px solid #004aad;
+            padding-bottom: 0.5rem;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+        section p {
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+        .delivery-image {
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 1rem;
+            box-shadow: 0 4px 10px rgb(0 0 0 / 0.1);
+            object-fit: cover;
+            height: 300px;
+        }
+        footer {
+            background: #222;
+            color: #aaa;
+            text-align: center;
+            padding: 1.5rem 1rem;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            user-select: none;
+        }
+        @media (max-width: 600px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            nav a {
+                margin: 0.5rem 0 0 0;
+                display: inline-block;
+            }
+        }
+    </style>
 </head>
 <body>
-<header>
-  <h1>Современный сайт</h1>
-  <nav>
-    <button aria-label="Меню" id="menu-btn">&#9776;</button>
-    <ul id="nav-list">
-      <li><a href="#about">О нас</a></li>
-      <li><a href="#services">Услуги</a></li>
-      <li><a href="#contact">Контакты</a></li>
-    </ul>
-  </nav>
-</header>
-<main>
-  <section class="hero" aria-label="Главный баннер сайта">
-    <div class="hero-text">
-      <h2>Добро пожаловать на наш современный сайт</h2>
-      <p>Мы предоставляем лучшие услуги в своем деле, соединяя профессионализм и креативность.</p>
-    </div>
-    <div class="hero-img" role="img" aria-label="Современная работа на ноутбуке"></div>
-  </section>
-  <section id="about" style="margin-top:3rem;">
-    <h2>О нас</h2>
-    <p>Наша команда состоит из профессионалов с многолетним опытом в веб-разработке и дизайне. Мы создаем современные, удобные и функциональные сайты, которые помогут вашему бизнесу расти.</p>
-  </section>
-  <section id="services" style="margin-top:2rem;">
-    <h2>Услуги</h2>
-    <ul>
-      <li>Разработка веб-сайтов и приложений</li>
-      <li>Дизайн интерфейсов и опыт пользователя (UI/UX)</li>
-      <li>Поддержка и сопровождение проектов</li>
-      <li>SEO и маркетинг</li>
-    </ul>
-  </section>
-  <section id="contact" style="margin-top:2rem;">
-    <h2>Контакты</h2>
-    <p>Свяжитесь с нами по электронной почте: <a href="mailto:info@modernsite.ru">info@modernsite.ru</a> или по телефону: <a href="tel:+79001234567">+7 900 123-45-67</a></p>
-  </section>
-</main>
-<footer>
-  &copy; 2024 Современный сайт. Все права защищены.
-</footer>
-<script>
-  const menuBtn = document.getElementById('menu-btn');
-  const navList = document.getElementById('nav-list');
-  menuBtn.addEventListener('click', () => {
-    navList.classList.toggle('show');
-  });
-</script>
+    <header>
+        <h1>Компания</h1>
+        <nav>
+            <a href="#about">О нас</a>
+            <a href="#services">Услуги</a>
+            <a href="#delivery" class="active">Доставка</a>
+            <a href="#contact">Контакты</a>
+        </nav>
+    </header>
+    <main>
+        <section id="about">
+            <h2>О нас</h2>
+            <p>Мы предоставляем качественные товары и услуги, ориентируясь на потребности наших клиентов.</p>
+        </section>
+        <section id="services">
+            <h2>Услуги</h2>
+            <p>Предлагаем широкий спектр услуг, включая консультации, поддержку и индивидуальные решения.</p>
+        </section>
+        <section id="delivery">
+            <h2>Доставка</h2>
+            <p>Мы организуем быструю и надежную доставку по всей стране. Заказы обрабатываются в течение 24 часов, а доставка занимает от 2 до 5 рабочих дней в зависимости от региона.</p>
+            <p>Стоимость доставки рассчитывается автоматически при оформлении заказа и зависит от веса и объема товара. Мы сотрудничаем с ведущими службами доставки для обеспечения высокого уровня сервиса.</p>
+            <img
+                src="https://images.unsplash.com/photo-1506617420156-8e4536971650?w=800"
+                alt="Доставка"
+                class="delivery-image"
+                loading="lazy"
+            />
+        </section>
+        <section id="contact">
+            <h2>Контакты</h2>
+            <p>Свяжитесь с нами для получения дополнительной информации и поддержки.</p>
+        </section>
+    </main>
+    <footer>
+        &copy; 2024 Компания. Все права защищены.
+    </footer>
 </body>
 </html>
