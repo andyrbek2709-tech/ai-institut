@@ -1,27 +1,26 @@
 -- Migration 009: Meetings (протоколы совещаний) + Time Entries (табель)
+-- Note: no REFERENCES constraints because projects table has composite PK
 
--- ── Meetings ─────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS meetings (
-  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  project_id  uuid REFERENCES projects(id) ON DELETE CASCADE,
-  title       text NOT NULL,
+  id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id   bigint NOT NULL,
+  title        text NOT NULL,
   meeting_date date,
   participants text,
-  agenda      text,
-  decisions   text,
-  created_by  uuid,
-  created_at  timestamptz DEFAULT now()
+  agenda       text,
+  decisions    text,
+  created_by   bigint,
+  created_at   timestamptz DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS meetings_project_id_idx ON meetings(project_id);
 CREATE INDEX IF NOT EXISTS meetings_date_idx ON meetings(meeting_date DESC);
 
--- ── Time Entries ──────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS time_entries (
   id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  project_id  uuid REFERENCES projects(id) ON DELETE CASCADE,
-  task_id     uuid REFERENCES tasks(id) ON DELETE SET NULL,
-  user_id     uuid,
+  project_id  bigint NOT NULL,
+  task_id     bigint,
+  user_id     bigint,
   hours       numeric(5,2) NOT NULL CHECK (hours > 0 AND hours <= 24),
   date        date NOT NULL,
   note        text,
