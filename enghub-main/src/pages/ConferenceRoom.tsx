@@ -93,12 +93,12 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{
             width: 42, height: 42, borderRadius: 12,
-            background: `linear-gradient(135deg, ${C.accent}, #F59E0B)`,
+            background: `linear-gradient(135deg, ${C.accent}, #4f7fd8)`,
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 18, color: "#fff", fontWeight: 700
           }}>🏗️</div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Конференц-зал</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Совещание проекта</div>
             <div style={{ fontSize: 12, color: C.textMuted }}>{project.name} · {project.code}</div>
           </div>
         </div>
@@ -228,7 +228,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
         {/* ===== ОСНОВНАЯ ОБЛАСТЬ ===== */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", background: C.bg }}>
 
-          {/* Табы: Чат / Участники (мобильная) */}
+          {/* Табы: Обсуждение / Участники (мобильная) */}
           <div style={{
             display: "flex", borderBottom: `1px solid ${C.border}`,
             padding: "0 20px"
@@ -241,7 +241,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                 borderBottom: activeTab === tab ? `2px solid ${C.accent}` : "2px solid transparent",
                 transition: "all 0.2s"
               }}>
-                {tab === "chat" ? "💬 Чат" : "👥 Участники"}
+                {tab === "chat" ? "💬 Обсуждение" : "👥 Участники"}
               </button>
             ))}
           </div>
@@ -257,7 +257,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                     height: "100%", color: C.textMuted, gap: 12
                   }}>
                     <span style={{ fontSize: 48 }}>💬</span>
-                    <span style={{ fontSize: 14 }}>Начните обсуждение проекта</span>
+                    <span style={{ fontSize: 14 }}>Начните совещание по проекту</span>
                   </div>
                 )}
                 {msgs.map((m: any) => {

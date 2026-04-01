@@ -1,63 +1,63 @@
-// ===== ЦВЕТОВАЯ СХЕМА — АДАПТАЦИЯ ПОД НОВЫЙ ДИЗАЙН =====
+// ===== ЦВЕТОВАЯ СХЕМА — STITCH-ALIGNED TOKENS =====
 
 // Тёмная тема (сайдбар всегда тёмный, контент тёмный)
 export const DARK = {
   // Сайдбар
-  sidebarBg: "#1a1f2e",
-  sidebarText: "#8892a4",
-  sidebarActive: "#f5a623",
-  sidebarActiveBg: "rgba(245,166,35,0.15)",
+  sidebarBg: "#0f1720",
+  sidebarText: "#93a1b6",
+  sidebarActive: "#2b5bb5",
+  sidebarActiveBg: "rgba(43,91,181,0.2)",
   sidebarHover: "rgba(255,255,255,0.06)",
   // Контент
-  bg: "#121621",
-  surface: "#1e2235",
-  surface2: "#262b3e",
-  border: "#2d3348",
+  bg: "#0c0f10",
+  surface: "#141a1e",
+  surface2: "#1b2429",
+  border: "#2a343a",
   // Текст
-  text: "#e8ecf4",
-  textDim: "#b0b8cc",
-  textMuted: "#6b7590",
+  text: "#e3eaee",
+  textDim: "#b8c4cc",
+  textMuted: "#8e9aa3",
   // Акценты
-  accent: "#f5a623",
-  green: "#2ac769",
+  accent: "#2b5bb5",
+  green: "#2f9e62",
   red: "#ef4444",
-  blue: "#4a9eff",
+  blue: "#4f7fd8",
   purple: "#a855f7",
-  orange: "#ff8c42",
+  orange: "#d08a38",
   // Карточки
-  cardBg: "#1e2235",
-  topbarBg: "#1a1f2e",
-  navBg: "#1a1f2e",
+  cardBg: "#141a1e",
+  topbarBg: "#141a1e",
+  navBg: "#0f1720",
 };
 
 // Светлая тема (сайдбар тёмный, контент белый)
 export const LIGHT = {
   // Сайдбар
-  sidebarBg: "#1a1f2e",
-  sidebarText: "#8892a4",
-  sidebarActive: "#f5a623",
-  sidebarActiveBg: "rgba(245,166,35,0.15)",
+  sidebarBg: "#121a23",
+  sidebarText: "#8fa0b1",
+  sidebarActive: "#2b5bb5",
+  sidebarActiveBg: "rgba(43,91,181,0.2)",
   sidebarHover: "rgba(255,255,255,0.06)",
   // Контент
-  bg: "#f5f6fa",
+  bg: "#f8f9fa",
   surface: "#ffffff",
-  surface2: "#f0f1f5",
-  border: "#e5e7ee",
+  surface2: "#eef2f5",
+  border: "#dbe4e7",
   // Текст
-  text: "#1a202c",
-  textDim: "#4a5568",
-  textMuted: "#8896a8",
+  text: "#2b3437",
+  textDim: "#49585f",
+  textMuted: "#748188",
   // Акценты
-  accent: "#f5a623",
-  green: "#2ac769",
+  accent: "#2b5bb5",
+  green: "#2f9e62",
   red: "#ef4444",
-  blue: "#4a9eff",
+  blue: "#4f7fd8",
   purple: "#a855f7",
-  orange: "#ff8c42",
+  orange: "#d08a38",
   // Карточки
   cardBg: "#ffffff",
   topbarBg: "#ffffff",
-  navBg: "#1a1f2e",
+  navBg: "#121a23",
 };
 
 // Статусы задач

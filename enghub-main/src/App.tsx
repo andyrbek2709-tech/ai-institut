@@ -123,8 +123,8 @@ export default function App() {
       if (!me && userEmail && !isAdmin) {
          // Fallback: create public profile if missing for authed user
          const fallbackRole = userEmail.includes('gip') ? 'gip' : (userEmail.includes('lead') ? 'lead' : 'engineer');
-         const { data: newMe } = await post("app_users", { email: userEmail, full_name: userEmail.split('@')[0], role: fallbackRole }, token!);
-         if (newMe) me = newMe;
+         const newMeData = await post("app_users", { email: userEmail, full_name: userEmail.split('@')[0], role: fallbackRole, dept_id: 1 }, token!);
+         me = Array.isArray(newMeData) ? newMeData[0] : newMeData;
       }
       if (me) setCurrentUserData(me); 
     } 
@@ -856,7 +856,7 @@ export default function App() {
                   <div style={{ fontSize: 13, color: C.textDim }}>{incomingCall.initiator_name} приглашает вас в проект "{incomingCall.project_name}"</div>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-primary" onClick={() => { setScreen('project'); setSideTab('conference'); setIncomingCall(null); }}>Подключиться</button>
+                  <button className="btn btn-primary" onClick={() => { setScreen('project'); setSideTab('conference'); setIncomingCall(null); }}>Открыть совещание</button>
                   <button className="btn btn-ghost" onClick={() => setIncomingCall(null)}>Позже</button>
               </div>
           </div>
@@ -1328,7 +1328,7 @@ export default function App() {
               <div style={{ display: "flex", gap: 6, marginBottom: 24, overflowX: 'auto', paddingBottom: 4, flexShrink: 0 }}>
                 {["tasks","drawings","revisions","reviews","transmittals","assignments","gantt","meetings","timelog","conference"].map(t => (
                   <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : "⊕ Конференц"}
+                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : "🗣 Совещание"}
                   </button>
                 ))}
               </div>

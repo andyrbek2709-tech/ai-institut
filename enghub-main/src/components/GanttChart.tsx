@@ -62,7 +62,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ tasks, activeProject, getUserBy
           </div>
         ))}
       </div>
-      <div style={{ overflowX: 'auto' }}>
+      <div style={{ overflowX: 'auto', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 14, boxShadow: 'var(--card-shadow)' }}>
         <div style={{ minWidth: 520 }}>
           <div style={{ display: 'flex', marginLeft: 160, marginBottom: 6, position: 'relative', height: 18 }}>
             <div style={{ position: 'absolute', left: '0%', fontSize: 10, color: C.textMuted }}>{new Date(minT).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })}</div>

@@ -64,7 +64,7 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
       {meetings.length === 0 && !showNewMeeting && <div className="empty-state" style={{ padding: 40 }}>Протоколов пока нет</div>}
       
       {meetings.map(m => (
-        <div key={m.id} style={{ background: C.surface2, borderRadius: 12, padding: 16, marginBottom: 10, border: `1px solid ${C.border}` }}>
+        <div key={m.id} style={{ background: C.surface, borderRadius: 14, padding: 16, marginBottom: 10, border: `1px solid ${C.border}`, boxShadow: 'var(--card-shadow)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{m.title}</div>
             <button onClick={() => exportMeetingPdf(m, projectName)} title="Экспорт в PDF" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.textMuted, padding: '0 4px' }}>🖨</button>
@@ -79,7 +79,7 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
       ))}
 
       {showNewMeeting && (
-        <div style={{ background: C.surface2, borderRadius: 12, padding: 20, border: `1px solid ${C.accent}40`, marginTop: 8 }}>
+        <div style={{ background: C.surface, borderRadius: 14, padding: 20, border: `1px solid ${C.accent}40`, marginTop: 8, boxShadow: 'var(--card-shadow)' }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 12 }}>Новый протокол</div>
           <div className="form-stack">
             <Field label="ТЕМА *" C={C}><input value={newMeeting.title} onChange={e => setNewMeeting({...newMeeting, title: e.target.value})} placeholder="Совещание по проекту" style={getInp(C)} /></Field>

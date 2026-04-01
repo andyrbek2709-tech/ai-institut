@@ -89,7 +89,7 @@ const TimelogPanel: React.FC<TimelogPanelProps> = ({
         return (
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
             {Object.entries(byUser).sort((a, b) => b[1] - a[1]).map(([name, hours]) => (
-              <div key={name} style={{ background: C.surface2, borderRadius: 8, padding: '10px 16px', border: `1px solid ${C.border}` }}>
+              <div key={name} style={{ background: C.surface, borderRadius: 10, padding: '10px 16px', border: `1px solid ${C.border}`, boxShadow: 'var(--card-shadow)' }}>
                 <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>{name}</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>{hours} ч</div>
               </div>
@@ -101,7 +101,7 @@ const TimelogPanel: React.FC<TimelogPanelProps> = ({
       {timeEntries.length === 0 && !showNewTimeEntry && <div className="empty-state" style={{ padding: 40 }}>Записей пока нет</div>}
       
       {timeEntries.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: 'var(--card-shadow)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
               {['Дата', 'Сотрудник', 'Задача', 'Часов', 'Примечание'].map(h => (
@@ -128,7 +128,7 @@ const TimelogPanel: React.FC<TimelogPanelProps> = ({
       )}
 
       {showNewTimeEntry && (
-        <div style={{ background: C.surface2, borderRadius: 12, padding: 20, border: `1px solid ${C.accent}40`, marginTop: 12 }}>
+        <div style={{ background: C.surface, borderRadius: 14, padding: 20, border: `1px solid ${C.accent}40`, marginTop: 12, boxShadow: 'var(--card-shadow)' }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 12 }}>Записать время</div>
           <div className="form-stack">
             <Field label="ДАТА *" C={C}><input type="date" value={newTimeEntry.date} onChange={e => setNewTimeEntry({...newTimeEntry, date: e.target.value})} style={getInp(C)} /></Field>

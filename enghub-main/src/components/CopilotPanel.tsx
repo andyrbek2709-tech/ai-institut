@@ -282,7 +282,7 @@ export function CopilotPanel({
       {/* Header */}
       <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: C.surface2 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #FF3366, #FF9933)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>AI</div>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: `linear-gradient(135deg, ${C.accent}, #4f7fd8)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>AI</div>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>AI Copilot</div>
             <div style={{ fontSize: 12, color: C.textMuted }}>Orchestrator v1.0 · {roleTitleMap[userRole || 'engineer']}</div>

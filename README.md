@@ -13,7 +13,7 @@
 - **Канбан задач**: 6 статусов (`todo → inprogress → review_lead → review_gip → revision → done`)
 - **Система ревизий**: клонирование задач R0 → R1 → R2 с историей замечаний
 - **Задания смежникам (Assignments)**: матрица увязки, Accept/Reject, Inbox для нач. отделов
-- **Конференц-зал**: чат внутри проекта через Supabase Realtime
+- **Совещание проекта**: обсуждение внутри проекта через Supabase Realtime
 
 ### Модуль чертежей
 - **Реестр чертежей**: создание, статусы (draft / in_work / review / issued / cancelled)
@@ -207,6 +207,26 @@ git push origin main
 ---
 
 ## 🧾 Agent Handover Log
+
+v7.6: Stitch UI Migration Wave 1 (2026-04-01)
+- ✅ Приведены базовые дизайн-токены (`constants.ts`, `styles.css`) к Stitch-ориентированной палитре/типографике (Inter + Manrope), без изменения бизнес-логики.
+- ✅ Переименован UI-нейминг `conference/chat` → «Совещание/Обсуждение» (при сохранении внутренних state/id для обратной совместимости).
+- ✅ Унифицирован визуал ключевых экранов на текущих компонентах: `GanttChart`, `MeetingsPanel`, `TimelogPanel`, `CopilotPanel` (карточки/поверхности/тени/акценты).
+- ✅ Выполнена верификация: `npm run build` и `CI=true npm test -- --watch=false` — успешно.
+- ✅ Изменения опубликованы в `main` для серверной проверки (push на GitHub).
+
+### Stitch → EngHub mapping (Wave 1)
+
+| Stitch visual block | EngHub screen/component | Решение |
+|---|---|---|
+| Global shell (sidebar/topbar/content) | `src/App.tsx`, `src/styles.css`, `src/constants.ts` | Взято 1:1 по структуре, адаптировано по токенам без смены логики |
+| Project workspace tabs | `src/App.tsx` (`tasks/drawings/revisions/reviews/transmittals/assignments/gantt/meetings/timelog/conference`) | Сохранён текущий workflow, визуал и лейблы приведены к новому стилю |
+| Conference/Chat area | `src/pages/ConferenceRoom.tsx`, `src/App.tsx` (`sideTab='conference'`) | UI-нейминг адаптирован: «Совещание», внутренний ключ `conference` сохранён |
+| Gantt timeline card | `src/components/GanttChart.tsx` | Карточный контейнер и поверхности выровнены под Stitch |
+| Meetings list and form | `src/components/MeetingsPanel.tsx` | Карточки/форма переведены на единый surface + shadow стиль |
+| Timelog summary/table/form | `src/components/TimelogPanel.tsx` | Сводка/таблица/форма унифицированы визуально |
+| Copilot right panel | `src/components/CopilotPanel.tsx` | Акцент/шапка синхронизированы с дизайн-токенами |
+| Domain deviations | Все перечисленные экраны | Лишнее не переносилось; доменные сущности EngHub сохранены |
 
 v7.5: App.tsx Decomposition & RAG Backend (2026-04-01)
 - ✅ Экстракция `GanttChart`, `MeetingsPanel` и `TimelogPanel` в отдельные компоненты.
