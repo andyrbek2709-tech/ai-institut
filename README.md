@@ -208,6 +208,13 @@ git push origin main
 
 ## 🧾 Agent Handover Log
 
+v7.9: Stitch UI Migration Wave 4 (micro-interactions & density tuning) (2026-04-01)
+- ✅ Добавлена системная кривая анимаций (`--ease-standard`) и единые переходы для интерактивных элементов.
+- ✅ Улучшены `hover/focus/pressed` состояния кнопок, табов, topbar controls, filter chips, search input.
+- ✅ Полировка визуальной иерархии: badge-капсулы, плотность `project-meta-bar`, `tab-strip`, `task-list-title` и колонок Kanban.
+- ✅ Доработаны глубина и акцентность карточек/колонок для более “живого” инновационного восприятия интерфейса.
+- ✅ Верификация: `npm run build` и `CI=true npm test -- --watch=false` — успешно.
+
 v7.8: Stitch UI Migration Wave 3 (domain screens alignment) (2026-04-01)
 - ✅ Доведены доменные экраны под Stitch-подход: `Tasks/Kanban`, `Drawings`, `Revisions`, `Reviews`, `Transmittals`, `Conference`.
 - ✅ Для доменных блоков добавлены унифицированные контейнеры `panel-surface` и улучшенная структура колонок Kanban (`kanban-col-shell`, `kanban-empty`).
