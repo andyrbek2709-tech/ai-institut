@@ -5,157 +5,158 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Современный сайт</title>
 <style>
-  * {
-    box-sizing: border-box;
-  }
   body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #f5f7fa;
     color: #333;
-    line-height: 1.6;
   }
   header {
-    background: #24292e;
+    background: #0d6efd;
     color: #fff;
     padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 100;
+  }
+  header h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.5rem;
   }
   nav {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    gap: 1.5rem;
   }
-  .logo {
-    font-weight: 700;
-    font-size: 1.5rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-  .nav-links {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-  }
-  .nav-links li {
-    margin-left: 1.5rem;
-  }
-  .nav-links a {
+  nav a {
     color: #fff;
     text-decoration: none;
     font-weight: 600;
-    transition: color 0.3s ease;
+    transition: color 0.3s;
   }
-  .nav-links a:hover {
-    color: #4fc3f7;
+  nav a:hover {
+    color: #ffc107;
   }
   main {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    padding: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
   }
   .hero {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    align-items: center;
-    background: #fff;
-    border-radius: 8px;
-    padding: 2rem;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
-  }
-  .hero-content {
-    flex: 1 1 400px;
-  }
-  .hero-content h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    color: #24292e;
-  }
-  .hero-content p {
-    font-size: 1.125rem;
-    margin-bottom: 1.5rem;
-    color: #555;
-  }
-  .hero-content a {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    background: #4fc3f7;
-    color: white;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: background 0.3s ease;
-  }
-  .hero-content a:hover {
-    background: #3a9bd8;
-  }
-  .hero-image {
-    flex: 1 1 350px;
-    border-radius: 8px;
+    position: relative;
+    border-radius: 12px;
     overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
   }
-  .hero-image img {
+  .hero img {
     width: 100%;
+    height: auto;
     display: block;
-    border-radius: 8px;
     object-fit: cover;
-    height: 100%;
-    max-height: 350px;
+    aspect-ratio: 16 / 9;
+  }
+  .hero-text {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 2rem;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(0,0,0,0.7);
+  }
+  .hero-text h2 {
+    margin: 0 0 0.5rem;
+    font-size: 2rem;
+  }
+  section {
+    margin-bottom: 3rem;
+  }
+  section h2 {
+    margin-bottom: 1rem;
+    font-weight: 700;
+    font-size: 1.75rem;
+    border-bottom: 3px solid #0d6efd;
+    padding-bottom: 0.5rem;
+    max-width: max-content;
   }
   footer {
-    background: #24292e;
-    color: #bbb;
+    background: #212529;
+    color: #adb5bd;
     text-align: center;
-    padding: 1.5rem 2rem;
-    margin-top: 4rem;
+    padding: 1.25rem 2rem;
+    font-size: 0.9rem;
   }
-  footer a {
-    color: #4fc3f7;
-    text-decoration: none;
-  }
-  footer a:hover {
-    text-decoration: underline;
-  }
-  @media (max-width: 768px) {
-    .hero {
+  @media (max-width: 600px){
+    header {
       flex-direction: column;
+      gap: 0.75rem;
     }
-    .hero-image {
-      max-height: 300px;
+    nav {
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .hero-text h2 {
+      font-size: 1.5rem;
     }
   }
 </style>
 </head>
 <body>
 <header>
+  <h1>Современный Сайт</h1>
   <nav>
-    <div class="logo">MySite</div>
-    <ul class="nav-links">
-      <li><a href="#home">Главная</a></li>
-      <li><a href="#about">О нас</a></li>
-      <li><a href="#services">Услуги</a></li>
-      <li><a href="#contact">Контакты</a></li>
-    </ul>
+    <a href="#about">О нас</a>
+    <a href="#services">Услуги</a>
+    <a href="#gallery">Галерея</a>
+    <a href="#contact">Контакты</a>
   </nav>
 </header>
 <main>
-  <section class="hero" id="home">
-    <div class="hero-content">
-      <h1>Добро пожаловать на современный сайт</h1>
-      <p>Создавайте красивые и современные веб-сайты легко и быстро с нашим профессиональным подходом.</p>
-      <a href="#about">Узнать больше</a>
+  <section class="hero">
+    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Красивый современный пейзаж" />
+    <div class="hero-text">
+      <h2>Добро пожаловать на наш сайт</h2>
+      <p>Красота современного веба с простотой и эффективностью</p>
     </div>
-    <div class="hero-image">
-      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный дизайн" />
+  </section>
+  <section id="about">
+    <h2>О нас</h2>
+    <p>Мы — команда профессиональных разработчиков, создающая современные и адаптивные веб-сайты для вашего бизнеса. Наши решения сочетают в себе визуальную привлекательность и техническую надёжность.</p>
+  </section>
+  <section id="services">
+    <h2>Услуги</h2>
+    <ul>
+      <li>Веб-разработка под ключ</li>
+      <li>Дизайн пользовательского интерфейса</li>
+      <li>Оптимизация производительности и SEO</li>
+      <li>Поддержка и сопровождение проектов</li>
+    </ul>
+  </section>
+  <section id="gallery">
+    <h2>Галерея</h2>
+    <div style="display:flex; gap: 1rem; flex-wrap: wrap;">
+      <img src="https://images.unsplash.com/photo-1523942839745-7843c3a9059b?w=400" alt="Пейзаж 1" style="width:calc(50% - 0.5rem); border-radius:8px;">
+      <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=400" alt="Пейзаж 2" style="width:calc(50% - 0.5rem); border-radius:8px;">
+      <img src="https://images.unsplash.com/photo-1500534623283-312aade485b7?w=400" alt="Пейзаж 3" style="width:calc(33% - 0.66rem); border-radius:8px;">
+      <img src="https://images.unsplash.com/photo-1494526585095-c41746248156?w=400" alt="Пейзаж 4" style="width:calc(33% - 0.66rem); border-radius:8px;">
+      <img src="https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?w=400" alt="Пейзаж 5" style="width:calc(33% - 0.66rem); border-radius:8px;">
     </div>
+  </section>
+  <section id="contact">
+    <h2>Контакты</h2>
+    <p>Свяжитесь с нами для сотрудничества или получения дополнительной информации.</p>
+    <address>
+      Email: <a href="mailto:info@modernsite.ru">info@modernsite.ru</a><br>
+      Телефон: <a href="tel:+79001234567">+7 (900) 123-45-67</a><br>
+      Адрес: г. Москва, ул. Примерная, д. 1
+    </address>
   </section>
 </main>
 <footer>
-  &copy; 2024 MySite. Все права защищены. | <a href="#home">Наверх</a>
+  &copy; 2024 Современный Сайт. Все права защищены.
 </footer>
 </body>
 </html>
