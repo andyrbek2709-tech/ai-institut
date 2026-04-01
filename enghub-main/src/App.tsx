@@ -299,7 +299,13 @@ export default function App() {
         task_id: taskId || null
       }, token!);
       if (!Array.isArray(created) || created.length === 0) {
-        addNotification('Сообщение не отправлено. Проверьте доступ к таблице messages.', 'warning');
+        const backendError = (created as any)?.message || (created as any)?.error || (created as any)?.hint || (created as any)?.details;
+        addNotification(
+          backendError
+            ? `Сообщение не отправлено: ${String(backendError)}`
+            : 'Сообщение не отправлено. Проверьте доступ к таблице messages.',
+          'warning'
+        );
         return false;
       }
       if (!customText) setChatInput(""); 
