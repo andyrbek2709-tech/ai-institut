@@ -16,25 +16,35 @@ const AdminH = () => ({
   'Content-Type': 'application/json',
 });
 
+export class AuthError extends Error {
+  status = 401;
+  constructor() { super('Unauthorized'); this.name = 'AuthError'; }
+}
+
+const guard401 = (r: Response): Response => {
+  if (r.status === 401) throw new AuthError();
+  return r;
+};
+
 export const get = (path: string, token?: string) =>
-  fetch(`${SURL}/rest/v1/${path}`, { headers: H(token) }).then(r => r.json());
+  fetch(`${SURL}/rest/v1/${path}`, { headers: H(token) }).then(guard401).then(r => r.json());
 
 export const post = (path: string, data: any, token?: string) =>
   fetch(`${SURL}/rest/v1/${path}`, {
     method: 'POST',
     headers: { ...H(token), 'Prefer': 'return=representation' },
     body: JSON.stringify(data),
-  }).then(r => r.json());
+  }).then(guard401).then(r => r.json());
 
 export const patch = (path: string, data: any, token?: string) =>
   fetch(`${SURL}/rest/v1/${path}`, {
     method: 'PATCH',
     headers: { ...H(token), 'Prefer': 'return=representation' },
     body: JSON.stringify(data),
-  }).then(r => r.json());
+  }).then(guard401).then(r => r.json());
 
 export const del = (path: string, token?: string) =>
-  fetch(`${SURL}/rest/v1/${path}`, { method: 'DELETE', headers: H(token) });
+  fetch(`${SURL}/rest/v1/${path}`, { method: 'DELETE', headers: H(token) }).then(guard401);
 
 export const signIn = (email: string, password: string) =>
   fetch(`${SURL}/auth/v1/token?grant_type=password`, {
