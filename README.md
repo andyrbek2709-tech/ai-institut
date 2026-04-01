@@ -289,6 +289,12 @@ v7.5: App.tsx Decomposition & RAG Backend (2026-04-01)
 - Validation: `npm run build` + `CI=true npm test -- --watch=false` + lint diagnostics по измененным файлам.
 - Next: применить/проверить миграцию `009_meetings_timelog.sql` в целевом Supabase (если еще не применена), затем продолжать дорожную карту v7.x.
 
+#### [2026-04-01 14:05] Production sign-off update
+- Step: Заполнен `Production Sign-off Report` в `README` с фактическими `pass/fail` по SQL-checks и `QA-*` сценариям. Текущий итоговый статус: `blocked` до применения миграции `009` и ручного e2e прогона.
+- Files: `README.md`
+- Validation: not run (документационное обновление статуса sign-off).
+- Next: применить `009_meetings_timelog.sql`, выполнить `QA-GIP-01/LEAD-01/ENG-01/DATA-01`, затем обновить report до `approved`.
+
 #### [2026-04-01] v7.3 — PDF-экспорт
 - Step: `exportMeetingPdf` (A4 portrait) + `exportTransmittalPdf` (A4 landscape), кнопки 🖨 на карточках
 - Files: `App.tsx`, `TransmittalsTab.tsx`, `README.md`
@@ -378,6 +384,45 @@ WHERE table_schema = 'public'
     'transmittals','transmittal_items','meetings','time_entries')
 ORDER BY table_name;
 ```
+
+---
+
+## ✅ Production Sign-off Report
+
+- Environment: `production (enghub.vercel.app)`
+- Date: `2026-04-01`
+- Operator: `Dom`
+- Release commit: `393c251` (all local project changes synced for server verification)
+- Migration `009_meetings_timelog.sql`: `fail (not confirmed applied in target Supabase)`
+
+### SQL checks
+
+| Check | Result | Notes |
+|---|---|---|
+| Tables `drawings/tasks/revisions/reviews/transmittals/transmittal_items` exist | `pass` | По проекту используются и задокументированы как примененные |
+| `008_schema_hardening.sql` constraints/indexes confirmed in target DB | `fail` | Нет подтвержденного SQL-вывода из целевой production БД |
+| Tables `meetings/time_entries` from migration `009` | `fail` | Миграция `009` явно отмечена как требующая применения |
+
+### QA scenarios
+
+| Scenario | Result | Notes |
+|---|---|---|
+| `QA-GIP-01` | `fail` | Ручной прогон в production не зафиксирован |
+| `QA-LEAD-01` | `fail` | Ручной прогон в production не зафиксирован |
+| `QA-ENG-01` | `fail` | Ручной прогон в production не зафиксирован |
+| `QA-DATA-01` | `fail` | Ручной прогон в production не зафиксирован |
+
+### Final decision
+
+- Decision: `blocked`
+- Blocking reasons:
+  1. Не подтверждено применение `009_meetings_timelog.sql` в целевом Supabase.
+  2. Не зафиксированы SQL-подтверждения по migration hardening в production.
+  3. Не выполнен и не зафиксирован manual e2e прогон по `QA-*` сценариям.
+- Required to move to `approved`:
+  - Применить `009_meetings_timelog.sql` и сохранить результаты SQL-проверок.
+  - Выполнить `QA-GIP-01`, `QA-LEAD-01`, `QA-ENG-01`, `QA-DATA-01` в production.
+  - Обновить этот раздел, сменив `fail` на `pass` и decision на `approved`.
 
 ---
 
