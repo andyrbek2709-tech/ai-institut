@@ -109,11 +109,19 @@ export const listMeetings = (projectId: number, token?: string) =>
 export const createMeeting = (payload: any, token?: string) =>
   post('meetings', payload, token);
 
-export const listTimeEntries = (projectId: number, token?: string) =>
-  get(`time_log?project_id=eq.${projectId}&order=date.desc`, token);
+export const listTimeEntries = async (projectId: number, token?: string) => {
+  const primary = await get(`time_entries?project_id=eq.${projectId}&order=date.desc`, token);
+  if (Array.isArray(primary)) return primary;
+  const fallback = await get(`time_log?project_id=eq.${projectId}&order=date.desc`, token);
+  return Array.isArray(fallback) ? fallback : [];
+};
 
-export const createTimeEntry = (payload: any, token?: string) =>
-  post('time_log', payload, token);
+export const createTimeEntry = async (payload: any, token?: string) => {
+  const primary = await post('time_entries', payload, token);
+  if (Array.isArray(primary)) return primary;
+  if ((primary as any)?.id) return primary;
+  return post('time_log', payload, token);
+};
 
 export const globalSearch = async (query: string, token?: string) => {
   const normalized = String(query || '').trim();

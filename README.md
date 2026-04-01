@@ -107,6 +107,7 @@
 | `007_transmittal_items.sql` | ✅ применена | таблица `transmittal_items` |
 | `008_schema_hardening.sql` | ✅ применена | составные индексы + CHECK-ограничения по доменным статусам |
 | `009_meetings_timelog.sql` | ⚠️ **требует применения в Supabase SQL Editor** | таблицы `meetings` и `time_entries` |
+| `010_recover_core_tables.sql` | 🆕 recovery | аварийное восстановление `drawings/revisions/reviews/transmittals/transmittal_items` в production |
 
 > **Важно для `009`:** открыть [Supabase Dashboard → SQL Editor](https://supabase.com/dashboard), вставить текст файла `supabase/migrations/009_meetings_timelog.sql` целиком и выполнить.
 
@@ -207,6 +208,12 @@ git push origin main
 ---
 
 ## 🧾 Agent Handover Log
+
+v8.1: Production data-recovery hardening (2026-04-01)
+- ✅ Исправлен API helper табеля: переход на `time_entries` с fallback на `time_log` для обратной совместимости.
+- ✅ Усилена отправка сообщений в совещании: явный `success/fail` и уведомления при ошибке записи в `messages`.
+- ✅ Добавлена recovery-миграция `supabase/migrations/010_recover_core_tables.sql` для устранения production 404 по отсутствующим таблицам `drawings/revisions/reviews/transmittals/transmittal_items`.
+- ⚠️ Для полного снятия блока QA нужно выполнить SQL миграцию `010` в целевом Supabase (SQL Editor), затем повторить smoke-тест.
 
 v8.0: Conference UX/ordering fix (2026-04-01)
 - ✅ Вкладка `Совещание` перенесена перед `Увязкой` в карточке проекта.

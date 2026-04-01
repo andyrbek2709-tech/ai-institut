@@ -290,19 +290,25 @@ export default function App() {
     const finalTxt = customText || chatInput;
     if (!finalTxt.trim() || !activeProject || !currentUserData?.id) return false;
     const normalizedType = type === "call_start" ? "call_start" : "text";
-    const created = await post("messages", { 
-      text: finalTxt, 
-      user_id: currentUserData?.id, 
-      project_id: activeProject.id, 
-      type: normalizedType,
-      task_id: taskId || null
-    }, token!);
-    if (!Array.isArray(created) || created.length === 0) {
+    try {
+      const created = await post("messages", { 
+        text: finalTxt, 
+        user_id: currentUserData?.id, 
+        project_id: activeProject.id, 
+        type: normalizedType,
+        task_id: taskId || null
+      }, token!);
+      if (!Array.isArray(created) || created.length === 0) {
+        addNotification('Сообщение не отправлено. Проверьте доступ к таблице messages.', 'warning');
+        return false;
+      }
+      if (!customText) setChatInput(""); 
+      await loadMessages(activeProject.id, taskId);
+      return true;
+    } catch {
+      addNotification('Ошибка отправки сообщения.', 'warning');
       return false;
     }
-    if (!customText) setChatInput(""); 
-    await loadMessages(activeProject.id, taskId);
-    return true;
   };
   const { notifications, addNotification, removeNotification } = useNotifications();
 
