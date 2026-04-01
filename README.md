@@ -164,6 +164,13 @@ git push origin main
 
 ## 📝 История изменений
 
+### v7.1 — Realtime-уведомления, расширенный Excel-экспорт, мобильные фиксы
+- ✅ **Realtime notifications расширены**: добавлены подписки на `reviews` (новое замечание, снято, взято в работу) и `transmittals` (выпущен трансмиттал)
+- ✅ **Excel-экспорт** теперь содержит 4 листа: Задачи, Чертежи, Замечания, Проект (раньше было 2)
+- ✅ **CopilotPanel мобильная**: ширина `min(400px, 100vw)` + `position: fixed` — не выходит за экран
+- ✅ **Mobile CSS**: фиксы для Kanban, topbar, project-card, модалок, вкладок на 480px
+- ✅ Файлы: `enghub-main/src/App.tsx`, `enghub-main/src/components/CopilotPanel.tsx`, `enghub-main/src/styles.css`
+
 ### v7.0 — AI-агенты нового поколения: аналитика, планирование, нормоконтроль, отчёты
 - ✅ **Project Insights Agent** (`project_insights`): "Как дела по проекту?" → Claude собирает живые данные и выдаёт структурированный анализ с рисками
 - ✅ **Smart Decompose Agent** (`smart_decompose`): "Разработай план задач для ОВ" → Claude генерирует задачи → action `create_tasks` на подтверждение
@@ -639,6 +646,16 @@ where drawing_id is null and revision_id is null;
 - Phase 6 (Reviews): DONE
 - Phase 7 (Transmittals): DONE
 - Phase 8 (Copilot Role Hardening): DONE
+
+#### [2026-04-01 15:00] Agent update
+- Step: v7.1 — 3 улучшения в одном коммите: (1) Realtime-канал расширен подписками на reviews/transmittals — появляются уведомления о новых замечаниях, их снятии и выпуске трансмитталов; (2) Excel-экспорт теперь генерирует 4 листа: Задачи + Чертежи + Замечания + Проект; (3) CopilotPanel переведён в position:fixed с шириной min(400px,100vw) — корректно отображается на телефоне; добавлены мобильные CSS-фиксы.
+- Files:
+  - `enghub-main/src/App.tsx`
+  - `enghub-main/src/components/CopilotPanel.tsx`
+  - `enghub-main/src/styles.css`
+  - `README.md`
+- Validation: `npm run build` (успешно), lint без ошибок.
+- Next: commit+push v7.1; далее — новые модули: учёт рабочего времени (Табель), протоколы совещаний, Gantt-диаграмма.
 
 #### [2026-04-01 14:00] Agent update
 - Step: v7.0 — реализованы 4 новых AI-агента в `orchestrator.js`: `handleProjectInsights` (анализ проекта через Claude), `handleSmartDecompose` (декомпозиция задач через Claude → `create_tasks` action), `handleComplianceCheck` (нормоконтроль через RAG + Claude → `create_review` actions), `handleGenerateReport` (недельный отчёт через Claude). Добавлен `callClaude()` хелпер. Обновлён `detectIntent()` и `ROLE_ALLOWED_INTENTS`. В `CopilotPanel.tsx` обновлены плейсхолдеры и метки агентов.

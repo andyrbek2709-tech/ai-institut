@@ -344,6 +344,31 @@ export default function App() {
         }
         if (activeProjectRef.current?.id === t.project_id) loadTasksRef.current(t.project_id);
       })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reviews' }, (payload: any) => {
+        const r = payload.new;
+        const me = currentUserDataRef.current;
+        if (!me || String(r.author_id) === String(me.id)) return;
+        if (activeProjectRef.current?.id === r.project_id) {
+          addNotifRef.current(`📋 Новое замечание: «${r.title}»`, 'warning');
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'reviews' }, (payload: any) => {
+        const r = payload.new;
+        const me = currentUserDataRef.current;
+        if (!me) return;
+        if (activeProjectRef.current?.id === r.project_id) {
+          if (r.status === 'resolved') addNotifRef.current(`✅ Замечание снято: «${r.title}»`, 'success');
+          if (r.status === 'in_progress' && (me.role === 'gip' || me.role === 'lead')) addNotifRef.current(`🔧 Замечание взято в работу: «${r.title}»`, 'info');
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'transmittals' }, (payload: any) => {
+        const tr = payload.new;
+        const me = currentUserDataRef.current;
+        if (!me) return;
+        if (activeProjectRef.current?.id === tr.project_id && tr.status === 'issued') {
+          addNotifRef.current(`📬 Трансмиттал выпущен: №${tr.number}`, 'info');
+        }
+      })
       .subscribe();
     return () => { supa.removeChannel(channel); };
   }, [currentUserData?.id]); // eslint-disable-line
@@ -588,7 +613,12 @@ export default function App() {
       const u = getUserById(t.assigned_to);
       return `<Row>${cell(t.name)}${cell(statusLabels[t.status] || t.status)}${cell(priorityLabels[t.priority] || t.priority)}${cell(u ? u.full_name : '')}${cell(t.dept || '')}${cell(t.deadline || '')}${cell(t.revision_count > 0 ? String(t.revision_count) : '')}</Row>`;
     }).join('');
-    const xml = `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="h"><Font ss:Bold="1"/></Style></Styles><Worksheet ss:Name="Задачи"><Table><Row>${cell('Название', true)}${cell('Статус', true)}${cell('Приоритет', true)}${cell('Исполнитель', true)}${cell('Отдел', true)}${cell('Дедлайн', true)}${cell('Ревизий', true)}</Row>${rows}</Table></Worksheet><Worksheet ss:Name="Проект"><Table><Row>${cell('Параметр', true)}${cell('Значение', true)}</Row><Row>${cell('Название')}${cell(activeProject.name)}</Row><Row>${cell('Код')}${cell(activeProject.code)}</Row><Row>${cell('Статус')}${cell(activeProject.status === 'active' ? 'В работе' : activeProject.status)}</Row><Row>${cell('Дедлайн')}${cell(activeProject.deadline || '—')}</Row><Row>${cell('Прогресс')}${cell(activeProjectProgress + '%')}</Row><Row>${cell('Всего задач')}${cell(String(allTasks.filter(t => t.project_id === activeProject.id).length))}</Row></Table></Worksheet></Workbook>`;
+    const drawingStatusLabels: Record<string, string> = { draft: 'Черновик', in_work: 'В работе', review: 'На проверке', issued: 'Выпущен', cancelled: 'Отменён' };
+    const drawingRows = drawings.map(d => `<Row>${cell(d.code)}${cell(d.title)}${cell(d.discipline || '')}${cell(drawingStatusLabels[d.status] || d.status)}${cell(d.revision || 'R0')}</Row>`).join('');
+    const reviewSevLabels: Record<string, string> = { critical: 'Критический', major: 'Значительный', minor: 'Незначительный' };
+    const reviewStatusLabels: Record<string, string> = { open: 'Открыто', in_progress: 'В работе', resolved: 'Снято', rejected: 'Отклонено' };
+    const reviewRows = reviews.map(r => `<Row>${cell(r.title)}${cell(reviewSevLabels[r.severity] || r.severity)}${cell(reviewStatusLabels[r.status] || r.status)}</Row>`).join('');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="h"><Font ss:Bold="1"/></Style></Styles><Worksheet ss:Name="Задачи"><Table><Row>${cell('Название', true)}${cell('Статус', true)}${cell('Приоритет', true)}${cell('Исполнитель', true)}${cell('Отдел', true)}${cell('Дедлайн', true)}${cell('Ревизий', true)}</Row>${rows}</Table></Worksheet><Worksheet ss:Name="Чертежи"><Table><Row>${cell('Код', true)}${cell('Название', true)}${cell('Дисциплина', true)}${cell('Статус', true)}${cell('Ревизия', true)}</Row>${drawingRows}</Table></Worksheet><Worksheet ss:Name="Замечания"><Table><Row>${cell('Текст замечания', true)}${cell('Серьёзность', true)}${cell('Статус', true)}</Row>${reviewRows}</Table></Worksheet><Worksheet ss:Name="Проект"><Table><Row>${cell('Параметр', true)}${cell('Значение', true)}</Row><Row>${cell('Название')}${cell(activeProject.name)}</Row><Row>${cell('Код')}${cell(activeProject.code)}</Row><Row>${cell('Статус')}${cell(activeProject.status === 'active' ? 'В работе' : activeProject.status)}</Row><Row>${cell('Дедлайн')}${cell(activeProject.deadline || '—')}</Row><Row>${cell('Прогресс')}${cell(activeProjectProgress + '%')}</Row><Row>${cell('Всего задач')}${cell(String(allTasks.filter(t => t.project_id === activeProject.id).length))}</Row><Row>${cell('Чертежей')}${cell(String(drawings.length))}</Row><Row>${cell('Замечаний открыто')}${cell(String(reviews.filter(r => r.status === 'open').length))}</Row></Table></Worksheet></Workbook>`;
     const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
     saveAs(blob, `${activeProject.code}_${activeProject.name}.xls`);
     addNotification(`Экспорт "${activeProject.name}" готов`, 'success');
