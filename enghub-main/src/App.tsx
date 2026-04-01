@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions } from './constants';
-import { get, post, patch, del, SURL, SERVICE_KEY, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem } from './api/supabase';
+import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem } from './api/supabase';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
@@ -87,7 +87,15 @@ export default function App() {
   const getUserById = (id: any) => appUsers.find(u => String(u.id) === String(id));
   const getDeptName = (id: any) => depts.find(d => d.id === id)?.name || "";
 
-  useEffect(() => { if (token && !isAdmin) { loadAppUsers(); loadDepts(); loadProjects(); loadNormativeDocs(); } }, [token]);
+  useEffect(() => {
+    if (token && !isAdmin) {
+      Promise.all([loadAppUsers(), loadDepts(), loadProjects(), loadNormativeDocs()])
+        .catch((e: any) => {
+          setLoading(false);
+          if (e instanceof AuthError) handleLogout();
+        });
+    }
+  }, [token]);
   useEffect(() => {
     if (activeProject && token) {
       loadAllTasks(activeProject.id);
