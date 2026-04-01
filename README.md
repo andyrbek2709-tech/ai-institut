@@ -289,6 +289,12 @@ v7.5: App.tsx Decomposition & RAG Backend (2026-04-01)
 - Validation: `npm run build` + `CI=true npm test -- --watch=false` + lint diagnostics по измененным файлам.
 - Next: применить/проверить миграцию `009_meetings_timelog.sql` в целевом Supabase (если еще не применена), затем продолжать дорожную карту v7.x.
 
+#### [2026-04-01 14:20] Production DB confirmation update
+- Step: Подтверждено применение миграции `009_meetings_timelog.sql` в production Supabase: по результату SQL-проверки присутствуют таблицы `meetings` и `time_entries`.
+- Files: `README.md`
+- Validation: SQL verification in Supabase SQL Editor (`information_schema.tables` -> `meetings`, `time_entries`).
+- Next: выполнить manual role-based smoke (`QA-GIP-01`, `QA-LEAD-01`, `QA-ENG-01`, `QA-DATA-01`) и обновить final sign-off до `approved`.
+
 #### [2026-04-01 14:05] Production sign-off update
 - Step: Заполнен `Production Sign-off Report` в `README` с фактическими `pass/fail` по SQL-checks и `QA-*` сценариям. Текущий итоговый статус: `blocked` до применения миграции `009` и ручного e2e прогона.
 - Files: `README.md`
@@ -384,6 +390,17 @@ WHERE table_schema = 'public'
     'transmittals','transmittal_items','meetings','time_entries')
 ORDER BY table_name;
 ```
+
+### Production Sign-off (current state)
+
+- DB migration `009_meetings_timelog.sql`: **PASS** (tables `meetings` and `time_entries` confirmed in production Supabase).
+- Automated quality gates: **PASS** (`npm run build`, `CI=true npm test -- --watch=false` on latest code).
+- Manual role-based QA:
+  - `QA-GIP-01`: pending
+  - `QA-LEAD-01`: pending
+  - `QA-ENG-01`: pending
+  - `QA-DATA-01`: pending
+- Final decision: **BLOCKED** until manual role scenarios are executed and recorded.
 
 ---
 
