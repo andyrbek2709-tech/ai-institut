@@ -45,9 +45,15 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
   const [isInRoom, setIsInRoom] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "participants">("chat");
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
   const participants = usePresence(project?.id, isInRoom ? currentUser : null);
+  const SURL = process.env.REACT_APP_SUPABASE_URL || '';
+  const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -64,7 +70,106 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
     // Trigger the incoming call notification for others
     onSendMsg("📞 Начинается видеовстреча...", "call_start"); 
   };
-  const leaveRoom = () => { setIsInRoom(false); setMicEnabled(false); setScreenSharing(false); };
+  const leaveRoom = () => {
+    setIsInRoom(false);
+    setMicEnabled(false);
+    setScreenSharing(false);
+    micStreamRef.current?.getTracks().forEach((t) => t.stop());
+    micStreamRef.current = null;
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current = null;
+  };
+
+  const toggleMic = async () => {
+    try {
+      if (!micEnabled) {
+        if (!micStreamRef.current) {
+          micStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        }
+        micStreamRef.current.getAudioTracks().forEach((t) => { t.enabled = true; });
+        setMicEnabled(true);
+      } else {
+        micStreamRef.current?.getAudioTracks().forEach((t) => { t.enabled = false; });
+        setMicEnabled(false);
+      }
+    } catch {
+      onSendMsg("Не удалось получить доступ к микрофону. Проверьте разрешения браузера.", "system");
+    }
+  };
+
+  const toggleScreenShare = async () => {
+    try {
+      if (!screenSharing) {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        screenStreamRef.current = stream;
+        setScreenSharing(true);
+        const [videoTrack] = stream.getVideoTracks();
+        if (videoTrack) {
+          videoTrack.onended = () => {
+            setScreenSharing(false);
+            screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+            screenStreamRef.current = null;
+          };
+        }
+      } else {
+        screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+        screenStreamRef.current = null;
+        setScreenSharing(false);
+      }
+    } catch {
+      onSendMsg("Демонстрация экрана не запущена. Разрешите доступ в браузере.", "system");
+    }
+  };
+
+  const uploadConferenceFile = async (file: File): Promise<string | null> => {
+    if (!SURL || !SERVICE_KEY || !project?.id) return null;
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = `conference/${project.id}/${Date.now()}_${safeName}`;
+
+    const uploadRes = await fetch(`${SURL}/storage/v1/object/normative-docs/${filePath}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        'Content-Type': file.type || 'application/octet-stream',
+      },
+      body: file,
+    });
+    if (!uploadRes.ok) return null;
+
+    const signRes = await fetch(`${SURL}/storage/v1/object/sign/normative-docs/${filePath}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        apikey: SERVICE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ expiresIn: 60 * 60 * 24 * 7 }),
+    });
+    if (!signRes.ok) return null;
+    const signJson = await signRes.json();
+    const signedPath = signJson?.signedURL || signJson?.signedUrl;
+    if (!signedPath) return null;
+    return signedPath.startsWith('http') ? signedPath : `${SURL}/storage/v1${signedPath}`;
+  };
+
+  const handleAttachFile = async (evt: any) => {
+    const file = evt.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const link = await uploadConferenceFile(file);
+      if (!link) {
+        onSendMsg(`Не удалось загрузить файл "${file.name}".`, "system");
+        return;
+      }
+      onSendMsg(`📎 ${file.name}\n${link}`, "file");
+    } catch {
+      onSendMsg(`Ошибка при отправке файла "${file.name}".`, "system");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const getInitials = (name: string) => {
     const parts = name?.split(" ") || [];
@@ -119,7 +224,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
           {/* Кнопки управления */}
           {isInRoom && (
             <>
-              <button onClick={() => setMicEnabled(!micEnabled)} style={{
+              <button onClick={toggleMic} style={{
                 width: 40, height: 40, borderRadius: 12, border: "none", cursor: "pointer",
                 background: micEnabled ? "#10B98120" : "#EF444420",
                 color: micEnabled ? "#10B981" : "#EF4444",
@@ -129,7 +234,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                 {micEnabled ? "🎤" : "🔇"}
               </button>
 
-              <button onClick={() => setScreenSharing(!screenSharing)} style={{
+              <button onClick={toggleScreenShare} style={{
                 width: 40, height: 40, borderRadius: 12, border: "none", cursor: "pointer",
                 background: screenSharing ? "#3B82F620" : C.surface2,
                 color: screenSharing ? "#3B82F6" : C.textMuted,
@@ -291,7 +396,19 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                           </span>
                           <span style={{ fontSize: 10, color: isMe ? "#ffffff90" : C.textMuted }}>{time}</span>
                         </div>
-                        <div style={{ fontSize: 13, color: isMe ? "#fff" : C.textDim, lineHeight: 1.5 }}>{m.text}</div>
+                        <div style={{ fontSize: 13, color: isMe ? "#fff" : C.textDim, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                          {String(m.text || '')}
+                        </div>
+                        {typeof m.text === 'string' && m.text.includes('http') && (
+                          <a
+                            href={m.text.split('\n').find((line: string) => line.startsWith('http')) || '#'}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ fontSize: 12, color: isMe ? "#fff" : C.accent, textDecoration: "underline" }}
+                          >
+                            Открыть файл
+                          </a>
+                        )}
                       </div>
                     </div>
                   );
@@ -306,13 +423,18 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                 display: "flex", gap: 10, alignItems: "center",
                 background: C.surface
               }}>
-                {/* Кнопка файла (заглушка для Фазы 3) */}
-                <button style={{
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  style={{ display: "none" }}
+                  onChange={handleAttachFile}
+                />
+                <button onClick={() => fileInputRef.current?.click()} style={{
                   width: 38, height: 38, borderRadius: 10,
                   background: C.surface2, border: `1px solid ${C.border}`,
                   color: C.textMuted, fontSize: 16, cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center"
-                }} title="Прикрепить файл (скоро)">📎</button>
+                }} title={uploading ? "Загрузка файла..." : "Прикрепить файл"} disabled={uploading}>📎</button>
 
                 <input
                   value={chatInput}

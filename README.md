@@ -208,6 +208,13 @@ git push origin main
 
 ## 🧾 Agent Handover Log
 
+v8.0: Conference UX/ordering fix (2026-04-01)
+- ✅ Вкладка `Совещание` перенесена перед `Увязкой` в карточке проекта.
+- ✅ Реализована отправка файлов в совещании: upload в Supabase Storage + отправка ссылки в чат (`type=file`).
+- ✅ Добавлено реальное включение микрофона через `getUserMedia` и демонстрации экрана через `getDisplayMedia` (с корректным stop/cleanup).
+- ✅ В чате совещания добавлен рендер ссылки на вложение (`Открыть файл`) из сообщения.
+- ✅ Верификация: `npm run build` и `CI=true npm test -- --watch=false` — успешно.
+
 v7.9: Stitch UI Migration Wave 4 (micro-interactions & density tuning) (2026-04-01)
 - ✅ Добавлена системная кривая анимаций (`--ease-standard`) и единые переходы для интерактивных элементов.
 - ✅ Улучшены `hover/focus/pressed` состояния кнопок, табов, topbar controls, filter chips, search input.
