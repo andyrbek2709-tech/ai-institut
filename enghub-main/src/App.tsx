@@ -15,7 +15,11 @@ import { RevisionsTab } from './components/RevisionsTab';
 import { ReviewsTab } from './components/ReviewsTab';
 import { TransmittalsTab } from './components/TransmittalsTab';
 import { AssignmentsTab } from './components/AssignmentsTab';
-import { saveAs } from 'file-saver';
+import GanttChart from './components/GanttChart';
+import MeetingsPanel from './components/MeetingsPanel';
+import TimelogPanel from './components/TimelogPanel';
+import { exportProjectXls, exportTransmittalPdf } from './utils/export';
+import { GlobalSearch } from './components/GlobalSearch';
 
 export default function App() {
   const [dark, setDark] = useState(false); // Светлая тема по умолчанию
@@ -38,12 +42,6 @@ export default function App() {
   const [transmittals, setTransmittals] = useState<any[]>([]);
   const [transmittalItems, setTransmittalItems] = useState<Record<string, any[]>>({});
   const [transmittalDraftLinks, setTransmittalDraftLinks] = useState<Record<string, { drawingId: string; revisionId: string }>>({});
-  const [meetings, setMeetings] = useState<any[]>([]);
-  const [showNewMeeting, setShowNewMeeting] = useState(false);
-  const [newMeeting, setNewMeeting] = useState({ title: '', meeting_date: '', participants: '', agenda: '', decisions: '' });
-  const [timeEntries, setTimeEntries] = useState<any[]>([]);
-  const [showNewTimeEntry, setShowNewTimeEntry] = useState(false);
-  const [newTimeEntry, setNewTimeEntry] = useState({ task_id: '', hours: '', date: new Date().toISOString().split('T')[0], note: '' });
   const [normativeDocs, setNormativeDocs] = useState<any[]>([]);
   const [normSearchQuery, setNormSearchQuery] = useState("");
   const [normSearchResults, setNormSearchResults] = useState<any[] | null>(null);
@@ -98,8 +96,6 @@ export default function App() {
       loadRevisions(activeProject.id);
       loadReviews(activeProject.id);
       loadTransmittals(activeProject.id);
-      loadMeetings(activeProject.id);
-      loadTimeEntries(activeProject.id);
     }
   }, [activeProject]);
   useEffect(() => { document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light'); }, [dark]);
@@ -184,33 +180,6 @@ export default function App() {
       }
       setTransmittalItems(itemMap);
     }
-  };
-
-  const loadMeetings = async (pid: any) => {
-    const data = await get(`meetings?project_id=eq.${pid}&order=meeting_date.desc`, token!);
-    if (Array.isArray(data)) setMeetings(data);
-  };
-  const createMeeting = async () => {
-    if (!newMeeting.title || !activeProject) return;
-    setSaving(true);
-    await post('meetings', { ...newMeeting, project_id: activeProject.id, created_by: currentUserData?.id }, token!);
-    setNewMeeting({ title: '', meeting_date: '', participants: '', agenda: '', decisions: '' });
-    setShowNewMeeting(false); setSaving(false);
-    await loadMeetings(activeProject.id);
-    addNotification('Протокол создан', 'success');
-  };
-  const loadTimeEntries = async (pid: any) => {
-    const data = await get(`time_entries?project_id=eq.${pid}&order=date.desc`, token!);
-    if (Array.isArray(data)) setTimeEntries(data);
-  };
-  const createTimeEntry = async () => {
-    if (!newTimeEntry.hours || !activeProject) return;
-    setSaving(true);
-    await post('time_entries', { ...newTimeEntry, project_id: activeProject.id, user_id: currentUserData?.id, hours: Number(newTimeEntry.hours) }, token!);
-    setNewTimeEntry({ task_id: '', hours: '', date: new Date().toISOString().split('T')[0], note: '' });
-    setShowNewTimeEntry(false); setSaving(false);
-    await loadTimeEntries(activeProject.id);
-    addNotification('Время записано', 'success');
   };
 
   const loadNormativeDocs = async () => {
@@ -635,114 +604,32 @@ export default function App() {
   const handleLogin = async (accessToken: string, email: string) => { setToken(accessToken); setUserEmail(email); localStorage.setItem('enghub_token', accessToken); localStorage.setItem('enghub_email', email); if (email !== "admin@enghub.com") setLoading(true); else setLoading(false); };
   const handleLogout = () => { setToken(null); setUserEmail(""); setCurrentUserData(null); setProjects([]); setTasks([]); setMsgs([]); localStorage.removeItem('enghub_token'); localStorage.removeItem('enghub_email'); };
 
+  const handleGlobalSearchSelect = (type: string, item: any) => {
+    if (type === 'projects') {
+      setActiveProject(item);
+      setScreen('project');
+      setSideTab('tasks');
+    } else if (type === 'tasks') {
+      const proj = projects.find(p => p.id === item.project_id);
+      if (proj) {
+        setActiveProject(proj);
+        setScreen('project');
+        setSideTab('tasks');
+        setSelectedTask(item);
+        setShowTaskDetail(true);
+      }
+    } else if (type === 'drawings') {
+      const proj = projects.find(p => p.id === item.project_id);
+      if (proj) {
+        setActiveProject(proj);
+        setScreen('project');
+        setSideTab('drawings');
+      }
+    }
+  };
+
   const getAutoProgress = (pid: number): number => { const pt = allTasks.filter(t => t.project_id === pid); if (pt.length === 0) return 0; return Math.round((pt.filter(t => t.status === "done").length / pt.length) * 100); };
   const activeProjectProgress = activeProject ? getAutoProgress(activeProject.id) : 0;
-
-  const exportProjectXls = () => {
-    if (!activeProject) return;
-    const statusLabels: Record<string, string> = { todo: 'В очереди', inprogress: 'В работе', review_lead: 'Проверка руководителя', review_gip: 'Проверка ГИПа', revision: 'На доработку', done: 'Завершено' };
-    const priorityLabels: Record<string, string> = { low: 'Низкий', medium: 'Средний', high: 'Высокий', critical: 'Критический' };
-    const esc = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const cell = (v: string, bold = false) => `<Cell${bold ? ' ss:StyleID="h"' : ''}><Data ss:Type="String">${esc(v)}</Data></Cell>`;
-    const rows = allTasks.filter(t => t.project_id === activeProject.id).map(t => {
-      const u = getUserById(t.assigned_to);
-      return `<Row>${cell(t.name)}${cell(statusLabels[t.status] || t.status)}${cell(priorityLabels[t.priority] || t.priority)}${cell(u ? u.full_name : '')}${cell(t.dept || '')}${cell(t.deadline || '')}${cell(t.revision_count > 0 ? String(t.revision_count) : '')}</Row>`;
-    }).join('');
-    const drawingStatusLabels: Record<string, string> = { draft: 'Черновик', in_work: 'В работе', review: 'На проверке', issued: 'Выпущен', cancelled: 'Отменён' };
-    const drawingRows = drawings.map(d => `<Row>${cell(d.code)}${cell(d.title)}${cell(d.discipline || '')}${cell(drawingStatusLabels[d.status] || d.status)}${cell(d.revision || 'R0')}</Row>`).join('');
-    const reviewSevLabels: Record<string, string> = { critical: 'Критический', major: 'Значительный', minor: 'Незначительный' };
-    const reviewStatusLabels: Record<string, string> = { open: 'Открыто', in_progress: 'В работе', resolved: 'Снято', rejected: 'Отклонено' };
-    const reviewRows = reviews.map(r => `<Row>${cell(r.title)}${cell(reviewSevLabels[r.severity] || r.severity)}${cell(reviewStatusLabels[r.status] || r.status)}</Row>`).join('');
-    const xml = `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="h"><Font ss:Bold="1"/></Style></Styles><Worksheet ss:Name="Задачи"><Table><Row>${cell('Название', true)}${cell('Статус', true)}${cell('Приоритет', true)}${cell('Исполнитель', true)}${cell('Отдел', true)}${cell('Дедлайн', true)}${cell('Ревизий', true)}</Row>${rows}</Table></Worksheet><Worksheet ss:Name="Чертежи"><Table><Row>${cell('Код', true)}${cell('Название', true)}${cell('Дисциплина', true)}${cell('Статус', true)}${cell('Ревизия', true)}</Row>${drawingRows}</Table></Worksheet><Worksheet ss:Name="Замечания"><Table><Row>${cell('Текст замечания', true)}${cell('Серьёзность', true)}${cell('Статус', true)}</Row>${reviewRows}</Table></Worksheet><Worksheet ss:Name="Проект"><Table><Row>${cell('Параметр', true)}${cell('Значение', true)}</Row><Row>${cell('Название')}${cell(activeProject.name)}</Row><Row>${cell('Код')}${cell(activeProject.code)}</Row><Row>${cell('Статус')}${cell(activeProject.status === 'active' ? 'В работе' : activeProject.status)}</Row><Row>${cell('Дедлайн')}${cell(activeProject.deadline || '—')}</Row><Row>${cell('Прогресс')}${cell(activeProjectProgress + '%')}</Row><Row>${cell('Всего задач')}${cell(String(allTasks.filter(t => t.project_id === activeProject.id).length))}</Row><Row>${cell('Чертежей')}${cell(String(drawings.length))}</Row><Row>${cell('Замечаний открыто')}${cell(String(reviews.filter(r => r.status === 'open').length))}</Row></Table></Worksheet></Workbook>`;
-    const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
-    saveAs(blob, `${activeProject.code}_${activeProject.name}.xls`);
-    addNotification(`Экспорт "${activeProject.name}" готов`, 'success');
-  };
-
-  const exportMeetingPdf = (m: any) => {
-    const esc = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const dateStr = m.meeting_date ? new Date(m.meeting_date + 'T00:00:00').toLocaleDateString('ru-RU') : '—';
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Протокол: ${esc(m.title)}</title>
-<style>
-  body { font-family: Arial, sans-serif; font-size: 14px; color: #111; margin: 0; padding: 40px; }
-  h1 { font-size: 20px; text-align: center; margin-bottom: 4px; }
-  .subtitle { text-align: center; font-size: 13px; color: #555; margin-bottom: 24px; }
-  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #888; margin: 20px 0 6px; letter-spacing: .05em; }
-  .section-body { border-left: 3px solid #ddd; padding-left: 12px; font-size: 14px; white-space: pre-wrap; }
-  .footer { margin-top: 48px; display: flex; justify-content: space-between; font-size: 12px; color: #555; }
-  .sign-block { width: 40%; }
-  .sign-line { border-top: 1px solid #000; margin-top: 32px; padding-top: 4px; font-size: 11px; }
-  @media print { body { padding: 20mm 20mm 20mm 20mm; } }
-</style></head><body>
-<h1>ПРОТОКОЛ СОВЕЩАНИЯ</h1>
-<div class="subtitle">${esc(activeProject?.name || '')} &nbsp;·&nbsp; ${dateStr}</div>
-<div class="section-label">Тема</div>
-<div class="section-body">${esc(m.title)}</div>
-${m.participants ? `<div class="section-label">Участники</div><div class="section-body">${esc(m.participants)}</div>` : ''}
-${m.agenda ? `<div class="section-label">Повестка</div><div class="section-body">${esc(m.agenda)}</div>` : ''}
-${m.decisions ? `<div class="section-label">Решения / Поручения</div><div class="section-body">${esc(m.decisions)}</div>` : ''}
-<div class="footer">
-  <div class="sign-block"><div class="sign-line">Председатель</div></div>
-  <div class="sign-block"><div class="sign-line">Секретарь</div></div>
-</div>
-<script>window.onload=function(){window.print();}</script>
-</body></html>`;
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-  };
-
-  const exportTransmittalPdf = (tr: any) => {
-    const esc = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const dateStr = new Date(tr.created_at).toLocaleDateString('ru-RU');
-    const items = transmittalItems[tr.id] || [];
-    const rows = items.map((it: any) => {
-      const d = drawings.find((dr: any) => String(dr.id) === String(it.drawing_id));
-      const rev = revisions.find((rv: any) => String(rv.id) === String(it.revision_id));
-      return `<tr>
-        <td>${esc(d?.code || '—')}</td>
-        <td>${esc(d?.title || '—')}</td>
-        <td>${esc(d?.discipline || '—')}</td>
-        <td>${rev ? `${esc(rev.from_revision)}→${esc(rev.to_revision)}` : '—'}</td>
-        <td>${esc(it.note || '')}</td>
-      </tr>`;
-    }).join('');
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Трансмиттал ${esc(tr.number)}</title>
-<style>
-  body { font-family: Arial, sans-serif; font-size: 13px; color: #111; margin: 0; padding: 40px; }
-  h1 { font-size: 18px; text-align: center; margin-bottom: 4px; }
-  .subtitle { text-align: center; font-size: 12px; color: #555; margin-bottom: 20px; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; }
-  th { background: #f0f0f0; font-size: 11px; text-transform: uppercase; padding: 8px 10px; text-align: left; border: 1px solid #ccc; }
-  td { padding: 7px 10px; border: 1px solid #ddd; vertical-align: top; }
-  .meta { display: flex; gap: 32px; margin-bottom: 12px; font-size: 13px; }
-  .meta span { color: #555; }
-  .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 12px; }
-  .sign-block { width: 40%; }
-  .sign-line { border-top: 1px solid #000; margin-top: 28px; padding-top: 4px; font-size: 11px; }
-  @media print { body { padding: 10mm 15mm; } @page { size: A4 landscape; } }
-</style></head><body>
-<h1>ТРАНСМИТТАЛ</h1>
-<div class="subtitle">${esc(activeProject?.name || '')} &nbsp;·&nbsp; ${esc(tr.number)}</div>
-<div class="meta">
-  <div><span>Дата:</span> ${dateStr}</div>
-  <div><span>Статус:</span> ${esc(tr.status || 'draft')}</div>
-  <div><span>Позиций:</span> ${items.length}</div>
-</div>
-<table>
-  <thead><tr><th>Код</th><th>Название</th><th>Дисциплина</th><th>Ревизия</th><th>Примечание</th></tr></thead>
-  <tbody>${rows || '<tr><td colspan="5">—</td></tr>'}</tbody>
-</table>
-<div class="footer">
-  <div class="sign-block"><div class="sign-line">Выдал</div></div>
-  <div class="sign-block"><div class="sign-line">Принял</div></div>
-</div>
-<script>window.onload=function(){window.print();}</script>
-</body></html>`;
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-  };
 
   if (!token) return <LoginPage onLogin={handleLogin} dark={dark} setDark={setDark} />;
   if (isAdmin) return <AdminPanel token={token} onLogout={handleLogout} dark={dark} setDark={setDark} />;
@@ -1082,10 +969,7 @@ ${m.decisions ? `<div class="section-label">Решения / Поручения<
             </div>
           </div>
           <div className="topbar-right">
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <input placeholder="Поиск... ⌘K" style={{ padding: "8px 14px 8px 32px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface2, color: C.text, fontSize: 13, width: 160, fontFamily: "inherit", outline: "none" }} readOnly />
-              <span style={{ position: "absolute", left: 10, color: C.textMuted, fontSize: 14 }}>🔍</span>
-            </div>
+            <GlobalSearch token={token!} C={C} onSelect={handleGlobalSearchSelect} />
             <ThemeToggle dark={dark} setDark={setDark} C={C} />
             {notifications.length > 0 && (
               <div style={{ position: 'relative' }}>
@@ -1385,7 +1269,7 @@ ${m.decisions ? `<div class="section-label">Решения / Поручения<
                 
                 {/* EXPORT BUTTON */}
                 <button
-                  onClick={exportProjectXls}
+                  onClick={() => exportProjectXls(activeProject, allTasks, drawings, reviews, getUserById, activeProjectProgress, addNotification)}
                   title="Экспорт задач в Excel"
                   style={{ background: C.surface, color: C.textMuted, border: `1px solid ${C.border}`, padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
                 >
@@ -1544,7 +1428,7 @@ ${m.decisions ? `<div class="section-label">Решения / Поручения<
                   createProjectTransmittal={createProjectTransmittal}
                   changeTransmittalStatus={changeTransmittalStatus}
                   addTransmittalItem={addTransmittalItem}
-                  onExportPdf={exportTransmittalPdf}
+                  onExportPdf={(tr) => exportTransmittalPdf(tr, activeProject.name, transmittalItems[tr.id] || [], drawings, revisions)}
                 />
               )}
 
@@ -1564,164 +1448,36 @@ ${m.decisions ? `<div class="section-label">Решения / Поручения<
               )}
 
               {/* ── GANTT ── */}
-              {sideTab === "gantt" && (() => {
-                const pTasks = allTasks.filter(t => t.project_id === activeProject.id);
-                if (pTasks.length === 0) return <div className="empty-state" style={{ padding: 40 }}>Нет задач для диаграммы. Создайте задачи с дедлайнами.</div>;
-                const now = Date.now();
-                const stamps = pTasks.flatMap(t => [t.created_at ? new Date(t.created_at).getTime() : null, t.deadline ? new Date(t.deadline).getTime() : null]).filter(Boolean) as number[];
-                if (activeProject.deadline) stamps.push(new Date(activeProject.deadline).getTime());
-                stamps.push(now);
-                const minT = Math.min(...stamps), maxT = Math.max(...stamps);
-                const range = Math.max(maxT - minT, 86400000 * 7);
-                const pct = (t: number) => Math.max(0, Math.min(100, ((t - minT) / range) * 100));
-                const todayPct = pct(now);
-                const sColors: Record<string, string> = { done: '#2ac769', inprogress: '#4a9eff', review_lead: '#a78bfa', review_gip: '#7c3aed', revision: '#f5a623', todo: '#8896a4' };
-                const sLabels: Record<string, string> = { todo: 'В очереди', inprogress: 'В работе', review_lead: 'Проверка', review_gip: 'Проверка ГИПа', revision: 'Доработка', done: 'Готово' };
-                const grouped: Record<string, any[]> = {};
-                for (const t of pTasks) { const u = getUserById(t.assigned_to); const dept = t.dept || (u ? getDeptName(u.dept_id) : '') || 'Общие'; if (!grouped[dept]) grouped[dept] = []; grouped[dept].push(t); }
-                return (
-                  <div>
-                    <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-                      {Object.entries(sLabels).map(([s, l]) => <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: C.textMuted }}><div style={{ width: 10, height: 10, borderRadius: 2, background: sColors[s] }} />{l}</div>)}
-                    </div>
-                    <div style={{ overflowX: 'auto' }}>
-                      <div style={{ minWidth: 520 }}>
-                        <div style={{ display: 'flex', marginLeft: 160, marginBottom: 6, position: 'relative', height: 18 }}>
-                          <div style={{ position: 'absolute', left: '0%', fontSize: 10, color: C.textMuted }}>{new Date(minT).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })}</div>
-                          <div style={{ position: 'absolute', right: 0, fontSize: 10, color: C.textMuted }}>{new Date(maxT).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })}</div>
-                          <div style={{ position: 'absolute', left: `${todayPct}%`, transform: 'translateX(-50%)', fontSize: 10, color: '#ef4444', fontWeight: 700 }}>↓</div>
-                        </div>
-                        {Object.entries(grouped).map(([dept, dTasks]) => (
-                          <div key={dept}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, marginTop: 14 }}>{dept}</div>
-                            {dTasks.map(task => {
-                              const startT = task.created_at ? new Date(task.created_at).getTime() : minT;
-                              const endT = task.deadline ? new Date(task.deadline).getTime() : startT + 7 * 86400000;
-                              const isOverdue = endT < now && task.status !== 'done';
-                              const barL = pct(startT), barW = Math.max(1, pct(endT) - barL);
-                              const color = isOverdue ? '#ef4444' : (sColors[task.status] || '#8896a4');
-                              return (
-                                <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                                  <div style={{ width: 150, flexShrink: 0, fontSize: 12, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right', paddingRight: 8 }} title={task.name}>{task.name}</div>
-                                  <div style={{ flex: 1, position: 'relative', height: 22, background: C.surface2, borderRadius: 4 }}>
-                                    <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${todayPct}%`, width: 1.5, background: '#ef444460', zIndex: 3 }} />
-                                    <div style={{ position: 'absolute', top: 3, bottom: 3, left: `${barL}%`, width: `${barW}%`, background: color, borderRadius: 3, opacity: 0.85, minWidth: 4 }} title={`${task.name} · ${sLabels[task.status]} · ${task.deadline || '—'}`} />
-                                  </div>
-                                  <div style={{ width: 56, flexShrink: 0, fontSize: 11, color: isOverdue ? '#ef4444' : C.textMuted, textAlign: 'right' }}>{task.deadline ? new Date(task.deadline).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) : '—'}</div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
+              {sideTab === "gantt" && <GanttChart tasks={allTasks} activeProject={activeProject} getUserById={getUserById} getDeptName={getDeptName} C={C} />}
 
               {/* ── MEETINGS ── */}
               {sideTab === "meetings" && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Протоколы совещаний</div>
-                    {(isGip || isLead) && <button className="btn btn-primary" onClick={() => setShowNewMeeting(true)}>+ Новый протокол</button>}
-                  </div>
-                  {meetings.length === 0 && !showNewMeeting && <div className="empty-state" style={{ padding: 40 }}>Протоколов пока нет</div>}
-                  {meetings.map(m => (
-                    <div key={m.id} style={{ background: C.surface2, borderRadius: 12, padding: 16, marginBottom: 10, border: `1px solid ${C.border}` }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{m.title}</div>
-                        <button onClick={() => exportMeetingPdf(m)} title="Экспорт в PDF" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.textMuted, padding: '0 4px' }}>🖨</button>
-                      </div>
-                      <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 8 }}>
-                        {m.meeting_date ? `📅 ${new Date(m.meeting_date + 'T00:00:00').toLocaleDateString('ru-RU')}` : ''}
-                        {m.participants ? ` · 👥 ${m.participants}` : ''}
-                      </div>
-                      {m.agenda && <div style={{ fontSize: 13, color: C.text, marginBottom: 6 }}><span style={{ color: C.textMuted, fontWeight: 600 }}>Повестка:</span> {m.agenda}</div>}
-                      {m.decisions && <div style={{ fontSize: 13, color: C.text }}><span style={{ color: C.textMuted, fontWeight: 600 }}>Решения:</span> {m.decisions}</div>}
-                    </div>
-                  ))}
-                  {showNewMeeting && (
-                    <div style={{ background: C.surface2, borderRadius: 12, padding: 20, border: `1px solid ${C.accent}40`, marginTop: 8 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 12 }}>Новый протокол</div>
-                      <div className="form-stack">
-                        <Field label="ТЕМА *" C={C}><input value={newMeeting.title} onChange={e => setNewMeeting({...newMeeting, title: e.target.value})} placeholder="Совещание по проекту" style={getInp(C)} /></Field>
-                        <Field label="ДАТА" C={C}><input type="date" value={newMeeting.meeting_date} onChange={e => setNewMeeting({...newMeeting, meeting_date: e.target.value})} style={getInp(C)} /></Field>
-                        <Field label="УЧАСТНИКИ" C={C}><input value={newMeeting.participants} onChange={e => setNewMeeting({...newMeeting, participants: e.target.value})} placeholder="Иванов, Петров, Сидоров" style={getInp(C)} /></Field>
-                        <Field label="ПОВЕСТКА" C={C}><textarea value={newMeeting.agenda} onChange={e => setNewMeeting({...newMeeting, agenda: e.target.value})} rows={2} placeholder="Рассмотрение хода проекта..." style={{...getInp(C), resize: 'vertical' as const}} /></Field>
-                        <Field label="РЕШЕНИЯ / ПОРУЧЕНИЯ" C={C}><textarea value={newMeeting.decisions} onChange={e => setNewMeeting({...newMeeting, decisions: e.target.value})} rows={3} placeholder="Инженеру Иванову — выпустить ОВ-001 до 01.05..." style={{...getInp(C), resize: 'vertical' as const}} /></Field>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                        <button className="btn btn-primary" onClick={createMeeting} disabled={saving || !newMeeting.title}>Сохранить</button>
-                        <button className="btn" onClick={() => setShowNewMeeting(false)} style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.text, borderRadius: 8, padding: '8px 18px', cursor: 'pointer' }}>Отмена</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <MeetingsPanel 
+                  projectId={activeProject.id} 
+                  projectName={activeProject.name}
+                  isGip={isGip} 
+                  isLead={isLead} 
+                  C={C} 
+                  token={token!} 
+                  userId={currentUserData?.id}
+                  addNotification={addNotification}
+                />
               )}
 
               {/* ── TIMELOG ── */}
               {sideTab === "timelog" && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Учёт рабочего времени</div>
-                    <button className="btn btn-primary" onClick={() => setShowNewTimeEntry(true)}>+ Записать время</button>
-                  </div>
-                  {(isGip || isLead) && timeEntries.length > 0 && (() => {
-                    const byUser: Record<string, number> = {};
-                    for (const e of timeEntries) { const u = getUserById(e.user_id); const n = u?.full_name || 'Неизвестный'; byUser[n] = (byUser[n] || 0) + Number(e.hours); }
-                    return (
-                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
-                        {Object.entries(byUser).sort((a, b) => b[1] - a[1]).map(([name, hours]) => (
-                          <div key={name} style={{ background: C.surface2, borderRadius: 8, padding: '10px 16px', border: `1px solid ${C.border}` }}>
-                            <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 2 }}>{name}</div>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>{hours} ч</div>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                  {timeEntries.length === 0 && !showNewTimeEntry && <div className="empty-state" style={{ padding: 40 }}>Записей пока нет</div>}
-                  {timeEntries.length > 0 && (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                        <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                          {['Дата', 'Сотрудник', 'Задача', 'Часов', 'Примечание'].map(h => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', color: C.textMuted, fontWeight: 600, fontSize: 11, textTransform: 'uppercase' }}>{h}</th>)}
-                        </tr></thead>
-                        <tbody>
-                          {timeEntries.map(e => {
-                            const u = getUserById(e.user_id);
-                            const task = allTasks.find(t => String(t.id) === String(e.task_id));
-                            return (
-                              <tr key={e.id} style={{ borderBottom: `1px solid ${C.border}20` }}>
-                                <td style={{ padding: '9px 10px', color: C.textMuted }}>{e.date}</td>
-                                <td style={{ padding: '9px 10px', color: C.text }}>{u?.full_name || '—'}</td>
-                                <td style={{ padding: '9px 10px', color: C.text, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task?.name || '—'}</td>
-                                <td style={{ padding: '9px 10px', color: C.accent, fontWeight: 700 }}>{e.hours} ч</td>
-                                <td style={{ padding: '9px 10px', color: C.textMuted }}>{e.note || '—'}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                  {showNewTimeEntry && (
-                    <div style={{ background: C.surface2, borderRadius: 12, padding: 20, border: `1px solid ${C.accent}40`, marginTop: 12 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 12 }}>Записать время</div>
-                      <div className="form-stack">
-                        <Field label="ДАТА *" C={C}><input type="date" value={newTimeEntry.date} onChange={e => setNewTimeEntry({...newTimeEntry, date: e.target.value})} style={getInp(C)} /></Field>
-                        <Field label="ЗАДАЧА" C={C}><select value={newTimeEntry.task_id} onChange={e => setNewTimeEntry({...newTimeEntry, task_id: e.target.value})} style={getInp(C)}><option value="">— выберите задачу (необязательно) —</option>{tasks.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></Field>
-                        <Field label="ЧАСОВ *" C={C}><input type="number" min="0.5" max="24" step="0.5" value={newTimeEntry.hours} onChange={e => setNewTimeEntry({...newTimeEntry, hours: e.target.value})} placeholder="8" style={getInp(C)} /></Field>
-                        <Field label="ПРИМЕЧАНИЕ" C={C}><input value={newTimeEntry.note} onChange={e => setNewTimeEntry({...newTimeEntry, note: e.target.value})} placeholder="Разработка принципиальной схемы" style={getInp(C)} /></Field>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                        <button className="btn btn-primary" onClick={createTimeEntry} disabled={saving || !newTimeEntry.hours}>Сохранить</button>
-                        <button className="btn" onClick={() => setShowNewTimeEntry(false)} style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.text, borderRadius: 8, padding: '8px 18px', cursor: 'pointer' }}>Отмена</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <TimelogPanel 
+                  projectId={activeProject.id} 
+                  tasks={tasks} 
+                  allTasks={allTasks} 
+                  isGip={isGip} 
+                  isLead={isLead} 
+                  userId={currentUserData?.id} 
+                  getUserById={getUserById} 
+                  C={C} 
+                  token={token!} 
+                  addNotification={addNotification}
+                />
               )}
 
               {sideTab === "conference" && (
@@ -2033,25 +1789,34 @@ ${m.decisions ? `<div class="section-label">Решения / Поручения<
                     <button className="btn btn-secondary" onClick={async () => {
                       const pending = normativeDocs.filter(d => d.status === 'pending' || d.status === 'processing' || d.status === 'error');
                       if (pending.length === 0) { addNotification('Все документы уже проиндексированы', 'info'); return; }
-                      addNotification(`Запускаю индексацию для ${pending.length} документов...`, 'info');
-                      // Параллельная обработка батчами по 3 документа
-                      const BATCH = 3;
+                                            addNotification(`Запускаю индексацию для ${pending.length} документов...`, 'info');
+                      const BATCH = 2; // Reduced batch size for better stability
                       let done = 0;
+                      let errors = 0;
                       for (let i = 0; i < pending.length; i += BATCH) {
                         const batch = pending.slice(i, i + BATCH);
-                        await Promise.all(batch.map(doc =>
-                          fetch(`${SURL}/functions/v1/vectorize-doc`, {
-                            method: 'POST',
-                            headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ doc_id: doc.id }),
-                          }).catch(() => null)
-                        ));
-                        done += batch.length;
-                        addNotification(`Проиндексировано: ${done} / ${pending.length}`, 'info');
+                        const results = await Promise.all(batch.map(async (doc) => {
+                          try {
+                            const res = await fetch(`${SURL}/functions/v1/vectorize-doc`, {
+                              method: 'POST',
+                              headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ doc_id: doc.id }),
+                            });
+                            if (!res.ok) throw new Error(await res.text());
+                            return { success: true };
+                          } catch (err) {
+                            console.error(`Error indexing ${doc.name}:`, err);
+                            return { success: false };
+                          }
+                        }));
+                        
+                        done += results.filter(r => r.success).length;
+                        errors += results.filter(r => !r.success).length;
+                        
+                        addNotification(`Индексация: ${done} ок, ${errors} ошибка. Всего: ${pending.length}`, errors > 0 ? 'warning' : 'info');
                         await loadNormativeDocs();
                       }
-                      await loadNormativeDocs();
-                      addNotification('Индексация завершена', 'success');
+                      addNotification(`Индексация завершена. Успешно: ${done}, Ошибок: ${errors}`, errors > 0 ? 'warning' : 'success');
                     }}>🔄 Синхронизировать индекс</button>
                   </div>
                 )}

@@ -58,42 +58,31 @@ async function extractDocxText(buffer: ArrayBuffer): Promise<string> {
 // ─────────────────────────────────────────────
 // PDF text extraction (text-layer PDFs only)
 // ─────────────────────────────────────────────
-function extractPdfText(bytes: Uint8Array): string {
-  const parts: string[] = [];
-
-  // Method 1: latin1 decode → scan BT...ET blocks
+async function extractPdfText(bytes: Uint8Array): Promise<string> {
   try {
+    // In Deno, we can use Buffer from node:buffer
+    const { Buffer } = await import('node:buffer');
+    const pdf = (await import('npm:pdf-parse@1.1.1')).default;
+    const data = await pdf(Buffer.from(bytes));
+    const result = data.text.replace(/\s+/g, ' ').trim();
+    console.log(`PDF: extracted ${result.length} chars using pdf-parse`);
+    return result;
+  } catch (e) {
+    console.error('PDF extraction error (pdf-parse):', e);
+    
+    // Fallback: simple text scanner (limited)
+    const parts: string[] = [];
     const raw = new TextDecoder('latin1').decode(bytes);
-    const btBlocks = raw.match(/BT\b[\s\S]{1,3000}?\bET\b/g) || [];
+    const btBlocks = raw.match(/BT\b[\s\S]{1,5000}?\bET\b/g) || [];
     for (const blk of btBlocks) {
-      // (text) Tj
       for (const m of blk.matchAll(/\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g)) {
-        parts.push(
-          m[1]
-            .replace(/\\(\d{3})/g, (_, o) => String.fromCharCode(parseInt(o, 8)))
-            .replace(/\\\\/g, '\\')
-            .replace(/\\n/g, '\n')
-            .replace(/\\r/g, '\r')
-        );
-      }
-      // [(text) -k (text)] TJ
-      for (const m of blk.matchAll(/\[([^\]]+)\]\s*TJ/g)) {
-        const chunks = m[1].match(/\(([^)]*)\)/g) || [];
-        parts.push(chunks.map((c) => c.slice(1, -1)).join(''));
+        parts.push(m[1].replace(/\\(\d{3})/g, (_, o) => String.fromCharCode(parseInt(o, 8))).replace(/\\\\/g, '\\'));
       }
     }
-  } catch { /* ignore */ }
-
-  // Method 2: UTF-8 decode → find Cyrillic sequences (works for some PDFs)
-  try {
-    const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
-    const cyrMatches = utf8.match(/[а-яА-ЯёЁ][а-яА-ЯёЁ\s\d,.:;()\-–«»"'/]{15,}/g) || [];
-    parts.push(...cyrMatches);
-  } catch { /* ignore */ }
-
-  const result = parts.join(' ').replace(/\s+/g, ' ').trim();
-  console.log(`PDF: extracted ${result.length} chars`);
-  return result;
+    const result = parts.join(' ').replace(/\s+/g, ' ').trim();
+    console.log(`PDF Fallback: extracted ${result.length} chars`);
+    return result;
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -102,12 +91,28 @@ function extractPdfText(bytes: Uint8Array): string {
 function makeChunks(text: string): string[] {
   const chunks: string[] = [];
   let start = 0;
-  while (start < text.length) {
-    const end = Math.min(start + CHUNK_SIZE, text.length);
-    const chunk = text.slice(start, end).trim();
-    if (chunk.length > 20) chunks.push(chunk);
-    if (end === text.length) break;
-    start += CHUNK_SIZE - CHUNK_OVERLAP;
+  
+  // Cleaner text for chunking
+  const cleanText = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  
+  while (start < cleanText.length) {
+    let end = start + CHUNK_SIZE;
+    
+    // Try to find the end of a sentence for cleaner chunks
+    if (end < cleanText.length) {
+      const lastDot = cleanText.lastIndexOf('. ', end);
+      if (lastDot > start + (CHUNK_SIZE * 0.7)) { // Only if the dot is reasonably far
+        end = lastDot + 1;
+      }
+    } else {
+      end = cleanText.length;
+    }
+
+    const chunk = cleanText.slice(start, end).trim();
+    if (chunk.length > 50) chunks.push(chunk);
+    
+    if (end >= cleanText.length) break;
+    start = end - CHUNK_OVERLAP;
   }
   return chunks;
 }
@@ -200,7 +205,7 @@ serve(async (req: Request) => {
     if (nameLower.endsWith('.docx')) {
       text = await extractDocxText(fileBuffer);
     } else if (nameLower.endsWith('.pdf')) {
-      text = extractPdfText(fileBytes);
+      text = await extractPdfText(fileBytes);
     } else if (nameLower.endsWith('.txt')) {
       text = new TextDecoder('utf-8', { fatal: false }).decode(fileBytes);
     } else if (nameLower.endsWith('.doc')) {
