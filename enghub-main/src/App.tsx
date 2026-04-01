@@ -659,6 +659,91 @@ export default function App() {
     addNotification(`Экспорт "${activeProject.name}" готов`, 'success');
   };
 
+  const exportMeetingPdf = (m: any) => {
+    const esc = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dateStr = m.meeting_date ? new Date(m.meeting_date + 'T00:00:00').toLocaleDateString('ru-RU') : '—';
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Протокол: ${esc(m.title)}</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 14px; color: #111; margin: 0; padding: 40px; }
+  h1 { font-size: 20px; text-align: center; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 13px; color: #555; margin-bottom: 24px; }
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #888; margin: 20px 0 6px; letter-spacing: .05em; }
+  .section-body { border-left: 3px solid #ddd; padding-left: 12px; font-size: 14px; white-space: pre-wrap; }
+  .footer { margin-top: 48px; display: flex; justify-content: space-between; font-size: 12px; color: #555; }
+  .sign-block { width: 40%; }
+  .sign-line { border-top: 1px solid #000; margin-top: 32px; padding-top: 4px; font-size: 11px; }
+  @media print { body { padding: 20mm 20mm 20mm 20mm; } }
+</style></head><body>
+<h1>ПРОТОКОЛ СОВЕЩАНИЯ</h1>
+<div class="subtitle">${esc(activeProject?.name || '')} &nbsp;·&nbsp; ${dateStr}</div>
+<div class="section-label">Тема</div>
+<div class="section-body">${esc(m.title)}</div>
+${m.participants ? `<div class="section-label">Участники</div><div class="section-body">${esc(m.participants)}</div>` : ''}
+${m.agenda ? `<div class="section-label">Повестка</div><div class="section-body">${esc(m.agenda)}</div>` : ''}
+${m.decisions ? `<div class="section-label">Решения / Поручения</div><div class="section-body">${esc(m.decisions)}</div>` : ''}
+<div class="footer">
+  <div class="sign-block"><div class="sign-line">Председатель</div></div>
+  <div class="sign-block"><div class="sign-line">Секретарь</div></div>
+</div>
+<script>window.onload=function(){window.print();}</script>
+</body></html>`;
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  };
+
+  const exportTransmittalPdf = (tr: any) => {
+    const esc = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const dateStr = new Date(tr.created_at).toLocaleDateString('ru-RU');
+    const items = transmittalItems[tr.id] || [];
+    const rows = items.map((it: any) => {
+      const d = drawings.find((dr: any) => String(dr.id) === String(it.drawing_id));
+      const rev = revisions.find((rv: any) => String(rv.id) === String(it.revision_id));
+      return `<tr>
+        <td>${esc(d?.code || '—')}</td>
+        <td>${esc(d?.title || '—')}</td>
+        <td>${esc(d?.discipline || '—')}</td>
+        <td>${rev ? `${esc(rev.from_revision)}→${esc(rev.to_revision)}` : '—'}</td>
+        <td>${esc(it.note || '')}</td>
+      </tr>`;
+    }).join('');
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Трансмиттал ${esc(tr.number)}</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #111; margin: 0; padding: 40px; }
+  h1 { font-size: 18px; text-align: center; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 12px; color: #555; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; }
+  th { background: #f0f0f0; font-size: 11px; text-transform: uppercase; padding: 8px 10px; text-align: left; border: 1px solid #ccc; }
+  td { padding: 7px 10px; border: 1px solid #ddd; vertical-align: top; }
+  .meta { display: flex; gap: 32px; margin-bottom: 12px; font-size: 13px; }
+  .meta span { color: #555; }
+  .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 12px; }
+  .sign-block { width: 40%; }
+  .sign-line { border-top: 1px solid #000; margin-top: 28px; padding-top: 4px; font-size: 11px; }
+  @media print { body { padding: 10mm 15mm; } @page { size: A4 landscape; } }
+</style></head><body>
+<h1>ТРАНСМИТТАЛ</h1>
+<div class="subtitle">${esc(activeProject?.name || '')} &nbsp;·&nbsp; ${esc(tr.number)}</div>
+<div class="meta">
+  <div><span>Дата:</span> ${dateStr}</div>
+  <div><span>Статус:</span> ${esc(tr.status || 'draft')}</div>
+  <div><span>Позиций:</span> ${items.length}</div>
+</div>
+<table>
+  <thead><tr><th>Код</th><th>Название</th><th>Дисциплина</th><th>Ревизия</th><th>Примечание</th></tr></thead>
+  <tbody>${rows || '<tr><td colspan="5">—</td></tr>'}</tbody>
+</table>
+<div class="footer">
+  <div class="sign-block"><div class="sign-line">Выдал</div></div>
+  <div class="sign-block"><div class="sign-line">Принял</div></div>
+</div>
+<script>window.onload=function(){window.print();}</script>
+</body></html>`;
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  };
+
   if (!token) return <LoginPage onLogin={handleLogin} dark={dark} setDark={setDark} />;
   if (isAdmin) return <AdminPanel token={token} onLogout={handleLogout} dark={dark} setDark={setDark} />;
 
@@ -1459,6 +1544,7 @@ export default function App() {
                   createProjectTransmittal={createProjectTransmittal}
                   changeTransmittalStatus={changeTransmittalStatus}
                   addTransmittalItem={addTransmittalItem}
+                  onExportPdf={exportTransmittalPdf}
                 />
               )}
 
@@ -1543,7 +1629,10 @@ export default function App() {
                   {meetings.length === 0 && !showNewMeeting && <div className="empty-state" style={{ padding: 40 }}>Протоколов пока нет</div>}
                   {meetings.map(m => (
                     <div key={m.id} style={{ background: C.surface2, borderRadius: 12, padding: 16, marginBottom: 10, border: `1px solid ${C.border}` }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 4 }}>{m.title}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{m.title}</div>
+                        <button onClick={() => exportMeetingPdf(m)} title="Экспорт в PDF" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.textMuted, padding: '0 4px' }}>🖨</button>
+                      </div>
                       <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 8 }}>
                         {m.meeting_date ? `📅 ${new Date(m.meeting_date + 'T00:00:00').toLocaleDateString('ru-RU')}` : ''}
                         {m.participants ? ` · 👥 ${m.participants}` : ''}

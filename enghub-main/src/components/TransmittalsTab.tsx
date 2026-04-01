@@ -14,6 +14,7 @@ type Props = {
   createProjectTransmittal: () => void;
   changeTransmittalStatus: (transmittalId: string, status: string) => void;
   addTransmittalItem: (transmittalId: string, drawingId?: string, revisionId?: string) => void;
+  onExportPdf: (transmittal: any) => void;
 };
 
 export function TransmittalsTab({
@@ -29,6 +30,7 @@ export function TransmittalsTab({
   createProjectTransmittal,
   changeTransmittalStatus,
   addTransmittalItem,
+  onExportPdf,
 }: Props) {
   return (
     <div>
@@ -40,9 +42,12 @@ export function TransmittalsTab({
         {transmittals.length === 0 && <div className="empty-state">Трансмитталов пока нет</div>}
         {transmittals.map((t) => (
           <div key={t.id} className="task-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{t.number}</div>
-              <div style={{ fontSize: 12, color: C.textMuted }}>{new Date(t.created_at).toLocaleString()}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{t.number}</div>
+                <div style={{ fontSize: 12, color: C.textMuted }}>{new Date(t.created_at).toLocaleString()}</div>
+              </div>
+              <button onClick={() => onExportPdf(t)} title="Экспорт в PDF" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.textMuted, padding: '0 4px' }}>🖨</button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="badge">{t.status || 'draft'}</span>
