@@ -9,46 +9,41 @@
     box-sizing: border-box;
   }
   body {
-    margin: 0;
+    margin: 0; 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
-    background: #f9f9f9;
+    background: #f5f7fa;
     color: #333;
   }
   header {
-    background: #0073e6;
-    color: white;
+    background: #0d6efd;
+    color: #fff;
     padding: 1rem 2rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    justify-content: space-between;
   }
   header h1 {
     margin: 0;
-    font-weight: 700;
     font-size: 1.5rem;
   }
   nav ul {
     list-style: none;
     display: flex;
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
   }
-  nav li {
+  nav ul li {
     margin-left: 1.5rem;
   }
-  nav a {
-    color: white;
+  nav ul li a {
+    color: #fff;
     text-decoration: none;
     font-weight: 600;
     transition: color 0.3s;
   }
-  nav a:hover,
-  nav a:focus {
-    color: #ffcc00;
+  nav ul li a:hover,
+  nav ul li a:focus {
+    color: #ffd43b;
     outline: none;
   }
   main {
@@ -59,41 +54,35 @@
   .hero {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 2rem;
-    margin-bottom: 3rem;
-  }
-  .hero img {
-    width: 100%;
-    max-width: 600px;
-    border-radius: 12px;
+    background: #fff;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
   }
   .hero-text {
-    flex: 1;
+    flex: 1 1 400px;
+    padding: 2rem;
   }
   .hero-text h2 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    color: #0073e6;
+    margin-top: 0;
+    font-size: 2rem;
+    color: #0d6efd;
   }
   .hero-text p {
-    font-size: 1.125rem;
+    font-size: 1.1rem;
+    margin: 1rem 0 0 0;
     color: #555;
   }
-  section {
-    margin-bottom: 3rem;
-  }
-  section h3 {
-    color: #0073e6;
-    margin-bottom: 1rem;
-    border-bottom: 2px solid #0073e6;
-    display: inline-block;
+  .hero-img {
+    flex: 1 1 400px;
+    min-height: 300px;
+    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800') center center/cover no-repeat;
   }
   footer {
-    background: #222;
-    color: #bbb;
+    background: #212529;
+    color: #adb5bd;
     text-align: center;
-    padding: 1.5rem 1rem;
+    padding: 1rem;
     font-size: 0.9rem;
   }
   @media (max-width: 768px) {
@@ -102,101 +91,77 @@
     }
     nav ul {
       flex-direction: column;
-      background: #005bb5;
+      background: #0d6efd;
       position: absolute;
       top: 60px;
       right: 0;
-      width: 200px;
+      width: 150px;
       display: none;
-      border-radius: 0 0 0 12px;
     }
     nav ul.show {
       display: flex;
     }
-    nav li {
-      margin: 0;
-      border-bottom: 1px solid #004a9c;
+    nav ul li {
+      margin: 1rem 0;
+      text-align: center;
     }
-    nav li:last-child {
-      border-bottom: none;
-    }
-    nav a {
-      display: block;
-      padding: 0.8rem 1rem;
-    }
-    .menu-toggle {
-      display: block;
-      cursor: pointer;
+    nav button {
+      background: none;
+      border: none;
+      color: #fff;
       font-size: 1.5rem;
-      user-select: none;
-      color: white;
-    }
-  }
-  @media (min-width: 769px) {
-    .menu-toggle {
-      display: none;
+      cursor: pointer;
+      display: block;
     }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>ModernSite</h1>
+  <h1>Современный сайт</h1>
   <nav>
-    <div class="menu-toggle" role="button" tabindex="0" aria-label="Toggle menu">&#9776;</div>
-    <ul>
-      <li><a href="#home" tabindex="0">Главная</a></li>
-      <li><a href="#about" tabindex="0">О нас</a></li>
-      <li><a href="#services" tabindex="0">Услуги</a></li>
-      <li><a href="#contact" tabindex="0">Контакты</a></li>
+    <button aria-label="Меню" id="menu-btn">&#9776;</button>
+    <ul id="nav-list">
+      <li><a href="#about">О нас</a></li>
+      <li><a href="#services">Услуги</a></li>
+      <li><a href="#contact">Контакты</a></li>
     </ul>
   </nav>
 </header>
 <main>
-  <section class="hero" id="home">
-    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800" alt="Современный офис" />
+  <section class="hero" aria-label="Главный баннер сайта">
     <div class="hero-text">
-      <h2>Добро пожаловать на ModernSite</h2>
-      <p>Мы создаём современные и адаптивные веб-сайты, которые помогут вашему бизнесу расти и выделяться среди конкурентов.</p>
+      <h2>Добро пожаловать на наш современный сайт</h2>
+      <p>Мы предоставляем лучшие услуги в своем деле, соединяя профессионализм и креативность.</p>
     </div>
+    <div class="hero-img" role="img" aria-label="Современная работа на ноутбуке"></div>
   </section>
-
-  <section id="about">
-    <h3>О нас</h3>
-    <p>Наша команда состоит из опытных веб-разработчиков, дизайнеров и маркетологов, объединённых одной целью — создавать качественные и эффективные цифровые решения.</p>
+  <section id="about" style="margin-top:3rem;">
+    <h2>О нас</h2>
+    <p>Наша команда состоит из профессионалов с многолетним опытом в веб-разработке и дизайне. Мы создаем современные, удобные и функциональные сайты, которые помогут вашему бизнесу расти.</p>
   </section>
-
-  <section id="services">
-    <h3>Услуги</h3>
+  <section id="services" style="margin-top:2rem;">
+    <h2>Услуги</h2>
     <ul>
-      <li>Веб-дизайн и UX/UI</li>
-      <li>Разработка сайтов и веб-приложений</li>
-      <li>SEO оптимизация</li>
-      <li>Техническая поддержка и развитие</li>
+      <li>Разработка веб-сайтов и приложений</li>
+      <li>Дизайн интерфейсов и опыт пользователя (UI/UX)</li>
+      <li>Поддержка и сопровождение проектов</li>
+      <li>SEO и маркетинг</li>
     </ul>
   </section>
-
-  <section id="contact">
-    <h3>Контакты</h3>
-    <p>Свяжитесь с нами через email: <a href="mailto:info@modernsite.ru">info@modernsite.ru</a> или по телефону: <a href="tel:+79991234567">+7 999 123 45 67</a>.</p>
+  <section id="contact" style="margin-top:2rem;">
+    <h2>Контакты</h2>
+    <p>Свяжитесь с нами по электронной почте: <a href="mailto:info@modernsite.ru">info@modernsite.ru</a> или по телефону: <a href="tel:+79001234567">+7 900 123-45-67</a></p>
   </section>
 </main>
 <footer>
-  &copy; 2024 ModernSite. Все права защищены.
+  &copy; 2024 Современный сайт. Все права защищены.
 </footer>
 <script>
-  const menuToggle = document.querySelector('.menu-toggle');
-  const navUl = document.querySelector('nav ul');
-
-  menuToggle.addEventListener('click', () => {
-    navUl.classList.toggle('show');
-  });
-
-  menuToggle.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      navUl.classList.toggle('show');
-    }
+  const menuBtn = document.getElementById('menu-btn');
+  const navList = document.getElementById('nav-list');
+  menuBtn.addEventListener('click', () => {
+    navList.classList.toggle('show');
   });
 </script>
 </body>
