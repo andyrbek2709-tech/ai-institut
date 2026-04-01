@@ -103,4 +103,40 @@ export const createProjectTask = (payload: any, token?: string) =>
 export const updateTaskDrawingLink = (taskId: number, drawingId: string | null, token?: string) =>
   patch(`tasks?id=eq.${taskId}`, { drawing_id: drawingId }, token);
 
+export const listMeetings = (projectId: number, token?: string) =>
+  get(`meetings?project_id=eq.${projectId}&order=meeting_date.desc`, token);
+
+export const createMeeting = (payload: any, token?: string) =>
+  post('meetings', payload, token);
+
+export const listTimeEntries = (projectId: number, token?: string) =>
+  get(`time_log?project_id=eq.${projectId}&order=date.desc`, token);
+
+export const createTimeEntry = (payload: any, token?: string) =>
+  post('time_log', payload, token);
+
+export const globalSearch = async (query: string, token?: string) => {
+  const normalized = String(query || '').trim();
+  if (!normalized) {
+    return { projects: [], tasks: [], drawings: [], reviews: [] };
+  }
+
+  const escaped = normalized.replace(/,/g, '\\,');
+  const q = encodeURIComponent(`ilike.*${escaped}*`);
+
+  const [projects, tasks, drawings, reviews] = await Promise.all([
+    get(`projects?select=id,name,code,status&or=(name.${q},code.${q})&order=updated_at.desc.nullslast&limit=10`, token),
+    get(`tasks?select=id,project_id,name,dept,status,priority&or=(name.${q},comment.${q})&order=id.desc&limit=10`, token),
+    get(`drawings?select=id,project_id,code,title,discipline,status,revision&or=(title.${q},code.${q})&order=updated_at.desc.nullslast&limit=10`, token),
+    get(`reviews?select=id,project_id,drawing_id,title,status,severity&or=(title.${q},status.${q})&order=updated_at.desc.nullslast&limit=10`, token),
+  ]);
+
+  return {
+    projects: Array.isArray(projects) ? projects : [],
+    tasks: Array.isArray(tasks) ? tasks : [],
+    drawings: Array.isArray(drawings) ? drawings : [],
+    reviews: Array.isArray(reviews) ? reviews : [],
+  };
+};
+
 export { SURL, SERVICE_KEY };
