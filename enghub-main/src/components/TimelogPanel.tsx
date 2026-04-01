@@ -65,8 +65,8 @@ const TimelogPanel: React.FC<TimelogPanelProps> = ({
       setShowNewTimeEntry(false);
       await loadTimeEntries();
       addNotification('Время записано', 'success');
-    } catch (err) {
-      addNotification('Ошибка при сохранении времени', 'error');
+    } catch (err: any) {
+      addNotification(`Ошибка: ${err.message || 'не удалось сохранить время'}`, 'warning');
     } finally {
       setSaving(false);
     }

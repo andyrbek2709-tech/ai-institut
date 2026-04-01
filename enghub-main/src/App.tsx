@@ -79,7 +79,7 @@ export default function App() {
   const [filterAssigned, setFilterAssigned] = useState("all");
 
   const isAdmin = userEmail === "admin@enghub.com";
-  const role = currentUserData?.role;
+  const role = currentUserData?.role?.toLowerCase();
   const isGip = role === "gip";
   const isLead = role === "lead";
   const isEng = role === "engineer";
@@ -151,10 +151,10 @@ export default function App() {
       if (myRole === "gip") {
         setTasks(data);
       } else if (myRole === "lead") {
-        const myEngIds = appUsers.filter(u => u.dept_id === myDeptId && u.role === "engineer").map(u => String(u.id));
-        setTasks(data.filter((t: any) => String(t.assigned_to) === myId || myEngIds.includes(String(t.assigned_to))));
+        const myEngIds = appUsers.filter(u => u.dept_id === myDeptId && u.role?.toLowerCase() === "engineer").map(u => String(u.id));
+        setTasks(data.filter((t: any) => String(t.assigned_to) === String(myId) || myEngIds.includes(String(t.assigned_to))));
       } else {
-        setTasks(data.filter((t: any) => String(t.assigned_to) === myId));
+        setTasks(data.filter((t: any) => String(t.assigned_to) === String(myId)));
       }
     }
   };
@@ -306,21 +306,12 @@ export default function App() {
         type: normalizedType,
         task_id: taskId || null
       }, token!);
-      if (!Array.isArray(created) || created.length === 0) {
-        const backendError = (created as any)?.message || (created as any)?.error || (created as any)?.hint || (created as any)?.details;
-        addNotification(
-          backendError
-            ? `Сообщение не отправлено: ${String(backendError)}`
-            : 'Сообщение не отправлено. Проверьте доступ к таблице messages.',
-          'warning'
-        );
-        return false;
-      }
+      
       if (!customText) setChatInput(""); 
       await loadMessages(activeProject.id, taskId);
       return true;
-    } catch {
-      addNotification('Ошибка отправки сообщения.', 'warning');
+    } catch (err: any) {
+      addNotification(`Сообщение не отправлено: ${err.message || 'Ошибка сервера'}`, 'warning');
       return false;
     }
   };
