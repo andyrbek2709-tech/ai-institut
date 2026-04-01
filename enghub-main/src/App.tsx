@@ -992,7 +992,7 @@ export default function App() {
         <div className="content">
           {/* ===== DASHBOARD ===== */}
           {screen === "dashboard" && (
-            <div>
+            <div className="screen-fade">
               <div className="page-header">
                 <div>
                   <div className="page-label">Рабочий стол</div>
@@ -1258,10 +1258,10 @@ export default function App() {
 
           {/* ===== PROJECT (Figma-style) ===== */}
           {screen === "project" && activeProject && (
-            <div>
+            <div className="screen-fade">
               {/* Back + Meta Bar */}
               <div className="project-meta-bar">
-                <button onClick={() => setScreen("dashboard")} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 8, padding: "4px 10px", cursor: "pointer", color: C.textMuted, fontSize: 16 }}>←</button>
+                <button onClick={() => setScreen("dashboard")} className="btn btn-ghost">← Dashboard</button>
                 <span className="project-meta-badge" style={{ color: C.accent, borderColor: C.accent + "40", background: C.accent + "10" }}>{activeProject.code}</span>
                 <span className="project-meta-badge" style={{ color: C.green, borderColor: C.green + "40", background: C.green + "10" }}>{activeProject.status === "active" ? "В работе" : "На проверке"}</span>
                 {activeProject.department && <span style={{ fontSize: 12, color: C.textMuted }}>{activeProject.department}</span>}
@@ -1271,7 +1271,7 @@ export default function App() {
                 <button
                   onClick={() => exportProjectXls(activeProject, allTasks, drawings, reviews, getUserById, activeProjectProgress, addNotification)}
                   title="Экспорт задач в Excel"
-                  style={{ background: C.surface, color: C.textMuted, border: `1px solid ${C.border}`, padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                  className="btn btn-secondary"
                 >
                   <span style={{ fontSize: 14 }}>⬇</span> Excel
                 </button>
@@ -1279,7 +1279,7 @@ export default function App() {
                 {/* COPILOT BUTTON */}
                 <button
                   onClick={() => setShowCopilot(!showCopilot)}
-                  style={{ background: showCopilot ? C.accent : C.surface, color: showCopilot ? '#fff' : C.accent, border: `1px solid ${C.accent}`, padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                  className={`btn ${showCopilot ? "btn-primary" : "btn-secondary"}`}
                 >
                   <span style={{ fontSize: 14 }}>✨</span> AI Copilot
                 </button>
@@ -1325,7 +1325,7 @@ export default function App() {
               <div className="progress-track" style={{ height: 6, marginBottom: 24 }}><div className="progress-bar" style={{ width: `${activeProjectProgress}%`, height: "100%" }} /></div>
 
               {/* Tabs */}
-              <div style={{ display: "flex", gap: 6, marginBottom: 24, overflowX: 'auto', paddingBottom: 4, flexShrink: 0 }}>
+              <div className="tab-strip" style={{ flexShrink: 0 }}>
                 {["tasks","drawings","revisions","reviews","transmittals","assignments","gantt","meetings","timelog","conference"].map(t => (
                   <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
                     {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : "🗣 Совещание"}
@@ -1497,7 +1497,7 @@ export default function App() {
 
           {/* ===== PROJECTS REGISTRY ===== */}
           {screen === "projects_list" && (
-            <div>
+            <div className="screen-fade">
               <div className="page-header">
                 <div>
                   <div className="page-label">Реестр проектов</div>

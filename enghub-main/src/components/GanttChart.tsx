@@ -53,7 +53,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ tasks, activeProject, getUserBy
   }
 
   return (
-    <div>
+    <div className="screen-fade">
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
         {Object.entries(sLabels).map(([s, l]) => (
           <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: C.textMuted }}>

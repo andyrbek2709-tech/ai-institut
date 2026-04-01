@@ -55,7 +55,7 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
   };
 
   return (
-    <div>
+    <div className="screen-fade">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Протоколы совещаний</div>
         {(isGip || isLead) && <button className="btn btn-primary" onClick={() => setShowNewMeeting(true)}>+ Новый протокол</button>}

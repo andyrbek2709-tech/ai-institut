@@ -30,6 +30,7 @@
   --radius: 12px;
   --radius-sm: 8px;
   --radius-xs: 6px;
+  --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 [data-theme="dark"] {
@@ -283,6 +284,9 @@ body {
   flex: 1;
   padding: 24px 28px;
   overflow-y: auto;
+  background:
+    radial-gradient(1200px 500px at 85% -180px, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%),
+    var(--bg);
 }
 
 /* ===== PAGE HEADER ===== */
@@ -363,6 +367,13 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--card-shadow);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-1px);
 }
 
 .card-header {
@@ -385,14 +396,15 @@ body {
 
 /* ===== BUTTONS ===== */
 .btn {
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
   padding: 10px 18px;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: inherit;
-  transition: all 0.15s ease;
+  letter-spacing: 0.01em;
+  transition: transform 0.15s ease, box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease, color 0.22s ease;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -401,18 +413,19 @@ body {
 .btn:active { transform: scale(0.97); }
 
 .btn-primary {
-  background: var(--accent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 90%, #fff), var(--blue));
   color: #fff;
-  box-shadow: 0 2px 8px rgba(245,166,35,0.3);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 35%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 65%, transparent);
 }
-.btn-primary:hover { background: #e69a1f; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 24px color-mix(in srgb, var(--accent) 40%, transparent); }
 
 .btn-secondary {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border-color: var(--border);
   color: var(--text-dim);
 }
-.btn-secondary:hover { border-color: var(--text-muted); }
+.btn-secondary:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); color: var(--text); transform: translateY(-1px); }
 
 .btn-danger {
   background: rgba(239,68,68,0.1);
@@ -422,13 +435,13 @@ body {
 .btn-danger:hover { background: rgba(239,68,68,0.15); }
 
 .btn-ghost {
-  background: transparent;
-  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface2) 65%, transparent);
+  border-color: var(--border);
   color: var(--text-muted);
   padding: 6px 12px;
   font-size: 12px;
 }
-.btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+.btn-ghost:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); color: var(--accent); }
 
 .btn-sm {
   padding: 6px 12px;
@@ -452,7 +465,7 @@ body {
 
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(245,166,35,0.1);
+  box-shadow: var(--ring);
 }
 
 .input::placeholder {
@@ -535,11 +548,14 @@ select.input option { background: var(--surface); color: var(--text); }
   box-shadow: var(--card-shadow);
   transition: all 0.2s ease;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
 .project-card:hover {
   box-shadow: var(--card-shadow-hover);
   transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
 }
 
 .project-card.active {
@@ -633,7 +649,7 @@ select.input option { background: var(--surface); color: var(--text); }
 .kanban-card:hover {
   box-shadow: var(--card-shadow-hover);
   transform: translateY(-1px);
-  border-color: rgba(245,166,35,0.3);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
 }
 
 /* ===== BADGE (Figma-style) ===== */
@@ -690,6 +706,17 @@ select.input option { background: var(--surface); color: var(--text); }
   overflow-y: auto;
   box-shadow: 0 24px 80px rgba(0,0,0,0.25);
   animation: slideUp 0.25s ease;
+  position: relative;
+}
+
+.modal-box::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--blue));
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
 
 .modal-header {
@@ -829,31 +856,34 @@ select.input option { background: var(--surface); color: var(--text); }
 
 /* ===== TABS (Figma pill-style) ===== */
 .tab-btn {
-  padding: 8px 18px;
-  border-radius: 20px;
+  padding: 9px 16px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-family: inherit;
-  border: 1.5px solid transparent;
-  background: transparent;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 78%, var(--surface2));
   color: var(--text-muted);
-  font-weight: 500;
-  transition: all 0.2s;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.22s;
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
 .tab-btn:hover {
-  color: var(--text-dim);
-  background: var(--surface2);
+  color: var(--text);
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
 }
 
 .tab-btn.active {
-  background: var(--sidebar-active-bg);
-  border-color: rgba(245,166,35,0.25);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
   color: var(--accent);
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 /* ===== DELETE CONFIRM ===== */
@@ -1140,15 +1170,20 @@ select.input option { background: var(--surface); color: var(--text); }
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 70%, var(--surface2));
+  box-shadow: var(--card-shadow);
 }
 
 .project-meta-badge {
   font-size: 11px;
   font-weight: 600;
   padding: 3px 10px;
-  border-radius: 6px;
+  border-radius: 999px;
   border: 1px solid;
 }
 
@@ -1180,10 +1215,32 @@ select.input option { background: var(--surface); color: var(--text); }
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  padding: 8px 2px;
 }
 
 .task-list-title {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
+  font-family: var(--font-display);
   color: var(--text);
+}
+
+.tab-strip {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface2) 55%, var(--surface));
+}
+
+.screen-fade {
+  animation: fadeShift 0.28s ease;
+}
+
+@keyframes fadeShift {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
