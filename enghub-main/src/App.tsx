@@ -288,16 +288,21 @@ export default function App() {
 
   const sendMsg = async (taskId?: number, type: string = "text", customText?: string) => { 
     const finalTxt = customText || chatInput;
-    if (!finalTxt.trim() || !activeProject) return; 
-    await post("messages", { 
+    if (!finalTxt.trim() || !activeProject || !currentUserData?.id) return false;
+    const normalizedType = type === "call_start" ? "call_start" : "text";
+    const created = await post("messages", { 
       text: finalTxt, 
       user_id: currentUserData?.id, 
       project_id: activeProject.id, 
-      type,
+      type: normalizedType,
       task_id: taskId || null
-    }, token!); 
+    }, token!);
+    if (!Array.isArray(created) || created.length === 0) {
+      return false;
+    }
     if (!customText) setChatInput(""); 
-    loadMessages(activeProject.id, taskId); 
+    await loadMessages(activeProject.id, taskId);
+    return true;
   };
   const { notifications, addNotification, removeNotification } = useNotifications();
 
@@ -1326,7 +1331,7 @@ export default function App() {
 
               {/* Tabs */}
               <div className="tab-strip" style={{ flexShrink: 0 }}>
-                {["tasks","drawings","revisions","reviews","transmittals","conference","assignments","gantt","meetings","timelog"].map(t => (
+                {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","meetings","timelog"].map(t => (
                   <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
                     {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : "🗣 Совещание"}
                   </button>

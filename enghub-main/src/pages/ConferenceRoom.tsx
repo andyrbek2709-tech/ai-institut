@@ -7,7 +7,7 @@ interface ConferenceProps {
   msgs: any[];
   C: any;
   token: string;
-  onSendMsg: (text: string, type?: string) => void;
+  onSendMsg: (text: string, type?: string) => Promise<boolean> | boolean;
   getUserById: (id: any) => any;
 }
 
@@ -59,10 +59,10 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs.length]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!chatInput.trim()) return;
-    onSendMsg(chatInput);
-    setChatInput("");
+    const ok = await onSendMsg(chatInput, "text");
+    if (ok !== false) setChatInput("");
   };
 
   const joinRoom = () => {
@@ -93,7 +93,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
         setMicEnabled(false);
       }
     } catch {
-      onSendMsg("Не удалось получить доступ к микрофону. Проверьте разрешения браузера.", "system");
+      onSendMsg("Не удалось получить доступ к микрофону. Проверьте разрешения браузера.", "text");
     }
   };
 
@@ -117,7 +117,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
         setScreenSharing(false);
       }
     } catch {
-      onSendMsg("Демонстрация экрана не запущена. Разрешите доступ в браузере.", "system");
+      onSendMsg("Демонстрация экрана не запущена. Разрешите доступ в браузере.", "text");
     }
   };
 
@@ -159,12 +159,12 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
     try {
       const link = await uploadConferenceFile(file);
       if (!link) {
-        onSendMsg(`Не удалось загрузить файл "${file.name}".`, "system");
+        onSendMsg(`Не удалось загрузить файл "${file.name}".`, "text");
         return;
       }
-      onSendMsg(`📎 ${file.name}\n${link}`, "file");
+      onSendMsg(`📎 ${file.name}\n${link}`, "text");
     } catch {
-      onSendMsg(`Ошибка при отправке файла "${file.name}".`, "system");
+      onSendMsg(`Ошибка при отправке файла "${file.name}".`, "text");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -439,7 +439,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                 <input
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleSend()}
+                  onKeyDown={e => e.key === "Enter" && void handleSend()}
                   placeholder="Написать сообщение..."
                   style={{
                     flex: 1, padding: "10px 16px", borderRadius: 12,
@@ -448,7 +448,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                     transition: "border-color 0.2s"
                   }}
                 />
-                <button onClick={handleSend} style={{
+                <button onClick={() => void handleSend()} style={{
                   width: 38, height: 38, borderRadius: 10,
                   background: `linear-gradient(135deg, ${C.accent}, #F59E0B)`,
                   border: "none", color: "#fff", fontSize: 16, cursor: "pointer",
