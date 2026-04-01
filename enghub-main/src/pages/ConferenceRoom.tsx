@@ -203,8 +203,8 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
             fontSize: 18, color: "#fff", fontWeight: 700
           }}>🏗️</div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Совещание проекта</div>
-            <div style={{ fontSize: 12, color: C.textMuted }}>{project.name} · {project.code}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#ffffff" }}>Совещание проекта</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.78)" }}>{project.name} · {project.code}</div>
           </div>
         </div>
 
@@ -369,6 +369,11 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                   const mu = getUserById(m.user_id);
                   const isMe = mu?.id === currentUser?.id;
                   const time = m.created_at ? new Date(m.created_at).toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" }) : "";
+                  const rawText = String(m.text || "");
+                  const textLines = rawText.split("\n");
+                  const fileUrl = textLines.find((line: string) => line.startsWith("http")) || "";
+                  const isFileMsg = textLines[0]?.startsWith("📎 ") && !!fileUrl;
+                  const fileName = isFileMsg ? textLines[0].replace(/^📎\s*/, "") : "";
                   return (
                     <div key={m.id} style={{
                       display: "flex", gap: 12, marginBottom: 16,
@@ -396,10 +401,26 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                           </span>
                           <span style={{ fontSize: 10, color: isMe ? "#ffffff90" : C.textMuted }}>{time}</span>
                         </div>
-                        <div style={{ fontSize: 13, color: isMe ? "#fff" : C.textDim, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                          {String(m.text || '')}
-                        </div>
-                        {typeof m.text === 'string' && m.text.includes('http') && (
+                        {isFileMsg ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            <div style={{ fontSize: 13, color: isMe ? "#fff" : C.textDim, lineHeight: 1.5, wordBreak: "break-word" }}>
+                              {fileName}
+                            </div>
+                            <a
+                              href={fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ fontSize: 12, color: isMe ? "#fff" : C.accent, textDecoration: "underline" }}
+                            >
+                              Открыть файл
+                            </a>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 13, color: isMe ? "#fff" : C.textDim, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                            {rawText}
+                          </div>
+                        )}
+                        {!isFileMsg && typeof m.text === 'string' && m.text.includes('http') && (
                           <a
                             href={m.text.split('\n').find((line: string) => line.startsWith('http')) || '#'}
                             target="_blank"

@@ -1335,11 +1335,13 @@ export default function App() {
                 />
               )}
 
-              {/* Project Name */}
-              <div className="page-title" style={{ marginBottom: 16, fontSize: 28 }}>{activeProject.name}</div>
-
-              {/* Progress Bar */}
-              <div className="progress-track" style={{ height: 6, marginBottom: 24 }}><div className="progress-bar" style={{ width: `${activeProjectProgress}%`, height: "100%" }} /></div>
+              {/* Project Name + Progress (not shown in meeting mode to maximize chat area) */}
+              {sideTab !== "conference" && (
+                <>
+                  <div className="page-title" style={{ marginBottom: 16, fontSize: 28 }}>{activeProject.name}</div>
+                  <div className="progress-track" style={{ height: 6, marginBottom: 24 }}><div className="progress-bar" style={{ width: `${activeProjectProgress}%`, height: "100%" }} /></div>
+                </>
+              )}
 
               {/* Tabs */}
               <div className="tab-strip" style={{ flexShrink: 0 }}>
