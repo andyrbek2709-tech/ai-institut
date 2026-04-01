@@ -23,9 +23,23 @@ const roleTitleMap: Record<string, string> = {
 };
 
 const rolePlaceholderMap: Record<string, string> = {
-  gip: "Напр.: 'Проверь риски по срокам и подготовь план задач'",
-  lead: "Напр.: 'Сформируй задачи и замечания по моему отделу'",
-  engineer: "Напр.: 'Создай замечание по чертежу и шаги исправления'",
+  gip: "Напр.: 'Как дела по проекту?' или 'Разработай план задач для ОВ'",
+  lead: "Напр.: 'Сформируй еженедельный отчёт' или 'Проверь ОВ-001 на нормы'",
+  engineer: "Напр.: 'Нормоконтроль чертежа ЭО-005' или 'Анализ состояния проекта'",
+};
+
+const agentLabelMap: Record<string, string> = {
+  task_manager: 'Task Manager',
+  drawing_agent: 'Drawing Agent',
+  revision_agent: 'Revision Agent',
+  review_agent: 'Review Agent',
+  register_agent: 'Register Agent',
+  workflow_agent: 'Workflow Agent',
+  rag_assistant: 'RAG Ассистент',
+  project_insights_agent: '📊 Аналитик проекта',
+  smart_decompose_agent: '🧠 Планировщик задач',
+  compliance_agent: '📋 Нормоконтроль',
+  report_agent: '📄 Генератор отчётов',
 };
 
 export function CopilotPanel({ 
@@ -102,8 +116,7 @@ export function CopilotPanel({
         setMessages(prev => [...prev, { role: 'ai', text: 'Запрос обработан.' }]);
       }
       
-      if (data.action_id || data.agent === 'task_manager' || data.agent === 'drawing_agent' || data.agent === 'review_agent' || data.agent === 'register_agent') {
-          // Refresh feed to show the newly inserted pending action
+      if (data.action_id || data.action_count || ['task_manager', 'drawing_agent', 'review_agent', 'register_agent', 'smart_decompose_agent', 'compliance_agent'].includes(data.agent)) {
           fetchActions();
       }
     } catch (e) {
@@ -331,8 +344,8 @@ export function CopilotPanel({
             boxShadow: `0 4px 12px ${C.accent}10`, position: 'relative', overflow: 'hidden'
           }}>
             <div style={{ position: 'absolute', top: 0, left: 0, width: 4, bottom: 0, background: C.accent }}></div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, textTransform: 'uppercase', marginBottom: 8 }}>⚡ {action.agent_type}</div>
-            <div style={{ fontSize: 14, color: C.text, fontWeight: 600, marginBottom: 12 }}>Предложенное действие: {action.action_type === 'create_tasks' ? 'Создание пакета задач' : action.action_type}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, textTransform: 'uppercase', marginBottom: 8 }}>⚡ {agentLabelMap[action.agent_type] || action.agent_type}</div>
+            <div style={{ fontSize: 14, color: C.text, fontWeight: 600, marginBottom: 12 }}>Предложенное действие: {action.action_type === 'create_tasks' ? 'Создание пакета задач' : action.action_type === 'create_review' ? 'Создание замечания' : action.action_type}</div>
             
             {action.action_type === 'create_tasks' && (
               <div style={{ background: C.surface2, borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>

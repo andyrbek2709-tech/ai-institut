@@ -164,6 +164,15 @@ git push origin main
 
 ## 📝 История изменений
 
+### v7.0 — AI-агенты нового поколения: аналитика, планирование, нормоконтроль, отчёты
+- ✅ **Project Insights Agent** (`project_insights`): "Как дела по проекту?" → Claude собирает живые данные и выдаёт структурированный анализ с рисками
+- ✅ **Smart Decompose Agent** (`smart_decompose`): "Разработай план задач для ОВ" → Claude генерирует задачи → action `create_tasks` на подтверждение
+- ✅ **Compliance Check Agent** (`compliance_check`): "Нормоконтроль ОВ-001" → RAG по нормативной базе → Claude формирует чеклист → action `create_review` на подтверждение
+- ✅ **Generate Report Agent** (`generate_report`): "Сформируй еженедельный отчёт" → Claude пишет структурированный статус-отчёт
+- ✅ **Роли**: ГИП/Lead — все 4 агента; Инженер — `project_insights` + `compliance_check`
+- ✅ Плейсхолдеры Copilot адаптированы под роль; метки агентов переведены на русский
+- ✅ Файлы: `enghub-main/api/orchestrator.js`, `enghub-main/src/components/CopilotPanel.tsx`
+
 ### v6.4 — Нормативка: исправлена векторизация документов
 - ✅ **Полный рефакторинг edge function `vectorize-doc`**: теперь правильно извлекает текст из DOCX через JSZip (парсинг ZIP → word/document.xml)
 - ✅ **PDF**: улучшено извлечение текста (BT/ET + UTF-8 Cyrillic сканирование)
@@ -630,6 +639,15 @@ where drawing_id is null and revision_id is null;
 - Phase 6 (Reviews): DONE
 - Phase 7 (Transmittals): DONE
 - Phase 8 (Copilot Role Hardening): DONE
+
+#### [2026-04-01 14:00] Agent update
+- Step: v7.0 — реализованы 4 новых AI-агента в `orchestrator.js`: `handleProjectInsights` (анализ проекта через Claude), `handleSmartDecompose` (декомпозиция задач через Claude → `create_tasks` action), `handleComplianceCheck` (нормоконтроль через RAG + Claude → `create_review` actions), `handleGenerateReport` (недельный отчёт через Claude). Добавлен `callClaude()` хелпер. Обновлён `detectIntent()` и `ROLE_ALLOWED_INTENTS`. В `CopilotPanel.tsx` обновлены плейсхолдеры и метки агентов.
+- Files:
+  - `enghub-main/api/orchestrator.js`
+  - `enghub-main/src/components/CopilotPanel.tsx`
+  - `README.md`
+- Validation: `npm run build` (успешно, 313.71 kB JS), lint без ошибок.
+- Next: commit+push v7.0; далее — приоритеты 3.2 (real-time notifications), 3.3 (Excel export), 3.4 (mobile), плюс новые модули (учёт времени, протоколы совещаний, Gantt).
 
 #### [2026-03-31 20:02] Agent update
 - Step: Формально закрыта Фаза 8 как завершенная: в `orchestrator` добавлены ролевые ограничения по intent/action (ГИП/Lead/Инженер) с блокировками недоступных операций и ролевыми сообщениями; в `CopilotPanel` добавлена явная ролевая индикация и role-aware placeholder запросов.
