@@ -63,7 +63,7 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate }: Prop
   };
 
   return (
-    <div>
+    <div className="screen-fade">
       <div className="task-list-header">
         <div className="task-list-title">Реестр чертежей</div>
         <input
@@ -75,7 +75,7 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate }: Prop
       </div>
 
       {canEdit && (
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
+        <div className="panel-surface" style={{ padding: 14, marginBottom: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr 1fr 0.6fr 1fr auto', gap: 8 }}>
             <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="Марка (АР-101)" style={getInp(C)} />
             <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Наименование" style={getInp(C)} />
@@ -89,7 +89,7 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate }: Prop
         </div>
       )}
 
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+      <div className="panel-surface" style={{ overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: C.surface2 }}>

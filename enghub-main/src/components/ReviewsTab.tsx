@@ -25,9 +25,9 @@ export function ReviewsTab({
   changeReviewStatus,
 }: Props) {
   return (
-    <div>
+    <div className="screen-fade">
       {(isGip || isLead) && (
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
+        <div className="panel-surface" style={{ padding: 14, marginBottom: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8 }}>
             <input value={newReview.title} onChange={(e) => setNewReview({ ...newReview, title: e.target.value })} placeholder="Текст замечания" style={getInp(C)} />
             <select value={newReview.severity} onChange={(e) => setNewReview({ ...newReview, severity: e.target.value })} style={getInp(C)}>

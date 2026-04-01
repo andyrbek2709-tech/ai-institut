@@ -208,6 +208,13 @@ git push origin main
 
 ## 🧾 Agent Handover Log
 
+v7.8: Stitch UI Migration Wave 3 (domain screens alignment) (2026-04-01)
+- ✅ Доведены доменные экраны под Stitch-подход: `Tasks/Kanban`, `Drawings`, `Revisions`, `Reviews`, `Transmittals`, `Conference`.
+- ✅ Для доменных блоков добавлены унифицированные контейнеры `panel-surface` и улучшенная структура колонок Kanban (`kanban-col-shell`, `kanban-empty`).
+- ✅ Добавлены плавные входы экранов (`screen-fade`) на ключевых разделах, включая проектные вкладки и режим совещаний.
+- ✅ Изменения выполнены без правок бизнес-логики/API, только UI-композиция и оформление.
+- ✅ Верификация: `npm run build` и `CI=true npm test -- --watch=false` — успешно.
+
 v7.7: Stitch UI Migration Wave 2 (layout/components polish) (2026-04-01)
 - ✅ Усилен перенос дизайн-подхода Stitch: переработаны композиция и оформление shell/контента (не только палитра).
 - ✅ Обновлены стили кнопок, вкладок, модальных окон, карточек и project meta bar (градиенты, depth, интерактивные состояния).

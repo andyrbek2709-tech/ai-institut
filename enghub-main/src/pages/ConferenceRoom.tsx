@@ -80,7 +80,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
   if (!project) return <div className="empty-state" style={{ padding: 60 }}>Выберите проект</div>;
 
   return (
-    <div className="conf-root" style={{ display: "flex", flexDirection: "column", height: 600, gap: 0 }}>
+    <div className="conf-root screen-fade" style={{ display: "flex", flexDirection: "column", height: 600, gap: 0 }}>
 
       {/* ===== HEADER ===== */}
       <div className="conf-header" style={{

@@ -20,7 +20,7 @@ export function RevisionsTab({
   issueDrawingRevision,
 }: Props) {
   return (
-    <div>
+    <div className="screen-fade">
       <div className="task-list-header">
         <div className="task-list-title">История ревизий</div>
         <div style={{ fontSize: 12, color: C.textMuted }}>
@@ -41,7 +41,7 @@ export function RevisionsTab({
         ))}
         {drawings.length === 0 && <div className="empty-state">Нет чертежей для ревизии</div>}
       </div>
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14 }}>
+      <div className="panel-surface" style={{ padding: 14 }}>
         <div className="page-label" style={{ marginBottom: 10 }}>Журнал</div>
         {revisions.length === 0 ? <div className="empty-state">Записей ревизий пока нет</div> : revisions.map((r) => {
           const d = drawings.find((dr) => String(dr.id) === String(r.drawing_id));

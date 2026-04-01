@@ -1542,7 +1542,7 @@ export default function App() {
 
           {/* ===== TASKS KANBAN ===== */}
           {screen === "tasks" && (
-            <div>
+            <div className="screen-fade">
               <div className="page-header"><div><div className="page-label">Мои задачи</div><div className="page-title">Задачи по статусу</div></div></div>
 
               {/* Фильтры */}
@@ -1583,12 +1583,12 @@ export default function App() {
                   });
                   if (colTasks.length === 0 && col !== "todo" && col !== "inprogress") return null;
                   return (
-                    <div key={col}>
+                    <div key={col} className="kanban-col-shell">
                       <div className="kanban-col-title" style={{ color: s.color }}>
                         <span className="stat-card-dot" style={{ background: s.color }} />{s.label}
                         <span className="kanban-col-count">{colTasks.length}</span>
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div className="kanban-col-body" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                         {colTasks.map(t => {
                           const u = getUserById(t.assigned_to);
                           return (
@@ -1615,7 +1615,7 @@ export default function App() {
                             </div>
                           );
                         })}
-                        {colTasks.length === 0 && <div style={{ fontSize: 12, color: C.textMuted, textAlign: "center", padding: 16, background: C.surface, borderRadius: 8, border: `1px dashed ${C.border}` }}>Пусто</div>}
+                        {colTasks.length === 0 && <div className="kanban-empty" style={{ fontSize: 12, color: C.textMuted, textAlign: "center", padding: 16 }}>Пусто</div>}
                       </div>
                     </div>
                   );

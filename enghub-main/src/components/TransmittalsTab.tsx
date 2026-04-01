@@ -33,7 +33,7 @@ export function TransmittalsTab({
   onExportPdf,
 }: Props) {
   return (
-    <div>
+    <div className="screen-fade">
       <div className="task-list-header">
         <div className="task-list-title">Реестр трансмитталов</div>
         {(isGip || isLead) && <button className="btn btn-primary" onClick={createProjectTransmittal}>+ Новый трансмиттал</button>}
@@ -41,7 +41,7 @@ export function TransmittalsTab({
       <div className="task-list">
         {transmittals.length === 0 && <div className="empty-state">Трансмитталов пока нет</div>}
         {transmittals.map((t) => (
-          <div key={t.id} className="task-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+          <div key={t.id} className="task-row panel-surface" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{t.number}</div>
