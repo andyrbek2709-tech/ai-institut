@@ -52,7 +52,7 @@ export default function App() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [showArchive, setShowArchive] = useState(false);
   const [archivedProjects, setArchivedProjects] = useState<any[]>([]);
-  const [sideTab, setSideTab] = useState(localStorage.getItem('enghub_sidetab') || "tasks");
+  const [sideTab, setSideTab] = useState(() => { const s = localStorage.getItem('enghub_sidetab'); return (s && s !== 'conference') ? s : 'tasks'; });
   const [chatInput, setChatInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -785,6 +785,14 @@ export default function App() {
     }
   };
 
+  const parseDeadline = (d: string | null | undefined): Date | null => {
+    if (!d) return null;
+    const dmy = d.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (dmy) return new Date(parseInt(dmy[3]), parseInt(dmy[2]) - 1, parseInt(dmy[1]));
+    const dt = new Date(d);
+    return isNaN(dt.getTime()) ? null : dt;
+  };
+
   const getAutoProgress = (pid: number): number => { const pt = allTasks.filter(t => t.project_id === pid); if (pt.length === 0) return 0; return Math.round((pt.filter(t => t.status === "done").length / pt.length) * 100); };
   const activeProjectProgress = activeProject ? getAutoProgress(activeProject.id) : 0;
 
@@ -896,7 +904,7 @@ export default function App() {
             <div style={{ background: C.surface2, borderRadius: 10, padding: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontWeight: 600, fontSize: 15, color: C.text }}>{selectedTask.name}</div>
-                <div style={{ background: C.accent + '20', color: C.accent, fontWeight: 700, fontSize: 12, padding: '3px 8px', borderRadius: 6 }}>R{selectedTask.revision_num || 0}</div>
+                <div title={`Ревизия ${selectedTask.revision_num || 0}`} style={{ background: C.accent + '20', color: C.accent, fontWeight: 700, fontSize: 12, padding: '3px 8px', borderRadius: 6, cursor: 'help' }}>R{selectedTask.revision_num || 0}</div>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
                 <BadgeComp status={selectedTask.status} C={C} />
@@ -906,7 +914,7 @@ export default function App() {
                   const d = drawings.find(dr => String(dr.id) === String(selectedTask.drawing_id));
                   return d ? <span style={{ fontSize: 11, color: C.textMuted, background: C.surface, padding: "3px 8px", borderRadius: 6 }}>📐 {d.code}</span> : null;
                 })()}
-                {selectedTask.deadline && <span style={{ fontSize: 11, color: C.textMuted }}>до {selectedTask.deadline}</span>}
+                {selectedTask.deadline && <span style={{ fontSize: 11, color: (() => { const dl = parseDeadline(selectedTask.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {selectedTask.deadline}</span>}
               </div>
             </div>
             {selectedTask.parent_task_id && (
@@ -1153,7 +1161,7 @@ export default function App() {
               <div className="page-header">
                 <div>
                   <div className="page-label">Рабочий стол</div>
-                  <div className="page-title">Добро пожаловать, {currentUserData?.full_name?.split(" ")[0]} 👋</div>
+                  <div className="page-title">Добро пожаловать, {currentUserData?.full_name?.split(" ")[1] || currentUserData?.full_name?.split(" ")[0]} 👋</div>
                 </div>
                 {isGip && <button className="btn btn-primary" onClick={() => setShowNewProject(true)}>+ Новый проект</button>}
               </div>
@@ -1252,9 +1260,9 @@ export default function App() {
                   {/* Дедлайны проектов */}
                   <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20 }}>
                     <div className="page-label" style={{ marginBottom: 14 }}>Дедлайны проектов</div>
-                    {[...projects].sort((a, b) => new Date(a.deadline || '9999').getTime() - new Date(b.deadline || '9999').getTime()).map(p => {
+                    {[...projects].sort((a, b) => (parseDeadline(a.deadline)?.getTime() ?? 99999999999999) - (parseDeadline(b.deadline)?.getTime() ?? 99999999999999)).map(p => {
                       const now = new Date();
-                      const dl = p.deadline ? new Date(p.deadline) : null;
+                      const dl = parseDeadline(p.deadline);
                       const daysLeft = dl ? Math.ceil((dl.getTime() - now.getTime()) / 86400000) : null;
                       const color = daysLeft === null ? C.textMuted : daysLeft < 0 ? C.red : daysLeft < 14 ? C.orange : C.green;
                       const label = daysLeft === null ? '—' : daysLeft < 0 ? `Просрочен ${-daysLeft} д.` : daysLeft === 0 ? 'Сегодня!' : `${daysLeft} дн.`;
@@ -1398,7 +1406,7 @@ export default function App() {
                           <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: "3px 10px", borderRadius: 6 }}>{p.code}</span>
                         </div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <span style={{ fontSize: 12, color: C.textMuted }}>до {p.deadline}</span>
+                          <span style={{ fontSize: 12, color: (() => { const dl = parseDeadline(p.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {p.deadline}</span>
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); if (window.confirm(`Отправить "${p.name}" в архив?`)) archiveProject(p.id); }}>→ Архив</button>}
                         </div>
                       </div>
@@ -1516,7 +1524,7 @@ export default function App() {
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                                 <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{t.name}</div>
-                                <div style={{ background: C.accent + '15', color: C.accent, fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 4 }}>R{t.revision_num || 0}</div>
+                                <div title={`Ревизия ${t.revision_num || 0}`} style={{ background: C.accent + '15', color: C.accent, fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 4, cursor: 'help' }}>R{t.revision_num || 0}</div>
                             </div>
                             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                               {deptName && <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: "3px 10px", borderRadius: 6, fontWeight: 500 }}>{deptName}</span>}
@@ -1524,7 +1532,7 @@ export default function App() {
                                 const d = drawings.find(dr => String(dr.id) === String(t.drawing_id));
                                 return d ? <span style={{ fontSize: 11, color: C.textMuted }}>📐 {d.code}</span> : null;
                               })()}
-                              {t.deadline && <span style={{ fontSize: 11, color: C.textMuted }}>📅 {t.deadline}</span>}
+                              {t.deadline && <span style={{ fontSize: 11, color: (() => { const dl = parseDeadline(t.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>📅 {t.deadline}</span>}
                               <span style={{ fontSize: 11, color: t.priority === "high" ? C.red : t.priority === "medium" ? C.orange : C.green, fontWeight: 600 }}>● {t.priority === "high" ? "Высокий" : t.priority === "medium" ? "Средний" : "Низкий"}</span>
                             </div>
                           </div>
@@ -1687,7 +1695,7 @@ export default function App() {
                           <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: "3px 10px", borderRadius: 6 }}>{p.code}</span>
                         </div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <span style={{ fontSize: 12, color: C.textMuted }}>до {p.deadline}</span>
+                          <span style={{ fontSize: 12, color: (() => { const dl = parseDeadline(p.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {p.deadline}</span>
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); if (window.confirm(`Отправить "${p.name}" в архив?`)) archiveProject(p.id); }}>→ Архив</button>}
                         </div>
                       </div>
@@ -1976,11 +1984,11 @@ export default function App() {
                         done += results.filter(r => r.success).length;
                         errors += results.filter(r => !r.success).length;
                         
-                        addNotification(`Индексация: ${done} ок, ${errors} ошибка. Всего: ${pending.length}`, errors > 0 ? 'warning' : 'info');
+                        addNotification(`Обновление: ${done} готово, ${errors} ошибок. Всего: ${pending.length}`, errors > 0 ? 'warning' : 'info');
                         await loadNormativeDocs();
                       }
-                      addNotification(`Индексация завершена. Успешно: ${done}, Ошибок: ${errors}`, errors > 0 ? 'warning' : 'success');
-                    }}>🔄 Синхронизировать индекс</button>
+                      addNotification(`Обновление завершено. Успешно: ${done}, Ошибок: ${errors}`, errors > 0 ? 'warning' : 'success');
+                    }}>🔄 Обновить поиск по документам</button>
                   </div>
                 )}
               </div>
@@ -2115,7 +2123,7 @@ export default function App() {
                           <div style={{ fontSize: 11, color: C.textMuted }}>{doc.file_type?.includes('pdf') ? 'PDF' : doc.file_type?.includes('word') ? 'DOCX' : 'DOC'}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ fontSize: 11, color: C.textMuted }}>
-                              {doc.status === 'ready' ? '✅ Готов' : doc.status === 'processing' ? '⚙️ Обработка...' : doc.status === 'error' ? '❌ Ошибка (скан?)' : '🕐 В очереди'}
+                              {doc.status === 'ready' ? '✅ Готов' : doc.status === 'processing' ? '⚙️ Обрабатывается...' : doc.status === 'error' ? '❌ Не удалось обработать' : '🕐 В очереди'}
                             </span>
                             {(isGip || isAdmin) && (
                               <button style={{ marginLeft: 'auto', fontSize: 11, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}

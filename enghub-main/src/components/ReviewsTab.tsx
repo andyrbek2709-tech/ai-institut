@@ -31,9 +31,9 @@ export function ReviewsTab({
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8 }}>
             <input value={newReview.title} onChange={(e) => setNewReview({ ...newReview, title: e.target.value })} placeholder="Текст замечания" style={getInp(C)} />
             <select value={newReview.severity} onChange={(e) => setNewReview({ ...newReview, severity: e.target.value })} style={getInp(C)}>
-              <option value="minor">minor</option>
-              <option value="major">major</option>
-              <option value="critical">critical</option>
+              <option value="minor">Незначительное</option>
+              <option value="major">Существенное</option>
+              <option value="critical">Критическое</option>
             </select>
             <select value={newReview.drawing_id} onChange={(e) => setNewReview({ ...newReview, drawing_id: e.target.value })} style={getInp(C)}>
               <option value="">Без привязки</option>
@@ -53,18 +53,18 @@ export function ReviewsTab({
                 <div style={{ fontSize: 14, color: C.text }}>{r.title}</div>
                 <div style={{ fontSize: 12, color: C.textMuted }}>{d ? `${d.code} — ${d.title}` : 'Без чертежа'}</div>
               </div>
-              <span className="badge">{r.severity}</span>
-              <span style={{ fontSize: 12, color: C.textMuted }}>{r.status || 'open'}</span>
+              <span className="badge">{{ minor: 'Незначительное', major: 'Существенное', critical: 'Критическое' }[r.severity] || r.severity}</span>
+              <span style={{ fontSize: 12, color: C.textMuted }}>{{ open: 'Открыто', in_progress: 'В работе', resolved: 'Устранено', rejected: 'Отклонено' }[r.status || 'open'] || r.status}</span>
               {(isLead || isGip) && (
                 <select
                   value={r.status || 'open'}
                   onChange={(e) => changeReviewStatus(r.id, e.target.value)}
-                  style={{ ...getInp(C), height: 30, fontSize: 12, width: 130 }}
+                  style={{ ...getInp(C), height: 30, fontSize: 12, width: 140 }}
                 >
-                  <option value="open">open</option>
-                  <option value="in_progress">in_progress</option>
-                  <option value="resolved">resolved</option>
-                  <option value="rejected">rejected</option>
+                  <option value="open">Открыто</option>
+                  <option value="in_progress">В работе</option>
+                  <option value="resolved">Устранено</option>
+                  <option value="rejected">Отклонено</option>
                 </select>
               )}
             </div>

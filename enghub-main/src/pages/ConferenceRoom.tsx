@@ -142,7 +142,10 @@ export function ConferenceRoom({
   const joinRoom = () => {
     setIsInRoom(true);
     onJoin(false, false);
-    onSendMsg("📞 Начинается видеовстреча...", "call_start");
+    const lastMsg = msgs[msgs.length - 1];
+    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+    const recentCallStart = lastMsg && lastMsg.type === 'call_start' && new Date(lastMsg.created_at).getTime() > fiveMinAgo;
+    if (!recentCallStart) onSendMsg("📞 Начинается видеовстреча...", "call_start");
   };
 
   const leaveRoom = async () => {
