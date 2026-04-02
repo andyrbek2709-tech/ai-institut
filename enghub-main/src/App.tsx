@@ -479,12 +479,20 @@ export default function App() {
       if (u && String(u.id) !== String(currentUserData.id)) {
         addNotification(`👤 ${u.full_name || 'Участник'} зашёл в совещание`, 'info');
       }
+      // Refresh full participants list on any join event
+      const state = ch.presenceState<any>();
+      const users = (Object.values(state) as any[][]).flat();
+      setConferenceParticipants(users);
     })
     .on('presence', { event: 'leave' }, ({ leftPresences }: any) => {
       const u = leftPresences?.[0];
       if (u && String(u.id) !== String(currentUserData.id)) {
         addNotification(`👤 ${u.full_name || 'Участник'} вышел из совещания`, 'info');
       }
+      // Refresh full participants list on any leave event
+      const state = ch.presenceState<any>();
+      const users = (Object.values(state) as any[][]).flat();
+      setConferenceParticipants(users);
     })
     .subscribe(async (status: string) => {
       if (status === 'SUBSCRIBED') {

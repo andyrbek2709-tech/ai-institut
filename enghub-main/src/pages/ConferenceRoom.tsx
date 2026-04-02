@@ -55,9 +55,11 @@ export function ConferenceRoom({
 
   // ── Subscribe to remote screen share broadcasts when in room ──
   useEffect(() => {
-    if (!isInRoom || !project?.id || !SURL_CONST || !ANON_KEY) return;
-    const supa = createClient(SURL_CONST, ANON_KEY);
-    const ch = supa.channel(`screen:${project.id}`);
+    if (!isInRoom || !project?.id || !SURL_CONST || !SERVICE_KEY) return;
+    const supa = createClient(SURL_CONST, SERVICE_KEY);
+    const ch = supa.channel(`screen:${project.id}`, {
+      config: { broadcast: { self: false, ack: false } }
+    });
     ch.on('broadcast', { event: 'frame' }, ({ payload }: any) => {
       if (payload?.userId && String(payload.userId) !== String(currentUser?.id)) {
         setRemoteScreenData(payload.imageData || null);
@@ -66,10 +68,13 @@ export function ConferenceRoom({
       if (payload?.userId && String(payload.userId) !== String(currentUser?.id)) {
         setRemoteScreenData(null);
       }
-    }).subscribe();
-    broadcastRef.current = { ch, supa };
+    }).subscribe((status: string) => {
+      if (status === 'SUBSCRIBED') {
+        broadcastRef.current = { ch, supa };
+      }
+    });
     return () => {
-      broadcastRef.current?.supa?.removeChannel(broadcastRef.current.ch);
+      supa.removeChannel(ch);
       broadcastRef.current = null;
     };
   }, [isInRoom, project?.id]); // eslint-disable-line
@@ -299,17 +304,30 @@ export function ConferenceRoom({
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* Счётчик участников */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "5px 12px", borderRadius: 20,
-            background: isInRoom ? "#10B98120" : C.surface2,
-            border: `1px solid ${isInRoom ? "#10B98150" : C.border}`,
-            fontSize: 12, color: isInRoom ? "#10B981" : C.textMuted, fontWeight: 600
-          }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: isInRoom ? "#10B981" : C.textMuted, display: "inline-block" }} />
-            {conferenceParticipants.length} в зале
-          </div>
+          {/* Статус: демонстрация экрана ИЛИ счётчик участников */}
+          {isInRoom && (screenSharing || sharingParticipant) ? (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "5px 12px", borderRadius: 20,
+              background: "#3B82F620",
+              border: "1px solid #3B82F650",
+              fontSize: 12, color: "#3B82F6", fontWeight: 600
+            }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#3B82F6", display: "inline-block", animation: "pulse 1.5s infinite" }} />
+              🖥️ Демонстрация экрана
+            </div>
+          ) : (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "5px 12px", borderRadius: 20,
+              background: isInRoom ? "#10B98120" : C.surface2,
+              border: `1px solid ${isInRoom ? "#10B98150" : C.border}`,
+              fontSize: 12, color: isInRoom ? "#10B981" : C.textMuted, fontWeight: 600
+            }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: isInRoom ? "#10B981" : C.textMuted, display: "inline-block" }} />
+              {conferenceParticipants.length} в зале
+            </div>
+          )}
 
           {isInRoom && (
             <>
