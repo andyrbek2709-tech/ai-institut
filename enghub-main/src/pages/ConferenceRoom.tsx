@@ -47,11 +47,39 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
   const [screenSharing, setScreenSharing] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "participants">("chat");
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const participants = usePresence(project?.id, isInRoom ? currentUser : null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs.length]);
+
+  useEffect(() => {
+    if (screenSharing && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [screenSharing]);
+
+  const toggleScreenShare = async () => {
+    if (screenSharing) {
+      streamRef.current?.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+      setScreenSharing(false);
+    } else {
+      try {
+        const stream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: false });
+        streamRef.current = stream;
+        stream.getVideoTracks()[0].onended = () => {
+          streamRef.current = null;
+          setScreenSharing(false);
+        };
+        setScreenSharing(true);
+      } catch (e) {
+        // пользователь отменил выбор
+      }
+    }
+  };
 
   const handleSend = () => {
     if (!chatInput.trim()) return;
@@ -64,7 +92,11 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
     // Trigger the incoming call notification for others
     onSendMsg("📞 Начинается видеовстреча...", "call_start"); 
   };
-  const leaveRoom = () => { setIsInRoom(false); setMicEnabled(false); setScreenSharing(false); };
+  const leaveRoom = () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    setIsInRoom(false); setMicEnabled(false); setScreenSharing(false);
+  };
 
   const getInitials = (name: string) => {
     const parts = name?.split(" ") || [];
@@ -129,7 +161,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                 {micEnabled ? "🎤" : "🔇"}
               </button>
 
-              <button onClick={() => setScreenSharing(!screenSharing)} style={{
+              <button onClick={toggleScreenShare} style={{
                 width: 40, height: 40, borderRadius: 12, border: "none", cursor: "pointer",
                 background: screenSharing ? "#3B82F620" : C.surface2,
                 color: screenSharing ? "#3B82F6" : C.textMuted,
@@ -249,6 +281,19 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
           {/* ===== ЧАТ ===== */}
           {activeTab === "chat" && (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              {/* Демонстрация экрана */}
+              {screenSharing && (
+                <div style={{ padding: "12px 24px 0" }}>
+                  <video ref={videoRef} autoPlay muted playsInline style={{
+                    width: "100%", borderRadius: 12, maxHeight: 280,
+                    background: "#000", display: "block"
+                  }} />
+                  <div style={{ fontSize: 11, color: C.textMuted, textAlign: "center", marginTop: 4 }}>
+                    Демонстрация экрана · нажмите 🖥️ чтобы остановить
+                  </div>
+                </div>
+              )}
+
               {/* Сообщения */}
               <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
                 {msgs.length === 0 && (

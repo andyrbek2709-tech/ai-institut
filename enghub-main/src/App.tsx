@@ -302,6 +302,25 @@ export default function App() {
     return () => { supa.removeChannel(channel); };
   }, [currentUserData?.id]); // eslint-disable-line
 
+  // ── Supabase Realtime: подписка на новые сообщения чата ──
+  useEffect(() => {
+    if (!token || !currentUserData?.id) return;
+    const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
+    const channel = supa.channel('messages:live')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
+        const m = payload.new;
+        if (
+          activeProjectRef.current &&
+          m.project_id === activeProjectRef.current.id &&
+          (m.task_id === null || m.task_id === undefined)
+        ) {
+          setMsgs(prev => prev.some((x: any) => x.id === m.id) ? prev : [...prev, m]);
+        }
+      })
+      .subscribe();
+    return () => { supa.removeChannel(channel); };
+  }, [currentUserData?.id]); // eslint-disable-line
+
   // Polling — только для уведомлений о звонках (задачи обновляются через Realtime)
   useEffect(() => {
     if (!activeProject || !token) return;
