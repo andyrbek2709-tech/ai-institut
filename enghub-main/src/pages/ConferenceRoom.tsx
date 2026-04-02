@@ -51,6 +51,7 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
   const fileInputRef = useRef<HTMLInputElement>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const participants = usePresence(project?.id, isInRoom ? currentUser : null);
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
@@ -58,6 +59,12 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs.length]);
+
+  useEffect(() => {
+    if (screenSharing && videoRef.current && screenStreamRef.current) {
+      videoRef.current.srcObject = screenStreamRef.current;
+    }
+  }, [screenSharing]);
 
   const handleSend = async () => {
     if (!chatInput.trim()) return;
@@ -354,6 +361,19 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
           {/* ===== ЧАТ ===== */}
           {activeTab === "chat" && (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              {/* Демонстрация экрана */}
+              {screenSharing && (
+                <div style={{ padding: "12px 24px 0" }}>
+                  <video ref={videoRef} autoPlay muted playsInline style={{
+                    width: "100%", borderRadius: 12, maxHeight: 280,
+                    background: "#000", display: "block"
+                  }} />
+                  <div style={{ fontSize: 11, color: C.textMuted, textAlign: "center", marginTop: 4 }}>
+                    Демонстрация экрана · нажмите 🖥️ чтобы остановить
+                  </div>
+                </div>
+              )}
+
               {/* Сообщения */}
               <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
                 {msgs.length === 0 && (
