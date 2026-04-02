@@ -321,6 +321,15 @@ export default function App() {
     return () => { supa.removeChannel(channel); };
   }, [currentUserData?.id]); // eslint-disable-line
 
+  // Polling — обновление сообщений чата при открытом совещании
+  useEffect(() => {
+    if (!activeProject || !token || sideTab !== 'conference') return;
+    const interval = setInterval(() => {
+      loadMessages(activeProject.id);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [activeProject?.id, token, sideTab]); // eslint-disable-line
+
   // Polling — только для уведомлений о звонках (задачи обновляются через Realtime)
   useEffect(() => {
     if (!activeProject || !token) return;
