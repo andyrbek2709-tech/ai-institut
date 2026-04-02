@@ -1,4 +1,4 @@
-# EngHub — Инженерная платформа (v7.3)
+# EngHub — Инженерная платформа (v8.3)
 
 Веб-платформа для управления инженерными проектами проектного института.  
 Стек: React 18 + TypeScript, Vercel, Supabase (PostgreSQL + pgvector), Claude AI (Anthropic).
@@ -209,6 +209,13 @@ git push origin main
 
 ## 🧾 Agent Handover Log
 
+#### [2026-04-02] v8.3 — Исправление ConferenceRoom (экран + сообщения)
+- **Баг 1**: Демонстрация экрана запускалась (getDisplayMedia уже был в main), но поток не отображался — отсутствовал `<video>` элемент. Добавлены `videoRef`, `useEffect` для привязки `screenStreamRef → videoRef.srcObject`, `<video>` в области чата.
+- **Баг 2**: Сообщения другого пользователя не появлялись пока сам не напишешь / не войдёшь в зал. Добавлен `setInterval(loadMessages, 3000)` при `sideTab === 'conference'` + Supabase Realtime подписка на `messages`.
+- **Деплой**: merge worktree `claude/dazzling-mahavira` → `main` → `git push origin main` (Vercel auto-deploy).
+- Files: `ConferenceRoom.tsx`, `App.tsx`, `README.md`
+- Next: исправить остальные блокеры из QA Sign-off: права ГИП на чертежи, Timelog persistence, видимость задач у инженера.
+
 #### [2026-04-01 18:30] Production QA Sign-off (v8.2)
 - Step: Выполнен полный smoke + QA цикл в production (ГИП, Lead, Инженер).
 - Result: **BLOCKED**. Обнаружены критические баги в Meetings (отправка сообщений) и Timelog (сохранение данных).
@@ -294,6 +301,12 @@ v7.5: App.tsx Decomposition & RAG Backend (2026-04-01)
 - ✅ Учёт рабочего времени (вкладка ⏱): ввод часов, сводка по сотрудникам (ГИП/Lead), таблица записей
 - ✅ SQL-миграция `009_meetings_timelog.sql`: таблицы `meetings` и `time_entries`
 - Файлы: `App.tsx`, `supabase/migrations/009_meetings_timelog.sql`
+
+### v8.3 — Исправлены баги ConferenceRoom *(2026-04-02)*
+- ✅ Демонстрация экрана: добавлен `videoRef` + `<video>` элемент → поток `screenStreamRef` теперь отображается в чате под сообщениями
+- ✅ Real-time сообщения: поллинг каждые 3 сек при открытом табе «Совещание» — получатель видит новые сообщения без каких-либо действий
+- ✅ Supabase Realtime подписка на `messages` (INSERT) как дополнительный канал доставки
+- Файлы: `enghub-main/src/pages/ConferenceRoom.tsx`, `enghub-main/src/App.tsx`
 
 ### v7.1 — Realtime, Excel 4 листа, Mobile *(2026-04-01)*
 - ✅ Realtime подписки на `reviews` (INSERT/UPDATE) и `transmittals` (UPDATE → issued)
