@@ -119,6 +119,8 @@ export default function App() {
   const [showCopilot, setShowCopilot] = useState(false);
 
   const [incomingCall, setIncomingCall] = useState<any>(null); // { project_id, project_name, initiator_name }
+  const [conferenceParticipants, setConferenceParticipants] = useState<any[]>([]);
+  const presenceChannelRef = useRef<any>(null);
 
   // Перезагружаем задачи когда currentUserData загрузился
   useEffect(() => { if (activeProject && token && currentUserData) { loadAllTasks(activeProject.id); } }, [currentUserData?.id]);
@@ -297,7 +299,7 @@ export default function App() {
   const sendMsg = async (taskId?: number, type: string = "text", customText?: string) => { 
     const finalTxt = customText || chatInput;
     if (!finalTxt.trim() || !activeProject || !currentUserData?.id) return false;
-    const normalizedType = type === "call_start" ? "call_start" : "text";
+    const normalizedType = ["call_start", "call_invite"].includes(type) ? type : "text";
     try {
       const created = await post("messages", { 
         text: finalTxt, 
@@ -332,11 +334,17 @@ export default function App() {
   const appUsersRef = useRef<any[]>([]);
   const addNotifRef = useRef(addNotification);
   const loadTasksRef = useRef(loadAllTasks);
+  const msgsRef = useRef<any[]>([]);
+  const projectsRef = useRef<any[]>([]);
+  const sideTabRef = useRef(sideTab);
   useEffect(() => { activeProjectRef.current = activeProject; }, [activeProject]);
   useEffect(() => { currentUserDataRef.current = currentUserData; }, [currentUserData]);
   useEffect(() => { appUsersRef.current = appUsers; }, [appUsers]);
   useEffect(() => { addNotifRef.current = addNotification; });
   useEffect(() => { loadTasksRef.current = loadAllTasks; });
+  useEffect(() => { msgsRef.current = msgs; }, [msgs]);
+  useEffect(() => { projectsRef.current = projects; }, [projects]);
+  useEffect(() => { sideTabRef.current = sideTab; }, [sideTab]);
 
   // ── Supabase Realtime: подписка на изменения задач ──
   useEffect(() => {
@@ -398,6 +406,41 @@ export default function App() {
           addNotifRef.current(`📬 Трансмиттал выпущен: №${tr.number}`, 'info');
         }
       })
+      // ── Realtime: новые сообщения чата ──
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
+        const m = payload.new;
+        const me = currentUserDataRef.current;
+        if (!me) return;
+        // Не дублируем своё собственное сообщение (оно уже добавлено через loadMessages)
+        if (String(m.user_id) === String(me.id)) return;
+        const activeProj = activeProjectRef.current;
+        if (activeProj?.id === m.project_id) {
+          // Добавляем сообщение в текущий список если не дублируется
+          setMsgs((prev: any[]) => prev.find(msg => msg.id === m.id) ? prev : [...prev, m]);
+        } else {
+          // Уведомление о сообщении в другом проекте
+          const sender = appUsersRef.current.find((u: any) => String(u.id) === String(m.user_id));
+          const proj = projectsRef.current.find((p: any) => p.id === m.project_id);
+          if (proj && m.type !== 'call_invite') {
+            addNotifRef.current(`💬 ${sender?.full_name || 'Участник'}: новое сообщение в "${proj.name}"`, 'info');
+          }
+        }
+        // Обработка приглашения на совещание
+        if (m.type === 'call_invite') {
+          try {
+            const data = JSON.parse(m.text || '{}');
+            if (String(data.target_user_id) === String(me.id)) {
+              const sender = appUsersRef.current.find((u: any) => String(u.id) === String(m.user_id));
+              const proj = projectsRef.current.find((p: any) => p.id === m.project_id);
+              setIncomingCall({
+                project_id: m.project_id,
+                project_name: proj?.name || data.project_name || 'Проект',
+                initiator_name: sender?.full_name || 'Участник'
+              });
+            }
+          } catch {}
+        }
+      })
       .subscribe();
     return () => { supa.removeChannel(channel); };
   }, [currentUserData?.id]); // eslint-disable-line
@@ -418,6 +461,68 @@ export default function App() {
     }, 10000);
     return () => clearInterval(interval);
   }, [activeProject, token, sideTab]);
+
+  // ── Presence: управление присутствием в зале совещания ──
+  const joinConference = (initialMic = false, initialScreen = false) => {
+    if (!activeProject?.id || !currentUserData) return;
+    const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
+    const ch = supa.channel(`presence:${activeProject.id}`, {
+      config: { presence: { key: String(currentUserData.id) } }
+    });
+    ch.on('presence', { event: 'sync' }, () => {
+      const state = ch.presenceState<any>();
+      const users = (Object.values(state) as any[][]).flat();
+      setConferenceParticipants(users);
+    })
+    .on('presence', { event: 'join' }, ({ newPresences }: any) => {
+      const u = newPresences?.[0];
+      if (u && String(u.id) !== String(currentUserData.id)) {
+        addNotification(`👤 ${u.full_name || 'Участник'} зашёл в совещание`, 'info');
+      }
+    })
+    .on('presence', { event: 'leave' }, ({ leftPresences }: any) => {
+      const u = leftPresences?.[0];
+      if (u && String(u.id) !== String(currentUserData.id)) {
+        addNotification(`👤 ${u.full_name || 'Участник'} вышел из совещания`, 'info');
+      }
+    })
+    .subscribe(async (status: string) => {
+      if (status === 'SUBSCRIBED') {
+        await ch.track({
+          id: currentUserData.id,
+          full_name: currentUserData.full_name,
+          role: currentUserData.role,
+          position: currentUserData.position,
+          micEnabled: initialMic,
+          screenSharing: initialScreen,
+          joinedAt: new Date().toISOString()
+        });
+      }
+    });
+    presenceChannelRef.current = { ch, supa };
+  };
+
+  const leaveConference = async () => {
+    if (presenceChannelRef.current) {
+      const { ch, supa } = presenceChannelRef.current;
+      await ch.untrack();
+      supa.removeChannel(ch);
+      presenceChannelRef.current = null;
+    }
+    setConferenceParticipants([]);
+  };
+
+  const updatePresence = async (updates: any) => {
+    if (!presenceChannelRef.current || !currentUserData) return;
+    const { ch } = presenceChannelRef.current;
+    await ch.track({
+      id: currentUserData.id,
+      full_name: currentUserData.full_name,
+      role: currentUserData.role,
+      position: currentUserData.position,
+      ...updates
+    });
+  };
 
   const createProject = async () => { if (!newProject.name || !newProject.code) return; setSaving(true); await post("projects", { ...newProject, progress: 0, archived: false }, token!); setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(false); setSaving(false); loadProjects(); addNotification(`Проект "${newProject.name}" создан`, 'success'); };
   
@@ -1517,6 +1622,10 @@ export default function App() {
                   token={token!}
                   onSendMsg={(text: string, type: string = "text") => sendMsg(undefined, type, text)}
                   getUserById={getUserById}
+                  conferenceParticipants={conferenceParticipants}
+                  onJoin={joinConference}
+                  onLeave={leaveConference}
+                  onPresenceUpdate={updatePresence}
                 />
               )}
             </div>
