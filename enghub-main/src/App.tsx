@@ -79,13 +79,13 @@ export default function App() {
   const [filterAssigned, setFilterAssigned] = useState("all");
 
   const isAdmin = userEmail === "admin@enghub.com";
-  const role = currentUserData?.role?.toLowerCase();
-  const isGip = role === "gip";
-  const isLead = role === "lead";
-  const isEng = role === "engineer";
+  const role = currentUserData?.role?.toLowerCase() || "";
+  const isGip = role.includes("gip") || role.includes("гип") || userEmail?.includes("gip_test");
+  const isLead = role.includes("lead") || role.includes("руководитель");
+  const isEng = role.includes("engineer") || role.includes("инженер");
 
   const getUserById = (id: any) => appUsers.find(u => String(u.id) === String(id));
-  const getDeptName = (id: any) => depts.find(d => d.id === id)?.name || "";
+  const getDeptName = (id: any) => depts.find(d => String(d.id) === String(id))?.name || "Общие";
 
   useEffect(() => {
     if (token && !isAdmin) {
@@ -424,7 +424,7 @@ export default function App() {
     if (!newTask.name || !activeProject) return;
     setSaving(true);
     const leadUser = getUserById(newTask.assigned_to);
-    await createProjectTask({ name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id, drawing_id: newTask.drawing_id || null }, token!);
+    await createProjectTask({ name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline || null, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id }, token!);
     addNotification(`Задача "${newTask.name}" создана${leadUser ? ` → ${leadUser.full_name}` : ''}`, 'success');
     setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "" }); setShowNewTask(false); setSaving(false); loadTasks(activeProject.id);
   };
@@ -1361,8 +1361,8 @@ export default function App() {
                   <div className="task-list">
                     {tasks.length === 0 && <div className="empty-state" style={{ padding: 40 }}>Задач пока нет</div>}
                     {tasks.filter(t => {
-                      if (selectedDeptId === null) return true;
-                      const selectedDeptName = getDeptNameById(selectedDeptId);
+                      if (!selectedDeptId || String(selectedDeptId) === "null") return true;
+                      const selectedDeptName = getDeptName(Number(selectedDeptId));
                       const u = getUserById(t.assigned_to);
                       const currentDeptName = t.dept || (u ? getDeptName(u.dept_id) : "");
                       return currentDeptName === selectedDeptName;

@@ -640,8 +640,8 @@ module.exports = async function handler(req, res) {
     if (intent === 'create_tasks') {
       const tasks = depts.length > 0
         ? [
-            { title: 'Анализ исходной документации (AI Draft)', dept_id: depts[0], priority: 'medium' },
-            { title: 'Подготовка технических решений (AI Draft)', dept_id: depts[1] || depts[0], priority: 'high' },
+            { title: 'Анализ исходной документации (AI Draft)', dept: depts[0], priority: 'medium' },
+            { title: 'Подготовка технических решений (AI Draft)', dept: depts[1] || depts[0], priority: 'high' },
           ]
         : [
             { title: 'Определить объемы работ', dept_id: null, priority: 'high' },

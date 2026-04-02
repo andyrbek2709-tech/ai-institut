@@ -70,8 +70,8 @@ export function TransmittalsTab({
             {(transmittalItems[t.id] || []).length > 0 && (
               <div style={{ background: C.surface2, borderRadius: 8, padding: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {(transmittalItems[t.id] || []).map((it: any) => {
-                  const d = drawings.find((dr) => String(dr.id) === String(it.drawing_id));
-                  const r = revisions.find((rv) => String(rv.id) === String(it.revision_id));
+                  const d = Array.isArray(drawings) ? drawings.find((dr) => String(dr.id) === String(it.drawing_id)) : null;
+                  const r = Array.isArray(revisions) ? revisions.find((rv) => String(rv.id) === String(it.revision_id)) : null;
                   return (
                     <div key={it.id} style={{ fontSize: 12, color: C.text }}>
                       • {d ? `${d.code}` : '—'} {r ? `(${r.from_revision}→${r.to_revision})` : ''} {it.note ? `— ${it.note}` : ''}
@@ -94,7 +94,7 @@ export function TransmittalsTab({
                   style={{ ...getInp(C), height: 30, fontSize: 12, width: 200 }}
                 >
                   <option value="">Выбрать чертеж</option>
-                  {drawings.map((d) => <option key={d.id} value={d.id}>{d.code}</option>)}
+                  {Array.isArray(drawings) && drawings.map((d) => <option key={d.id} value={d.id}>{d.code}</option>)}
                 </select>
                 <select
                   value={transmittalDraftLinks[t.id]?.revisionId || ''}
@@ -108,7 +108,7 @@ export function TransmittalsTab({
                   style={{ ...getInp(C), height: 30, fontSize: 12, width: 220 }}
                 >
                   <option value="">Выбрать ревизию</option>
-                  {revisions.map((r) => <option key={r.id} value={r.id}>{r.from_revision}→{r.to_revision}</option>)}
+                  {Array.isArray(revisions) && revisions.map((r) => <option key={r.id} value={r.id}>{r.from_revision}→{r.to_revision}</option>)}
                 </select>
                 <button
                   className="btn btn-ghost btn-sm"

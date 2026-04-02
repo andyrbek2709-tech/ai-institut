@@ -31,12 +31,19 @@ const GanttChart: React.FC<GanttChartProps> = ({ tasks, activeProject, getUserBy
   if (pTasks.length === 0) return <div className="empty-state" style={{ padding: 40 }}>Нет задач для диаграммы. Создайте задачи с дедлайнами.</div>;
 
   const now = Date.now();
-  const stamps = pTasks.flatMap(t => [t.created_at ? new Date(t.created_at).getTime() : null, t.deadline ? new Date(t.deadline).getTime() : null]).filter(Boolean) as number[];
-  if (activeProject.deadline) stamps.push(new Date(activeProject.deadline).getTime());
+  const stamps = pTasks.flatMap(t => [
+    t.created_at ? new Date(t.created_at).getTime() : null, 
+    t.deadline ? new Date(t.deadline).getTime() : null
+  ]).filter(s => s !== null && !isNaN(s)) as number[];
+
+  if (activeProject.deadline) {
+    const pD = new Date(activeProject.deadline).getTime();
+    if (!isNaN(pD)) stamps.push(pD);
+  }
   stamps.push(now);
   
-  const minT = Math.min(...stamps);
-  const maxT = Math.max(...stamps);
+  const minT = stamps.length > 0 ? Math.min(...stamps) : now - 86400000 * 7;
+  const maxT = stamps.length > 0 ? Math.max(...stamps) : now + 86400000 * 7;
   const range = Math.max(maxT - minT, 86400000 * 7);
   const pct = (t: number) => Math.max(0, Math.min(100, ((t - minT) / range) * 100));
   const todayPct = pct(now);
@@ -73,11 +80,19 @@ const GanttChart: React.FC<GanttChartProps> = ({ tasks, activeProject, getUserBy
             <div key={dept}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, marginTop: 14 }}>{dept}</div>
               {dTasks.map(task => {
-                const startT = task.created_at ? new Date(task.created_at).getTime() : minT;
-                const endT = task.deadline ? new Date(task.deadline).getTime() : startT + 7 * 86400000;
+                const startD = new Date(task.created_at);
+                const startT = !isNaN(startD.getTime()) ? startD.getTime() : minT;
+                const endD = task.deadline ? new Date(task.deadline) : null;
+                const endT = (endD && !isNaN(endD.getTime())) ? endD.getTime() : startT + 7 * 86400000;
+                
                 const isOverdue = endT < now && task.status !== 'done';
                 const barL = pct(startT), barW = Math.max(1, pct(endT) - barL);
                 const color = isOverdue ? '#ef4444' : (sColors[task.status] || '#8896a4');
+                
+                const displayDeadline = (endD && !isNaN(endD.getTime())) 
+                  ? endD.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) 
+                  : '—';
+
                 return (
                   <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
                     <div style={{ width: 150, flexShrink: 0, fontSize: 12, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right', paddingRight: 8 }} title={task.name}>{task.name}</div>
@@ -85,7 +100,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ tasks, activeProject, getUserBy
                       <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${todayPct}%`, width: 1.5, background: '#ef444460', zIndex: 3 }} />
                       <div style={{ position: 'absolute', top: 3, bottom: 3, left: `${barL}%`, width: `${barW}%`, background: color, borderRadius: 3, opacity: 0.85, minWidth: 4 }} title={`${task.name} · ${sLabels[task.status]} · ${task.deadline || '—'}`} />
                     </div>
-                    <div style={{ width: 56, flexShrink: 0, fontSize: 11, color: isOverdue ? '#ef4444' : C.textMuted, textAlign: 'right' }}>{task.deadline ? new Date(task.deadline).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) : '—'}</div>
+                    <div style={{ width: 56, flexShrink: 0, fontSize: 11, color: isOverdue ? '#ef4444' : C.textMuted, textAlign: 'right' }}>{displayDeadline}</div>
                   </div>
                 );
               })}

@@ -93,7 +93,8 @@ export function CopilotPanel({
 
     // Real Orchestrator Backend API call
     try {
-      const res = await fetch('/api/orchestrator', {
+      const apiUrl = window.location.hostname === 'localhost' ? 'https://enghub-three.vercel.app/api/orchestrator' : '/api/orchestrator';
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -167,7 +168,8 @@ export function CopilotPanel({
             name: t.title,
             priority: t.priority,
             status: 'todo',
-            assigned_to: null
+            assigned_to: null,
+            dept: (t as any).dept || 'Общие'
           }, token || '');
         }
         onTaskCreated();
