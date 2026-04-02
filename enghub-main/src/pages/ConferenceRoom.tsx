@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
 interface ConferenceProps {
   project: any;
@@ -15,7 +16,14 @@ interface ConferenceProps {
   onPresenceUpdate: (updates: any) => Promise<void>;
 }
 
-export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token, onSendMsg, getUserById, conferenceParticipants, onJoin, onLeave, onPresenceUpdate }: ConferenceProps) {
+const ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+const SURL_CONST = process.env.REACT_APP_SUPABASE_URL || '';
+
+export function ConferenceRoom({
+  project, currentUser, appUsers, msgs, C, token,
+  onSendMsg, getUserById,
+  conferenceParticipants, onJoin, onLeave, onPresenceUpdate
+}: ConferenceProps) {
   const [chatInput, setChatInput] = useState("");
   const [isInRoom, setIsInRoom] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
@@ -23,21 +31,87 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "participants">("chat");
   const [showInviteMenu, setShowInviteMenu] = useState(false);
+  const [selectedInvitees, setSelectedInvitees] = useState<Set<number>>(new Set());
+  // Remote screen share: base64 JPEG data URL received from another participant
+  const [remoteScreenData, setRemoteScreenData] = useState<string | null>(null);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const screenVideoRef = useRef<HTMLVideoElement>(null);
   const inviteMenuRef = useRef<HTMLDivElement>(null);
+  const broadcastRef = useRef<any>(null); // { ch, supa } for screen share broadcast
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
-  // Attach screen stream to video element
+  // ── Attach local screen stream to video element ──
   useEffect(() => {
     if (screenVideoRef.current) {
-      screenVideoRef.current.srcObject = screenSharing && screenStreamRef.current ? screenStreamRef.current : null;
+      screenVideoRef.current.srcObject = screenSharing && screenStreamRef.current
+        ? screenStreamRef.current : null;
     }
   }, [screenSharing]);
+
+  // ── Subscribe to remote screen share broadcasts when in room ──
+  useEffect(() => {
+    if (!isInRoom || !project?.id || !SURL_CONST || !ANON_KEY) return;
+    const supa = createClient(SURL_CONST, ANON_KEY);
+    const ch = supa.channel(`screen:${project.id}`);
+    ch.on('broadcast', { event: 'frame' }, ({ payload }: any) => {
+      if (payload?.userId && String(payload.userId) !== String(currentUser?.id)) {
+        setRemoteScreenData(payload.imageData || null);
+      }
+    }).on('broadcast', { event: 'stop' }, ({ payload }: any) => {
+      if (payload?.userId && String(payload.userId) !== String(currentUser?.id)) {
+        setRemoteScreenData(null);
+      }
+    }).subscribe();
+    broadcastRef.current = { ch, supa };
+    return () => {
+      broadcastRef.current?.supa?.removeChannel(broadcastRef.current.ch);
+      broadcastRef.current = null;
+    };
+  }, [isInRoom, project?.id]); // eslint-disable-line
+
+  // ── Capture and broadcast screen frames at ~2fps ──
+  useEffect(() => {
+    if (!screenSharing) {
+      // Notify others that sharing stopped
+      broadcastRef.current?.ch?.send({
+        type: 'broadcast', event: 'stop',
+        payload: { userId: String(currentUser?.id) }
+      });
+      return;
+    }
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const interval = setInterval(() => {
+      const video = screenVideoRef.current;
+      if (!video || !ctx || video.videoWidth === 0) return;
+      // Downsample to max 480x270 to fit in broadcast payload
+      const scale = Math.min(480 / video.videoWidth, 270 / video.videoHeight, 1);
+      canvas.width = Math.floor(video.videoWidth * scale);
+      canvas.height = Math.floor(video.videoHeight * scale);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = canvas.toDataURL('image/jpeg', 0.55);
+      broadcastRef.current?.ch?.send({
+        type: 'broadcast', event: 'frame',
+        payload: { userId: String(currentUser?.id), imageData }
+      });
+    }, 500);
+    return () => clearInterval(interval);
+  }, [screenSharing]); // eslint-disable-line
+
+  // ── Clear remote screen data when sharer leaves ──
+  useEffect(() => {
+    const sharingIds = conferenceParticipants
+      .filter((p: any) => p.screenSharing)
+      .map((p: any) => String(p.id));
+    if (remoteScreenData && sharingIds.length === 0) {
+      setRemoteScreenData(null);
+    }
+  }, [conferenceParticipants]); // eslint-disable-line
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,9 +144,9 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
     setIsInRoom(false);
     setMicEnabled(false);
     setScreenSharing(false);
-    micStreamRef.current?.getTracks().forEach((t) => t.stop());
+    micStreamRef.current?.getTracks().forEach(t => t.stop());
     micStreamRef.current = null;
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current?.getTracks().forEach(t => t.stop());
     screenStreamRef.current = null;
     await onLeave();
   };
@@ -83,11 +157,11 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
         if (!micStreamRef.current) {
           micStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         }
-        micStreamRef.current.getAudioTracks().forEach((t) => { t.enabled = true; });
+        micStreamRef.current.getAudioTracks().forEach(t => { t.enabled = true; });
         setMicEnabled(true);
         await onPresenceUpdate({ micEnabled: true, screenSharing });
       } else {
-        micStreamRef.current?.getAudioTracks().forEach((t) => { t.enabled = false; });
+        micStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false; });
         setMicEnabled(false);
         await onPresenceUpdate({ micEnabled: false, screenSharing });
       }
@@ -103,17 +177,14 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
         screenStreamRef.current = stream;
         setScreenSharing(true);
         await onPresenceUpdate({ micEnabled, screenSharing: true });
-        const [videoTrack] = stream.getVideoTracks();
-        if (videoTrack) {
-          videoTrack.onended = async () => {
-            setScreenSharing(false);
-            screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-            screenStreamRef.current = null;
-            await onPresenceUpdate({ micEnabled, screenSharing: false });
-          };
-        }
+        stream.getVideoTracks()[0].onended = async () => {
+          setScreenSharing(false);
+          screenStreamRef.current?.getTracks().forEach(t => t.stop());
+          screenStreamRef.current = null;
+          await onPresenceUpdate({ micEnabled, screenSharing: false });
+        };
       } else {
-        screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+        screenStreamRef.current?.getTracks().forEach(t => t.stop());
         screenStreamRef.current = null;
         setScreenSharing(false);
         await onPresenceUpdate({ micEnabled, screenSharing: false });
@@ -161,11 +232,23 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
     }
   };
 
-  const sendInvite = async (user: any) => {
-    await onSendMsg(
-      JSON.stringify({ type: 'call_invite', target_user_id: String(user.id), project_name: project?.name }),
-      'call_invite'
-    );
+  const toggleInvitee = (userId: number) => {
+    setSelectedInvitees(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId); else next.add(userId);
+      return next;
+    });
+  };
+
+  const sendInvites = async () => {
+    const toInvite = appUsers.filter(u => selectedInvitees.has(u.id));
+    for (const user of toInvite) {
+      await onSendMsg(
+        JSON.stringify({ type: 'call_invite', target_user_id: String(user.id), project_name: project?.name }),
+        'call_invite'
+      );
+    }
+    setSelectedInvitees(new Set());
     setShowInviteMenu(false);
   };
 
@@ -176,240 +259,246 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
 
   const roleColors: Record<string, string> = { gip: "#F59E0B", lead: "#8B5CF6", engineer: "#10B981" };
 
-  // Users in the room (by presence), not already in the room (for invite)
   const participantIds = new Set(conferenceParticipants.map((p: any) => String(p.id)));
   const invitableUsers = appUsers.filter(u => u.id !== currentUser?.id && !participantIds.has(String(u.id)));
-
-  // Find a participant who is screen sharing (for "other user sharing" banner)
   const sharingParticipant = conferenceParticipants.find(
     (p: any) => p.screenSharing && String(p.id) !== String(currentUser?.id)
   );
+  const hasScreenContent = screenSharing || (remoteScreenData && sharingParticipant);
 
   if (!project) return <div className="empty-state" style={{ padding: 60 }}>Выберите проект</div>;
 
   return (
-    <div className="conf-root screen-fade" style={{ display: "flex", flexDirection: "column", height: 600, gap: 0 }}>
-
+    <div
+      className="conf-root screen-fade"
+      style={{
+        display: "flex", flexDirection: "column",
+        height: "calc(100vh - 170px)", minHeight: 540,
+        gap: 0, borderRadius: 16, overflow: "hidden",
+        border: `1px solid ${C.border}`
+      }}
+    >
       {/* ===== HEADER ===== */}
       <div className="conf-header" style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 24px",
+        padding: "14px 20px", flexShrink: 0,
         background: `linear-gradient(135deg, ${C.sidebarBg} 0%, ${C.surface2} 100%)`,
-        borderRadius: "16px 16px 0 0",
         borderBottom: `1px solid ${C.border}`
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
-            width: 42, height: 42, borderRadius: 12,
+            width: 40, height: 40, borderRadius: 12,
             background: `linear-gradient(135deg, ${C.accent}, #4f7fd8)`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 18, color: "#fff", fontWeight: 700
+            fontSize: 18, color: "#fff"
           }}>🏗️</div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#ffffff" }}>Совещание проекта</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.78)" }}>{project.name} · {project.code}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Совещание проекта</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>{project.name} · {project.code}</div>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {/* Счётчик участников */}
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 14px", borderRadius: 20,
+            padding: "5px 12px", borderRadius: 20,
             background: isInRoom ? "#10B98120" : C.surface2,
             border: `1px solid ${isInRoom ? "#10B98150" : C.border}`,
-            fontSize: 13, color: isInRoom ? "#10B981" : C.textMuted, fontWeight: 600
+            fontSize: 12, color: isInRoom ? "#10B981" : C.textMuted, fontWeight: 600
           }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: isInRoom ? "#10B981" : C.textMuted }} />
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: isInRoom ? "#10B981" : C.textMuted, display: "inline-block" }} />
             {conferenceParticipants.length} в зале
           </div>
 
-          {/* Кнопки управления */}
           {isInRoom && (
             <>
-              <button onClick={toggleMic} style={{
-                width: 40, height: 40, borderRadius: 12, border: "none", cursor: "pointer",
+              {/* Микрофон */}
+              <button onClick={toggleMic} title={micEnabled ? "Выключить микрофон" : "Включить микрофон"} style={{
+                width: 38, height: 38, borderRadius: 10, border: "none", cursor: "pointer",
                 background: micEnabled ? "#10B98120" : "#EF444420",
                 color: micEnabled ? "#10B981" : "#EF4444",
-                fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.2s"
-              }} title={micEnabled ? "Выключить микрофон" : "Включить микрофон"}>
-                {micEnabled ? "🎤" : "🔇"}
-              </button>
+                fontSize: 17, display: "flex", alignItems: "center", justifyContent: "center"
+              }}>{micEnabled ? "🎤" : "🔇"}</button>
 
-              <button onClick={toggleScreenShare} style={{
-                width: 40, height: 40, borderRadius: 12, border: "none", cursor: "pointer",
+              {/* Демонстрация */}
+              <button onClick={toggleScreenShare} title={screenSharing ? "Остановить демонстрацию" : "Демонстрация экрана"} style={{
+                width: 38, height: 38, borderRadius: 10, border: "none", cursor: "pointer",
                 background: screenSharing ? "#3B82F620" : C.surface2,
                 color: screenSharing ? "#3B82F6" : C.textMuted,
-                fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.2s"
-              }} title={screenSharing ? "Остановить демонстрацию" : "Демонстрация экрана"}>
-                🖥️
-              </button>
+                fontSize: 17, display: "flex", alignItems: "center", justifyContent: "center"
+              }}>🖥️</button>
 
-              {/* Кнопка приглашения */}
+              {/* ── Пригласить (мульти-выбор) ── */}
               <div style={{ position: "relative" }} ref={inviteMenuRef}>
-                <button onClick={() => setShowInviteMenu(v => !v)} style={{
-                  height: 40, padding: "0 14px", borderRadius: 12, border: "none", cursor: "pointer",
-                  background: showInviteMenu ? `${C.accent}20` : C.surface2,
+                <button onClick={() => { setShowInviteMenu(v => !v); setSelectedInvitees(new Set()); }} style={{
+                  height: 38, padding: "0 12px", borderRadius: 10, border: "none", cursor: "pointer",
+                  background: showInviteMenu ? `${C.accent}25` : C.surface2,
                   color: showInviteMenu ? C.accent : C.textMuted,
-                  fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
-                  transition: "all 0.2s"
-                }} title="Пригласить участника">
-                  📲 Пригласить
-                </button>
+                  fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 5
+                }}>📲 Пригласить</button>
+
                 {showInviteMenu && (
                   <div style={{
-                    position: "absolute", top: "calc(100% + 8px)", right: 0, zIndex: 200,
+                    position: "absolute", top: "calc(100% + 8px)", right: 0, zIndex: 300,
                     background: C.surface, border: `1px solid ${C.border}`,
-                    borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
-                    minWidth: 220, overflow: "hidden"
+                    borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
+                    minWidth: 240, overflow: "hidden"
                   }}>
-                    <div style={{ padding: "8px 14px", fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 1, borderBottom: `1px solid ${C.border}` }}>
-                      Не в зале
+                    <div style={{
+                      padding: "10px 16px", fontSize: 11, fontWeight: 700,
+                      color: C.textMuted, textTransform: "uppercase", letterSpacing: 1,
+                      borderBottom: `1px solid ${C.border}`, display: "flex",
+                      justifyContent: "space-between", alignItems: "center"
+                    }}>
+                      <span>Не в зале ({invitableUsers.length})</span>
+                      {selectedInvitees.size > 0 && (
+                        <span style={{ color: C.accent }}>Выбрано: {selectedInvitees.size}</span>
+                      )}
                     </div>
-                    {invitableUsers.length === 0 ? (
-                      <div style={{ padding: "12px 16px", fontSize: 13, color: C.textMuted }}>Все участники уже в зале</div>
-                    ) : invitableUsers.map(u => (
-                      <button key={u.id} onClick={() => sendInvite(u)} style={{
-                        display: "flex", alignItems: "center", gap: 10,
-                        width: "100%", padding: "10px 16px", background: "none",
-                        border: "none", cursor: "pointer", textAlign: "left",
-                        transition: "background 0.15s"
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = C.surface2)}
-                      onMouseLeave={e => (e.currentTarget.style.background = "none")}
-                      >
-                        <div style={{
-                          width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-                          background: `linear-gradient(135deg, ${roleColors[u.role] || C.accent}, ${roleColors[u.role] || C.accent}90)`,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 11, fontWeight: 700, color: "#fff"
-                        }}>
-                          {getInitials(u.full_name)}
+
+                    <div style={{ maxHeight: 220, overflowY: "auto" }}>
+                      {invitableUsers.length === 0 ? (
+                        <div style={{ padding: "16px", fontSize: 13, color: C.textMuted, textAlign: "center" }}>
+                          Все участники уже в зале
                         </div>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{u.full_name?.split(" ").slice(0, 2).join(" ")}</div>
-                          <div style={{ fontSize: 11, color: C.textMuted }}>{u.position || (u.role === "gip" ? "ГИП" : u.role === "lead" ? "Руководитель" : "Инженер")}</div>
-                        </div>
-                      </button>
-                    ))}
+                      ) : invitableUsers.map(u => {
+                        const sel = selectedInvitees.has(u.id);
+                        return (
+                          <div
+                            key={u.id}
+                            onClick={() => toggleInvitee(u.id)}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 10,
+                              padding: "10px 16px", cursor: "pointer",
+                              background: sel ? `${C.accent}15` : "transparent",
+                              transition: "background 0.15s"
+                            }}
+                            onMouseEnter={e => { if (!sel) (e.currentTarget as HTMLElement).style.background = C.surface2; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = sel ? `${C.accent}15` : "transparent"; }}
+                          >
+                            {/* Чекбокс */}
+                            <div style={{
+                              width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                              border: `2px solid ${sel ? C.accent : C.border}`,
+                              background: sel ? C.accent : "transparent",
+                              display: "flex", alignItems: "center", justifyContent: "center"
+                            }}>
+                              {sel && <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>✓</span>}
+                            </div>
+                            {/* Аватар */}
+                            <div style={{
+                              width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                              background: `linear-gradient(135deg, ${roleColors[u.role] || C.accent}, ${roleColors[u.role] || C.accent}90)`,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: 11, fontWeight: 700, color: "#fff"
+                            }}>{getInitials(u.full_name)}</div>
+                            <div style={{ flex: 1, overflow: "hidden" }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {u.full_name?.split(" ").slice(0, 2).join(" ")}
+                              </div>
+                              <div style={{ fontSize: 11, color: C.textMuted }}>
+                                {u.position || (u.role === "gip" ? "ГИП" : u.role === "lead" ? "Руководитель" : "Инженер")}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {invitableUsers.length > 0 && (
+                      <div style={{ padding: "10px 16px", borderTop: `1px solid ${C.border}` }}>
+                        <button
+                          onClick={sendInvites}
+                          disabled={selectedInvitees.size === 0}
+                          style={{
+                            width: "100%", padding: "9px", borderRadius: 8, border: "none",
+                            background: selectedInvitees.size > 0
+                              ? `linear-gradient(135deg, ${C.accent}, #F59E0B)` : C.surface2,
+                            color: selectedInvitees.size > 0 ? "#fff" : C.textMuted,
+                            fontSize: 13, fontWeight: 700, cursor: selectedInvitees.size > 0 ? "pointer" : "not-allowed",
+                            transition: "all 0.2s"
+                          }}
+                        >
+                          {selectedInvitees.size === 0
+                            ? "Выберите участников"
+                            : `Пригласить ${selectedInvitees.size} чел.`}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </>
           )}
 
-          {/* Войти/Выйти */}
+          {/* Войти / Выйти */}
           <button onClick={isInRoom ? leaveRoom : joinRoom} style={{
-            padding: "8px 20px", borderRadius: 12, border: "none", cursor: "pointer",
-            background: isInRoom ? "linear-gradient(135deg, #EF4444, #DC2626)" : "linear-gradient(135deg, #10B981, #059669)",
+            padding: "8px 18px", borderRadius: 10, border: "none", cursor: "pointer",
+            background: isInRoom
+              ? "linear-gradient(135deg, #EF4444, #DC2626)"
+              : "linear-gradient(135deg, #10B981, #059669)",
             color: "#fff", fontSize: 13, fontWeight: 700,
-            boxShadow: isInRoom ? "0 4px 12px #EF444440" : "0 4px 12px #10B98140",
-            transition: "all 0.3s"
+            boxShadow: isInRoom ? "0 4px 12px #EF444440" : "0 4px 12px #10B98140"
           }}>
             {isInRoom ? "📞 Выйти" : "☎️ Войти в зал"}
           </button>
         </div>
       </div>
 
-      {/* ===== ДЕМОНСТРАЦИЯ ЭКРАНА ===== */}
-      {/* Локальная демонстрация — видит тот, кто демонстрирует */}
-      {screenSharing && (
-        <div style={{ position: "relative", background: "#0a0a0a", flexShrink: 0 }}>
-          <video
-            ref={screenVideoRef}
-            autoPlay
-            muted
-            style={{ width: "100%", maxHeight: 380, display: "block", objectFit: "contain" }}
-          />
-          <div style={{
-            position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
-            color: "#fff", fontSize: 12, background: "rgba(0,0,0,0.65)",
-            padding: "4px 14px", borderRadius: 20, whiteSpace: "nowrap"
-          }}>
-            Демонстрация экрана · нажмите 🖥️ чтобы остановить
-          </div>
-        </div>
-      )}
-      {/* Удалённая демонстрация — видит другой участник */}
-      {!screenSharing && sharingParticipant && (
-        <div style={{
-          background: "#0a0a0a", flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          height: 120, gap: 14
-        }}>
-          <span style={{ fontSize: 32 }}>🖥️</span>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>
-              {sharingParticipant.full_name?.split(" ").slice(0, 2).join(" ")} демонстрирует экран
-            </div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 4 }}>
-              Трансляция экрана недоступна в браузере без WebRTC-звонка
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===== BODY ===== */}
-      <div style={{ display: "flex", flex: 1, overflow: "hidden", borderRadius: "0 0 16px 16px" }}>
+      {/* ===== ТЕЛО ===== */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
         {/* ===== УЧАСТНИКИ (боковая панель) ===== */}
-        <div className="conf-participants" style={{
-          width: 240, minWidth: 240,
-          background: C.bg,
-          borderRight: `1px solid ${C.border}`,
-          display: "flex", flexDirection: "column",
-          overflow: "hidden"
+        <div style={{
+          width: 220, minWidth: 220, flexShrink: 0,
+          background: C.bg, borderRight: `1px solid ${C.border}`,
+          display: "flex", flexDirection: "column", overflow: "hidden"
         }}>
           <div style={{
-            padding: "14px 18px",
-            fontSize: 11, fontWeight: 700, letterSpacing: 1.2,
-            color: C.textMuted, textTransform: "uppercase",
+            padding: "12px 16px", fontSize: 10, fontWeight: 700,
+            letterSpacing: 1.2, color: C.textMuted, textTransform: "uppercase",
             borderBottom: `1px solid ${C.border}`
-          }}>
-            Участники ({conferenceParticipants.length})
-          </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+          }}>Участники ({conferenceParticipants.length})</div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "6px 0" }}>
             {conferenceParticipants.length === 0 && (
-              <div style={{ padding: "30px 18px", textAlign: "center", color: C.textMuted, fontSize: 13 }}>
+              <div style={{ padding: "24px 16px", textAlign: "center", color: C.textMuted, fontSize: 12 }}>
                 Зал пуст.<br />Нажмите «Войти в зал»
               </div>
             )}
             {conferenceParticipants.map((p: any) => (
               <div key={p.id} style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "10px 18px", transition: "background 0.15s",
-                borderRadius: 8, margin: "0 8px", cursor: "default",
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "8px 14px", borderRadius: 8, margin: "0 6px",
+                cursor: "default"
               }}
               onMouseEnter={e => (e.currentTarget.style.background = C.surface2)}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >
                 <div style={{
-                  width: 38, height: 38, borderRadius: 10,
+                  width: 34, height: 34, borderRadius: 9, flexShrink: 0,
                   background: `linear-gradient(135deg, ${roleColors[p.role] || C.accent}, ${roleColors[p.role] || C.accent}90)`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 13, fontWeight: 700, color: "#fff",
-                  position: "relative", flexShrink: 0
+                  fontSize: 12, fontWeight: 700, color: "#fff", position: "relative"
                 }}>
                   {getInitials(p.full_name)}
                   <div style={{
                     position: "absolute", bottom: -1, right: -1,
-                    width: 12, height: 12, borderRadius: "50%",
+                    width: 10, height: 10, borderRadius: "50%",
                     background: "#10B981", border: `2px solid ${C.bg}`
                   }} />
                 </div>
                 <div style={{ flex: 1, overflow: "hidden" }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {p.full_name?.split(" ").slice(0, 2).join(" ")}
                   </div>
-                  <div style={{ fontSize: 11, color: C.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {p.position || (p.role === "gip" ? "ГИП" : p.role === "lead" ? "Руководитель" : "Инженер")}
+                  <div style={{ fontSize: 10, color: C.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {p.position || (p.role === "gip" ? "ГИП" : p.role === "lead" ? "Рук. отдела" : "Инженер")}
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                  <span style={{ fontSize: 14 }}>{p.micEnabled ? "🎤" : "🔇"}</span>
-                  {p.screenSharing && <span style={{ fontSize: 14 }}>🖥️</span>}
+                <div style={{ display: "flex", gap: 3, flexShrink: 0, fontSize: 13 }}>
+                  <span>{p.micEnabled ? "🎤" : "🔇"}</span>
+                  {p.screenSharing && <span>🖥️</span>}
                 </div>
               </div>
             ))}
@@ -417,31 +506,97 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
         </div>
 
         {/* ===== ОСНОВНАЯ ОБЛАСТЬ ===== */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", background: C.bg }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: C.bg }}>
+
+          {/* ── ДЕМОНСТРАЦИЯ ЭКРАНА ── */}
+          {hasScreenContent && (
+            <div style={{
+              flex: "0 0 60%", background: "#080808", position: "relative",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              overflow: "hidden"
+            }}>
+              {/* Локальный экран (тот кто делится) */}
+              {screenSharing && (
+                <>
+                  <video
+                    ref={screenVideoRef}
+                    autoPlay muted
+                    style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+                  />
+                  <div style={{
+                    position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
+                    color: "#fff", fontSize: 12, background: "rgba(0,0,0,0.7)",
+                    padding: "5px 16px", borderRadius: 20, whiteSpace: "nowrap",
+                    display: "flex", alignItems: "center", gap: 8
+                  }}>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#3B82F6", display: "inline-block", animation: "pulse 1.5s infinite" }} />
+                    Вы демонстрируете экран · нажмите 🖥️ чтобы остановить
+                  </div>
+                </>
+              )}
+              {/* Удалённый экран (принятые фреймы) */}
+              {!screenSharing && remoteScreenData && (
+                <>
+                  <img
+                    src={remoteScreenData}
+                    alt="screen share"
+                    style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+                  />
+                  {sharingParticipant && (
+                    <div style={{
+                      position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
+                      color: "#fff", fontSize: 12, background: "rgba(0,0,0,0.7)",
+                      padding: "5px 16px", borderRadius: 20, whiteSpace: "nowrap",
+                      display: "flex", alignItems: "center", gap: 8
+                    }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981", display: "inline-block" }} />
+                      {sharingParticipant.full_name?.split(" ").slice(0,2).join(" ")} демонстрирует экран
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ── Если в зале кто-то делится, но фрейм ещё не пришёл ── */}
+          {!screenSharing && sharingParticipant && !remoteScreenData && (
+            <div style={{
+              flex: "0 0 40%", background: "#080808",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12
+            }}>
+              <span style={{ fontSize: 48 }}>🖥️</span>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>
+                {sharingParticipant.full_name?.split(" ").slice(0, 2).join(" ")} запускает демонстрацию...
+              </div>
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>Подождите пару секунд</div>
+            </div>
+          )}
 
           {/* Табы */}
-          <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, padding: "0 20px" }}>
+          <div style={{
+            display: "flex", flexShrink: 0,
+            borderBottom: `1px solid ${C.border}`, padding: "0 16px"
+          }}>
             {(["chat", "participants"] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)} style={{
-                padding: "12px 20px", fontSize: 13, fontWeight: 600,
+                padding: "10px 18px", fontSize: 13, fontWeight: 600,
                 color: activeTab === tab ? C.accent : C.textMuted,
                 background: "none", border: "none", cursor: "pointer",
                 borderBottom: activeTab === tab ? `2px solid ${C.accent}` : "2px solid transparent",
-                transition: "all 0.2s"
               }}>
                 {tab === "chat" ? "💬 Обсуждение" : "👥 Участники"}
               </button>
             ))}
           </div>
 
-          {/* ===== ЧАТ ===== */}
+          {/* ── ЧАТ ── */}
           {activeTab === "chat" && (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-              <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+              <div style={{ flex: 1, overflowY: "auto", padding: "12px 18px" }}>
                 {msgs.filter(m => m.type !== 'call_invite').length === 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: C.textMuted, gap: 12 }}>
-                    <span style={{ fontSize: 48 }}>💬</span>
-                    <span style={{ fontSize: 14 }}>Начните совещание по проекту</span>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: C.textMuted, gap: 10 }}>
+                    <span style={{ fontSize: 40 }}>💬</span>
+                    <span style={{ fontSize: 13 }}>Начните совещание по проекту</span>
                   </div>
                 )}
                 {msgs.filter(m => m.type !== 'call_invite').map((m: any) => {
@@ -450,40 +605,36 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                   const time = m.created_at ? new Date(m.created_at).toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" }) : "";
                   const rawText = String(m.text || "");
                   const textLines = rawText.split("\n");
-                  const fileUrl = textLines.find((line: string) => line.startsWith("http")) || "";
+                  const fileUrl = textLines.find((l: string) => l.startsWith("http")) || "";
                   const isFileMsg = textLines[0]?.startsWith("📎 ") && !!fileUrl;
                   const fileName = isFileMsg ? textLines[0].replace(/^📎\s*/, "") : "";
                   return (
-                    <div key={m.id} style={{ display: "flex", gap: 12, marginBottom: 16, flexDirection: isMe ? "row-reverse" : "row" }}>
+                    <div key={m.id} style={{ display: "flex", gap: 10, marginBottom: 14, flexDirection: isMe ? "row-reverse" : "row" }}>
                       <div style={{
-                        width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+                        width: 32, height: 32, borderRadius: 9, flexShrink: 0,
                         background: `linear-gradient(135deg, ${roleColors[mu?.role] || C.accent}, ${roleColors[mu?.role] || C.accent}90)`,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 12, fontWeight: 700, color: "#fff"
-                      }}>
-                        {mu ? getInitials(mu.full_name) : "?"}
-                      </div>
+                        fontSize: 11, fontWeight: 700, color: "#fff"
+                      }}>{mu ? getInitials(mu.full_name) : "?"}</div>
                       <div style={{
-                        maxWidth: "70%",
+                        maxWidth: "72%",
                         background: isMe ? `linear-gradient(135deg, ${C.accent}, #F59E0B)` : C.surface2,
-                        borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                        padding: "10px 16px",
+                        borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                        padding: "9px 14px"
                       }}>
-                        <div style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "baseline" }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: isMe ? "#fff" : C.text }}>
+                        <div style={{ display: "flex", gap: 7, marginBottom: 3, alignItems: "baseline" }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: isMe ? "#fff" : C.text }}>
                             {mu?.full_name?.split(" ").slice(0, 2).join(" ") || "Пользователь"}
                           </span>
                           <span style={{ fontSize: 10, color: isMe ? "#ffffff90" : C.textMuted }}>{time}</span>
                         </div>
                         {isFileMsg ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                            <div style={{ fontSize: 13, color: isMe ? "#fff" : C.textDim, lineHeight: 1.5, wordBreak: "break-word" }}>{fileName}</div>
+                          <div>
+                            <div style={{ fontSize: 13, color: isMe ? "#fff" : C.textDim, wordBreak: "break-word" }}>{fileName}</div>
                             <a href={fileUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: isMe ? "#fff" : C.accent, textDecoration: "underline" }}>Открыть файл</a>
                           </div>
                         ) : (
-                          <div style={{ fontSize: 13, color: isMe ? "#fff" : C.textDim, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                            {rawText}
-                          </div>
+                          <div style={{ fontSize: 13, color: isMe ? "#fff" : C.textDim, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{rawText}</div>
                         )}
                       </div>
                     </div>
@@ -492,72 +643,70 @@ export function ConferenceRoom({ project, currentUser, appUsers, msgs, C, token,
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Ввод сообщения */}
+              {/* Поле ввода */}
               <div style={{
-                padding: "12px 24px", borderTop: `1px solid ${C.border}`,
-                display: "flex", gap: 10, alignItems: "center", background: C.surface
+                padding: "10px 16px", borderTop: `1px solid ${C.border}`,
+                display: "flex", gap: 8, alignItems: "center", background: C.surface, flexShrink: 0
               }}>
                 <input ref={fileInputRef} type="file" style={{ display: "none" }} onChange={handleAttachFile} />
-                <button onClick={() => fileInputRef.current?.click()} style={{
-                  width: 38, height: 38, borderRadius: 10, background: C.surface2,
+                <button onClick={() => fileInputRef.current?.click()} disabled={uploading} style={{
+                  width: 36, height: 36, borderRadius: 9, background: C.surface2,
                   border: `1px solid ${C.border}`, color: C.textMuted, fontSize: 16, cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center"
-                }} title={uploading ? "Загрузка файла..." : "Прикрепить файл"} disabled={uploading}>📎</button>
+                }} title="Прикрепить файл">📎</button>
                 <input
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && void handleSend()}
                   placeholder="Написать сообщение..."
                   style={{
-                    flex: 1, padding: "10px 16px", borderRadius: 12,
+                    flex: 1, padding: "9px 14px", borderRadius: 10,
                     border: `1px solid ${C.border}`, background: C.bg,
-                    color: C.text, fontSize: 13, outline: "none", transition: "border-color 0.2s"
+                    color: C.text, fontSize: 13, outline: "none"
                   }}
                 />
                 <button onClick={() => void handleSend()} style={{
-                  width: 38, height: 38, borderRadius: 10,
+                  width: 36, height: 36, borderRadius: 9,
                   background: `linear-gradient(135deg, ${C.accent}, #F59E0B)`,
                   border: "none", color: "#fff", fontSize: 16, cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: `0 4px 12px ${C.accent}40`, transition: "transform 0.15s"
+                  boxShadow: `0 4px 12px ${C.accent}40`
                 }}>↑</button>
               </div>
             </div>
           )}
 
-          {/* ===== УЧАСТНИКИ (вкладка) ===== */}
+          {/* ── УЧАСТНИКИ (вкладка) ── */}
           {activeTab === "participants" && (
-            <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+            <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
               {conferenceParticipants.length === 0 ? (
-                <div style={{ textAlign: "center", padding: 60, color: C.textMuted }}>
-                  <span style={{ fontSize: 48, display: "block", marginBottom: 12 }}>👥</span>
+                <div style={{ textAlign: "center", padding: 48, color: C.textMuted }}>
+                  <span style={{ fontSize: 42, display: "block", marginBottom: 10 }}>👥</span>
                   Никого нет в зале
                 </div>
-              ) : (
-                conferenceParticipants.map((p: any) => (
-                  <div key={p.id} className="card" style={{ padding: "16px 20px", marginBottom: 12, display: "flex", alignItems: "center", gap: 16 }}>
-                    <div style={{
-                      width: 48, height: 48, borderRadius: 14,
-                      background: `linear-gradient(135deg, ${roleColors[p.role] || C.accent}, ${roleColors[p.role] || C.accent}90)`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 16, fontWeight: 700, color: "#fff", position: "relative"
-                    }}>
-                      {getInitials(p.full_name)}
-                      <div style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#10B981", border: `3px solid ${C.surface}` }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{p.full_name}</div>
-                      <div style={{ fontSize: 12, color: C.textMuted }}>
-                        {p.position || (p.role === "gip" ? "Главный Инженер Проекта" : p.role === "lead" ? "Руководитель отдела" : "Инженер")}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <span style={{ fontSize: 18 }}>{p.micEnabled ? "🎤" : "🔇"}</span>
-                      {p.screenSharing && <span style={{ fontSize: 18 }}>🖥️</span>}
+              ) : conferenceParticipants.map((p: any) => (
+                <div key={p.id} className="card" style={{ padding: "14px 18px", marginBottom: 10, display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 12,
+                    background: `linear-gradient(135deg, ${roleColors[p.role] || C.accent}, ${roleColors[p.role] || C.accent}90)`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 15, fontWeight: 700, color: "#fff", position: "relative"
+                  }}>
+                    {getInitials(p.full_name)}
+                    <div style={{ position: "absolute", bottom: -2, right: -2, width: 12, height: 12, borderRadius: "50%", background: "#10B981", border: `3px solid ${C.surface}` }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{p.full_name}</div>
+                    <div style={{ fontSize: 12, color: C.textMuted }}>
+                      {p.position || (p.role === "gip" ? "Главный Инженер Проекта" : p.role === "lead" ? "Руководитель отдела" : "Инженер")}
                     </div>
                   </div>
-                ))
-              )}
+                  <div style={{ display: "flex", gap: 6, fontSize: 18 }}>
+                    <span>{p.micEnabled ? "🎤" : "🔇"}</span>
+                    {p.screenSharing && <span>🖥️</span>}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
