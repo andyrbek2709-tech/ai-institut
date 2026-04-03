@@ -86,10 +86,12 @@ const GanttChart: React.FC<GanttChartProps> = ({ tasks, activeProject, getUserBy
             <div key={dept}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, marginTop: 14 }}>{dept}</div>
               {dTasks.map(task => {
-                const startD = parseDate(task.created_at);
-                const startT = startD ? startD.getTime() : minT;
                 const endD = parseDate(task.deadline);
-                const endT = endD ? endD.getTime() : startT + 14 * 86400000;
+                const endT = endD ? endD.getTime() : now + 14 * 86400000;
+                // Use created_at as start only if it's before deadline; otherwise use deadline - 14 days
+                const createdD = parseDate(task.created_at);
+                const createdT = createdD ? createdD.getTime() : null;
+                const startT = (createdT && createdT < endT) ? createdT : endT - 14 * 86400000;
 
                 const isOverdue = endT < now && task.status !== 'done';
                 const barL = pct(startT), barW = Math.max(0.5, pct(endT) - barL);

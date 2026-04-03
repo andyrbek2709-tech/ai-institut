@@ -146,7 +146,7 @@ export const globalSearch = async (query: string, token?: string) => {
   const v = encodeURIComponent(`*${normalized}*`);
 
   const [projects, tasks, drawings, reviews] = await Promise.all([
-    get(`projects?select=id,name,code,status&or=(name.ilike.${v},code.ilike.${v})&order=updated_at.desc.nullslast&limit=10`, token),
+    get(`projects?select=id,name,code,status&or=(name.ilike.${v},code.ilike.${v})&order=id.desc&limit=10`, token),
     get(`tasks?select=id,project_id,name,dept,status,priority&name=ilike.${v}&order=id.desc&limit=10`, token),
     get(`drawings?select=id,project_id,code,title,discipline,status,revision&or=(title.ilike.${v},code.ilike.${v})&order=updated_at.desc.nullslast&limit=10`, token),
     get(`reviews?select=id,project_id,drawing_id,title,status,severity&title=ilike.${v}&order=updated_at.desc.nullslast&limit=10`, token),
