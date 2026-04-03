@@ -116,6 +116,7 @@ export function GlobalSearch({ token, C, onSelect }: GlobalSearchProps) {
               e.preventDefault();
               handleEnterSelect();
             } else if (e.key === 'Escape') {
+              setQuery('');
               setIsOpen(false);
               setSelectedIndex(-1);
             }

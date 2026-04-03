@@ -64,7 +64,7 @@ export default function App() {
   const [newProject, setNewProject] = useState<any>({ name: "", code: "", deadline: "", status: "active", depts: [] });
   const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
-  const [newTask, setNewTask] = useState({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "" });
+  const [newTask, setNewTask] = useState({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" });
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskComment, setTaskComment] = useState("");
@@ -584,9 +584,9 @@ export default function App() {
     if (!newTask.name || !activeProject) return;
     setSaving(true);
     const leadUser = getUserById(newTask.assigned_to);
-    await createProjectTask({ name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline || null, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id }, token!);
+    await createProjectTask({ name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline || null, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id, description: newTask.description || null }, token!);
     addNotification(`Задача "${newTask.name}" создана${leadUser ? ` → ${leadUser.full_name}` : ''}`, 'success');
-    setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "" }); setShowNewTask(false); setSaving(false); loadTasks(activeProject.id);
+    setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setShowNewTask(false); setSaving(false); loadTasks(activeProject.id);
   };
   
   const createAssignment = async () => {
@@ -888,6 +888,7 @@ export default function App() {
         <Modal title="Новая задача" onClose={() => setShowNewTask(false)} C={C}>
           <div className="form-stack">
             <Field label="НАЗВАНИЕ *" C={C}><input value={newTask.name} onChange={e => setNewTask({ ...newTask, name: e.target.value })} placeholder="Расчёт нагрузок" style={getInp(C)} /></Field>
+            <Field label="ОПИСАНИЕ" C={C}><textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} placeholder="Подробное описание задачи..." rows={3} style={{ ...getInp(C), resize: 'vertical', fontFamily: 'inherit' }} /></Field>
             <Field label="НАЗНАЧИТЬ РУКОВОДИТЕЛЮ" C={C}><select value={newTask.assigned_to} onChange={e => { const lead = appUsers.find(u => String(u.id) === e.target.value); setNewTask({ ...newTask, assigned_to: e.target.value, dept_id: lead?.dept_id || "" }); }} style={getInp(C)}><option value="">— Выбрать —</option>{myLeads.map(u => <option key={u.id} value={u.id}>{u.full_name} ({getDeptName(u.dept_id)})</option>)}</select></Field>
             <Field label="ЧЕРТЕЖ (ОПЦИОНАЛЬНО)" C={C}>
               <select value={newTask.drawing_id} onChange={e => setNewTask({ ...newTask, drawing_id: e.target.value })} style={getInp(C)}>
@@ -941,7 +942,12 @@ export default function App() {
                 🔗 Предыдущая ревизия: <span style={{ color: C.accent, cursor: 'pointer' }} onClick={() => { const p = allTasks.find(t => t.id === selectedTask.parent_task_id); if (p) setSelectedTask(p); }}>#{String(selectedTask.parent_task_id).slice(0, 4)}</span>
               </div>
             )}
-            {selectedTask.assigned_to && (() => { const u = getUserById(selectedTask.assigned_to); return u ? (<div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}><AvatarComp user={u} size={28} C={C} /><span style={{ color: C.textDim, fontWeight: 500 }}>{u.full_name}</span><span style={{ fontSize: 11, color: C.textMuted }}>{u.position || roleLabels[u.role]}</span></div>) : null; })()}
+            {(() => {
+              if (!selectedTask.assigned_to) return <div style={{ fontSize: 12, color: C.textMuted }}>👤 Исполнитель не назначен</div>;
+              const u = getUserById(selectedTask.assigned_to);
+              if (u) return (<div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}><AvatarComp user={u} size={28} C={C} /><span style={{ color: C.textDim, fontWeight: 500 }}>{u.full_name}</span><span style={{ fontSize: 11, color: C.textMuted }}>{u.position || roleLabels[u.role]}</span></div>);
+              return <div style={{ fontSize: 12, color: C.textMuted }}>👤 Исполнитель: ID {String(selectedTask.assigned_to).slice(0, 8)}…</div>;
+            })()}
             {selectedTask.drawing_id && (() => {
               const d = drawings.find(dr => String(dr.id) === String(selectedTask.drawing_id));
               return d ? (
@@ -952,6 +958,7 @@ export default function App() {
                 </div>
               ) : null;
             })()}
+            {selectedTask.description && (<div style={{ background: C.surface2, borderRadius: 10, padding: 14 }}><div style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Описание</div><div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>{selectedTask.description}</div></div>)}
             {selectedTask.comment && (<div style={{ background: C.red + "10", border: `1px solid ${C.red}25`, borderRadius: 10, padding: 14 }}><div style={{ fontSize: 10, color: C.red, fontWeight: 600, marginBottom: 4 }}>КОММЕНТАРИЙ К ДОРАБОТКЕ</div><div style={{ fontSize: 13, color: C.textDim }}>{selectedTask.comment}</div></div>)}
             {workflowBlockInfo && (
               <div style={{ background: C.red + "12", border: `1px solid ${C.red}30`, borderRadius: 10, padding: 12 }}>
@@ -977,6 +984,24 @@ export default function App() {
                 >
                   <option value="">— Без привязки —</option>
                   {drawings.map((d) => <option key={d.id} value={d.id}>{d.code} — {d.title}</option>)}
+                </select>
+              </Field>
+            )}
+            {isGip && (
+              <Field label="СТАТУС ЗАДАЧИ (ГИП)" C={C}>
+                <select value={selectedTask.status} onChange={async e => {
+                  const newStatus = e.target.value;
+                  await patch(`tasks?id=eq.${selectedTask.id}`, { status: newStatus }, token!);
+                  setSelectedTask({ ...selectedTask, status: newStatus });
+                  if (activeProject) loadTasks(activeProject.id);
+                  addNotification(`Статус задачи → "${statusMap[newStatus]?.label || newStatus}"`, 'info');
+                }} style={getInp(C)}>
+                  <option value="todo">В очереди</option>
+                  <option value="inprogress">В работе</option>
+                  <option value="review_lead">На проверке</option>
+                  <option value="review_gip">Проверка ГИПа</option>
+                  <option value="revision">Доработка</option>
+                  <option value="done">Завершена</option>
                 </select>
               </Field>
             )}
