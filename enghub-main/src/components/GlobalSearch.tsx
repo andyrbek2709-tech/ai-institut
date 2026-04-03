@@ -11,6 +11,7 @@ export function GlobalSearch({ token, C, onSelect }: GlobalSearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any>(null);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -57,6 +58,7 @@ export function GlobalSearch({ token, C, onSelect }: GlobalSearchProps) {
     }
     const timer = setTimeout(async () => {
       setSearching(true);
+      setSearchError(false);
       try {
         const data = await globalSearch(query, token);
         setResults(data);
@@ -64,6 +66,8 @@ export function GlobalSearch({ token, C, onSelect }: GlobalSearchProps) {
         setSelectedIndex(-1);
       } catch (e) {
         console.error(e);
+        setSearchError(true);
+        setResults(null);
       }
       setSearching(false);
     }, 400);
@@ -220,6 +224,9 @@ export function GlobalSearch({ token, C, onSelect }: GlobalSearchProps) {
           })}
           {query.trim() && results && Object.values(results).every((arr: any) => arr.length === 0) && (
             <div style={{ padding: 20, textAlign: 'center', color: C.textMuted, fontSize: 13 }}>Ничего не найдено</div>
+          )}
+          {query.trim() && searchError && (
+            <div style={{ padding: 20, textAlign: 'center', color: C.textMuted, fontSize: 13 }}>Ошибка поиска</div>
           )}
           {!query.trim() && recentSearches.length === 0 && (
             <div style={{ padding: 20, textAlign: 'center', color: C.textMuted, fontSize: 13 }}>Введите запрос для глобального поиска</div>

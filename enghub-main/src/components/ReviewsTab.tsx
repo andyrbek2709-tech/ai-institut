@@ -9,6 +9,7 @@ type Props = {
   setNewReview: React.Dispatch<React.SetStateAction<{ title: string; severity: string; drawing_id: string }>>;
   drawings: any[];
   reviews: any[];
+  appUsers: any[];
   submitReview: () => void;
   changeReviewStatus: (reviewId: string, status: string) => void;
 };
@@ -21,6 +22,7 @@ export function ReviewsTab({
   setNewReview,
   drawings,
   reviews,
+  appUsers,
   submitReview,
   changeReviewStatus,
 }: Props) {
@@ -47,11 +49,20 @@ export function ReviewsTab({
         {reviews.length === 0 && <div className="empty-state">Замечаний пока нет</div>}
         {reviews.map((r) => {
           const d = drawings.find((dr) => String(dr.id) === String(r.drawing_id));
+          const author = appUsers.find((u: any) => u.id === r.author_id);
+          const createdDate = r.created_at ? new Date(r.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null;
           return (
             <div key={r.id} className="task-row" style={{ borderLeft: `4px solid ${r.severity === 'critical' ? C.red : r.severity === 'major' ? C.orange : C.blue}` }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, color: C.text }}>{r.title}</div>
                 <div style={{ fontSize: 12, color: C.textMuted }}>{d ? `${d.code} — ${d.title}` : 'Без чертежа'}</div>
+                {(author || createdDate) && (
+                  <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+                    {author && <span>{author.full_name}</span>}
+                    {author && createdDate && <span> · </span>}
+                    {createdDate && <span>{createdDate}</span>}
+                  </div>
+                )}
               </div>
               <span className="badge">{{ minor: 'Незначительное', major: 'Существенное', critical: 'Критическое' }[r.severity] || r.severity}</span>
               <span style={{ fontSize: 12, color: C.textMuted }}>{{ open: 'Открыто', in_progress: 'В работе', resolved: 'Устранено', rejected: 'Отклонено' }[r.status || 'open'] || r.status}</span>

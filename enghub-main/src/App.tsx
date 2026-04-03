@@ -51,6 +51,8 @@ export default function App() {
   const [dupDecisions, setDupDecisions] = useState<Record<string, 'overwrite' | 'skip'>>({});
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [showArchive, setShowArchive] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [archivedProjects, setArchivedProjects] = useState<any[]>([]);
   const [sideTab, setSideTab] = useState(() => { const s = localStorage.getItem('enghub_sidetab'); return (s && s !== 'conference') ? s : 'tasks'; });
   const [chatInput, setChatInput] = useState("");
@@ -109,6 +111,12 @@ export default function App() {
   useEffect(() => { document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light'); }, [dark]);
   useEffect(() => { localStorage.setItem('enghub_screen', screen); }, [screen]);
   useEffect(() => { localStorage.setItem('enghub_sidetab', sideTab); }, [sideTab]);
+  useEffect(() => {
+    if (!showUserMenu) return;
+    const handler = (e: MouseEvent) => { if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setShowUserMenu(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showUserMenu]);
 
   // Calculation Module States
   const [calcFilter, setCalcFilter] = useState(""); // active category accordion
@@ -162,10 +170,21 @@ export default function App() {
   };
   // Keep loadTasks as alias
   const loadTasks = loadAllTasks;
-  const loadMessages = async (pid: number, taskId?: number) => { 
-    const query = taskId ? `messages?task_id=eq.${taskId}&order=created_at` : `messages?project_id=eq.${pid}&task_id=is.null&order=created_at`;
-    const data = await get(query, token!); 
-    if (Array.isArray(data)) setMsgs(data); 
+  const loadMessages = async (pid: number, taskId?: number) => {
+    const query = taskId
+      ? `messages?task_id=eq.${taskId}&order=created_at`
+      : `messages?project_id=eq.${pid}&task_id=is.null&order=created_at`;
+    const data = await get(query, token!);
+    if (!Array.isArray(data)) return;
+    if (taskId) {
+      // Merge task messages into msgs without wiping project messages
+      setMsgs(prev => {
+        const withoutThisTask = prev.filter(m => String(m.task_id) !== String(taskId));
+        return [...withoutThisTask, ...data];
+      });
+    } else {
+      setMsgs(data);
+    }
   };
   const loadDrawings = async (pid: number) => {
     const data = await listDrawings(pid, token!);
@@ -301,10 +320,10 @@ export default function App() {
     if (!finalTxt.trim() || !activeProject || !currentUserData?.id) return false;
     const normalizedType = ["call_start", "call_invite"].includes(type) ? type : "text";
     try {
-      const created = await post("messages", { 
-        text: finalTxt, 
-        user_id: currentUserData?.id, 
-        project_id: activeProject.id, 
+      const created = await post("messages", {
+        text: finalTxt,
+        user_id: String(currentUserData?.id),
+        project_id: activeProject.id,
         type: normalizedType,
         task_id: taskId || null
       }, token!);
@@ -1142,12 +1161,22 @@ export default function App() {
               </div>
             )}
             {currentUserData && (
-              <div className="topbar-user">
-                <AvatarComp user={currentUserData} size={34} C={C} />
-                <div className="topbar-user-info">
-                  <div className="topbar-user-name">{currentUserData.full_name}</div>
-                  <div className="topbar-user-role">{currentUserData.position || roleLabels[role]}</div>
+              <div ref={userMenuRef} style={{ position: 'relative' }}>
+                <div className="topbar-user" style={{ cursor: 'pointer' }} onClick={() => setShowUserMenu(v => !v)}>
+                  <AvatarComp user={currentUserData} size={34} C={C} />
+                  <div className="topbar-user-info">
+                    <div className="topbar-user-name">{currentUserData.full_name}</div>
+                    <div className="topbar-user-role">{currentUserData.position || roleLabels[role]}</div>
+                  </div>
                 </div>
+                {showUserMenu && (
+                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', minWidth: 160, zIndex: 2000, overflow: 'hidden' }}>
+                    <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}`, fontSize: 12, color: C.textMuted }}>{currentUserData.full_name}</div>
+                    <button onClick={() => { setShowUserMenu(false); handleLogout(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
+                      ⏻ Выйти из системы
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1178,26 +1207,28 @@ export default function App() {
               {(() => {
                 const now = new Date();
                 const baseTasks = (isGip || isAdmin) ? allTasks : tasks;
-                const overdueProjects = projects.filter(p => p.deadline && new Date(p.deadline) < now).length;
+                const overdueProjects = projects.filter(p => { const dl = parseDeadline(p.deadline); return dl && dl < now && p.status !== 'done' && !p.archived; }).length;
                 return (
                   <div className="stats-row">
                     {((isGip || isAdmin) ? [
-                      { label: "Проектов", value: projects.length, color: C.accent },
-                      { label: "Активных задач", value: allTasks.filter(t => t.status !== "done").length, color: C.blue },
-                      { label: "На проверке ГИПа", value: allTasks.filter(t => t.status === "review_gip").length, color: C.purple },
-                      { label: "Просроченных проектов", value: overdueProjects, color: overdueProjects > 0 ? C.red : C.green },
+                      { label: "Проектов", value: projects.length, color: C.accent, onClick: () => {} },
+                      { label: "Активных задач", value: allTasks.filter(t => t.status !== "done").length, color: C.blue, onClick: () => setSideTab('tasks') },
+                      { label: "На проверке ГИПа", value: allTasks.filter(t => t.status === "review_gip").length, color: C.purple, onClick: () => setSideTab('tasks') },
+                      { label: "Просроченных проектов", value: overdueProjects, color: overdueProjects > 0 ? C.red : C.green, onClick: () => {} },
                     ] : isLead ? [
-                      { label: "Задач в отделе", value: baseTasks.length, color: C.accent },
-                      { label: "В работе", value: baseTasks.filter(t => t.status === "inprogress").length, color: C.blue },
-                      { label: "На проверке", value: baseTasks.filter(t => t.status === "review_lead" || t.status === "review_gip").length, color: C.purple },
-                      { label: "Завершено", value: baseTasks.filter(t => t.status === "done").length, color: C.green },
+                      { label: "Задач в отделе", value: baseTasks.length, color: C.accent, onClick: () => setSideTab('tasks') },
+                      { label: "В работе", value: baseTasks.filter(t => t.status === "inprogress").length, color: C.blue, onClick: () => setSideTab('tasks') },
+                      { label: "На проверке", value: baseTasks.filter(t => t.status === "review_lead" || t.status === "review_gip").length, color: C.purple, onClick: () => setSideTab('tasks') },
+                      { label: "Завершено", value: baseTasks.filter(t => t.status === "done").length, color: C.green, onClick: () => setSideTab('tasks') },
                     ] : [
-                      { label: "Мои задачи", value: baseTasks.length, color: C.accent },
-                      { label: "В работе", value: baseTasks.filter(t => t.status === "inprogress").length, color: C.blue },
-                      { label: "На проверке", value: baseTasks.filter(t => t.status === "review_lead" || t.status === "review_gip").length, color: C.purple },
-                      { label: "Завершено", value: baseTasks.filter(t => t.status === "done").length, color: C.green },
+                      { label: "Мои задачи", value: baseTasks.length, color: C.accent, onClick: () => setSideTab('tasks') },
+                      { label: "В работе", value: baseTasks.filter(t => t.status === "inprogress").length, color: C.blue, onClick: () => setSideTab('tasks') },
+                      { label: "На проверке", value: baseTasks.filter(t => t.status === "review_lead" || t.status === "review_gip").length, color: C.purple, onClick: () => setSideTab('tasks') },
+                      { label: "Завершено", value: baseTasks.filter(t => t.status === "done").length, color: C.green, onClick: () => setSideTab('tasks') },
                     ]).map(s => (
-                      <div key={s.label} className="stat-card">
+                      <div key={s.label} className="stat-card" onClick={s.onClick} style={{ cursor: 'pointer' }}
+                        onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 4px 16px ${s.color}30`)}
+                        onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}>
                         <div className="stat-card-header"><span className="stat-card-dot" style={{ background: s.color }} /><span className="stat-card-label">{s.label}</span></div>
                         <div className="stat-card-value" style={{ color: s.color }}>{s.value}</div>
                       </div>
@@ -1264,7 +1295,8 @@ export default function App() {
                       const now = new Date();
                       const dl = parseDeadline(p.deadline);
                       const daysLeft = dl ? Math.ceil((dl.getTime() - now.getTime()) / 86400000) : null;
-                      const color = daysLeft === null ? C.textMuted : daysLeft < 0 ? C.red : daysLeft < 14 ? C.orange : C.green;
+                      const isDoneOrArchived = p.status === 'done' || p.archived;
+                      const color = daysLeft === null ? C.textMuted : (daysLeft < 0 && !isDoneOrArchived) ? C.red : daysLeft < 14 ? C.orange : C.green;
                       const label = daysLeft === null ? '—' : daysLeft < 0 ? `Просрочен ${-daysLeft} д.` : daysLeft === 0 ? 'Сегодня!' : `${daysLeft} дн.`;
                       const progress = getAutoProgress(p.id);
                       return (
@@ -1492,7 +1524,7 @@ export default function App() {
               )}
 
               {/* Tabs */}
-              <div className="tab-strip" style={{ flexShrink: 0 }}>
+              <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
                 {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","meetings","timelog"].map(t => (
                   <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
                     {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : "🗣 Совещание"}
@@ -1576,6 +1608,7 @@ export default function App() {
                   setNewReview={setNewReview}
                   drawings={drawings}
                   reviews={reviews}
+                  appUsers={appUsers}
                   submitReview={submitReview}
                   changeReviewStatus={changeReviewStatus}
                 />
@@ -1619,14 +1652,15 @@ export default function App() {
 
               {/* ── MEETINGS ── */}
               {sideTab === "meetings" && (
-                <MeetingsPanel 
-                  projectId={activeProject.id} 
+                <MeetingsPanel
+                  projectId={activeProject.id}
                   projectName={activeProject.name}
-                  isGip={isGip} 
-                  isLead={isLead} 
-                  C={C} 
-                  token={token!} 
+                  isGip={isGip}
+                  isLead={isLead}
+                  C={C}
+                  token={token!}
                   userId={currentUserData?.id}
+                  appUsers={appUsers}
                   addNotification={addNotification}
                 />
               )}

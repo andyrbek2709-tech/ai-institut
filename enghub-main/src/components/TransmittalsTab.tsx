@@ -17,6 +17,13 @@ type Props = {
   onExportPdf: (transmittal: any) => void;
 };
 
+const TRANSMITTAL_STATUS_LABELS: Record<string, string> = {
+  draft: 'Черновик',
+  issued: 'Выпущен',
+  delivered: 'Доставлен',
+  cancelled: 'Отменён',
+};
+
 export function TransmittalsTab({
   C,
   isLead,
@@ -50,17 +57,17 @@ export function TransmittalsTab({
               <button onClick={() => onExportPdf(t)} title="Экспорт в PDF" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.textMuted, padding: '0 4px' }}>🖨</button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="badge">{t.status || 'draft'}</span>
+              <span className="badge">{TRANSMITTAL_STATUS_LABELS[t.status || 'draft'] || t.status || 'Черновик'}</span>
               {(isLead || isGip) && (
                 <select
                   value={t.status || 'draft'}
                   onChange={(e) => changeTransmittalStatus(t.id, e.target.value)}
                   style={{ ...getInp(C), height: 30, fontSize: 12, width: 150 }}
                 >
-                  <option value="draft">draft</option>
-                  <option value="issued">issued</option>
-                  <option value="delivered">delivered</option>
-                  <option value="cancelled">cancelled</option>
+                  <option value="draft">Черновик</option>
+                  <option value="issued">Выпущен</option>
+                  <option value="delivered">Доставлен</option>
+                  <option value="cancelled">Отменён</option>
                 </select>
               )}
             </div>

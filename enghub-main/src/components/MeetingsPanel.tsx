@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { listMeetings, createMeeting as apiCreateMeeting } from '../api/supabase';
 import { Modal, Field, getInp } from './ui';
 import { exportMeetingPdf } from '../utils/export';
@@ -11,23 +11,39 @@ interface MeetingsPanelProps {
   C: any;
   token: string;
   userId: string;
+  appUsers: any[];
   addNotification: (msg: string, type: any) => void;
 }
 
-const MeetingsPanel: React.FC<MeetingsPanelProps> = ({ 
-  projectId, 
+const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
+  projectId,
   projectName,
-  isGip, 
-  isLead, 
-  C, 
-  token, 
+  isGip,
+  isLead,
+  C,
+  token,
   userId,
-  addNotification 
+  appUsers,
+  addNotification
 }) => {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [showNewMeeting, setShowNewMeeting] = useState(false);
   const [newMeeting, setNewMeeting] = useState({ title: '', meeting_date: '', participants: '', agenda: '', decisions: '' });
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+  const [participantSearch, setParticipantSearch] = useState('');
+  const [showParticipantDrop, setShowParticipantDrop] = useState(false);
+  const participantRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (participantRef.current && !participantRef.current.contains(e.target as Node)) {
+        setShowParticipantDrop(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const loadMeetings = async () => {
     const data = await listMeetings(projectId, token);
@@ -42,8 +58,10 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
     if (!newMeeting.title) return;
     setSaving(true);
     try {
-      await apiCreateMeeting({ ...newMeeting, project_id: projectId, created_by: userId }, token);
+      const participantsStr = selectedParticipants.length > 0 ? selectedParticipants.join(', ') : newMeeting.participants;
+      await apiCreateMeeting({ ...newMeeting, participants: participantsStr, project_id: projectId, created_by: userId }, token);
       setNewMeeting({ title: '', meeting_date: '', participants: '', agenda: '', decisions: '' });
+      setSelectedParticipants([]);
       setShowNewMeeting(false);
       await loadMeetings();
       addNotification('Протокол создан', 'success');
@@ -53,6 +71,11 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
       setSaving(false);
     }
   };
+
+  const filteredUsers = appUsers.filter(u =>
+    u.full_name?.toLowerCase().includes(participantSearch.toLowerCase()) &&
+    !selectedParticipants.includes(u.full_name)
+  );
 
   return (
     <div className="screen-fade">
@@ -84,7 +107,44 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
           <div className="form-stack">
             <Field label="ТЕМА *" C={C}><input value={newMeeting.title} onChange={e => setNewMeeting({...newMeeting, title: e.target.value})} placeholder="Совещание по проекту" style={getInp(C)} /></Field>
             <Field label="ДАТА" C={C}><input type="date" value={newMeeting.meeting_date} onChange={e => setNewMeeting({...newMeeting, meeting_date: e.target.value})} style={getInp(C)} /></Field>
-            <Field label="УЧАСТНИКИ" C={C}><input value={newMeeting.participants} onChange={e => setNewMeeting({...newMeeting, participants: e.target.value})} placeholder="Иванов, Петров, Сидоров" style={getInp(C)} /></Field>
+            <Field label="УЧАСТНИКИ" C={C}>
+              <div ref={participantRef} style={{ position: 'relative' }}>
+                <div
+                  style={{ ...getInp(C), minHeight: 38, display: 'flex', flexWrap: 'wrap', gap: 4, cursor: 'text', padding: '4px 8px' }}
+                  onClick={() => setShowParticipantDrop(true)}
+                >
+                  {selectedParticipants.map(name => (
+                    <span key={name} style={{ background: C.accent + '20', color: C.accent, borderRadius: 6, padding: '2px 8px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {name}
+                      <span style={{ cursor: 'pointer', fontWeight: 700 }} onClick={e => { e.stopPropagation(); setSelectedParticipants(prev => prev.filter(n => n !== name)); }}>×</span>
+                    </span>
+                  ))}
+                  <input
+                    value={participantSearch}
+                    onChange={e => { setParticipantSearch(e.target.value); setShowParticipantDrop(true); }}
+                    onFocus={() => setShowParticipantDrop(true)}
+                    placeholder={selectedParticipants.length === 0 ? 'Выбрать участников...' : ''}
+                    style={{ border: 'none', outline: 'none', background: 'transparent', color: C.text, fontSize: 13, flex: 1, minWidth: 80 }}
+                  />
+                </div>
+                {showParticipantDrop && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, zIndex: 100, maxHeight: 180, overflowY: 'auto', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', marginTop: 4 }}>
+                    {filteredUsers.length === 0
+                      ? <div style={{ padding: '10px 14px', fontSize: 12, color: C.textMuted }}>Нет совпадений</div>
+                      : filteredUsers.map(u => (
+                        <div key={u.id} style={{ padding: '8px 14px', fontSize: 13, color: C.text, cursor: 'pointer' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = C.surface2)}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                          onClick={() => { setSelectedParticipants(prev => [...prev, u.full_name]); setParticipantSearch(''); }}
+                        >
+                          {u.full_name} <span style={{ fontSize: 11, color: C.textMuted }}>· {u.position || u.role}</span>
+                        </div>
+                      ))
+                    }
+                  </div>
+                )}
+              </div>
+            </Field>
             <Field label="ПОВЕСТКА" C={C}><textarea value={newMeeting.agenda} onChange={e => setNewMeeting({...newMeeting, agenda: e.target.value})} rows={2} placeholder="Рассмотрение хода проекта..." style={{...getInp(C), resize: 'vertical' as const}} /></Field>
             <Field label="РЕШЕНИЯ / ПОРУЧЕНИЯ" C={C}><textarea value={newMeeting.decisions} onChange={e => setNewMeeting({...newMeeting, decisions: e.target.value})} rows={3} placeholder="Инженеру Иванову — выпустить ОВ-001 до 01.05..." style={{...getInp(C), resize: 'vertical' as const}} /></Field>
           </div>

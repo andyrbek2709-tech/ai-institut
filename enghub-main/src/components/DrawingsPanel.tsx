@@ -114,7 +114,7 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate }: Prop
                   <td style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}`, color: C.textDim }}>{d.stage || '—'}</td>
                   <td style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}`, color: C.accent, fontWeight: 700 }}>{d.revision || 'R0'}</td>
                   <td style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}` }}>
-                    <span className="badge" style={{ color: st.color, background: st.bg, border: `1px solid ${st.color}35` }}>{st.label}</span>
+                    {!canEdit && <span className="badge" style={{ color: st.color, background: st.bg, border: `1px solid ${st.color}35` }}>{st.label}</span>}
                   </td>
                   <td style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}`, color: C.textDim }}>{d.due_date || '—'}</td>
                   <td style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}` }}>

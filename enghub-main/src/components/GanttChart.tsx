@@ -26,20 +26,26 @@ interface GanttChartProps {
   C: any;
 }
 
+const parseDate = (d: string | null | undefined): Date | null => {
+  if (!d) return null;
+  const dmy = d.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (dmy) return new Date(parseInt(dmy[3]), parseInt(dmy[2]) - 1, parseInt(dmy[1]));
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? null : dt;
+};
+
 const GanttChart: React.FC<GanttChartProps> = ({ tasks, activeProject, getUserById, getDeptName, C }) => {
   const pTasks = tasks.filter(t => t.project_id === activeProject.id);
   if (pTasks.length === 0) return <div className="empty-state" style={{ padding: 40 }}>Нет задач для диаграммы. Создайте задачи с дедлайнами.</div>;
 
   const now = Date.now();
   const stamps = pTasks.flatMap(t => [
-    t.created_at ? new Date(t.created_at).getTime() : null, 
-    t.deadline ? new Date(t.deadline).getTime() : null
-  ]).filter(s => s !== null && !isNaN(s)) as number[];
+    parseDate(t.created_at)?.getTime() ?? null,
+    parseDate(t.deadline)?.getTime() ?? null,
+  ]).filter((s): s is number => s !== null && !isNaN(s));
 
-  if (activeProject.deadline) {
-    const pD = new Date(activeProject.deadline).getTime();
-    if (!isNaN(pD)) stamps.push(pD);
-  }
+  const pDeadline = parseDate(activeProject.deadline);
+  if (pDeadline) stamps.push(pDeadline.getTime());
   stamps.push(now);
   
   const minT = stamps.length > 0 ? Math.min(...stamps) : now - 86400000 * 7;
@@ -71,7 +77,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ tasks, activeProject, getUserBy
       </div>
       <div style={{ overflowX: 'auto', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 14, boxShadow: 'var(--card-shadow)' }}>
         <div style={{ minWidth: 520 }}>
-          <div style={{ display: 'flex', marginLeft: 160, marginBottom: 6, position: 'relative', height: 18 }}>
+          <div style={{ display: 'flex', marginLeft: 208, marginBottom: 6, position: 'relative', height: 18 }}>
             <div style={{ position: 'absolute', left: '0%', fontSize: 10, color: C.textMuted }}>{new Date(minT).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })}</div>
             <div style={{ position: 'absolute', right: 0, fontSize: 10, color: C.textMuted }}>{new Date(maxT).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })}</div>
             <div style={{ position: 'absolute', left: `${todayPct}%`, transform: 'translateX(-50%)', fontSize: 10, color: '#ef4444', fontWeight: 700 }}>↓</div>
@@ -80,22 +86,22 @@ const GanttChart: React.FC<GanttChartProps> = ({ tasks, activeProject, getUserBy
             <div key={dept}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, marginTop: 14 }}>{dept}</div>
               {dTasks.map(task => {
-                const startD = new Date(task.created_at);
-                const startT = !isNaN(startD.getTime()) ? startD.getTime() : minT;
-                const endD = task.deadline ? new Date(task.deadline) : null;
-                const endT = (endD && !isNaN(endD.getTime())) ? endD.getTime() : startT + 7 * 86400000;
-                
+                const startD = parseDate(task.created_at);
+                const startT = startD ? startD.getTime() : minT;
+                const endD = parseDate(task.deadline);
+                const endT = endD ? endD.getTime() : startT + 14 * 86400000;
+
                 const isOverdue = endT < now && task.status !== 'done';
-                const barL = pct(startT), barW = Math.max(1, pct(endT) - barL);
+                const barL = pct(startT), barW = Math.max(0.5, pct(endT) - barL);
                 const color = isOverdue ? '#ef4444' : (sColors[task.status] || '#8896a4');
-                
-                const displayDeadline = (endD && !isNaN(endD.getTime())) 
-                  ? endD.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) 
+
+                const displayDeadline = endD
+                  ? endD.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })
                   : '—';
 
                 return (
                   <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                    <div style={{ width: 150, flexShrink: 0, fontSize: 12, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right', paddingRight: 8 }} title={task.name}>{task.name}</div>
+                    <div style={{ width: 200, flexShrink: 0, fontSize: 12, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right', paddingRight: 8 }} title={task.name}>{task.name}</div>
                     <div style={{ flex: 1, position: 'relative', height: 22, background: C.surface2, borderRadius: 4 }}>
                       <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${todayPct}%`, width: 1.5, background: '#ef444460', zIndex: 3 }} />
                       <div style={{ position: 'absolute', top: 3, bottom: 3, left: `${barL}%`, width: `${barW}%`, background: color, borderRadius: 3, opacity: 0.85, minWidth: 4 }} title={`${task.name} · ${sLabels[task.status]} · ${task.deadline || '—'}`} />
