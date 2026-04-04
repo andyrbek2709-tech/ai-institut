@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions } from './constants';
-import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification } from './api/supabase';
+import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory } from './api/supabase';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
@@ -68,6 +68,8 @@ export default function App() {
   const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
   const [showTaskTemplates, setShowTaskTemplates] = useState(false);
+  const [taskHistory, setTaskHistory] = useState<any[]>([]);
+  const [showTaskHistory, setShowTaskHistory] = useState(false);
   const [newTask, setNewTask] = useState({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" });
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
@@ -1112,6 +1114,43 @@ export default function App() {
                   <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMsg(selectedTask.id)} placeholder="Написать замечание..." style={{ ...getInp(C), borderRadius: 8, height: 36, fontSize: 12 }} />
                   <button onClick={() => sendMsg(selectedTask.id)} style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 8, width: 36, height: 36, cursor: 'pointer' }}>↑</button>
                 </div>
+              </div>
+              {/* Task History */}
+              <div style={{ marginTop: 12 }}>
+                <button
+                  onClick={async () => {
+                    if (!showTaskHistory) {
+                      const h = await listTaskHistory(selectedTask.id, token!).catch(() => []);
+                      setTaskHistory(Array.isArray(h) ? h : []);
+                    }
+                    setShowTaskHistory(v => !v);
+                  }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: C.textMuted, display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'inherit' }}
+                >
+                  🕐 {showTaskHistory ? 'Скрыть историю' : 'История изменений'}
+                </button>
+                {showTaskHistory && (
+                  <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {taskHistory.length === 0
+                      ? <div style={{ fontSize: 12, color: C.textMuted, padding: '6px 0' }}>Изменений пока нет</div>
+                      : taskHistory.map(h => {
+                          const FIELD_LABELS: Record<string, string> = { status: 'Статус', priority: 'Приоритет', assigned_to: 'Исполнитель', deadline: 'Дедлайн' };
+                          const STATUS_RU: Record<string, string> = { todo: 'В очереди', inprogress: 'В работе', review_lead: 'Проверка', review_gip: 'Проверка ГИПа', revision: 'Доработка', done: 'Готово' };
+                          const fmt = (v: string, field: string) => {
+                            if (field === 'status') return STATUS_RU[v] || v;
+                            if (field === 'assigned_to') return getUserById(Number(v))?.full_name || `#${v}`;
+                            return v || '—';
+                          };
+                          return (
+                            <div key={h.id} style={{ fontSize: 12, color: C.textMuted, display: 'flex', gap: 8, padding: '4px 0', borderBottom: `1px solid ${C.border}` }}>
+                              <span style={{ color: C.textMuted, minWidth: 110 }}>{new Date(h.changed_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                              <span style={{ color: C.text }}><b>{FIELD_LABELS[h.field_name] || h.field_name}</b>: <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{fmt(h.old_value, h.field_name)}</span> → <span style={{ color: C.accent }}>{fmt(h.new_value, h.field_name)}</span></span>
+                            </div>
+                          );
+                        })
+                    }
+                  </div>
+                )}
               </div>
             </div>
           </div>

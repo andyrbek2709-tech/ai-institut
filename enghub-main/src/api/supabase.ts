@@ -160,6 +160,10 @@ export const globalSearch = async (query: string, token?: string) => {
   };
 };
 
+// Task history (versioning)
+export const listTaskHistory = (taskId: number, token?: string) =>
+  get(`task_history?task_id=eq.${taskId}&order=changed_at.desc&limit=30`, token);
+
 // Review comments (threads)
 export const listReviewComments = (reviewId: number, token?: string) =>
   get(`review_comments?review_id=eq.${reviewId}&order=created_at.asc`, token);
