@@ -44,6 +44,13 @@ export function Field({ label, C, children }: { label: string; C: any; children:
 // ===== AVATAR =====
 export function AvatarComp({ user, size, C }: { user: any; size: number; C: any }) {
   if (!user) return <div className="avatar" style={{ width: size, height: size, background: C.surface2, fontSize: size * 0.4, color: C.textMuted }}>?</div>;
+  if (user.avatar_url) {
+    return (
+      <div className="avatar" style={{ width: size, height: size, overflow: 'hidden', padding: 0 }}>
+        <img src={user.avatar_url} alt={user.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </div>
+    );
+  }
   const initials = (user.full_name || "").split(" ").map((s: string) => s[0]).join("").slice(0, 2).toUpperCase();
   const hash = (user.full_name || "").split("").reduce((a: number, c: string) => a + c.charCodeAt(0), 0);
   const colors = ["#4a9eff", "#2ac769", "#a855f7", "#f5a623", "#ff8c42", "#ef4444", "#06b6d4"];

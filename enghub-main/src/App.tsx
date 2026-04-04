@@ -1303,8 +1303,37 @@ export default function App() {
                   </div>
                 </div>
                 {showUserMenu && (
-                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', minWidth: 160, zIndex: 2000, overflow: 'hidden' }}>
-                    <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}`, fontSize: 12, color: C.textMuted }}>{currentUserData.full_name}</div>
+                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', minWidth: 200, zIndex: 2000, overflow: 'hidden' }}>
+                    <div style={{ padding: '12px 14px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <AvatarComp user={currentUserData} size={36} C={C} />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{currentUserData.full_name}</div>
+                        <div style={{ fontSize: 11, color: C.textMuted }}>{roleLabels[role]}</div>
+                      </div>
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: C.text, boxSizing: 'border-box' }}>
+                      🖼 Загрузить фото
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !currentUserData) return;
+                        const path = `${currentUserData.id}/${Date.now()}.${file.name.split('.').pop()}`;
+                        try {
+                          const uploadRes = await fetch(`${SURL}/storage/v1/object/avatars/${path}`, {
+                            method: 'POST',
+                            headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': file.type },
+                            body: file,
+                          });
+                          if (!uploadRes.ok) throw new Error('Upload failed');
+                          const publicUrl = `${SURL}/storage/v1/object/public/avatars/${path}`;
+                          await patch(`app_users?id=eq.${currentUserData.id}`, { avatar_url: publicUrl }, token!);
+                          setAppUsers(prev => prev.map(u => u.id === currentUserData.id ? { ...u, avatar_url: publicUrl } : u));
+                          addNotification('Фото профиля обновлено', 'success');
+                        } catch {
+                          addNotification('Ошибка загрузки фото', 'warning');
+                        }
+                        setShowUserMenu(false);
+                      }} />
+                    </label>
                     <button onClick={() => { setShowUserMenu(false); handleLogout(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
                       ⏻ Выйти из системы
                     </button>
