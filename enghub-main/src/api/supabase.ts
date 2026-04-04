@@ -160,4 +160,21 @@ export const globalSearch = async (query: string, token?: string) => {
   };
 };
 
+// Notifications
+export const listNotifications = (userId: number, token?: string) =>
+  get(`notifications?user_id=eq.${userId}&order=created_at.desc&limit=50`, token);
+
+export const markNotificationRead = (id: number, token?: string) =>
+  patch(`notifications?id=eq.${id}`, { is_read: true }, token);
+
+export const markAllNotificationsRead = (userId: number, token?: string) =>
+  patch(`notifications?user_id=eq.${userId}&is_read=eq.false`, { is_read: true }, token);
+
+export const createNotification = (payload: any) =>
+  fetch(`${SURL}/rest/v1/notifications`, {
+    method: 'POST',
+    headers: { ...AdminH(), 'Prefer': 'return=minimal' },
+    body: JSON.stringify(payload),
+  }).then(r => r.ok ? r : Promise.reject(r));
+
 export { SURL, SERVICE_KEY };

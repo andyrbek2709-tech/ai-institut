@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions } from './constants';
-import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem } from './api/supabase';
+import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification } from './api/supabase';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
@@ -21,6 +21,7 @@ import TimelogPanel from './components/TimelogPanel';
 import { exportProjectXls, exportTransmittalPdf } from './utils/export';
 import { GlobalSearch } from './components/GlobalSearch';
 import { KanbanBoard } from './components/KanbanBoard';
+import { NotificationCenter } from './components/NotificationCenter';
 
 export default function App() {
   const [dark, setDark] = useState(false); // Светлая тема по умолчанию
@@ -588,6 +589,16 @@ export default function App() {
     const leadUser = getUserById(newTask.assigned_to);
     await createProjectTask({ name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline || null, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id, description: newTask.description || null }, token!);
     addNotification(`Задача "${newTask.name}" создана${leadUser ? ` → ${leadUser.full_name}` : ''}`, 'success');
+    if (newTask.assigned_to && String(newTask.assigned_to) !== String(currentUserData?.id)) {
+      createNotification({
+        user_id: Number(newTask.assigned_to),
+        project_id: activeProject.id,
+        type: 'task_assigned',
+        title: `Вам назначена новая задача`,
+        body: newTask.name,
+        entity_type: 'task',
+      }).catch(() => {});
+    }
     setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setShowNewTask(false); setSaving(false); loadTasks(activeProject.id);
   };
   
@@ -663,6 +674,18 @@ export default function App() {
     await patch(`tasks?id=eq.${taskId}`, { status, ...(comment ? { comment } : {}) }, token!);
     const statusLabel = statusMap[status]?.label || status;
     addNotification(`Статус задачи изменён → "${statusLabel}"`, status === 'done' ? 'success' : 'info');
+    // Создаём уведомление в БД для исполнителя задачи
+    if (targetTask?.assigned_to && targetTask.assigned_to !== currentUserData?.id) {
+      createNotification({
+        user_id: targetTask.assigned_to,
+        project_id: activeProject?.id,
+        type: 'task_status',
+        title: `Статус задачи изменён → "${statusLabel}"`,
+        body: targetTask.name,
+        entity_type: 'task',
+        entity_id: String(taskId),
+      }).catch(() => {});
+    }
     setWorkflowBlockInfo("");
     setSaving(false); setShowTaskDetail(false); setTaskComment(""); if (activeProject) loadTasks(activeProject.id);
   };
@@ -1190,10 +1213,17 @@ export default function App() {
           <div className="topbar-right">
             <GlobalSearch token={token!} C={C} onSelect={handleGlobalSearchSelect} projects={projects} />
             <ThemeToggle dark={dark} setDark={setDark} C={C} />
-            {notifications.length > 0 && (
-              <div style={{ position: 'relative' }}>
-                <span style={{ background: C.accent, color: '#fff', borderRadius: 20, padding: '4px 10px', fontSize: 11, fontWeight: 700 }}>🔔 {notifications.length}</span>
-              </div>
+            {currentUserData && (
+              <NotificationCenter
+                userId={currentUserData.id}
+                token={token!}
+                C={C}
+                onNavigate={(entityType, entityId, projectId) => {
+                  if (entityType === 'task') { setScreen('tasks'); }
+                  else if (entityType === 'drawing') { setScreen('drawings'); }
+                  else if (entityType === 'review') { setScreen('drawings'); }
+                }}
+              />
             )}
             {currentUserData && (
               <div ref={userMenuRef} style={{ position: 'relative' }}>
