@@ -20,6 +20,7 @@ import MeetingsPanel from './components/MeetingsPanel';
 import TimelogPanel from './components/TimelogPanel';
 import { exportProjectXls, exportTransmittalPdf } from './utils/export';
 import { GlobalSearch } from './components/GlobalSearch';
+import { KanbanBoard } from './components/KanbanBoard';
 
 export default function App() {
   const [dark, setDark] = useState(false); // Светлая тема по умолчанию
@@ -1810,56 +1811,20 @@ export default function App() {
                 )}
               </div>
 
-              <div className="kanban-grid">
-                {Object.entries(statusMap).map(([col, s]) => {
-                  const colTasks = tasks.filter(t => {
-                    if (t.status !== col) return false;
-                    if (filterStatus !== "all" && t.status !== filterStatus) return false;
-                    if (filterPriority !== "all" && t.priority !== filterPriority) return false;
-                    if (filterAssigned !== "all" && String(t.assigned_to) !== filterAssigned) return false;
-                    if (searchQuery) { const sq = searchQuery.toLowerCase(); const u = getUserById(t.assigned_to); if (!t.name.toLowerCase().includes(sq) && !(t.dept || "").toLowerCase().includes(sq) && !(u?.full_name || "").toLowerCase().includes(sq)) return false; }
-                    return true;
-                  });
-                  if (colTasks.length === 0 && col !== "todo" && col !== "inprogress") return null;
-                  return (
-                    <div key={col} className="kanban-col-shell">
-                      <div className="kanban-col-title" style={{ color: s.color }}>
-                        <span className="stat-card-dot" style={{ background: s.color }} />{s.label}
-                        <span className="kanban-col-count">{colTasks.length}</span>
-                      </div>
-                      <div className="kanban-col-body" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                        {colTasks.map(t => {
-                          const u = getUserById(t.assigned_to);
-                          return (
-                            <div key={t.id} className="kanban-card" onClick={() => { setSelectedTask(t); setShowTaskDetail(true); loadMessages(activeProject.id, t.id); }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                                <PriorityDot p={t.priority} C={C} />
-                                <span style={{ fontSize: 13, flex: 1, color: C.text, fontWeight: 500 }}>{t.name}</span>
-                              </div>
-                              <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-                                <span>📁 {projects.find(p => String(p.id) === String(t.project_id))?.name || "Неизвестный проект"}</span>
-                              </div>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                                  {t.dept && <span style={{ fontSize: 10, color: C.textMuted, background: C.surface2, padding: "3px 8px", borderRadius: 6, width: "fit-content" }}>{t.dept}</span>}
-                                  {t.deadline && <span style={{ fontSize: 10, color: C.textMuted }}>📅 {formatDateRu(t.deadline)}</span>}
-                                </div>
-                                {u && (
-                                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                    <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 500 }}>{u.full_name.split(" ")[0]}</span>
-                                    <AvatarComp user={u} size={24} C={C} />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {colTasks.length === 0 && <div className="kanban-empty" style={{ fontSize: 12, color: C.textMuted, textAlign: "center", padding: 16 }}>Пусто</div>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <KanbanBoard
+                tasks={tasks}
+                statusMap={statusMap}
+                projects={projects}
+                getUserById={getUserById}
+                formatDateRu={formatDateRu}
+                onCardClick={(t: any) => { setSelectedTask(t); setShowTaskDetail(true); loadMessages(activeProject.id, t.id); }}
+                onStatusChange={(taskId: number, newStatus: string) => updateTaskStatus(taskId, newStatus)}
+                C={C}
+                searchQuery={searchQuery}
+                filterStatus={filterStatus}
+                filterPriority={filterPriority}
+                filterAssigned={filterAssigned}
+              />
             </div>
           )}
 
