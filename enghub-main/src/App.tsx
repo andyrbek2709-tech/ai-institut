@@ -24,6 +24,7 @@ import { KanbanBoard } from './components/KanbanBoard';
 import { ProjectTimeline } from './components/ProjectTimeline';
 import { NotificationCenter } from './components/NotificationCenter';
 import { TaskTemplates } from './components/TaskTemplates';
+import { ProjectReportPDF } from './components/ProjectReportPDF';
 
 export default function App() {
   const [dark, setDark] = useState(false); // Светлая тема по умолчанию
@@ -69,6 +70,7 @@ export default function App() {
   const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
   const [showTaskTemplates, setShowTaskTemplates] = useState(false);
+  const [showReportPDF, setShowReportPDF] = useState(false);
   const [taskHistory, setTaskHistory] = useState<any[]>([]);
   const [showTaskHistory, setShowTaskHistory] = useState(false);
   const [newTask, setNewTask] = useState({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" });
@@ -958,6 +960,12 @@ export default function App() {
           </div>
         </Modal>
       )}
+      {showReportPDF && activeProject && (
+        <ProjectReportPDF
+          data={{ project: activeProject, tasks: allTasks, drawings, reviews, transmittals, appUsers }}
+          onClose={() => setShowReportPDF(false)}
+        />
+      )}
       {showTaskTemplates && (
         <TaskTemplates
           token={token!}
@@ -1691,6 +1699,15 @@ export default function App() {
                   className="btn btn-secondary"
                 >
                   <span style={{ fontSize: 14 }}>⬇</span> Excel
+                </button>
+
+                {/* PDF REPORT BUTTON */}
+                <button
+                  onClick={() => setShowReportPDF(true)}
+                  title="Отчёт для заказчика (PDF)"
+                  className="btn btn-secondary"
+                >
+                  <span style={{ fontSize: 14 }}>📄</span> Отчёт
                 </button>
 
                 {/* COPILOT BUTTON */}
