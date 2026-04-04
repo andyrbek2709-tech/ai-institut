@@ -12,6 +12,12 @@ export function ThemeToggle({ dark, setDark, C }: { dark: boolean; setDark: (v: 
 
 // ===== MODAL =====
 export function Modal({ title, onClose, C, children }: { title: string; onClose: () => void; C: any; children: React.ReactNode }) {
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>

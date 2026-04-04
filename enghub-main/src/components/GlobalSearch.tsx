@@ -5,9 +5,27 @@ interface GlobalSearchProps {
   token: string;
   C: any;
   onSelect: (type: string, item: any) => void;
+  projects?: any[];
 }
 
-export function GlobalSearch({ token, C, onSelect }: GlobalSearchProps) {
+const STATUS_LABELS: Record<string, string> = {
+  todo: 'В очереди', inprogress: 'В работе', review_lead: 'Проверка',
+  review_gip: 'Проверка ГИПа', revision: 'Доработка', done: 'Готово',
+  active: 'Активный', archived: 'Архив', draft: 'Черновик',
+  open: 'Открыто', closed: 'Закрыто', rejected: 'Отклонено',
+};
+
+function dedup<T extends { id: any }>(arr: T[]): T[] {
+  const seen = new Set<string>();
+  return arr.filter(item => {
+    const key = String(item.id);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+export function GlobalSearch({ token, C, onSelect, projects = [] }: GlobalSearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any>(null);
   const [searching, setSearching] = useState(false);
@@ -60,7 +78,13 @@ export function GlobalSearch({ token, C, onSelect }: GlobalSearchProps) {
       setSearching(true);
       setSearchError(false);
       try {
-        const data = await globalSearch(query, token);
+        const raw = await globalSearch(query, token);
+        const data = {
+          projects: dedup(Array.isArray(raw.projects) ? raw.projects : []),
+          tasks: dedup(Array.isArray(raw.tasks) ? raw.tasks : []),
+          drawings: dedup(Array.isArray(raw.drawings) ? raw.drawings : []),
+          reviews: dedup(Array.isArray(raw.reviews) ? raw.reviews : []),
+        };
         setResults(data);
         setIsOpen(true);
         setSelectedIndex(-1);
@@ -179,13 +203,14 @@ export function GlobalSearch({ token, C, onSelect }: GlobalSearchProps) {
                   const flatIndex = groupedItems.findIndex((it) => it.type === type && String(it.item.id) === String(item.id));
                   const isActive = flatIndex === selectedIndex;
                   const line1 = item.name || item.title || item.code || item.id;
+                  const projCode = projects.find((p: any) => p.id === item.project_id)?.code || `#${item.project_id || '—'}`;
                   const line2 = type === 'projects'
-                    ? `${item.code || '—'} • ${item.status || 'active'}`
+                    ? `${item.code || '—'} • ${STATUS_LABELS[item.status] || item.status || 'Активный'}`
                     : type === 'tasks'
-                      ? `${item.dept || 'Без отдела'} • ${item.status || 'todo'} • prj:${item.project_id || '—'}`
+                      ? `${item.dept || 'Без отдела'} • ${STATUS_LABELS[item.status] || item.status} • ${projCode}`
                       : type === 'drawings'
-                        ? `${item.code || '—'} • ${item.discipline || '—'} • prj:${item.project_id || '—'}`
-                        : `${item.status || 'open'} • ${item.severity || 'major'} • prj:${item.project_id || '—'}`;
+                        ? `${item.code || '—'} • ${item.discipline || '—'} • ${projCode}`
+                        : `${STATUS_LABELS[item.status] || item.status || 'Открыто'} • ${item.severity || 'major'} • ${projCode}`;
                   return (
                   <div
                     key={item.id}

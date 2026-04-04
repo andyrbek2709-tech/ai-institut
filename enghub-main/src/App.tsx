@@ -355,6 +355,7 @@ export default function App() {
   useEffect(() => { msgsRef.current = msgs; }, [msgs]);
   useEffect(() => { projectsRef.current = projects; }, [projects]);
   useEffect(() => { sideTabRef.current = sideTab; }, [sideTab]);
+  useEffect(() => { window.scrollTo(0, 0); }, [sideTab]);
 
   // ── Supabase Realtime: подписка на изменения задач ──
   useEffect(() => {
@@ -777,7 +778,7 @@ export default function App() {
     setShowTaskDetail(false);
     loadTasks(activeProject.id);
   };
-  const handleLogin = async (accessToken: string, email: string) => { setToken(accessToken); setUserEmail(email); localStorage.setItem('enghub_token', accessToken); localStorage.setItem('enghub_email', email); if (email !== "admin@enghub.com") setLoading(true); else setLoading(false); };
+  const handleLogin = async (accessToken: string, email: string) => { setToken(accessToken); setUserEmail(email); setScreen('dashboard'); localStorage.setItem('enghub_token', accessToken); localStorage.setItem('enghub_email', email); if (email !== "admin@enghub.com") setLoading(true); else setLoading(false); };
   const handleLogout = () => { setToken(null); setUserEmail(""); setCurrentUserData(null); setProjects([]); setTasks([]); setMsgs([]); setChatInput(""); localStorage.removeItem('enghub_token'); localStorage.removeItem('enghub_email'); };
 
   const handleGlobalSearchSelect = (type: string, item: any) => {
@@ -893,7 +894,7 @@ export default function App() {
         </Modal>
       )}
       {showNewTask && (
-        <Modal title="Новая задача" onClose={() => setShowNewTask(false)} C={C}>
+        <Modal title="Новая задача" onClose={() => { setShowNewTask(false); setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); }} C={C}>
           <div className="form-stack">
             <Field label="НАЗВАНИЕ *" C={C}><input value={newTask.name} onChange={e => setNewTask({ ...newTask, name: e.target.value })} placeholder="Расчёт нагрузок" style={getInp(C)} /></Field>
             <Field label="ОПИСАНИЕ" C={C}><textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} placeholder="Подробное описание задачи..." rows={3} style={{ ...getInp(C), resize: 'vertical', fontFamily: 'inherit' }} /></Field>
@@ -1186,7 +1187,7 @@ export default function App() {
             </div>
           </div>
           <div className="topbar-right">
-            <GlobalSearch token={token!} C={C} onSelect={handleGlobalSearchSelect} />
+            <GlobalSearch token={token!} C={C} onSelect={handleGlobalSearchSelect} projects={projects} />
             <ThemeToggle dark={dark} setDark={setDark} C={C} />
             {notifications.length > 0 && (
               <div style={{ position: 'relative' }}>
