@@ -19,15 +19,15 @@ const ROLE_PROMPTS = {
 };
 
 const ROLE_ALLOWED_INTENTS = {
-  gip: ['create_tasks', 'create_drawing', 'update_drawing', 'drawing_revision', 'create_review', 'create_transmittal', 'workflow_transition', 'project_insights', 'smart_decompose', 'compliance_check', 'generate_report', 'unknown'],
-  lead: ['create_tasks', 'create_drawing', 'update_drawing', 'drawing_revision', 'create_review', 'create_transmittal', 'workflow_transition', 'project_insights', 'smart_decompose', 'compliance_check', 'generate_report', 'unknown'],
-  engineer: ['create_tasks', 'create_review', 'workflow_transition', 'project_insights', 'compliance_check', 'unknown'],
+  gip: ['create_tasks', 'create_drawing', 'update_drawing', 'drawing_revision', 'create_review', 'create_transmittal', 'workflow_transition', 'project_insights', 'smart_decompose', 'compliance_check', 'generate_report', 'nl_search', 'risk_forecast', 'unknown'],
+  lead: ['create_tasks', 'create_drawing', 'update_drawing', 'drawing_revision', 'create_review', 'create_transmittal', 'workflow_transition', 'project_insights', 'smart_decompose', 'compliance_check', 'generate_report', 'nl_search', 'risk_forecast', 'unknown'],
+  engineer: ['create_tasks', 'create_review', 'workflow_transition', 'project_insights', 'compliance_check', 'nl_search', 'unknown'],
 };
 
 const ROLE_ALLOWED_ACTIONS = {
-  gip: ['search_normative', 'validate_workflow', 'create_drawing', 'update_drawing', 'create_drawing_revision', 'create_revision', 'create_review', 'update_review_status', 'create_transmittal', 'update_transmittal_status'],
-  lead: ['search_normative', 'validate_workflow', 'create_drawing', 'update_drawing', 'create_drawing_revision', 'create_revision', 'create_review', 'update_review_status', 'create_transmittal', 'update_transmittal_status'],
-  engineer: ['search_normative', 'validate_workflow', 'create_review', 'update_review_status'],
+  gip: ['search_normative', 'validate_workflow', 'task_suggest', 'create_drawing', 'update_drawing', 'create_drawing_revision', 'create_revision', 'create_review', 'update_review_status', 'create_transmittal', 'update_transmittal_status'],
+  lead: ['search_normative', 'validate_workflow', 'task_suggest', 'create_drawing', 'update_drawing', 'create_drawing_revision', 'create_revision', 'create_review', 'update_review_status', 'create_transmittal', 'update_transmittal_status'],
+  engineer: ['search_normative', 'validate_workflow', 'task_suggest', 'create_review', 'update_review_status'],
 };
 
 async function createEmbedding(input) {
@@ -46,8 +46,10 @@ function detectIntent(message = '') {
   // New AI agents — checked first to avoid conflicts with generic patterns
   if (/нормоконтроль|проверь.{0,25}норм|соответстви.{0,20}норм|проверка.{0,20}нормам/.test(msg)) return 'compliance_check';
   if (/еженедельн|недельн.*отчет|сформируй.*отчет|generate.report|status.report/.test(msg)) return 'generate_report';
-  if (/как дела|состояние проект|аналитик|риск.*срыв|что происходит|покажи состоян|анализ проект/.test(msg)) return 'project_insights';
+  if (/риск.*проект|прогноз.*риск|когда завершим|velocity|отстаём|срыв.*срок|анализ.*риск/.test(msg)) return 'risk_forecast';
+  if (/как дела|состояние проект|аналитик|что происходит|покажи состоян|анализ проект/.test(msg)) return 'project_insights';
   if (/план задач|декомпозиц|разбей на задач|разработай план|составь задач|список задач/.test(msg)) return 'smart_decompose';
+  if (/найди задач|покажи задач|задачи.{0,20}(где|которые|с|без|просроч)|поиск.{0,20}задач/.test(msg)) return 'nl_search';
   // Existing patterns
   if (/чертеж|drawing/.test(msg)) {
     if (/ревизи|revision/.test(msg)) return 'drawing_revision';
@@ -226,6 +228,144 @@ async function handleGenerateReport(project_id, role, headers) {
     800
   );
   return { message: text, agent: 'report_agent' };
+}
+
+// ── A4: NL Search ─────────────────────────────────────────────────────────────
+async function handleNlSearch(message, project_id, headers) {
+  if (!ANTHROPIC_API_KEY) return { message: 'Anthropic API не настроен.' };
+  const now = new Date().toISOString().slice(0, 10);
+  const rawText = await callClaude(
+    `Ты конвертируешь поисковый запрос на русском в JSON-фильтры для базы задач проектного института.
+Доступные поля задачи: status (todo|inprogress|review_lead|review_gip|revision|done), priority (high|medium|low), dept (строка, напр. "КМ"), overdue (bool — дедлайн < сегодня и статус != done), assigned_name (строка — часть имени исполнителя).
+Отвечай ТОЛЬКО валидным JSON без пояснений. Пример: {"status":"inprogress","dept":"КМ"} или {"overdue":true}.
+Сегодня: ${now}.`,
+    `Запрос: ${message}`,
+    200
+  );
+  let filters = {};
+  try { const m = rawText.match(/\{[\s\S]*?\}/); filters = m ? JSON.parse(m[0]) : {}; } catch (e) { filters = {}; }
+
+  // Fetch tasks with filters
+  let url = `${SURL}/rest/v1/tasks?project_id=eq.${project_id}&select=id,name,status,priority,dept,deadline,assigned_to`;
+  if (filters.status) url += `&status=eq.${filters.status}`;
+  if (filters.priority) url += `&priority=eq.${filters.priority}`;
+  if (filters.dept) url += `&dept=ilike.*${encodeURIComponent(filters.dept)}*`;
+  const tasks = await (await fetch(url, { headers })).json();
+
+  let result = Array.isArray(tasks) ? tasks : [];
+  if (filters.overdue) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    result = result.filter(t => t.deadline && new Date(t.deadline) < today && t.status !== 'done');
+  }
+
+  if (result.length === 0) return { message: `По запросу "${message}" задач не найдено.`, agent: 'nl_search_agent', filters, tasks: [] };
+  const lines = result.slice(0, 10).map(t => `• ${t.name} [${t.status}${t.dept ? ', ' + t.dept : ''}${t.deadline ? ', до ' + t.deadline.slice(0, 10) : ''}]`).join('\n');
+  return {
+    message: `**Найдено ${result.length} задач${result.length > 10 ? ` (показаны 10)` : ''}:**\n${lines}`,
+    agent: 'nl_search_agent',
+    filters,
+    tasks: result,
+  };
+}
+
+// ── A6: Task Suggest (AI form assistant) ─────────────────────────────────────
+async function handleTaskSuggest(body, project_id, headers) {
+  if (!ANTHROPIC_API_KEY) return { deadline: null, assignee: null };
+  const { task_name, dept } = body;
+  // Fetch completed similar tasks for velocity reference
+  const doneTasks = await (await fetch(
+    `${SURL}/rest/v1/tasks?project_id=eq.${project_id}&status=eq.done&dept=eq.${encodeURIComponent(dept || '')}&select=name,deadline,created_at&order=created_at.desc&limit=5`,
+    { headers }
+  )).json();
+  const rawText = await callClaude(
+    `Ты помощник при создании задачи в проектном институте. Предложи: 1) срок выполнения (дней от сегодня), 2) краткое обоснование. Отвечай ТОЛЬКО JSON: {"days":N,"reason":"..."}. Сегодня: ${new Date().toISOString().slice(0, 10)}.`,
+    `Задача: "${task_name || 'Новая задача'}"\nОтдел: ${dept || 'не указан'}\nПохожие завершённые: ${Array.isArray(doneTasks) ? doneTasks.map(t => t.name).join(', ') : 'нет данных'}`,
+    150
+  );
+  let suggestion = {};
+  try { const m = rawText.match(/\{[\s\S]*?\}/); suggestion = m ? JSON.parse(m[0]) : {}; } catch (e) {}
+  const deadline = suggestion.days
+    ? new Date(Date.now() + suggestion.days * 86400000).toISOString().slice(0, 10)
+    : null;
+  return { deadline, reason: suggestion.reason || null, agent: 'task_suggest_agent' };
+}
+
+// ── A2+G6: Risk Forecast ──────────────────────────────────────────────────────
+async function handleRiskForecast(project_id, headers) {
+  if (!ANTHROPIC_API_KEY) return { message: 'Anthropic API не настроен.' };
+  const now = new Date();
+  const [tasksRes, projectRes] = await Promise.all([
+    fetch(`${SURL}/rest/v1/tasks?project_id=eq.${project_id}&select=id,name,status,deadline,dept`, { headers }),
+    fetch(`${SURL}/rest/v1/projects?id=eq.${project_id}&select=name,deadline`, { headers }),
+  ]);
+  const tasks = await tasksRes.json();
+  const project = (await projectRes.json())?.[0] || {};
+  if (!Array.isArray(tasks) || tasks.length === 0) return { message: 'Задач для анализа рисков нет.', agent: 'risk_forecast_agent' };
+
+  const total = tasks.length;
+  const done = tasks.filter(t => t.status === 'done').length;
+  const overdue = tasks.filter(t => t.deadline && new Date(t.deadline) < now && t.status !== 'done').length;
+  const inProgress = tasks.filter(t => ['inprogress', 'review_lead', 'review_gip'].includes(t.status)).length;
+  const blocked = tasks.filter(t => t.status === 'revision').length;
+
+  // Velocity: tasks done in last 14 days
+  const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000).toISOString();
+  const recentDone = await (await fetch(
+    `${SURL}/rest/v1/task_history?field_name=eq.status&new_value=eq.done&changed_at=gte.${twoWeeksAgo}&task_id=in.(${tasks.map(t => t.id).join(',')})&select=task_id`,
+    { headers }
+  )).json();
+  const velocity = Array.isArray(recentDone) ? recentDone.length / 2 : 0; // tasks/week
+
+  const remaining = total - done;
+  const weeksLeft = velocity > 0 ? (remaining / velocity).toFixed(1) : null;
+  let daysToDeadline = project.deadline ? Math.ceil((new Date(project.deadline).getTime() - now.getTime()) / 86400000) : null;
+
+  // Dept breakdown
+  const deptRisk = {};
+  tasks.forEach(t => {
+    const d = t.dept || 'Без отдела';
+    if (!deptRisk[d]) deptRisk[d] = { total: 0, done: 0, overdue: 0 };
+    deptRisk[d].total++;
+    if (t.status === 'done') deptRisk[d].done++;
+    if (t.deadline && new Date(t.deadline) < now && t.status !== 'done') deptRisk[d].overdue++;
+  });
+
+  const ctx = {
+    project: project.name, deadline_days: daysToDeadline,
+    total, done, remaining, overdue, in_progress: inProgress, blocked,
+    velocity_per_week: velocity.toFixed(1), weeks_to_finish: weeksLeft,
+    dept_breakdown: deptRisk,
+  };
+
+  const text = await callClaude(
+    'Ты риск-аналитик проектного института. На основе данных дай: 1) общий уровень риска (🟢/🟡/🔴), 2) прогноз завершения, 3) топ-3 риска, 4) рекомендации. Лаконично, по-русски, до 150 слов.',
+    `Данные проекта:\n${JSON.stringify(ctx, null, 2)}`,
+    600
+  );
+  return { message: text, agent: 'risk_forecast_agent', risk_data: ctx };
+}
+
+// ── A3: Smart Decompose with dates ────────────────────────────────────────────
+async function handleSmartDecomposeV2(message, project_id, user_id, headers) {
+  if (!ANTHROPIC_API_KEY) return { message: 'Anthropic API не настроен.' };
+  const pData = (await (await fetch(`${SURL}/rest/v1/projects?id=eq.${project_id}&select=name,depts,deadline`, { headers })).json())?.[0] || {};
+  const today = new Date().toISOString().slice(0, 10);
+  const rawText = await callClaude(
+    `Ты планировщик проектного института. Сформируй список задач с дедлайнами. Отвечай ТОЛЬКО JSON-массивом. Формат: [{"title":"...","priority":"high|medium|low","dept":"...","deadline":"YYYY-MM-DD","duration_days":N}]. От 4 до 10 задач. Дедлайны рассчитай от сегодня (${today}) с учётом последовательности работ.`,
+    `Проект: "${pData.name || 'Проект'}"\nДедлайн проекта: ${pData.deadline || 'не задан'}\nОтделы: ${(pData.depts || []).join(', ') || 'не указаны'}\nЗапрос: ${message}`,
+    900
+  );
+  let tasks = [];
+  try { const m = rawText.match(/\[[\s\S]*\]/); tasks = m ? JSON.parse(m[0]) : []; } catch (e) { tasks = []; }
+  if (!Array.isArray(tasks) || tasks.length === 0) return { message: 'AI не смог сформировать план. Уточните запрос.', agent: 'smart_decompose_v2_agent' };
+  const insertRes = await fetch(`${SURL}/rest/v1/ai_actions`, {
+    method: 'POST',
+    headers: { ...headers, Prefer: 'return=representation' },
+    body: JSON.stringify({ project_id, user_id, action_type: 'create_tasks', agent_type: 'smart_decompose_v2_agent', payload: { tasks }, status: 'pending' }),
+  });
+  const inserted = await insertRes.json();
+  const preview = tasks.slice(0, 5).map(t => `• ${t.title} [${t.priority}${t.deadline ? ', до ' + t.deadline : ''}]`).join('\n');
+  return { message: `**AI-планировщик сформировал ${tasks.length} задач с дедлайнами:**\n${preview}${tasks.length > 5 ? `\n...и ещё ${tasks.length - 5}` : ''}\n\nПодтвердите ниже.`, agent: 'smart_decompose_v2_agent', action_id: inserted?.[0]?.id };
 }
 
 // ── Drawing / Revision / Review / Transmittal Action Builders ────────────────
@@ -430,6 +570,11 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (action === 'task_suggest') {
+      const result = await handleTaskSuggest(req.body, project_id, headers);
+      return res.status(200).json({ success: true, ...result });
+    }
+
     if (action === 'validate_workflow') {
       const fromStatus = payload.from_status;
       const toStatus = payload.to_status;
@@ -622,11 +767,19 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true, ...result });
     }
     if (intent === 'smart_decompose') {
-      const result = await handleSmartDecompose(message, project_id, user_id, headers);
+      const result = await handleSmartDecomposeV2(message, project_id, user_id, headers);
       return res.status(200).json({ success: true, ...result });
     }
     if (intent === 'compliance_check') {
       const result = await handleComplianceCheck(message, project_id, user_id, headers);
+      return res.status(200).json({ success: true, ...result });
+    }
+    if (intent === 'nl_search') {
+      const result = await handleNlSearch(message, project_id, headers);
+      return res.status(200).json({ success: true, ...result });
+    }
+    if (intent === 'risk_forecast') {
+      const result = await handleRiskForecast(project_id, headers);
       return res.status(200).json({ success: true, ...result });
     }
     // ── Legacy intents ────────────────────────────────────────────────────────

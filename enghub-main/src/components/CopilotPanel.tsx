@@ -51,8 +51,11 @@ const agentLabelMap: Record<string, string> = {
   rag_assistant: 'RAG Ассистент',
   project_insights_agent: '📊 Аналитик проекта',
   smart_decompose_agent: '🧠 Планировщик задач',
+  smart_decompose_v2_agent: '🧠 AI-планировщик v2',
   compliance_agent: '📋 Нормоконтроль',
   report_agent: '📄 Генератор отчётов',
+  nl_search_agent: '🔍 NL-поиск',
+  risk_forecast_agent: '⚠️ Риск-анализ',
 };
 
 export function CopilotPanel({ 
@@ -130,7 +133,7 @@ export function CopilotPanel({
         setMessages(prev => [...prev, { role: 'ai', text: 'Запрос обработан.' }]);
       }
       
-      if (data.action_id || data.action_count || ['task_manager', 'drawing_agent', 'review_agent', 'register_agent', 'smart_decompose_agent', 'compliance_agent'].includes(data.agent)) {
+      if (data.action_id || data.action_count || ['task_manager', 'drawing_agent', 'review_agent', 'register_agent', 'smart_decompose_agent', 'smart_decompose_v2_agent', 'compliance_agent'].includes(data.agent)) {
           fetchActions();
       }
     } catch (e) {

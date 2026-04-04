@@ -72,6 +72,8 @@ export default function App() {
   const [taskHistory, setTaskHistory] = useState<any[]>([]);
   const [showTaskHistory, setShowTaskHistory] = useState(false);
   const [newTask, setNewTask] = useState({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" });
+  const [taskSuggest, setTaskSuggest] = useState<{ deadline: string | null; reason: string | null } | null>(null);
+  const [taskSuggestLoading, setTaskSuggestLoading] = useState(false);
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskComment, setTaskComment] = useState("");
@@ -508,6 +510,40 @@ export default function App() {
     return () => clearInterval(interval);
   }, [activeProject, token, sideTab]);
 
+  // ── A6: AI task suggest — debounced call on task name change ──
+  useEffect(() => {
+    if (!showNewTask || !newTask.name.trim() || newTask.name.trim().length < 5 || !activeProject) {
+      setTaskSuggest(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setTaskSuggestLoading(true);
+      try {
+        const apiUrl = window.location.hostname === 'localhost' ? 'https://enghub-three.vercel.app/api/orchestrator' : '/api/orchestrator';
+        const lead = appUsers.find(u => String(u.id) === newTask.assigned_to);
+        const deptName = lead ? depts.find(d => d.id === lead.dept_id)?.name || '' : '';
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: currentUserData?.id,
+            project_id: activeProject.id,
+            message: newTask.name,
+            action: 'task_suggest',
+            task_name: newTask.name,
+            dept: deptName,
+            role: currentUserData?.role || 'engineer',
+          }),
+        });
+        const data = await res.json();
+        if (data.deadline) setTaskSuggest({ deadline: data.deadline, reason: data.reason || null });
+        else setTaskSuggest(null);
+      } catch { setTaskSuggest(null); }
+      finally { setTaskSuggestLoading(false); }
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [newTask.name, showNewTask]); // eslint-disable-line
+
   // ── Presence: управление присутствием в зале совещания ──
   const joinConference = (initialMic = false, initialScreen = false) => {
     if (!activeProject?.id || !currentUserData) return;
@@ -942,7 +978,7 @@ export default function App() {
         />
       )}
       {showNewTask && (
-        <Modal title="Новая задача" onClose={() => { setShowNewTask(false); setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); }} C={C}>
+        <Modal title="Новая задача" onClose={() => { setShowNewTask(false); setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setTaskSuggest(null); }} C={C}>
           <div className="form-stack">
             <button
               type="button"
@@ -962,6 +998,28 @@ export default function App() {
             </Field>
             <Field label="ПРИОРИТЕТ" C={C}><select value={newTask.priority} onChange={e => setNewTask({ ...newTask, priority: e.target.value })} style={getInp(C)}><option value="high">🔴 Высокий</option><option value="medium">🟡 Средний</option><option value="low">⚪ Низкий</option></select></Field>
             <Field label="ДЕДЛАЙН" C={C}><input type="date" value={newTask.deadline} onChange={e => setNewTask({ ...newTask, deadline: e.target.value })} style={getInp(C)} /></Field>
+            {taskSuggestLoading && (
+              <div style={{ fontSize: 12, color: C.accent, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', border: `2px solid ${C.accent}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+                AI подбирает дедлайн…
+              </div>
+            )}
+            {taskSuggest && !taskSuggestLoading && (
+              <div style={{ background: C.accent + '12', border: `1px solid ${C.accent}30`, borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 18 }}>🤖</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.accent }}>AI предлагает дедлайн: {taskSuggest.deadline}</div>
+                  {taskSuggest.reason && <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{taskSuggest.reason}</div>}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setNewTask(prev => ({ ...prev, deadline: taskSuggest.deadline! })); setTaskSuggest(null); }}
+                  style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}
+                >
+                  Применить
+                </button>
+              </div>
+            )}
             <button className="btn btn-primary" onClick={createTask} disabled={saving || !newTask.name} style={{ width: "100%", opacity: !newTask.name ? 0.5 : 1 }}>{saving ? "Создаётся..." : "Создать задачу"}</button>
           </div>
         </Modal>
