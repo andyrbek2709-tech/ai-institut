@@ -22,6 +22,7 @@ import { exportProjectXls, exportTransmittalPdf } from './utils/export';
 import { GlobalSearch } from './components/GlobalSearch';
 import { KanbanBoard } from './components/KanbanBoard';
 import { NotificationCenter } from './components/NotificationCenter';
+import { TaskTemplates } from './components/TaskTemplates';
 
 export default function App() {
   const [dark, setDark] = useState(false); // Светлая тема по умолчанию
@@ -66,6 +67,7 @@ export default function App() {
   const [newProject, setNewProject] = useState<any>({ name: "", code: "", deadline: "", status: "active", depts: [] });
   const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
+  const [showTaskTemplates, setShowTaskTemplates] = useState(false);
   const [newTask, setNewTask] = useState({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" });
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
@@ -917,9 +919,35 @@ export default function App() {
           </div>
         </Modal>
       )}
+      {showTaskTemplates && (
+        <TaskTemplates
+          token={token!}
+          C={C}
+          onClose={() => setShowTaskTemplates(false)}
+          onApply={(tpl: any) => {
+            const deadline = tpl.duration_days
+              ? new Date(Date.now() + tpl.duration_days * 86400000).toISOString().slice(0, 10)
+              : '';
+            setNewTask(prev => ({
+              ...prev,
+              name: tpl.name,
+              priority: tpl.priority || 'medium',
+              description: tpl.description || '',
+              deadline,
+            }));
+          }}
+        />
+      )}
       {showNewTask && (
         <Modal title="Новая задача" onClose={() => { setShowNewTask(false); setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); }} C={C}>
           <div className="form-stack">
+            <button
+              type="button"
+              onClick={() => setShowTaskTemplates(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer', color: C.accent, fontSize: 13, fontWeight: 600, fontFamily: 'inherit' }}
+            >
+              📋 Выбрать из шаблона
+            </button>
             <Field label="НАЗВАНИЕ *" C={C}><input value={newTask.name} onChange={e => setNewTask({ ...newTask, name: e.target.value })} placeholder="Расчёт нагрузок" style={getInp(C)} /></Field>
             <Field label="ОПИСАНИЕ" C={C}><textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} placeholder="Подробное описание задачи..." rows={3} style={{ ...getInp(C), resize: 'vertical', fontFamily: 'inherit' }} /></Field>
             <Field label="НАЗНАЧИТЬ РУКОВОДИТЕЛЮ" C={C}><select value={newTask.assigned_to} onChange={e => { const lead = appUsers.find(u => String(u.id) === e.target.value); setNewTask({ ...newTask, assigned_to: e.target.value, dept_id: lead?.dept_id || "" }); }} style={getInp(C)}><option value="">— Выбрать —</option>{myLeads.map(u => <option key={u.id} value={u.id}>{u.full_name} ({getDeptName(u.dept_id)})</option>)}</select></Field>
