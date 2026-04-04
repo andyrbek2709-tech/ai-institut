@@ -12,6 +12,7 @@ const TYPE_ICON: Record<string, string> = {
   review_closed: '✅',
   transmittal_issued: '📦',
   comment_new: '💬',
+  ai_digest: '🤖',
   system: 'ℹ️',
 };
 

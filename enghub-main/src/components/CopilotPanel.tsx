@@ -36,9 +36,9 @@ const roleTitleMap: Record<string, string> = {
 };
 
 const rolePlaceholderMap: Record<string, string> = {
-  gip: "Напр.: 'Как дела по проекту?' или 'Разработай план задач для ОВ'",
-  lead: "Напр.: 'Сформируй еженедельный отчёт' или 'Проверь ОВ-001 на нормы'",
-  engineer: "Напр.: 'Нормоконтроль чертежа ЭО-005' или 'Анализ состояния проекта'",
+  gip: "Напр.: 'Риски срыва проекта?' / 'Найди задачи КМ просроченные' / 'Разработай план задач'",
+  lead: "Напр.: 'Сформируй еженедельный отчёт' / 'Найди задачи в доработке' / 'Риски проекта'",
+  engineer: "Напр.: 'Нормоконтроль ОВ-001' / 'Найди мои задачи в очереди' / 'Анализ проекта'",
 };
 
 const agentLabelMap: Record<string, string> = {
@@ -56,6 +56,8 @@ const agentLabelMap: Record<string, string> = {
   report_agent: '📄 Генератор отчётов',
   nl_search_agent: '🔍 NL-поиск',
   risk_forecast_agent: '⚠️ Риск-анализ',
+  norm_control_agent: '📋 Нормоконтроль ПЗ',
+  drawing_vision_agent: '🖼️ AI-анализ чертежа',
 };
 
 export function CopilotPanel({ 

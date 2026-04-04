@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { drawingStatusMap } from '../constants';
 import { getInp } from './ui';
 
@@ -82,6 +82,7 @@ type Props = {
   drawings: Drawing[];
   onCreate: (payload: Partial<Drawing>) => Promise<void>;
   onUpdate: (id: string, payload: Partial<Drawing>) => Promise<void>;
+  userRole?: string;
 };
 
 const emptyForm = {
@@ -92,11 +93,64 @@ const emptyForm = {
   due_date: '',
 };
 
-export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate }: Props) {
+export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRole = 'engineer' }: Props) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [aiAnalyzing, setAiAnalyzing] = useState<string | null>(null); // drawing id being analyzed
+  const [aiResult, setAiResult] = useState<{ drawingCode: string; message: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const analyzeDrawingRef = useRef<Drawing | null>(null);
+
+  const handleAnalyzeClick = (d: Drawing) => {
+    analyzeDrawingRef.current = d;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const drawing = analyzeDrawingRef.current;
+    if (!file || !drawing) return;
+    e.target.value = '';
+
+    const MAX_SIZE = 4 * 1024 * 1024; // 4 MB
+    if (file.size > MAX_SIZE) { alert('Файл слишком большой. Максимум 4 МБ.'); return; }
+
+    setAiAnalyzing(drawing.id);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]); // strip data:image/...;base64,
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const mediaType = file.type || 'image/png';
+      const apiUrl = window.location.hostname === 'localhost' ? 'https://enghub-three.vercel.app/api/orchestrator' : '/api/orchestrator';
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'analyze_drawing',
+          image_base64: base64,
+          media_type: mediaType,
+          drawing_code: drawing.code,
+          drawing_title: drawing.title,
+          discipline: drawing.discipline,
+          role: userRole,
+        }),
+      });
+      const data = await res.json();
+      setAiResult({ drawingCode: drawing.code, message: data.message || 'Анализ недоступен.' });
+    } catch (err) {
+      setAiResult({ drawingCode: drawing.code, message: 'Ошибка при анализе чертежа.' });
+    } finally {
+      setAiAnalyzing(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -128,6 +182,30 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate }: Prop
 
   return (
     <div className="screen-fade">
+      {/* Hidden file input for AI drawing analysis */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+
+      {/* AI Analysis result modal */}
+      {aiResult && (
+        <div className="modal-overlay" onClick={() => setAiResult(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 540 }}>
+            <div className="modal-header">
+              <div className="modal-title">🤖 AI-нормоконтроль: {aiResult.drawingCode}</div>
+              <button className="modal-close" onClick={() => setAiResult(null)}>✕</button>
+            </div>
+            <div style={{ padding: '16px 20px', fontSize: 13, color: C.text, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+              {aiResult.message}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="task-list-header">
         <div className="task-list-title">Реестр чертежей</div>
         <input
@@ -189,17 +267,31 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate }: Prop
                   </td>
                   <td style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}`, color: C.textDim }}>{d.due_date || '—'}</td>
                   <td style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}` }}>
-                    {canEdit && (
-                      <select
-                        value={d.status || 'draft'}
-                        onChange={(e) => onUpdate(d.id, { status: e.target.value })}
-                        style={{ ...getInp(C), height: 32, fontSize: 12, minWidth: 120 }}
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      {canEdit && (
+                        <select
+                          value={d.status || 'draft'}
+                          onChange={(e) => onUpdate(d.id, { status: e.target.value })}
+                          style={{ ...getInp(C), height: 32, fontSize: 12, minWidth: 120 }}
+                        >
+                          {Object.entries(drawingStatusMap).map(([k, v]) => (
+                            <option key={k} value={k}>{v.label}</option>
+                          ))}
+                        </select>
+                      )}
+                      <button
+                        title="AI-нормоконтроль (загрузить скриншот чертежа)"
+                        onClick={() => handleAnalyzeClick(d)}
+                        disabled={aiAnalyzing === d.id}
+                        style={{
+                          background: '#a855f720', border: '1px solid #a855f740', borderRadius: 6,
+                          padding: '4px 8px', cursor: 'pointer', fontSize: 13, color: '#a855f7',
+                          fontFamily: 'inherit', whiteSpace: 'nowrap',
+                        }}
                       >
-                        {Object.entries(drawingStatusMap).map(([k, v]) => (
-                          <option key={k} value={k}>{v.label}</option>
-                        ))}
-                      </select>
-                    )}
+                        {aiAnalyzing === d.id ? '⏳' : '🤖 AI'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

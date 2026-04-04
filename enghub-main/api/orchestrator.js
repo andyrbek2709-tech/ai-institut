@@ -25,9 +25,9 @@ const ROLE_ALLOWED_INTENTS = {
 };
 
 const ROLE_ALLOWED_ACTIONS = {
-  gip: ['search_normative', 'validate_workflow', 'task_suggest', 'create_drawing', 'update_drawing', 'create_drawing_revision', 'create_revision', 'create_review', 'update_review_status', 'create_transmittal', 'update_transmittal_status'],
-  lead: ['search_normative', 'validate_workflow', 'task_suggest', 'create_drawing', 'update_drawing', 'create_drawing_revision', 'create_revision', 'create_review', 'update_review_status', 'create_transmittal', 'update_transmittal_status'],
-  engineer: ['search_normative', 'validate_workflow', 'task_suggest', 'create_review', 'update_review_status'],
+  gip: ['search_normative', 'validate_workflow', 'task_suggest', 'analyze_drawing', 'norm_control', 'create_drawing', 'update_drawing', 'create_drawing_revision', 'create_revision', 'create_review', 'update_review_status', 'create_transmittal', 'update_transmittal_status'],
+  lead: ['search_normative', 'validate_workflow', 'task_suggest', 'analyze_drawing', 'norm_control', 'create_drawing', 'update_drawing', 'create_drawing_revision', 'create_revision', 'create_review', 'update_review_status', 'create_transmittal', 'update_transmittal_status'],
+  engineer: ['search_normative', 'validate_workflow', 'task_suggest', 'analyze_drawing', 'norm_control', 'create_review', 'update_review_status'],
 };
 
 async function createEmbedding(input) {
@@ -368,6 +368,95 @@ async function handleSmartDecomposeV2(message, project_id, user_id, headers) {
   return { message: `**AI-планировщик сформировал ${tasks.length} задач с дедлайнами:**\n${preview}${tasks.length > 5 ? `\n...и ещё ${tasks.length - 5}` : ''}\n\nПодтвердите ниже.`, agent: 'smart_decompose_v2_agent', action_id: inserted?.[0]?.id };
 }
 
+// ── A8: AI Norm Control — text ПЗ → structured GOST compliance findings ──────
+async function handleNormControl(body, project_id, user_id, headers) {
+  if (!ANTHROPIC_API_KEY) return { message: 'Anthropic API не настроен.' };
+  const { text, doc_title = 'ПЗ', discipline = '' } = body;
+  if (!text || !String(text).trim()) return { message: 'Текст документа не предоставлен.', agent: 'norm_control_agent' };
+
+  // Try RAG if OpenAI available
+  let ctxText = '';
+  if (OPENAI_API_KEY) {
+    try {
+      const embedding = await (async () => {
+        const r = await fetch('https://api.openai.com/v1/embeddings', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'text-embedding-3-small', input: `${discipline} ГОСТ нормы ${doc_title}`.trim() }),
+        });
+        const d = await r.json(); return d.data[0].embedding;
+      })();
+      const chunks = await (await fetch(`${SURL}/rest/v1/rpc/search_normative`, {
+        method: 'POST', headers: { ...headers, Prefer: 'return=representation' },
+        body: JSON.stringify({ query_embedding: embedding, match_count: 4 }),
+      })).json();
+      if (Array.isArray(chunks) && chunks.length > 0) {
+        ctxText = chunks.map((c, i) => `[${i + 1}] ${c.doc_name}:\n${c.content}`).join('\n\n');
+      }
+    } catch (e) { /* skip RAG on error */ }
+  }
+
+  const textSnippet = String(text).slice(0, 2000); // limit context
+  const rawText = await callClaude(
+    `Ты нормоконтролёр. Проверь текст документа на соответствие нормативным требованиям. Верни ТОЛЬКО JSON-массив замечаний без пояснений. Формат: [{"clause":"ГОСТ/СП/...","title":"Суть замечания","severity":"major|minor","quote":"цитата из текста"}]. От 3 до 8 замечаний.${ctxText ? ' Основывайся на предоставленных нормативах.' : ' Используй общие нормы для данного типа документа.'}`,
+    `Документ: "${doc_title}"${discipline ? `, дисциплина: ${discipline}` : ''}\nТекст:\n${textSnippet}${ctxText ? `\n\nНормативы:\n${ctxText}` : ''}`,
+    1000
+  );
+  let items = [];
+  try { const m = rawText.match(/\[[\s\S]*\]/); items = m ? JSON.parse(m[0]) : []; } catch (e) { items = []; }
+  if (!Array.isArray(items) || items.length === 0) return { message: 'Замечаний не найдено или не удалось разобрать ответ AI.', agent: 'norm_control_agent' };
+
+  // Save to ai_actions for confirmation
+  const insertRes = await fetch(`${SURL}/rest/v1/ai_actions`, {
+    method: 'POST',
+    headers: { ...headers, Prefer: 'return=representation' },
+    body: JSON.stringify({ project_id, user_id, action_type: 'create_review', agent_type: 'norm_control_agent', payload: { items, doc_title }, status: 'pending' }),
+  });
+  const inserted = await insertRes.json();
+  const preview = items.slice(0, 4).map(it => `• [${it.severity === 'major' ? '🔴' : '🟡'}] ${it.clause}: ${it.title}`).join('\n');
+  const sources = ctxText ? '\n\n📚 Использованы нормативы из базы знаний.' : '';
+  return {
+    message: `**Нормоконтроль "${doc_title}": ${items.length} замечаний**\n${preview}${items.length > 4 ? `\n...и ещё ${items.length - 4}` : ''}${sources}\n\nПодтвердите ниже.`,
+    agent: 'norm_control_agent',
+    action_id: inserted?.[0]?.id,
+    items,
+  };
+}
+
+// ── A1: AI Drawing Analysis (Claude Vision) ───────────────────────────────────
+async function handleAnalyzeDrawing(body) {
+  if (!ANTHROPIC_API_KEY) return { message: 'Anthropic API не настроен.' };
+  const { image_base64, media_type = 'image/png', drawing_code, drawing_title, discipline } = body;
+  if (!image_base64) return { message: 'Изображение не предоставлено.', agent: 'drawing_vision_agent' };
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 800,
+      system: 'Ты эксперт-нормоконтролёр проектного института. Анализируй инженерные чертежи и давай структурированную оценку: 1) Заполнение основной надписи (штамп), 2) Масштаб и форматирование, 3) Наличие размеров и обозначений, 4) Замечания по содержанию, 5) Итоговая оценка (Approved/Revision Required/Rejected). По-русски, до 200 слов.',
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type, data: image_base64 },
+          },
+          {
+            type: 'text',
+            text: `Чертёж: "${drawing_code || 'Без кода'} — ${drawing_title || 'Без названия'}"${discipline ? `, дисциплина: ${discipline}` : ''}. Проведи нормоконтроль.`,
+          },
+        ],
+      }],
+    }),
+  });
+  if (!res.ok) throw new Error('Claude Vision API failed: ' + res.status);
+  const data = await res.json();
+  const text = data.content?.[0]?.text || 'Анализ недоступен.';
+  return { message: text, agent: 'drawing_vision_agent' };
+}
+
 // ── Drawing / Revision / Review / Transmittal Action Builders ────────────────
 
 function buildDrawingAction(actionType, project_id, user_id, payload = {}) {
@@ -572,6 +661,16 @@ module.exports = async function handler(req, res) {
 
     if (action === 'task_suggest') {
       const result = await handleTaskSuggest(req.body, project_id, headers);
+      return res.status(200).json({ success: true, ...result });
+    }
+
+    if (action === 'analyze_drawing') {
+      const result = await handleAnalyzeDrawing(req.body);
+      return res.status(200).json({ success: true, ...result });
+    }
+
+    if (action === 'norm_control') {
+      const result = await handleNormControl(req.body, project_id, user_id, headers);
       return res.status(200).json({ success: true, ...result });
     }
 
