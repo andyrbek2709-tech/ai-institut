@@ -160,6 +160,13 @@ export const globalSearch = async (query: string, token?: string) => {
   };
 };
 
+// Review comments (threads)
+export const listReviewComments = (reviewId: number, token?: string) =>
+  get(`review_comments?review_id=eq.${reviewId}&order=created_at.asc`, token);
+
+export const createReviewComment = (payload: any, token?: string) =>
+  post('review_comments', payload, token);
+
 // Notifications
 export const listNotifications = (userId: number, token?: string) =>
   get(`notifications?user_id=eq.${userId}&order=created_at.desc&limit=50`, token);

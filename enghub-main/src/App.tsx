@@ -1702,6 +1702,8 @@ export default function App() {
                   drawings={drawings}
                   reviews={reviews}
                   appUsers={appUsers}
+                  currentUser={currentUserData}
+                  token={token!}
                   submitReview={submitReview}
                   changeReviewStatus={changeReviewStatus}
                 />

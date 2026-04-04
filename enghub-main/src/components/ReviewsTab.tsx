@@ -1,5 +1,6 @@
 import React from 'react';
 import { getInp } from './ui';
+import { ReviewThread } from './ReviewThread';
 
 type Props = {
   C: any;
@@ -10,6 +11,8 @@ type Props = {
   drawings: any[];
   reviews: any[];
   appUsers: any[];
+  currentUser: any;
+  token: string;
   submitReview: () => void;
   changeReviewStatus: (reviewId: string, status: string) => void;
 };
@@ -23,6 +26,8 @@ export function ReviewsTab({
   drawings,
   reviews,
   appUsers,
+  currentUser,
+  token,
   submitReview,
   changeReviewStatus,
 }: Props) {
@@ -63,6 +68,13 @@ export function ReviewsTab({
                     {createdDate && <span>{createdDate}</span>}
                   </div>
                 )}
+                <ReviewThread
+                  reviewId={r.id}
+                  currentUser={currentUser}
+                  token={token}
+                  appUsers={appUsers}
+                  C={C}
+                />
               </div>
               <span className="badge">{{ minor: 'Незначительное', major: 'Существенное', critical: 'Критическое' }[r.severity] || r.severity}</span>
               <span style={{ fontSize: 12, color: C.textMuted }}>{{ open: 'Открыто', in_progress: 'В работе', resolved: 'Устранено', rejected: 'Отклонено' }[r.status || 'open'] || r.status}</span>
