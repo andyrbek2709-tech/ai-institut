@@ -59,6 +59,9 @@ export default function App() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [showArchive, setShowArchive] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [telegramIdInput, setTelegramIdInput] = useState("");
+  const [telegramSaving, setTelegramSaving] = useState(false);
+  const [showTelegramInput, setShowTelegramInput] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [archivedProjects, setArchivedProjects] = useState<any[]>([]);
   const [sideTab, setSideTab] = useState(() => { const s = localStorage.getItem('enghub_sidetab'); return (s && s !== 'conference') ? s : 'tasks'; });
@@ -1402,7 +1405,56 @@ export default function App() {
                         setShowUserMenu(false);
                       }} />
                     </label>
-                    <button onClick={() => { setShowUserMenu(false); handleLogout(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
+                    {/* Telegram linking */}
+                    <div style={{ borderTop: `1px solid ${C.border}` }}>
+                      {!showTelegramInput ? (
+                        <button
+                          onClick={() => setShowTelegramInput(true)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', color: C.text, fontSize: 13 }}
+                        >
+                          📱 {currentUserData?.telegram_id ? `Telegram: привязан` : 'Привязать Telegram'}
+                        </button>
+                      ) : (
+                        <div style={{ padding: '10px 14px' }}>
+                          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>
+                            Напишите боту <b>@cer_institut_ai_bot</b> команду <code>/start</code>, он покажет ваш ID. Вставьте его ниже:
+                          </div>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <input
+                              value={telegramIdInput}
+                              onChange={e => setTelegramIdInput(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Telegram ID (числа)"
+                              style={{ flex: 1, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 6, padding: '6px 8px', color: C.text, fontSize: 12, outline: 'none', fontFamily: 'inherit' }}
+                            />
+                            <button
+                              disabled={telegramSaving || !telegramIdInput}
+                              onClick={async () => {
+                                setTelegramSaving(true);
+                                try {
+                                  await patch(`app_users?id=eq.${currentUserData.id}`, { telegram_id: Number(telegramIdInput) }, token!);
+                                  setCurrentUserData((prev: any) => ({ ...prev, telegram_id: Number(telegramIdInput) }));
+                                  addNotification('Telegram привязан! Напишите боту /start', 'success');
+                                  setShowTelegramInput(false);
+                                  setTelegramIdInput('');
+                                  setShowUserMenu(false);
+                                } catch {
+                                  addNotification('Ошибка привязки', 'warning');
+                                } finally {
+                                  setTelegramSaving(false);
+                                }
+                              }}
+                              style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', opacity: !telegramIdInput ? 0.5 : 1 }}
+                            >
+                              {telegramSaving ? '...' : 'OK'}
+                            </button>
+                          </div>
+                          {currentUserData?.telegram_id && (
+                            <div style={{ fontSize: 10, color: C.textMuted, marginTop: 4 }}>Текущий ID: {currentUserData.telegram_id}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => { setShowUserMenu(false); handleLogout(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'none', border: `none`, borderTop: `1px solid ${C.border}`, cursor: 'pointer', color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
                       ⏻ Выйти из системы
                     </button>
                   </div>
