@@ -25,6 +25,7 @@ import { ProjectTimeline } from './components/ProjectTimeline';
 import { NotificationCenter } from './components/NotificationCenter';
 import { TaskTemplates } from './components/TaskTemplates';
 import { ProjectReportPDF } from './components/ProjectReportPDF';
+import { GipDashboard } from './components/GipDashboard';
 
 export default function App() {
   const [dark, setDark] = useState(false); // Светлая тема по умолчанию
@@ -1762,9 +1763,9 @@ export default function App() {
 
               {/* Tabs */}
               <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-                {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog"].map(t => (
+                {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : [])].map(t => (
                   <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : "🗣 Совещание"}
+                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : "🗣 Совещание"}
                   </button>
                 ))}
               </div>
@@ -1923,6 +1924,19 @@ export default function App() {
                   C={C} 
                   token={token!} 
                   addNotification={addNotification}
+                />
+              )}
+
+              {sideTab === "gipdash" && isGip && (
+                <GipDashboard
+                  project={activeProject}
+                  tasks={allTasks}
+                  reviews={reviews}
+                  drawings={drawings}
+                  appUsers={appUsers}
+                  depts={activeProject?.depts?.map((id: number) => depts.find(d => d.id === id)?.name).filter(Boolean) || []}
+                  C={C}
+                  token={token!}
                 />
               )}
 
