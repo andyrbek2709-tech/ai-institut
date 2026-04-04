@@ -34,6 +34,8 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
   const [showParticipantDrop, setShowParticipantDrop] = useState(false);
   const participantRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const audioInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -77,6 +79,42 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
     !selectedParticipants.includes(u.full_name)
   );
 
+  const handleTranscribeAudio = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const MAX_SIZE = 25 * 1024 * 1024; // 25 MB Whisper limit
+    if (file.size > MAX_SIZE) { addNotification('Файл слишком большой (макс. 25 МБ)', 'warning'); return; }
+
+    setTranscribing(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const apiUrl = window.location.hostname === 'localhost' ? 'https://enghub-three.vercel.app/api/transcribe' : '/api/transcribe';
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio_base64: base64, media_type: file.type || 'audio/mpeg', filename: file.name }),
+      });
+      const data = await res.json();
+      if (data.text) {
+        setNewMeeting(prev => ({ ...prev, decisions: prev.decisions ? prev.decisions + '\n\n' + data.text : data.text }));
+        addNotification('Транскрипция завершена', 'success');
+      } else {
+        addNotification('Не удалось транскрибировать аудио', 'warning');
+      }
+    } catch {
+      addNotification('Ошибка транскрипции', 'error');
+    } finally {
+      setTranscribing(false);
+    }
+  };
+
   return (
     <div className="screen-fade">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -103,7 +141,21 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
 
       {showNewMeeting && (
         <div style={{ background: C.surface, borderRadius: 14, padding: 20, border: `1px solid ${C.accent}40`, marginTop: 8, boxShadow: 'var(--card-shadow)' }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 12 }}>Новый протокол</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Новый протокол</div>
+            <div>
+              <input ref={audioInputRef} type="file" accept="audio/*" style={{ display: 'none' }} onChange={handleTranscribeAudio} />
+              <button
+                type="button"
+                onClick={() => audioInputRef.current?.click()}
+                disabled={transcribing}
+                title="Загрузить аудиозапись совещания — AI транскрибирует и вставит текст в поле Решения"
+                style={{ background: '#4a9eff20', border: '1px solid #4a9eff40', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#4a9eff', fontFamily: 'inherit', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                {transcribing ? '⏳ Транскрипция…' : '🎙 AI Транскрипция'}
+              </button>
+            </div>
+          </div>
           <div className="form-stack">
             <Field label="ТЕМА *" C={C}><input value={newMeeting.title} onChange={e => setNewMeeting({...newMeeting, title: e.target.value})} placeholder="Совещание по проекту" style={getInp(C)} /></Field>
             <Field label="ДАТА" C={C}><input type="date" value={newMeeting.meeting_date} onChange={e => setNewMeeting({...newMeeting, meeting_date: e.target.value})} style={getInp(C)} /></Field>
