@@ -21,6 +21,7 @@ import TimelogPanel from './components/TimelogPanel';
 import { exportProjectXls, exportTransmittalPdf } from './utils/export';
 import { GlobalSearch } from './components/GlobalSearch';
 import { KanbanBoard } from './components/KanbanBoard';
+import { ProjectTimeline } from './components/ProjectTimeline';
 import { NotificationCenter } from './components/NotificationCenter';
 import { TaskTemplates } from './components/TaskTemplates';
 
@@ -1657,9 +1658,9 @@ export default function App() {
 
               {/* Tabs */}
               <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-                {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","meetings","timelog"].map(t => (
+                {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog"].map(t => (
                   <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : "🗣 Совещание"}
+                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : "🗣 Совещание"}
                   </button>
                 ))}
               </div>
@@ -1783,6 +1784,12 @@ export default function App() {
 
               {/* ── GANTT ── */}
               {sideTab === "gantt" && <GanttChart tasks={allTasks} activeProject={activeProject} getUserById={getUserById} getDeptName={getDeptName} C={C} />}
+              {sideTab === "timeline" && (
+                <div style={{ padding: 20 }}>
+                  <div className="page-header" style={{ marginBottom: 16 }}><div><div className="page-label">D5</div><div className="page-title">Timeline проекта</div></div></div>
+                  <ProjectTimeline tasks={allTasks} project={activeProject} C={C} />
+                </div>
+              )}
 
               {/* ── MEETINGS ── */}
               {sideTab === "meetings" && (
