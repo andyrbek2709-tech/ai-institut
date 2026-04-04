@@ -778,7 +778,7 @@ export default function App() {
     loadTasks(activeProject.id);
   };
   const handleLogin = async (accessToken: string, email: string) => { setToken(accessToken); setUserEmail(email); localStorage.setItem('enghub_token', accessToken); localStorage.setItem('enghub_email', email); if (email !== "admin@enghub.com") setLoading(true); else setLoading(false); };
-  const handleLogout = () => { setToken(null); setUserEmail(""); setCurrentUserData(null); setProjects([]); setTasks([]); setMsgs([]); localStorage.removeItem('enghub_token'); localStorage.removeItem('enghub_email'); };
+  const handleLogout = () => { setToken(null); setUserEmail(""); setCurrentUserData(null); setProjects([]); setTasks([]); setMsgs([]); setChatInput(""); localStorage.removeItem('enghub_token'); localStorage.removeItem('enghub_email'); };
 
   const handleGlobalSearchSelect = (type: string, item: any) => {
     if (type === 'projects') {
@@ -810,6 +810,14 @@ export default function App() {
     if (dmy) return new Date(parseInt(dmy[3]), parseInt(dmy[2]) - 1, parseInt(dmy[1]));
     const dt = new Date(d);
     return isNaN(dt.getTime()) ? null : dt;
+  };
+
+  const formatDateRu = (d: string | null | undefined): string => {
+    if (!d) return '';
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(d)) return d;
+    const iso = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return `${iso[3]}.${iso[2]}.${iso[1]}`;
+    return d;
   };
 
   const getAutoProgress = (pid: number): number => { const pt = allTasks.filter(t => t.project_id === pid); if (pt.length === 0) return 0; return Math.round((pt.filter(t => t.status === "done").length / pt.length) * 100); };
@@ -919,7 +927,7 @@ export default function App() {
         </Modal>
       )}
       {showTaskDetail && selectedTask && (
-        <Modal title="Задача" onClose={() => { setShowTaskDetail(false); setSelectedTask(null); setTaskComment(""); setWorkflowBlockInfo(""); loadMessages(activeProject.id); }} C={C}>
+        <Modal title="Задача" onClose={() => { setShowTaskDetail(false); setSelectedTask(null); setTaskComment(""); setWorkflowBlockInfo(""); setChatInput(""); loadMessages(activeProject.id); }} C={C}>
           <div className="form-stack">
             <div style={{ background: C.surface2, borderRadius: 10, padding: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -934,7 +942,7 @@ export default function App() {
                   const d = drawings.find(dr => String(dr.id) === String(selectedTask.drawing_id));
                   return d ? <span style={{ fontSize: 11, color: C.textMuted, background: C.surface, padding: "3px 8px", borderRadius: 6 }}>📐 {d.code}</span> : null;
                 })()}
-                {selectedTask.deadline && <span style={{ fontSize: 11, color: (() => { const dl = parseDeadline(selectedTask.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {selectedTask.deadline}</span>}
+                {selectedTask.deadline && <span style={{ fontSize: 11, color: (() => { const dl = parseDeadline(selectedTask.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {formatDateRu(selectedTask.deadline)}</span>}
               </div>
             </div>
             {selectedTask.parent_task_id && (
@@ -1029,7 +1037,7 @@ export default function App() {
               </div>
             )}
             
-            <div style={{ marginTop: 20 }}>
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Замечания и обсуждение</div>
               <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', height: 250 }}>
                 <div style={{ flex: 1, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1589,7 +1597,7 @@ export default function App() {
                                 const d = drawings.find(dr => String(dr.id) === String(t.drawing_id));
                                 return d ? <span style={{ fontSize: 11, color: C.textMuted }}>📐 {d.code}</span> : null;
                               })()}
-                              {t.deadline && <span style={{ fontSize: 11, color: (() => { const dl = parseDeadline(t.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>📅 {t.deadline}</span>}
+                              {t.deadline && <span style={{ fontSize: 11, color: (() => { const dl = parseDeadline(t.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>📅 {formatDateRu(t.deadline)}</span>}
                               <span style={{ fontSize: 11, color: t.priority === "high" ? C.red : t.priority === "medium" ? C.orange : C.green, fontWeight: 600 }}>● {t.priority === "high" ? "Высокий" : t.priority === "medium" ? "Средний" : "Низкий"}</span>
                             </div>
                           </div>
@@ -1833,7 +1841,7 @@ export default function App() {
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                                   {t.dept && <span style={{ fontSize: 10, color: C.textMuted, background: C.surface2, padding: "3px 8px", borderRadius: 6, width: "fit-content" }}>{t.dept}</span>}
-                                  {t.deadline && <span style={{ fontSize: 10, color: C.textMuted }}>📅 {t.deadline}</span>}
+                                  {t.deadline && <span style={{ fontSize: 10, color: C.textMuted }}>📅 {formatDateRu(t.deadline)}</span>}
                                 </div>
                                 {u && (
                                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

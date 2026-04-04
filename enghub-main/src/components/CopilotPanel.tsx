@@ -16,6 +16,19 @@ interface ChatMsg {
   text: string;
 }
 
+const renderMd = (text: string): string => {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.15);padding:1px 4px;border-radius:3px;font-family:monospace;font-size:12px">$1</code>')
+    .replace(/^### (.+)$/gm, '<div style="font-weight:700;font-size:13px;margin:6px 0 2px">$1</div>')
+    .replace(/^## (.+)$/gm, '<div style="font-weight:700;font-size:14px;margin:8px 0 4px">$1</div>')
+    .replace(/^# (.+)$/gm, '<div style="font-weight:700;font-size:15px;margin:8px 0 4px">$1</div>')
+    .replace(/^- (.+)$/gm, '<div style="padding-left:12px">• $1</div>')
+    .replace(/\n/g, '<br/>');
+};
+
 const roleTitleMap: Record<string, string> = {
   gip: 'Роль: ГИП',
   lead: 'Роль: Руководитель отдела',
@@ -323,9 +336,9 @@ export function CopilotPanel({
               fontSize: 14, lineHeight: 1.4,
               borderBottomRightRadius: m.role === 'user' ? 2 : 12,
               borderBottomLeftRadius: m.role === 'ai' ? 2 : 12,
-            }}>
-              {m.text}
-            </div>
+            }}
+              dangerouslySetInnerHTML={{ __html: m.role === 'ai' ? renderMd(m.text) : m.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }}
+            />
           </div>
         ))}
 

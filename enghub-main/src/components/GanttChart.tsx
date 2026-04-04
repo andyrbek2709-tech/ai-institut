@@ -35,7 +35,9 @@ const parseDate = (d: string | null | undefined): Date | null => {
 };
 
 const GanttChart: React.FC<GanttChartProps> = ({ tasks, activeProject, getUserById, getDeptName, C }) => {
-  const pTasks = tasks.filter(t => t.project_id === activeProject.id);
+  const pTasks = tasks
+    .filter(t => t.project_id === activeProject.id)
+    .filter((t, idx, arr) => arr.findIndex(x => x.id === t.id) === idx);
   if (pTasks.length === 0) return <div className="empty-state" style={{ padding: 40 }}>Нет задач для диаграммы. Создайте задачи с дедлайнами.</div>;
 
   const now = Date.now();
