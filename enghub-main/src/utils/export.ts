@@ -157,3 +157,107 @@ export const exportTransmittalPdf = (tr: any, projectName: string, items: any[],
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank');
 };
+
+/**
+ * Exports specification sheet to Excel (XML Spreadsheet 2003 format).
+ */
+export const exportSpecificationXls = (
+  specificationName: string,
+  stamp: Record<string, string>,
+  items: Array<{
+    line_no: number;
+    name: string;
+    type_mark?: string;
+    code?: string;
+    plant?: string;
+    unit?: string;
+    qty: number;
+  }>
+) => {
+  const cell = (v: string, styleId = '') =>
+    `<Cell${styleId ? ` ss:StyleID="${styleId}"` : ''}><Data ss:Type="String">${esc(v || '')}</Data></Cell>`;
+
+  const numCell = (v: number, styleId = '') =>
+    `<Cell${styleId ? ` ss:StyleID="${styleId}"` : ''}><Data ss:Type="Number">${Number.isFinite(v) ? v : 0}</Data></Cell>`;
+
+  const header = `<Row>
+    ${cell('Поз.', 'h')}
+    ${cell('Наименование и техническая характеристика', 'h')}
+    ${cell('Тип, марка', 'h')}
+    ${cell('Код', 'h')}
+    ${cell('Завод', 'h')}
+    ${cell('Ед.', 'h')}
+    ${cell('Кол-во', 'h')}
+    ${cell('Примечание', 'h')}
+  </Row>`;
+
+  const rows = items
+    .sort((a, b) => (a.line_no || 0) - (b.line_no || 0))
+    .map((it, idx) => `<Row>
+      ${numCell(idx + 1, 'b')}
+      ${cell(it.name || '', 'b')}
+      ${cell(it.type_mark || '', 'b')}
+      ${cell(it.code || '', 'b')}
+      ${cell(it.plant || '', 'b')}
+      ${cell(it.unit || '', 'b')}
+      ${numCell(Number(it.qty || 0), 'b')}
+      ${cell('', 'b')}
+    </Row>`)
+    .join('');
+
+  const stampRows = [
+    ['Шифр проекта', stamp.projectCode || ''],
+    ['Наименование объекта', stamp.objectName || ''],
+    ['Наименование системы', stamp.systemName || ''],
+    ['Стадия', stamp.stage || 'РП'],
+    ['Лист / Листов', `${stamp.sheet || '1'} / ${stamp.sheets || '1'}`],
+    ['Разработал', stamp.developedBy || ''],
+    ['Проверил', stamp.checkedBy || ''],
+    ['Н. контроль', stamp.normControlBy || ''],
+    ['Утвердил', stamp.approvedBy || ''],
+    ['Дата', stamp.date || ''],
+  ]
+    .map(([k, v]) => `<Row>${cell(k, 'h')}${cell(v, 'b')}</Row>`)
+    .join('');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="h"><Font ss:Bold="1"/><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders></Style>
+    <Style ss:ID="b"><Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders><Alignment ss:Vertical="Center" ss:WrapText="1"/></Style>
+  </Styles>
+  <Worksheet ss:Name="Спецификация">
+    <Table>
+      <Column ss:Width="45"/>
+      <Column ss:Width="320"/>
+      <Column ss:Width="160"/>
+      <Column ss:Width="110"/>
+      <Column ss:Width="110"/>
+      <Column ss:Width="55"/>
+      <Column ss:Width="65"/>
+      <Column ss:Width="100"/>
+      <Row><Cell ss:MergeAcross="7" ss:StyleID="h"><Data ss:Type="String">${esc(specificationName || 'Спецификация оборудования')}</Data></Cell></Row>
+      ${header}
+      ${rows}
+      <Row/>
+      <Row><Cell ss:MergeAcross="7" ss:StyleID="h"><Data ss:Type="String">ШТАМП</Data></Cell></Row>
+      ${stampRows}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const safe = (specificationName || 'specification').replace(/[^\w.-]+/g, '_');
+  saveAs(blob, `${safe}.xls`);
+};

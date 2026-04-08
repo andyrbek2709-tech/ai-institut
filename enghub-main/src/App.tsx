@@ -15,6 +15,7 @@ import { RevisionsTab } from './components/RevisionsTab';
 import { ReviewsTab } from './components/ReviewsTab';
 import { TransmittalsTab } from './components/TransmittalsTab';
 import { AssignmentsTab } from './components/AssignmentsTab';
+import { SpecificationsTab } from './components/SpecificationsTab';
 import GanttChart from './components/GanttChart';
 import MeetingsPanel from './components/MeetingsPanel';
 import TimelogPanel from './components/TimelogPanel';
@@ -352,6 +353,22 @@ export default function App() {
       return false;
     }
   };
+  // FIX: dedicated task comment sender using its own text param (not shared chatInput state)
+  const sendTaskComment = async (taskId: number, text: string) => {
+    if (!text.trim() || !activeProject || !currentUserData?.id) return;
+    try {
+      await post("messages", {
+        text: text.trim(),
+        user_id: String(currentUserData?.id),
+        project_id: activeProject.id,
+        type: "text",
+        task_id: taskId
+      }, token!);
+      await loadMessages(activeProject.id, taskId);
+    } catch (err: any) {
+      addNotification(`Комментарий не отправлен: ${err.message || 'Ошибка сервера'}`, 'warning');
+    }
+  };
   const { notifications, addNotification, removeNotification } = useNotifications();
 
   // ── Refs для Realtime callbacks (escape stale closures) ──
@@ -560,28 +577,57 @@ export default function App() {
     });
     ch.on('presence', { event: 'sync' }, () => {
       const state = ch.presenceState<any>();
-      const users = (Object.values(state) as any[][]).flat();
-      setConferenceParticipants(users);
+      // Group by user key and merge status (mic, screen) across sessions
+      const mergedUsers = Object.entries(state).map(([key, sessions]: [string, any[]]) => {
+        const primary = sessions[0];
+        return {
+          ...primary,
+          micEnabled: sessions.some(s => s.micEnabled),
+          screenSharing: sessions.some(s => s.screenSharing),
+          isTalking: sessions.some(s => s.isTalking),
+          // Ensure we have a consistent ID
+          id: primary.id || key
+        };
+      });
+      setConferenceParticipants(mergedUsers);
     })
     .on('presence', { event: 'join' }, ({ newPresences }: any) => {
       const u = newPresences?.[0];
       if (u && String(u.id) !== String(currentUserData.id)) {
         addNotification(`👤 ${u.full_name || 'Участник'} зашёл в совещание`, 'info');
       }
-      // Refresh full participants list on any join event
+      // Re-fetch state on join to ensure sync
       const state = ch.presenceState<any>();
-      const users = (Object.values(state) as any[][]).flat();
-      setConferenceParticipants(users);
+      const mergedUsers = Object.entries(state).map(([key, sessions]: [string, any[]]) => {
+        const primary = sessions[0];
+        return {
+          ...primary,
+          micEnabled: sessions.some(s => s.micEnabled),
+          screenSharing: sessions.some(s => s.screenSharing),
+          isTalking: sessions.some(s => s.isTalking),
+          id: primary.id || key
+        };
+      });
+      setConferenceParticipants(mergedUsers);
     })
     .on('presence', { event: 'leave' }, ({ leftPresences }: any) => {
       const u = leftPresences?.[0];
       if (u && String(u.id) !== String(currentUserData.id)) {
         addNotification(`👤 ${u.full_name || 'Участник'} вышел из совещания`, 'info');
       }
-      // Refresh full participants list on any leave event
+      // Re-fetch state on leave to ensure sync
       const state = ch.presenceState<any>();
-      const users = (Object.values(state) as any[][]).flat();
-      setConferenceParticipants(users);
+      const mergedUsers = Object.entries(state).map(([key, sessions]: [string, any[]]) => {
+        const primary = sessions[0];
+        return {
+          ...primary,
+          micEnabled: sessions.some(s => s.micEnabled),
+          screenSharing: sessions.some(s => s.screenSharing),
+          isTalking: sessions.some(s => s.isTalking),
+          id: primary.id || key
+        };
+      });
+      setConferenceParticipants(mergedUsers);
     })
     .subscribe(async (status: string) => {
       if (status === 'SUBSCRIBED') {
@@ -621,7 +667,21 @@ export default function App() {
     });
   };
 
-  const createProject = async () => { if (!newProject.name || !newProject.code) return; setSaving(true); await post("projects", { ...newProject, progress: 0, archived: false }, token!); setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(false); setSaving(false); loadProjects(); addNotification(`Проект "${newProject.name}" создан`, 'success'); };
+  const createProject = async () => {
+    if (!newProject.name || !newProject.code) return;
+    setSaving(true);
+    try {
+      await post("projects", { ...newProject, progress: 0, archived: false }, token!);
+      setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] });
+      setShowNewProject(false);
+      loadProjects();
+      addNotification(`Проект "${newProject.name}" создан`, 'success');
+    } catch (err: any) {
+      addNotification(`Ошибка создания проекта: ${err.message || 'Ошибка сервера'}`, 'warning');
+    } finally {
+      setSaving(false);
+    }
+  };
   
   const toggleProjectDept = (deptId: number) => {
     const current = newProject.depts || [];
@@ -633,21 +693,28 @@ export default function App() {
   const archiveProject = async (id: number) => { await patch(`projects?id=eq.${id}`, { archived: true }, token!); loadProjects(); };
   const createTask = async () => {
     if (!newTask.name || !activeProject) return;
+    if (!newTask.deadline) { addNotification('Укажите дедлайн задачи', 'warning'); return; }
     setSaving(true);
-    const leadUser = getUserById(newTask.assigned_to);
-    await createProjectTask({ name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline || null, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id, description: newTask.description || null }, token!);
-    addNotification(`Задача "${newTask.name}" создана${leadUser ? ` → ${leadUser.full_name}` : ''}`, 'success');
-    if (newTask.assigned_to && String(newTask.assigned_to) !== String(currentUserData?.id)) {
-      createNotification({
-        user_id: Number(newTask.assigned_to),
-        project_id: activeProject.id,
-        type: 'task_assigned',
-        title: `Вам назначена новая задача`,
-        body: newTask.name,
-        entity_type: 'task',
-      }).catch(() => {});
+    try {
+      const leadUser = getUserById(newTask.assigned_to);
+      await createProjectTask({ name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id, description: newTask.description || null }, token!);
+      addNotification(`Задача "${newTask.name}" создана${leadUser ? ` → ${leadUser.full_name}` : ''}`, 'success');
+      if (newTask.assigned_to && String(newTask.assigned_to) !== String(currentUserData?.id)) {
+        createNotification({
+          user_id: Number(newTask.assigned_to),
+          project_id: activeProject.id,
+          type: 'task_assigned',
+          title: `Вам назначена новая задача`,
+          body: newTask.name,
+          entity_type: 'task',
+        }).catch(() => {});
+      }
+      setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setShowNewTask(false); loadTasks(activeProject.id);
+    } catch (err: any) {
+      addNotification(`Ошибка создания задачи: ${err.message || 'Ошибка сервера'}`, 'warning');
+    } finally {
+      setSaving(false);
     }
-    setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setShowNewTask(false); setSaving(false); loadTasks(activeProject.id);
   };
   
   const createAssignment = async () => {
@@ -851,7 +918,14 @@ export default function App() {
     loadTasks(activeProject.id);
   };
   const handleLogin = async (accessToken: string, email: string) => { setToken(accessToken); setUserEmail(email); setScreen('dashboard'); localStorage.setItem('enghub_token', accessToken); localStorage.setItem('enghub_email', email); if (email !== "admin@enghub.com") setLoading(true); else setLoading(false); };
-  const handleLogout = () => { setToken(null); setUserEmail(""); setCurrentUserData(null); setProjects([]); setTasks([]); setMsgs([]); setChatInput(""); localStorage.removeItem('enghub_token'); localStorage.removeItem('enghub_email'); };
+  const handleLogout = () => {
+    setToken(null); setUserEmail(""); setCurrentUserData(null); setProjects([]); setTasks([]); setMsgs([]); setChatInput(""); setTaskComment("");
+    // FIX: reset search and filter states so next user doesn't see previous user's filters
+    setSearchQuery(""); setFilterStatus("all"); setFilterPriority("all"); setFilterAssigned("all");
+    setActiveProject(null); setScreen('dashboard');
+    localStorage.removeItem('enghub_token'); localStorage.removeItem('enghub_email');
+    localStorage.removeItem('enghub_screen'); localStorage.removeItem('enghub_sidetab');
+  };
 
   const handleGlobalSearchSelect = (type: string, item: any) => {
     if (type === 'projects') {
@@ -1033,7 +1107,7 @@ export default function App() {
                 </button>
               </div>
             )}
-            <button className="btn btn-primary" onClick={createTask} disabled={saving || !newTask.name} style={{ width: "100%", opacity: !newTask.name ? 0.5 : 1 }}>{saving ? "Создаётся..." : "Создать задачу"}</button>
+            <button className="btn btn-primary" onClick={createTask} disabled={saving || !newTask.name || !newTask.deadline} style={{ width: "100%", opacity: (!newTask.name || !newTask.deadline) ? 0.5 : 1 }}>{saving ? "Создаётся..." : "Создать задачу"}</button>
           </div>
         </Modal>
       )}
@@ -1183,8 +1257,9 @@ export default function App() {
                   })}
                 </div>
                 <div style={{ padding: 10, borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8 }}>
-                  <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMsg(selectedTask.id)} placeholder="Написать замечание..." style={{ ...getInp(C), borderRadius: 8, height: 36, fontSize: 12 }} />
-                  <button onClick={() => sendMsg(selectedTask.id)} style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 8, width: 36, height: 36, cursor: 'pointer' }}>↑</button>
+                  {/* FIX: use taskComment state (not chatInput) so task comments don't conflict with conference chat */}
+                  <input value={taskComment} onChange={e => setTaskComment(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && taskComment.trim()) { sendTaskComment(selectedTask.id, taskComment); setTaskComment(''); } }} placeholder="Написать замечание..." style={{ ...getInp(C), borderRadius: 8, height: 36, fontSize: 12 }} />
+                  <button onClick={() => { if (taskComment.trim()) { sendTaskComment(selectedTask.id, taskComment); setTaskComment(''); } }} style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 8, width: 36, height: 36, cursor: 'pointer' }}>↑</button>
                 </div>
               </div>
               {/* Task History */}
@@ -1710,6 +1785,10 @@ export default function App() {
               {/* ── Проекты ── */}
               <div className="page-label" style={{ marginBottom: 12 }}>Проекты</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {/* FIX: show "no results" message when search filter matches nothing */}
+                {searchQuery && projects.filter(p => { const sq = searchQuery.toLowerCase(); return p.name.toLowerCase().includes(sq) || p.code.toLowerCase().includes(sq); }).length === 0 && (
+                  <div style={{ fontSize: 13, color: C.textMuted, padding: '12px 0' }}>По запросу «{searchQuery}» проектов не найдено</div>
+                )}
                 {projects.filter(p => { if (!searchQuery) return true; const sq = searchQuery.toLowerCase(); return p.name.toLowerCase().includes(sq) || p.code.toLowerCase().includes(sq); }).map(p => {
                   const progress = getAutoProgress(p.id);
                   return (
@@ -1816,9 +1895,9 @@ export default function App() {
 
               {/* Tabs */}
               <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-                {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
+                {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","specifications","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
                   <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
+                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "specifications" ? "📋 Спецификации" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
                   </button>
                 ))}
               </div>
@@ -1937,6 +2016,17 @@ export default function App() {
                   getDeptNameById={getDeptNameById}
                   getDeptName={getDeptName}
                   handleAssignmentResponse={handleAssignmentResponse}
+                />
+              )}
+
+              {sideTab === "specifications" && (
+                <SpecificationsTab
+                  C={C}
+                  token={token!}
+                  project={activeProject}
+                  currentUser={currentUserData}
+                  isGip={isGip}
+                  isLead={isLead}
                 />
               )}
 

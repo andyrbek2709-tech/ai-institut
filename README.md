@@ -258,7 +258,7 @@
 ├── vercel.json                          # Конфигурация деплоя
 ├── supabase/
 │   ├── functions/vectorize-doc/index.ts # Edge Function: PDF/DOCX → pgvector
-│   └── migrations/001–009_*.sql        # SQL-миграции
+│   └── migrations/001–013_*.sql         # SQL-миграции (+ каталог/спецификации)
 └── enghub-main/
     ├── api/orchestrator.js              # Vercel serverless: AI-агенты + RAG
     └── src/
@@ -268,11 +268,12 @@
         │   ├── Notifications.tsx        # Toast-уведомления
         │   ├── CopilotPanel.tsx         # AI Copilot интерфейс
         │   ├── TransmittalsTab.tsx      # Реестр трансмитталов
+        │   ├── SpecificationsTab.tsx    # Создание спецификаций по AGSK каталогу
         │   ├── ReviewsTab.tsx           # Замечания
         │   ├── RevisionsTab.tsx         # Ревизии
         │   └── AssignmentsTab.tsx       # Задания смежникам
         ├── copilot/
-        │   └── validateApplyAction.ts   # Единый валидатор apply-действий
+        │   └── validateApplyAction.ts   # Единая точка защиты apply перед записью в БД
         ├── calculations/                # Движок расчётов (90+ шаблонов)
         ├── pages/LoginPage.tsx
         ├── pages/AdminPanel.tsx

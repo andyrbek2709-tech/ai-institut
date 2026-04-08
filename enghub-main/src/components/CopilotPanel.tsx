@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { get, post, patch } from '../api/supabase';
-import { validateCopilotApply } from '../copilot/validateApplyAction';
+import { validateApplyAction } from '../copilot/validateApplyAction';
+import type { Action } from '../copilot/validateApplyAction';
 
 interface AIAction {
   id: string;
@@ -155,7 +156,13 @@ export function CopilotPanel({
       return;
     }
 
-    const validation = validateCopilotApply(action.action_type, payload, approved);
+    const validation = approved
+      ? validateApplyAction(action.action_type as Action, payload, {
+          userId: String(userId || ''),
+          role: (String(userRole || 'engineer').toLowerCase() as any),
+          projectId: String(projectId || ''),
+        })
+      : { ok: true };
     if (validation.ok === false) {
       setMessages(prev => [...prev, { role: 'ai', text: validation.error }]);
       return;

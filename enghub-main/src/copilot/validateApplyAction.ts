@@ -1,124 +1,154 @@
 /**
- * Server-side orchestrator inserts rows into `ai_actions`; this module validates
- * payloads before the client applies them to Supabase (single source of truth for apply-contracts).
+ * validateApplyAction.ts
+ * ЕДИНАЯ точка защиты перед записью в БД
  */
 
-export type ApplyValidationResult =
-  | { ok: true }
-  | { ok: false; error: string };
+export type Role = 'admin' | 'gip' | 'lead' | 'engineer';
 
-const nonEmpty = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
+export type Action =
+  | 'create_tasks'
+  | 'create_review'
+  | 'update_task'
+  | 'delete_entity'
+  | 'assign_user';
 
-/** Action types the Copilot panel knows how to execute on approve. */
-export const COPILOT_SUPPORTED_APPLY_TYPES = new Set([
-  'create_tasks',
-  'create_drawing',
-  'update_drawing',
-  'create_drawing_revision',
-  'create_revision',
-  'create_review',
-  'update_review_status',
-  'create_transmittal',
-  'update_transmittal_status',
-]);
-
-function validateTransmittalItems(items: unknown): ApplyValidationResult {
-  if (!Array.isArray(items)) return { ok: true };
-  for (let i = 0; i < items.length; i++) {
-    const it = items[i];
-    if (it == null || typeof it !== 'object') {
-      return { ok: false, error: `create_transmittal: items[${i}] должен быть объектом.` };
-    }
-    const row = it as Record<string, unknown>;
-    const hasDrawing = row.drawing_id != null && String(row.drawing_id).trim() !== '';
-    const hasRevision = row.revision_id != null && String(row.revision_id).trim() !== '';
-    if (!hasDrawing && !hasRevision) {
-      return { ok: false, error: `create_transmittal: в позиции ${i + 1} нужен drawing_id и/или revision_id.` };
-    }
-  }
-  return { ok: true };
+export interface ValidateContext {
+  userId: string;
+  role: Role;
+  projectId?: string;
 }
 
-export function validateCopilotApply(
-  actionType: string,
-  payload: Record<string, unknown> | null | undefined,
-  approved: boolean,
-): ApplyValidationResult {
-  if (!approved) return { ok: true };
+export interface ValidationResult {
+  ok: boolean;
+  error?: string;
+}
 
-  if (!COPILOT_SUPPORTED_APPLY_TYPES.has(actionType)) {
-    return {
-      ok: false,
-      error: `Тип действия «${actionType}» не поддерживается при подтверждении в Copilot. Отклоните карточку или обновите клиент.`,
-    };
+/**
+ * Главная функция
+ */
+export function validateApplyAction(
+  action: Action,
+  payload: any,
+  ctx: ValidateContext
+): ValidationResult {
+  // --- 1. Базовая защита ---
+  if (!ctx.userId) {
+    return fail('UNAUTHORIZED', 'Пользователь не авторизован');
   }
 
-  const p = payload && typeof payload === 'object' ? payload : {};
+  if (!ctx.projectId) {
+    return fail('NO_PROJECT', 'Не выбран проект');
+  }
 
-  switch (actionType) {
-    case 'create_tasks': {
-      if (!Array.isArray(p.tasks)) {
-        return { ok: false, error: 'Невозможно применить create_tasks: payload.tasks должен быть массивом.' };
-      }
-      if (p.tasks.length === 0) {
-        return { ok: false, error: 'Невозможно применить create_tasks: список задач пуст.' };
-      }
-      for (let i = 0; i < p.tasks.length; i++) {
-        const t = p.tasks[i];
-        if (t == null || typeof t !== 'object') {
-          return { ok: false, error: `create_tasks: элемент ${i} не является объектом задачи.` };
-        }
-        const title = (t as Record<string, unknown>).title;
-        if (!nonEmpty(title)) {
-          return { ok: false, error: `create_tasks: у задачи ${i + 1} отсутствует title.` };
-        }
-      }
-      return { ok: true };
+  // --- 2. Запрещенные AI действия ---
+  const forbiddenActions: Action[] = [
+    'update_task',
+    'delete_entity',
+    'assign_user'
+  ];
+
+  if (forbiddenActions.includes(action)) {
+    return fail('FORBIDDEN_ACTION', 'AI не имеет права выполнять это действие');
+  }
+
+  // --- 3. Ролевая модель ---
+  if (ctx.role === 'engineer') {
+    if (action === 'create_tasks') {
+      return fail('ROLE_RESTRICTED', 'Инженер не может создавать задачи');
     }
-    case 'create_drawing': {
-      if (!nonEmpty(p.code) || !nonEmpty(p.title)) {
-        return { ok: false, error: 'Невозможно применить create_drawing: нужны непустые code и title.' };
-      }
-      return { ok: true };
-    }
-    case 'update_drawing': {
-      if (!nonEmpty(p.drawing_id)) {
-        return { ok: false, error: 'Невозможно применить update_drawing: отсутствует drawing_id.' };
-      }
-      if (p.updates == null || typeof p.updates !== 'object' || Array.isArray(p.updates)) {
-        return { ok: false, error: 'Невозможно применить update_drawing: updates должен быть объектом полей.' };
-      }
-      return { ok: true };
-    }
-    case 'create_drawing_revision':
-    case 'create_revision': {
-      if (!nonEmpty(p.drawing_id)) {
-        return { ok: false, error: 'Невозможно применить ревизию: отсутствует drawing_id.' };
-      }
-      return { ok: true };
-    }
-    case 'create_review': {
-      if (!nonEmpty(p.title)) {
-        return { ok: false, error: 'Невозможно применить create_review: отсутствует title.' };
-      }
-      return { ok: true };
-    }
-    case 'update_review_status': {
-      if (!nonEmpty(p.review_id) || !nonEmpty(p.status)) {
-        return { ok: false, error: 'Невозможно применить update_review_status: нужны review_id и status.' };
-      }
-      return { ok: true };
-    }
-    case 'create_transmittal': {
-      return validateTransmittalItems(p.items);
-    }
-    case 'update_transmittal_status': {
-      if (!nonEmpty(p.transmittal_id) || !nonEmpty(p.status)) {
-        return { ok: false, error: 'Невозможно применить update_transmittal_status: нужны transmittal_id и status.' };
-      }
-      return { ok: true };
-    }
+  }
+
+  // --- 4. Валидация по типу ---
+  switch (action) {
+    case 'create_tasks':
+      return validateCreateTasks(payload);
+
+    case 'create_review':
+      return validateCreateReview(payload);
+
     default:
-      return { ok: false, error: `Внутренняя ошибка: неизвестный тип «${actionType}».` };
+      return fail('UNKNOWN_ACTION', 'Неизвестное действие');
   }
+}
+
+/**
+ * --- VALIDATORS ---
+ */
+function validateCreateTasks(payload: any): ValidationResult {
+  if (!Array.isArray(payload.items)) {
+    return fail('INVALID_FORMAT', 'items должен быть массивом');
+  }
+
+  if (payload.items.length === 0) {
+    return fail('EMPTY', 'Нет задач для создания');
+  }
+
+  if (payload.items.length > 50) {
+    return fail('LIMIT_EXCEEDED', 'Слишком много задач (макс 50)');
+  }
+
+  for (const task of payload.items) {
+    if (!task.name || typeof task.name !== 'string') {
+      return fail('INVALID_NAME', 'Каждая задача должна иметь название');
+    }
+
+    if (task.name.length > 200) {
+      return fail('NAME_TOO_LONG', 'Название слишком длинное');
+    }
+
+    if (task.deadline && !isValidDate(task.deadline)) {
+      return fail('INVALID_DATE', 'Некорректный формат даты');
+    }
+
+    // AI не может назначать исполнителя
+    if (task.assignee_id) {
+      return fail('ASSIGN_FORBIDDEN', 'Назначение исполнителя запрещено для AI');
+    }
+  }
+
+  return success();
+}
+
+function validateCreateReview(payload: any): ValidationResult {
+  if (!Array.isArray(payload.items)) {
+    return fail('INVALID_FORMAT', 'items должен быть массивом');
+  }
+
+  if (payload.items.length === 0) {
+    return fail('EMPTY', 'Нет замечаний');
+  }
+
+  for (const r of payload.items) {
+    if (!r.text || r.text.length < 5) {
+      return fail('INVALID_TEXT', 'Замечание слишком короткое');
+    }
+
+    if (!['critical', 'major', 'minor'].includes(r.severity)) {
+      return fail('INVALID_SEVERITY', 'Некорректный severity');
+    }
+
+    if (!r.drawing_id) {
+      return fail('NO_DRAWING', 'Замечание должно быть привязано к чертежу');
+    }
+  }
+
+  return success();
+}
+
+/**
+ * --- HELPERS ---
+ */
+function isValidDate(date: string): boolean {
+  return !isNaN(Date.parse(date));
+}
+
+function fail(code: string, message: string): ValidationResult {
+  return {
+    ok: false,
+    error: `${code}: ${message}`
+  };
+}
+
+function success(): ValidationResult {
+  return { ok: true };
 }

@@ -30,6 +30,134 @@ const ROLE_ALLOWED_ACTIONS = {
   engineer: ['search_normative', 'validate_workflow', 'task_suggest', 'analyze_drawing', 'norm_control', 'create_review', 'update_review_status'],
 };
 
+const COPILOT_BASE_SYSTEM_PROMPT = `You are an AI Copilot inside EngHub — an engineering project management system.
+
+Your role is ASSISTANT, not decision-maker.
+
+CORE PRINCIPLE:
+You NEVER execute actions.
+You ONLY suggest.
+The user ALWAYS confirms.
+
+---
+
+ACTION LEVELS:
+
+LEVEL 1 — INFO:
+
+* analyze project data
+* answer questions
+* identify risks
+* generate reports
+
+Rules:
+
+* text only
+* no JSON actions
+* no database changes
+
+---
+
+LEVEL 2 — SUGGEST:
+
+* creating tasks
+* creating reviews
+* generating plans
+* suggesting deadlines
+
+Rules:
+
+* ALWAYS return structured JSON
+* MUST be confirmed by user
+* NEVER assume execution
+
+JSON format:
+{
+"type": "<action_type>",
+"items": [...]
+}
+
+---
+
+LEVEL 3 — ACTION (FORBIDDEN):
+
+* change task statuses
+* assign users
+* delete anything
+* write to database
+
+---
+
+LANGUAGE RULES:
+Use:
+
+* "Предположительно"
+* "Рекомендую"
+* "На основе текущих данных"
+* "Возможно"
+
+Do NOT say:
+
+* "Я создал"
+* "Готово"
+* "Выполнено"
+
+---
+
+DATA RULES:
+Use ONLY provided data:
+
+* tasks
+* drawings
+* reviews
+* deadlines
+* time_entries
+
+If data is missing:
+Respond:
+"Недостаточно данных для точного анализа."
+
+---
+
+RESPONSE STRUCTURE:
+
+For INFO:
+Анализ:
+Риски:
+Рекомендации:
+Confidence: low | medium | high
+
+---
+
+For SUGGEST:
+
+1. Short explanation
+2. JSON action
+
+---
+
+FAIL-SAFE:
+If unsure → do NOT guess → say insufficient data
+
+---
+
+OUTPUT STYLE:
+
+* concise
+* structured
+* professional
+
+---
+
+FINAL RULE:
+If there is ANY doubt → DO NOT act → ONLY suggest or decline.`;
+
+function buildSystemPrompt(agentSpecificPrompt = '') {
+  const specific = String(agentSpecificPrompt || '').trim();
+  if (!specific) return COPILOT_BASE_SYSTEM_PROMPT;
+  return `${COPILOT_BASE_SYSTEM_PROMPT}\n\n---\n\nAGENT-SPECIFIC CONTEXT:\n${specific}`;
+}
+
 async function createEmbedding(input) {
   const embRes = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
@@ -77,14 +205,14 @@ function blockedResponse({ agent = 'router', message, reason_code = 'blocked', n
 
 // ── AI Agent Handlers ────────────────────────────────────────────────────────
 
-async function callClaude(systemPrompt, userContent, maxTokens = 600) {
+async function callClaude(agentSpecificPrompt, userContent, maxTokens = 600) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: maxTokens,
-      system: systemPrompt,
+      system: buildSystemPrompt(agentSpecificPrompt),
       messages: [{ role: 'user', content: userContent }],
     }),
   });
@@ -435,7 +563,7 @@ async function handleAnalyzeDrawing(body) {
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 800,
-      system: 'Ты эксперт-нормоконтролёр проектного института. Анализируй инженерные чертежи и давай структурированную оценку: 1) Заполнение основной надписи (штамп), 2) Масштаб и форматирование, 3) Наличие размеров и обозначений, 4) Замечания по содержанию, 5) Итоговая оценка (Approved/Revision Required/Rejected). По-русски, до 200 слов.',
+      system: buildSystemPrompt('Ты эксперт-нормоконтролёр проектного института. Анализируй инженерные чертежи и давай структурированную оценку: 1) Заполнение основной надписи (штамп), 2) Масштаб и форматирование, 3) Наличие размеров и обозначений, 4) Замечания по содержанию, 5) Итоговая оценка (Approved/Revision Required/Rejected). По-русски, до 200 слов.'),
       messages: [{
         role: 'user',
         content: [
@@ -721,9 +849,11 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 1024,
-          system: hasContext
-            ? 'Отвечай только по предоставленным фрагментам, и указывай источники.'
-            : 'Документов в базе по запросу не найдено. Дай общий ответ и предупреди об этом.',
+          system: buildSystemPrompt(
+            hasContext
+              ? 'Отвечай только по предоставленным фрагментам, и указывай источники.'
+              : 'Документов в базе по запросу не найдено. Дай общий ответ и предупреди об этом.'
+          ),
           messages: [{ role: 'user', content: userMessage }],
         }),
       });
