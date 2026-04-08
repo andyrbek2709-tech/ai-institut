@@ -39,7 +39,9 @@ create table if not exists catalog_items (
 
 create table if not exists specifications (
   id bigserial primary key,
-  project_id bigint not null references projects(id) on delete cascade,
+  -- Keep project_id as plain bigint to support legacy schemas where projects(id)
+  -- is not unique/PK in production yet. Logical link is preserved via index.
+  project_id bigint not null,
   name text not null,
   catalog_id bigint references catalogs(id) on delete set null,
   stamp jsonb not null default '{}'::jsonb,

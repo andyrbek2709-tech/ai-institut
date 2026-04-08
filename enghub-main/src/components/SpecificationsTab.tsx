@@ -78,11 +78,28 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     const q = search.trim().toLowerCase();
     return items.filter((it) => {
       if (sectionId && String(it.section_id) !== String(sectionId)) return false;
-      if (groupId && String(it.group_id) !== String(groupId)) return false;
+      if (groupId) {
+        const gCode = String(it.code || '').split('-').slice(0, 2).join('-');
+        if (gCode !== groupId) return false;
+      }
       if (!q) return true;
       return String(it.code || '').toLowerCase().includes(q) || String(it.name || '').toLowerCase().includes(q);
     });
   }, [items, search, sectionId, groupId]);
+
+  const groupedOptions = useMemo(() => {
+    const map = new Map<string, { code: string; sampleName: string }>();
+    for (const it of items) {
+      if (sectionId && String(it.section_id) !== String(sectionId)) continue;
+      const code = String(it.code || '');
+      const groupCode = code.split('-').slice(0, 2).join('-');
+      if (!groupCode) continue;
+      if (!map.has(groupCode)) {
+        map.set(groupCode, { code: groupCode, sampleName: String(it.name || '') });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.code.localeCompare(b.code));
+  }, [items, sectionId]);
 
   const loadCatalogData = async () => {
     const c = await get('catalogs?order=catalog_date.desc', token);
@@ -167,11 +184,12 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     return id;
   };
 
-  const addItemToSpec = async () => {
-    if (!selectedItemId) return;
+  const addItemToSpec = async (itemIdArg?: string) => {
+    const itemId = itemIdArg || selectedItemId;
+    if (!itemId) return;
     const sid = await ensureSpec();
     if (!sid) return;
-    const item = items.find((x: any) => String(x.id) === String(selectedItemId));
+    const item = items.find((x: any) => String(x.id) === String(itemId));
     if (!item) return;
     const nextLine = (specRows[specRows.length - 1]?.line_no || 0) + 1;
     await post('specification_items', {
@@ -349,7 +367,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
       </div>
 
       <div className="card" style={{ padding: 14, borderRadius: 14 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1fr 1.2fr 1.2fr 1.5fr', gap: 8, marginBottom: 8 }}>
           <input
             style={inp}
             placeholder="Искать в каталоге AGSK-3 по коду и названию..."
@@ -366,42 +384,28 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
           </select>
           <select value={groupId} onChange={(e) => setGroupId(e.target.value)} style={inp}>
             <option value="">Группа</option>
-            {groups.filter((g: any) => !sectionId || String(g.section_id) === String(sectionId)).map((g: any) => (
-              <option key={g.id} value={g.id}>{g.name}</option>
+            {groupedOptions.map((g) => (
+              <option key={g.code} value={g.code}>{g.code} — {g.sampleName.slice(0, 48)}</option>
             ))}
           </select>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1.8fr auto auto', gap: 8, marginBottom: 8 }}>
-          <select value={selectedItemId} onChange={(e) => setSelectedItemId(e.target.value)} style={inp}>
+          <select
+            value={selectedItemId}
+            onChange={(e) => {
+              const v = e.target.value;
+              setSelectedItemId(v);
+              if (v) void addItemToSpec(v);
+            }}
+            style={inp}
+          >
             <option value="">Выбрать позицию из каталога...</option>
             {filteredItems.slice(0, 1000).map((it: any) => (
               <option key={it.id} value={it.id}>{it.code} — {it.name}</option>
             ))}
           </select>
-          <button className="btn btn-primary" style={{ height: 36, minWidth: 110 }} onClick={addItemToSpec} disabled={!selectedItemId || !canManage}>Добавить</button>
-          {canManage && (
-            <label className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 36, minWidth: 170 }}>
-              {uploading ? 'Загрузка...' : 'Загрузить PDF каталог'}
-              <input
-                type="file"
-                accept="application/pdf"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) void parseCatalogFile(file);
-                }}
-              />
-            </label>
-          )}
         </div>
 
-        <div style={{ marginBottom: 10, display: 'grid', gridTemplateColumns: '1fr 280px', gap: 8 }}>
+        <div style={{ marginBottom: 10 }}>
           <input style={inp} value={specName} onChange={(e) => setSpecName(e.target.value)} placeholder="Название спецификации" />
-          <select value={specId} onChange={(e) => setSpecId(e.target.value)} style={inp}>
-            <option value="">Выбрать спецификацию...</option>
-            {specs.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
         </div>
 
         <div style={{ border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden' }}>
