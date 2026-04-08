@@ -200,6 +200,7 @@ npm run build
 - Миграция: `supabase/migrations/013_specifications_catalog.sql`
 - Импорт каталога PDF: `api/catalog-parse.py` (PyMuPDF/pdfplumber, fallback на ручное редактирование в БД)
 - Экспорт: `exportSpecificationXls()` в `src/utils/export.ts` (Excel XML, ГОСТ-табличный формат + штамп)
+- Vercel runtime: `vercel.json` → `"functions": { "api/*.py": { "runtime": "python3.11" } }`
 
 ### Расчётный модуль
 - 90 инженерных формул по категориям: ТХ, КМ, ЭМ, ОВиК, ВК, ПТ

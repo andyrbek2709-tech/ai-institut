@@ -2,7 +2,7 @@ import base64
 import io
 import json
 import re
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
 def _extract_text(data: bytes) -> str:
@@ -85,30 +85,56 @@ def _parse_catalog(text: str) -> List[Dict]:
     return cleaned_sections
 
 
+def _parse_request_json(request: Any) -> Dict[str, Any]:
+    # Works across common Python serverless adapters.
+    if hasattr(request, "get_json"):
+        try:
+            data = request.get_json()
+            if isinstance(data, dict):
+                return data
+        except Exception:
+            pass
+    if hasattr(request, "body"):
+        try:
+            raw = request.body
+            if isinstance(raw, bytes):
+                raw = raw.decode("utf-8")
+            parsed = json.loads(raw or "{}")
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def _send(response: Any, status_code: int, payload: Dict[str, Any]):
+    if hasattr(response, "status_code"):
+        response.status_code = status_code
+    if hasattr(response, "headers"):
+        response.headers["Content-Type"] = "application/json; charset=utf-8"
+    return response.send(json.dumps(payload, ensure_ascii=False))
+
+
 def handler(request, response):
     if request.method == "OPTIONS":
         response.status_code = 200
         return response.send("")
+    if request.method == "GET":
+        return _send(response, 200, {"ok": True, "name": "catalog-parse", "method": "POST"})
     if request.method != "POST":
-        response.status_code = 405
-        return response.send(json.dumps({"error": "Method Not Allowed"}))
+        return _send(response, 405, {"error": "Method Not Allowed"})
 
     try:
-        body = request.get_json() or {}
+        body = _parse_request_json(request)
         file_base64 = body.get("file_base64")
         if not file_base64:
-            response.status_code = 400
-            return response.send(json.dumps({"error": "file_base64 required"}))
+            return _send(response, 400, {"error": "file_base64 required"})
 
         raw = base64.b64decode(file_base64)
         text = _extract_text(raw)
         if not text.strip():
-            response.status_code = 200
-            return response.send(json.dumps({"sections": [], "warning": "Не удалось извлечь текст из PDF"}))
+            return _send(response, 200, {"sections": [], "warning": "Не удалось извлечь текст из PDF"})
 
         sections = _parse_catalog(text)
-        response.status_code = 200
-        return response.send(json.dumps({"sections": sections}))
+        return _send(response, 200, {"sections": sections})
     except Exception as ex:
-        response.status_code = 500
-        return response.send(json.dumps({"error": str(ex)}))
+        return _send(response, 500, {"error": str(ex)})
