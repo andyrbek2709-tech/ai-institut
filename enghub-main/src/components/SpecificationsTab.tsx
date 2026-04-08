@@ -57,8 +57,8 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
   const [specName, setSpecName] = useState('Спецификация оборудования');
   const [stamp, setStamp] = useState<Stamp>(emptyStamp);
 
-  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [itemsLoading, setItemsLoading] = useState(false);
   const [status, setStatus] = useState('');
 
   const canManage = isGip || isLead;
@@ -74,32 +74,13 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     boxSizing: 'border-box' as const,
   };
 
-  const filteredItems = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return items.filter((it) => {
-      if (sectionId && String(it.section_id) !== String(sectionId)) return false;
-      if (groupId) {
-        const gCode = String(it.code || '').split('-').slice(0, 2).join('-');
-        if (gCode !== groupId) return false;
-      }
-      if (!q) return true;
-      return String(it.code || '').toLowerCase().includes(q) || String(it.name || '').toLowerCase().includes(q);
-    });
-  }, [items, search, sectionId, groupId]);
-
+  const filteredItems = items;
   const groupedOptions = useMemo(() => {
-    const map = new Map<string, { code: string; sampleName: string }>();
-    for (const it of items) {
-      if (sectionId && String(it.section_id) !== String(sectionId)) continue;
-      const code = String(it.code || '');
-      const groupCode = code.split('-').slice(0, 2).join('-');
-      if (!groupCode) continue;
-      if (!map.has(groupCode)) {
-        map.set(groupCode, { code: groupCode, sampleName: String(it.name || '') });
-      }
-    }
-    return Array.from(map.values()).sort((a, b) => a.code.localeCompare(b.code));
-  }, [items, sectionId]);
+    return groups
+      .filter((g: any) => !sectionId || String(g.section_id) === String(sectionId))
+      .map((g: any) => ({ id: String(g.id), label: String(g.name || '') }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [groups, sectionId]);
 
   const loadCatalogData = async () => {
     const c = await get('catalogs?order=catalog_date.desc', token);
@@ -125,27 +106,45 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     const s = await get(`sections?catalog_id=eq.${catalogId}&order=sort_order.asc,id.asc`, token);
     const allSections = Array.isArray(s) ? s : [];
     setSections(allSections);
-    const secIds = allSections.map((x: any) => x.id).join(',');
-    if (!secIds) {
+    if (!allSections.length) {
       setGroups([]);
       setItems([]);
       return;
     }
-    const g = await get(`groups?section_id=in.(${secIds})&order=sort_order.asc,id.asc`, token);
-    const allGroups = Array.isArray(g) ? g : [];
-    setGroups(allGroups);
-    const grpIds = allGroups.map((x: any) => x.id).join(',');
-    if (!grpIds) {
+    const secIds = allSections.map((x: any) => x.id).join(',');
+    const g = await get(`groups?section_id=in.(${secIds})&order=name.asc,id.asc`, token);
+    setGroups(Array.isArray(g) ? g : []);
+  };
+
+  const loadItems = async () => {
+    if (!activeCatalogId) return;
+    if (!sectionId) {
       setItems([]);
       return;
     }
-    const i = await get(`catalog_items?group_id=in.(${grpIds})&order=code.asc&limit=200000`, token);
-    const secByGroup = new Map(allGroups.map((gr: any) => [String(gr.id), gr.section_id]));
-    const withRefs = (Array.isArray(i) ? i : []).map((it: any) => ({
-      ...it,
-      section_id: secByGroup.get(String(it.group_id)),
-    }));
-    setItems(withRefs);
+    setItemsLoading(true);
+    try {
+      const scopedGroups = groups.filter((g: any) => String(g.section_id) === String(sectionId));
+      const groupIds = groupId
+        ? [groupId]
+        : scopedGroups.map((g: any) => String(g.id));
+
+      if (!groupIds.length) {
+        setItems([]);
+        return;
+      }
+
+      let query = `catalog_items?group_id=in.(${groupIds.join(',')})&select=id,group_id,code,name,unit,standard&order=code.asc&limit=600`;
+      const q = search.trim();
+      if (q) {
+        const v = encodeURIComponent(`*${q}*`);
+        query += `&or=(code.ilike.${v},name.ilike.${v})`;
+      }
+      const i = await get(query, token);
+      setItems(Array.isArray(i) ? i : []);
+    } finally {
+      setItemsLoading(false);
+    }
   };
 
   const loadSpecRows = async (id: string) => {
@@ -162,6 +161,10 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
   useEffect(() => {
     if (activeCatalogId) loadCatalogTree(activeCatalogId);
   }, [activeCatalogId]);
+
+  useEffect(() => {
+    void loadItems();
+  }, [activeCatalogId, sectionId, groupId, search, groups.length]);
 
   useEffect(() => {
     if (specId) loadSpecRows(specId);
@@ -245,83 +248,6 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     }
   };
 
-  const parseCatalogFile = async (file: File) => {
-    setUploading(true);
-    setStatus('');
-    try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const fr = new FileReader();
-        fr.onload = () => resolve(String(fr.result || ''));
-        fr.onerror = reject;
-        fr.readAsDataURL(file);
-      });
-      const base64 = dataUrl.split(',')[1] || '';
-      const url = window.location.hostname === 'localhost'
-        ? 'https://enghub-three.vercel.app/api/catalog-parse'
-        : '/api/catalog-parse';
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_base64: base64 }),
-      });
-      const parsed = await res.json();
-      if (!Array.isArray(parsed.sections) || parsed.sections.length === 0) {
-        setStatus(parsed.warning || 'Парсинг не дал структурированных данных');
-        return;
-      }
-
-      // New catalog version inferred from date + original filename
-      const now = new Date();
-      const version = file.name.replace(/\.pdf$/i, '').slice(0, 120);
-      await patch('catalogs?is_active=eq.true', { is_active: false }, token).catch(() => null);
-      const catalogResp = await post('catalogs', {
-        version,
-        catalog_date: now.toISOString().slice(0, 10),
-        is_active: true,
-        source_file: file.name,
-        created_by: currentUser?.id || null,
-      }, token);
-      const catalogId = (Array.isArray(catalogResp) ? catalogResp[0] : catalogResp)?.id;
-      if (!catalogId) return;
-
-      let sectionOrder = 1;
-      for (const sec of parsed.sections) {
-        const secResp = await post('sections', {
-          catalog_id: catalogId,
-          name: sec.name || `Раздел ${sectionOrder}`,
-          sort_order: sectionOrder++,
-        }, token);
-        const secId = (Array.isArray(secResp) ? secResp[0] : secResp)?.id;
-        if (!secId) continue;
-        let groupOrder = 1;
-        for (const gr of sec.groups || []) {
-          const grResp = await post('groups', {
-            section_id: secId,
-            name: gr.name || `Группа ${groupOrder}`,
-            sort_order: groupOrder++,
-          }, token);
-          const grId = (Array.isArray(grResp) ? grResp[0] : grResp)?.id;
-          if (!grId) continue;
-          for (const it of gr.items || []) {
-            await post('catalog_items', {
-              group_id: grId,
-              code: it.code || '',
-              name: it.name || '',
-              unit: it.unit || '',
-              standard: it.standard || '',
-            }, token);
-          }
-        }
-      }
-      await loadCatalogData();
-      setStatus('Каталог загружен и распарсен');
-    } catch (e: any) {
-      setStatus(`Ошибка парсинга: ${e?.message || 'unknown'}`);
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const onExport = () => {
     exportSpecificationXls(specName || 'Спецификация', stamp, specRows.map((r: any) => ({
       line_no: r.line_no,
@@ -385,7 +311,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
           <select value={groupId} onChange={(e) => setGroupId(e.target.value)} style={inp}>
             <option value="">Группа</option>
             {groupedOptions.map((g) => (
-              <option key={g.code} value={g.code}>{g.code} — {g.sampleName.slice(0, 48)}</option>
+              <option key={g.id} value={g.id}>{g.label}</option>
             ))}
           </select>
           <select
@@ -403,6 +329,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
             ))}
           </select>
         </div>
+        {itemsLoading && <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 8 }}>Загрузка позиций...</div>}
 
         <div style={{ marginBottom: 10 }}>
           <input style={inp} value={specName} onChange={(e) => setSpecName(e.target.value)} placeholder="Название спецификации" />
