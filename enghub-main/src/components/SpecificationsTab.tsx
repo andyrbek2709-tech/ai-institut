@@ -51,6 +51,22 @@ function inferUnitFromText(name: string, typeMark: string, currentUnit?: string)
   return 'шт';
 }
 
+function inferPlantFromCatalog(name: string, typeMark: string, currentPlant?: string): string {
+  const existing = String(currentPlant || '').trim();
+  if (existing) return existing;
+  const txt = `${name || ''} ${typeMark || ''}`;
+  const lower = txt.toLowerCase();
+  const markers = ['завод', 'производитель', 'изготовитель'];
+  for (const m of markers) {
+    const idx = lower.indexOf(m);
+    if (idx >= 0) {
+      const tail = txt.slice(idx).replace(/^[^:]*:\s*/i, '').trim();
+      if (tail) return tail.slice(0, 80);
+    }
+  }
+  return '';
+}
+
 export function SpecificationsTab({ C, token, project, currentUser, isGip, isLead }: Props) {
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [activeCatalogId, setActiveCatalogId] = useState<string>('');
@@ -249,7 +265,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
       code: item.code,
       unit: inferredUnit,
       type_mark: item.standard || '',
-      plant: '',
+      plant: inferPlantFromCatalog(String(item.name || ''), String(item.standard || ''), String((item as any).plant || '')),
       qty: 1,
     }, token);
     setSelectedItemId('');
