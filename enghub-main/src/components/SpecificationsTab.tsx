@@ -51,7 +51,7 @@ function inferUnitFromText(name: string, typeMark: string, currentUnit?: string)
   return 'шт';
 }
 
-function inferPlantFromCatalog(name: string, typeMark: string, currentPlant?: string): string {
+function inferPlantFromCatalog(name: string, typeMark: string, code: string, currentPlant?: string): string {
   const existing = String(currentPlant || '').trim();
   if (existing) return existing;
   const txt = `${name || ''} ${typeMark || ''}`;
@@ -64,7 +64,8 @@ function inferPlantFromCatalog(name: string, typeMark: string, currentPlant?: st
       if (tail) return tail.slice(0, 80);
     }
   }
-  return '';
+  // Final fallback from catalog code so column is never empty.
+  return String(code || '').trim() || '—';
 }
 
 export function SpecificationsTab({ C, token, project, currentUser, isGip, isLead }: Props) {
@@ -265,7 +266,12 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
       code: item.code,
       unit: inferredUnit,
       type_mark: item.standard || '',
-      plant: inferPlantFromCatalog(String(item.name || ''), String(item.standard || ''), String((item as any).plant || '')),
+      plant: inferPlantFromCatalog(
+        String(item.name || ''),
+        String(item.standard || ''),
+        String(item.code || ''),
+        String((item as any).plant || '')
+      ),
       qty: 1,
     }, token);
     setSelectedItemId('');
@@ -408,7 +414,16 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               <div style={{ lineHeight: 1.25 }}>{r.name}</div>
               <div>{r.type_mark || ''}</div>
               <div>{r.code || ''}</div>
-              <input value={r.plant || ''} onChange={(e) => updateRow(r, { plant: e.target.value })} style={{ ...inp, padding: '6px 8px' }} />
+              <input
+                value={inferPlantFromCatalog(
+                  String(r.name || ''),
+                  String(r.type_mark || ''),
+                  String(r.code || ''),
+                  String(r.plant || '')
+                )}
+                onChange={(e) => updateRow(r, { plant: e.target.value })}
+                style={{ ...inp, padding: '6px 8px' }}
+              />
               <div>{inferUnitFromText(String(r.name || ''), String(r.type_mark || ''), String(r.unit || ''))}</div>
               <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 28px', gap: 4 }}>
                 <button className="btn btn-secondary" style={{ padding: 0, height: 28 }} onClick={() => updateRow(r, { qty: Math.max(0, Number(r.qty || 0) - 1) })}>-</button>
