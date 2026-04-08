@@ -198,7 +198,8 @@ npm run build
 - Вкладка: `src/components/SpecificationsTab.tsx`
 - Хранилище: таблицы `catalogs`, `sections`, `groups`, `catalog_items`, `specifications`, `specification_items`
 - Миграция: `supabase/migrations/013_specifications_catalog.sql`
-- Импорт каталога PDF: `api/catalog-parse.py` (PyMuPDF/pdfplumber, fallback на ручное редактирование в БД)
+- Импорт каталога PDF: `api/catalog-parse.js` (Node + `pdf-parse`) как основной runtime для Vercel
+- Python-вариант: `api/catalog-parse.py` (PyMuPDF/pdfplumber) оставлен как альтернативный
 - Экспорт: `exportSpecificationXls()` в `src/utils/export.ts` (Excel XML, ГОСТ-табличный формат + штамп)
 - Vercel runtime: `vercel.json` → `"functions": { "api/*.py": { "runtime": "python3.11" } }`
 
