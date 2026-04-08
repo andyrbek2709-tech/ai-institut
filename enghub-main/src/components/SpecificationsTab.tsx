@@ -122,27 +122,33 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     try {
       const q = search.trim();
       const isGlobalSearch = q.length > 0;
+      if (isGlobalSearch) {
+        // Global search across full active catalog, independent from selected filters.
+        const v = encodeURIComponent(`*${q}*`);
+        const i = await get(
+          `catalog_items?select=id,group_id,code,name,unit,standard&or=(code.ilike.${v},name.ilike.${v})&order=code.asc&limit=600`,
+          token
+        );
+        setItems(Array.isArray(i) ? i : []);
+        return;
+      }
 
-      // Search must work regardless of previously selected section/group.
-      const scopedGroups = isGlobalSearch
-        ? groups
-        : groups.filter((g: any) => String(g.section_id) === String(sectionId));
+      if (!sectionId) {
+        setItems([]);
+        return;
+      }
 
-      const groupIds = isGlobalSearch
-        ? scopedGroups.map((g: any) => String(g.id))
-        : (groupId ? [groupId] : scopedGroups.map((g: any) => String(g.id)));
-
+      const scopedGroups = groups.filter((g: any) => String(g.section_id) === String(sectionId));
+      const groupIds = groupId ? [groupId] : scopedGroups.map((g: any) => String(g.id));
       if (!groupIds.length) {
         setItems([]);
         return;
       }
 
-      let query = `catalog_items?group_id=in.(${groupIds.join(',')})&select=id,group_id,code,name,unit,standard&order=code.asc&limit=600`;
-      if (q) {
-        const v = encodeURIComponent(`*${q}*`);
-        query += `&or=(code.ilike.${v},name.ilike.${v})`;
-      }
-      const i = await get(query, token);
+      const i = await get(
+        `catalog_items?group_id=in.(${groupIds.join(',')})&select=id,group_id,code,name,unit,standard&order=code.asc&limit=600`,
+        token
+      );
       setItems(Array.isArray(i) ? i : []);
     } finally {
       setItemsLoading(false);
