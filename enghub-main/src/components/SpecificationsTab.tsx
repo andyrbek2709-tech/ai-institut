@@ -118,16 +118,19 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
 
   const loadItems = async () => {
     if (!activeCatalogId) return;
-    if (!sectionId) {
-      setItems([]);
-      return;
-    }
     setItemsLoading(true);
     try {
-      const scopedGroups = groups.filter((g: any) => String(g.section_id) === String(sectionId));
-      const groupIds = groupId
-        ? [groupId]
-        : scopedGroups.map((g: any) => String(g.id));
+      const q = search.trim();
+      const isGlobalSearch = q.length > 0;
+
+      // Search must work regardless of previously selected section/group.
+      const scopedGroups = isGlobalSearch
+        ? groups
+        : groups.filter((g: any) => String(g.section_id) === String(sectionId));
+
+      const groupIds = isGlobalSearch
+        ? scopedGroups.map((g: any) => String(g.id))
+        : (groupId ? [groupId] : scopedGroups.map((g: any) => String(g.id)));
 
       if (!groupIds.length) {
         setItems([]);
@@ -135,7 +138,6 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
       }
 
       let query = `catalog_items?group_id=in.(${groupIds.join(',')})&select=id,group_id,code,name,unit,standard&order=code.asc&limit=600`;
-      const q = search.trim();
       if (q) {
         const v = encodeURIComponent(`*${q}*`);
         query += `&or=(code.ilike.${v},name.ilike.${v})`;
