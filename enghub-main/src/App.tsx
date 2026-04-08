@@ -999,10 +999,11 @@ export default function App() {
     { id: "projects_list", icon: "◈", label: "Проекты" },
     { id: "tasks", icon: "≡", label: "Задачи" },
     { id: "calculations", icon: "⎍", label: "Расчёты" },
+    { id: "specifications", icon: "📋", label: "Спецификации" },
     { id: "normative", icon: "📄", label: "Нормативка" }
   ];
 
-  const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", calculations: "Инженерные расчёты", normative: "База знаний (Нормативка)" };
+  const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", calculations: "Инженерные расчёты", specifications: "Спецификации", normative: "База знаний (Нормативка)" };
 
   const calcTemplates = Object.values(calcRegistry);
   const calcCatLabels: Record<string, string> = { "ТХ": "ТХ — Технология", "ТТ": "ТТ — Теплотехника", "ЭО": "ЭО — Электрика", "ВК": "ВК — Водоснабжение", "ПБ": "ПБ — Пожарная безопасность", "Г": "Генплан", "КЖ / КМ": "КЖ / КМ — Конструктив", "КИПиА": "КИПиА", "ОВ": "ОВ — Отопление и вентиляция" };
@@ -1895,9 +1896,9 @@ export default function App() {
 
               {/* Tabs */}
               <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-                {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","specifications","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
+                {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
                   <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "specifications" ? "📋 Спецификации" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
+                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
                   </button>
                 ))}
               </div>
@@ -2016,17 +2017,6 @@ export default function App() {
                   getDeptNameById={getDeptNameById}
                   getDeptName={getDeptName}
                   handleAssignmentResponse={handleAssignmentResponse}
-                />
-              )}
-
-              {sideTab === "specifications" && (
-                <SpecificationsTab
-                  C={C}
-                  token={token!}
-                  project={activeProject}
-                  currentUser={currentUserData}
-                  isGip={isGip}
-                  isLead={isLead}
                 />
               )}
 
@@ -2280,6 +2270,44 @@ export default function App() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ===== SPECIFICATIONS ===== */}
+          {screen === "specifications" && (
+            <div className="screen-fade">
+              <div className="page-header">
+                <div>
+                  <div className="page-label">Спецификации</div>
+                  <div className="page-title">Создание спецификации по каталогу</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, color: C.textMuted }}>Проект:</span>
+                  <select
+                    value={activeProject?.id || ''}
+                    onChange={(e) => {
+                      const p = projects.find((x: any) => String(x.id) === String(e.target.value));
+                      if (p) setActiveProject(p);
+                    }}
+                    style={{ ...getInp(C), minWidth: 260 }}
+                  >
+                    {projects.map((p: any) => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {activeProject ? (
+                <SpecificationsTab
+                  C={C}
+                  token={token!}
+                  project={activeProject}
+                  currentUser={currentUserData}
+                  isGip={isGip}
+                  isLead={isLead}
+                />
+              ) : (
+                <div className="empty-state" style={{ padding: 40 }}>Нет активного проекта для спецификации</div>
+              )}
             </div>
           )}
 
