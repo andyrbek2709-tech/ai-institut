@@ -39,6 +39,18 @@ const emptyStamp: Stamp = {
   date: new Date().toISOString().slice(0, 10),
 };
 
+function inferUnitFromText(name: string, typeMark: string, currentUnit?: string): string {
+  const u = String(currentUnit || '').trim();
+  if (u) return u;
+  const txt = `${name || ''} ${typeMark || ''}`.toLowerCase();
+  if (txt.includes('бетон')) return 'м3';
+  if (txt.includes('труб')) return 'м';
+  if (txt.includes('кабел')) return 'м';
+  if (txt.includes('краск') || txt.includes('грунт')) return 'кг';
+  // default for piece goods and unknowns
+  return 'шт';
+}
+
 export function SpecificationsTab({ C, token, project, currentUser, isGip, isLead }: Props) {
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [activeCatalogId, setActiveCatalogId] = useState<string>('');
@@ -227,13 +239,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     if (!sid) return;
     const item = items.find((x: any) => String(x.id) === String(itemId));
     if (!item) return;
-    const inferredUnit = (() => {
-      const rawUnit = String(item.unit || '').trim();
-      if (rawUnit) return rawUnit;
-      const txt = `${item.name || ''} ${item.standard || ''}`.toLowerCase();
-      if (txt.includes('армат')) return 'шт';
-      return '';
-    })();
+    const inferredUnit = inferUnitFromText(String(item.name || ''), String(item.standard || ''), String(item.unit || ''));
     const nextLine = (specRows[specRows.length - 1]?.line_no || 0) + 1;
     await post('specification_items', {
       specification_id: Number(sid),
@@ -387,7 +393,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               <div>{r.type_mark || ''}</div>
               <div>{r.code || ''}</div>
               <input value={r.plant || ''} onChange={(e) => updateRow(r, { plant: e.target.value })} style={{ ...inp, padding: '6px 8px' }} />
-              <div>{r.unit || ''}</div>
+              <div>{inferUnitFromText(String(r.name || ''), String(r.type_mark || ''), String(r.unit || ''))}</div>
               <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 28px', gap: 4 }}>
                 <button className="btn btn-secondary" style={{ padding: 0, height: 28 }} onClick={() => updateRow(r, { qty: Math.max(0, Number(r.qty || 0) - 1) })}>-</button>
                 <input value={String(r.qty || 0)} onChange={(e) => updateRow(r, { qty: Number(e.target.value || 0) })} style={{ ...inp, textAlign: 'center', padding: '5px 6px' }} />
