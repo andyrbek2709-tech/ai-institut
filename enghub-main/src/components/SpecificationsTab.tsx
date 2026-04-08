@@ -62,6 +62,17 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
   const [status, setStatus] = useState('');
 
   const canManage = isGip || isLead;
+  const inp = {
+    width: '100%',
+    background: C.surface2,
+    color: C.text,
+    border: `1px solid ${C.border}`,
+    borderRadius: 8,
+    padding: '8px 10px',
+    fontSize: 12,
+    outline: 'none',
+    boxSizing: 'border-box' as const,
+  };
 
   const filteredItems = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -308,49 +319,52 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
   if (!project) return <div className="empty-state">Выберите проект</div>;
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 12 }}>
-      <div className="card" style={{ padding: 12, alignSelf: 'start' }}>
-        <div className="page-label" style={{ marginBottom: 10 }}>Спецификация</div>
-        <button className="btn btn-primary" style={{ width: '100%', marginBottom: 8 }} onClick={onExport}>Сформировать спецификацию</button>
-        <button className="btn btn-secondary" style={{ width: '100%', marginBottom: 8 }} onClick={() => setSpecRows([])}>Очистить все</button>
-        <button className="btn btn-secondary" style={{ width: '100%', marginBottom: 8 }} onClick={createNewSpec}>Новая спецификация</button>
-        <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 10 }}>Статус: {status || (specId ? 'Заполняется' : 'Не создана')}</div>
+    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 14 }}>
+      <div className="card" style={{ padding: 14, alignSelf: 'start', borderRadius: 14 }}>
+        <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 }}>Спецификация</div>
+        <button className="btn btn-primary" style={{ width: '100%', marginBottom: 8, height: 36, fontWeight: 700 }} onClick={onExport}>Сформировать спецификацию</button>
+        <button className="btn btn-secondary" style={{ width: '100%', marginBottom: 8, height: 32 }} onClick={() => setSpecRows([])}>Очистить все</button>
+        <button className="btn btn-secondary" style={{ width: '100%', marginBottom: 10, height: 32 }} onClick={createNewSpec}>Новая спецификация</button>
+        <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 10 }}>
+          Статус: <span style={{ color: status ? C.green : C.text }}>{status || (specId ? 'Заполняется' : 'Не создана')}</span>
+        </div>
 
+        <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 }}>Штамп</div>
         <div style={{ display: 'grid', gap: 6 }}>
-          <input style={{ background: C.surface2, color: C.text }} placeholder="Шифр проекта" value={stamp.projectCode} onChange={(e) => setStamp({ ...stamp, projectCode: e.target.value })} />
-          <input style={{ background: C.surface2, color: C.text }} placeholder="Наименование объекта" value={stamp.objectName} onChange={(e) => setStamp({ ...stamp, objectName: e.target.value })} />
-          <input style={{ background: C.surface2, color: C.text }} placeholder="Наименование системы" value={stamp.systemName} onChange={(e) => setStamp({ ...stamp, systemName: e.target.value })} />
-          <input style={{ background: C.surface2, color: C.text }} placeholder="Стадия (РП)" value={stamp.stage} onChange={(e) => setStamp({ ...stamp, stage: e.target.value })} />
+          <input style={inp} placeholder="Шифр проекта" value={stamp.projectCode} onChange={(e) => setStamp({ ...stamp, projectCode: e.target.value })} />
+          <input style={inp} placeholder="Наименование объекта" value={stamp.objectName} onChange={(e) => setStamp({ ...stamp, objectName: e.target.value })} />
+          <input style={inp} placeholder="Наименование системы" value={stamp.systemName} onChange={(e) => setStamp({ ...stamp, systemName: e.target.value })} />
+          <input style={inp} placeholder="Стадия (РП)" value={stamp.stage} onChange={(e) => setStamp({ ...stamp, stage: e.target.value })} />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            <input style={{ background: C.surface2, color: C.text }} placeholder="Лист" value={stamp.sheet} onChange={(e) => setStamp({ ...stamp, sheet: e.target.value })} />
-            <input style={{ background: C.surface2, color: C.text }} placeholder="Листов" value={stamp.sheets} onChange={(e) => setStamp({ ...stamp, sheets: e.target.value })} />
+            <input style={inp} placeholder="Лист" value={stamp.sheet} onChange={(e) => setStamp({ ...stamp, sheet: e.target.value })} />
+            <input style={inp} placeholder="Листов" value={stamp.sheets} onChange={(e) => setStamp({ ...stamp, sheets: e.target.value })} />
           </div>
-          <input style={{ background: C.surface2, color: C.text }} placeholder="Разработал" value={stamp.developedBy} onChange={(e) => setStamp({ ...stamp, developedBy: e.target.value })} />
-          <input style={{ background: C.surface2, color: C.text }} placeholder="Проверил" value={stamp.checkedBy} onChange={(e) => setStamp({ ...stamp, checkedBy: e.target.value })} />
-          <input style={{ background: C.surface2, color: C.text }} placeholder="Н. контроль" value={stamp.normControlBy} onChange={(e) => setStamp({ ...stamp, normControlBy: e.target.value })} />
-          <input style={{ background: C.surface2, color: C.text }} placeholder="Утвердил" value={stamp.approvedBy} onChange={(e) => setStamp({ ...stamp, approvedBy: e.target.value })} />
-          <input style={{ background: C.surface2, color: C.text }} placeholder="Дата" value={stamp.date} onChange={(e) => setStamp({ ...stamp, date: e.target.value })} />
-          <button className="btn btn-secondary" onClick={saveSpecMeta} disabled={saving}>{saving ? 'Сохранение...' : 'Сохранить штамп'}</button>
+          <input style={inp} placeholder="Разработал" value={stamp.developedBy} onChange={(e) => setStamp({ ...stamp, developedBy: e.target.value })} />
+          <input style={inp} placeholder="Проверил" value={stamp.checkedBy} onChange={(e) => setStamp({ ...stamp, checkedBy: e.target.value })} />
+          <input style={inp} placeholder="Н. контроль" value={stamp.normControlBy} onChange={(e) => setStamp({ ...stamp, normControlBy: e.target.value })} />
+          <input style={inp} placeholder="Утвердил" value={stamp.approvedBy} onChange={(e) => setStamp({ ...stamp, approvedBy: e.target.value })} />
+          <input style={inp} placeholder="Дата" value={stamp.date} onChange={(e) => setStamp({ ...stamp, date: e.target.value })} />
+          <button className="btn btn-secondary" style={{ height: 32 }} onClick={saveSpecMeta} disabled={saving}>{saving ? 'Сохранение...' : 'Сохранить штамп'}</button>
         </div>
       </div>
 
-      <div className="card" style={{ padding: 12 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
+      <div className="card" style={{ padding: 14, borderRadius: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
           <input
-            style={{ background: C.surface2, color: C.text }}
+            style={inp}
             placeholder="Искать в каталоге AGSK-3 по коду и названию..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <select value={activeCatalogId} onChange={(e) => setActiveCatalogId(e.target.value)} style={{ background: C.surface2, color: C.text }}>
+          <select value={activeCatalogId} onChange={(e) => setActiveCatalogId(e.target.value)} style={inp}>
             <option value="">Каталог</option>
             {catalogs.map((c: any) => <option key={c.id} value={c.id}>{c.version} ({c.catalog_date}){c.is_active ? ' *' : ''}</option>)}
           </select>
-          <select value={sectionId} onChange={(e) => { setSectionId(e.target.value); setGroupId(''); }} style={{ background: C.surface2, color: C.text }}>
+          <select value={sectionId} onChange={(e) => { setSectionId(e.target.value); setGroupId(''); }} style={inp}>
             <option value="">Раздел</option>
             {sections.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          <select value={groupId} onChange={(e) => setGroupId(e.target.value)} style={{ background: C.surface2, color: C.text }}>
+          <select value={groupId} onChange={(e) => setGroupId(e.target.value)} style={inp}>
             <option value="">Группа</option>
             {groups.filter((g: any) => !sectionId || String(g.section_id) === String(sectionId)).map((g: any) => (
               <option key={g.id} value={g.id}>{g.name}</option>
@@ -358,16 +372,16 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
           </select>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr auto auto', gap: 8, marginBottom: 8 }}>
-          <select value={selectedItemId} onChange={(e) => setSelectedItemId(e.target.value)} style={{ background: C.surface2, color: C.text }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.8fr auto auto', gap: 8, marginBottom: 8 }}>
+          <select value={selectedItemId} onChange={(e) => setSelectedItemId(e.target.value)} style={inp}>
             <option value="">Выбрать позицию из каталога...</option>
             {filteredItems.slice(0, 1000).map((it: any) => (
               <option key={it.id} value={it.id}>{it.code} — {it.name}</option>
             ))}
           </select>
-          <button className="btn btn-primary" onClick={addItemToSpec} disabled={!selectedItemId || !canManage}>Добавить</button>
+          <button className="btn btn-primary" style={{ height: 36, minWidth: 110 }} onClick={addItemToSpec} disabled={!selectedItemId || !canManage}>Добавить</button>
           {canManage && (
-            <label className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <label className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 36, minWidth: 170 }}>
               {uploading ? 'Загрузка...' : 'Загрузить PDF каталог'}
               <input
                 type="file"
@@ -382,31 +396,31 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
           )}
         </div>
 
-        <div style={{ marginBottom: 8, display: 'grid', gridTemplateColumns: '1fr 280px', gap: 8 }}>
-          <input style={{ background: C.surface2, color: C.text }} value={specName} onChange={(e) => setSpecName(e.target.value)} placeholder="Название спецификации" />
-          <select value={specId} onChange={(e) => setSpecId(e.target.value)} style={{ background: C.surface2, color: C.text }}>
+        <div style={{ marginBottom: 10, display: 'grid', gridTemplateColumns: '1fr 280px', gap: 8 }}>
+          <input style={inp} value={specName} onChange={(e) => setSpecName(e.target.value)} placeholder="Название спецификации" />
+          <select value={specId} onChange={(e) => setSpecId(e.target.value)} style={inp}>
             <option value="">Выбрать спецификацию...</option>
             {specs.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
 
         <div style={{ border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '50px 1.8fr 1fr 140px 140px 60px 90px 50px', fontSize: 12, fontWeight: 700, background: C.surface2, padding: '8px 10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '50px 1.8fr 1fr 130px 130px 60px 100px 50px', fontSize: 12, fontWeight: 700, background: C.surface2, padding: '10px 10px' }}>
             <div>№</div><div>Наименование</div><div>Тип/марка</div><div>Код</div><div>Завод</div><div>Ед.</div><div>Кол-во</div><div />
           </div>
           {specRows.length === 0 && <div style={{ padding: 18, color: C.textMuted }}>Позиции не добавлены</div>}
           {specRows.map((r: any, idx: number) => (
-            <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '50px 1.8fr 1fr 140px 140px 60px 90px 50px', gap: 6, alignItems: 'center', padding: '8px 10px', borderTop: `1px solid ${C.border}` }}>
+            <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '50px 1.8fr 1fr 130px 130px 60px 100px 50px', gap: 6, alignItems: 'center', padding: '9px 10px', borderTop: `1px solid ${C.border}`, background: idx % 2 === 0 ? 'transparent' : C.surface + '80' }}>
               <div>{idx + 1}</div>
-              <div>{r.name}</div>
+              <div style={{ lineHeight: 1.25 }}>{r.name}</div>
               <div>{r.type_mark || ''}</div>
               <div>{r.code || ''}</div>
-              <input value={r.plant || ''} onChange={(e) => updateRow(r, { plant: e.target.value })} style={{ background: C.bg, color: C.text }} />
+              <input value={r.plant || ''} onChange={(e) => updateRow(r, { plant: e.target.value })} style={{ ...inp, padding: '6px 8px' }} />
               <div>{r.unit || ''}</div>
               <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 28px', gap: 4 }}>
-                <button className="btn btn-secondary" onClick={() => updateRow(r, { qty: Math.max(0, Number(r.qty || 0) - 1) })}>-</button>
-                <input value={String(r.qty || 0)} onChange={(e) => updateRow(r, { qty: Number(e.target.value || 0) })} style={{ textAlign: 'center', background: C.bg, color: C.text }} />
-                <button className="btn btn-secondary" onClick={() => updateRow(r, { qty: Number(r.qty || 0) + 1 })}>+</button>
+                <button className="btn btn-secondary" style={{ padding: 0, height: 28 }} onClick={() => updateRow(r, { qty: Math.max(0, Number(r.qty || 0) - 1) })}>-</button>
+                <input value={String(r.qty || 0)} onChange={(e) => updateRow(r, { qty: Number(e.target.value || 0) })} style={{ ...inp, textAlign: 'center', padding: '5px 6px' }} />
+                <button className="btn btn-secondary" style={{ padding: 0, height: 28 }} onClick={() => updateRow(r, { qty: Number(r.qty || 0) + 1 })}>+</button>
               </div>
               <button className="btn btn-danger btn-sm" onClick={() => removeRow(r)}>×</button>
             </div>
