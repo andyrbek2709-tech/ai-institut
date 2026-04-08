@@ -64,8 +64,7 @@ function inferPlantFromCatalog(name: string, typeMark: string, code: string, cur
       if (tail) return tail.slice(0, 80);
     }
   }
-  // Final fallback from catalog code so column is never empty.
-  return String(code || '').trim() || '—';
+  return '';
 }
 
 export function SpecificationsTab({ C, token, project, currentUser, isGip, isLead }: Props) {
@@ -132,7 +131,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
 
   const loadCatalogTree = async (catalogId: string) => {
     if (!catalogId) return;
-    const s = await get(`sections?catalog_id=eq.${catalogId}&order=sort_order.asc,id.asc`, token);
+    const s = await get(`sections?catalog_id=eq.${catalogId}&order=sort_order.asc,id.asc&limit=500`, token);
     const allSections = Array.isArray(s) ? s : [];
     setSections(allSections);
     if (!allSections.length) {
@@ -141,7 +140,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
       return;
     }
     const secIds = allSections.map((x: any) => x.id).join(',');
-    const g = await get(`groups?section_id=in.(${secIds})&order=name.asc,id.asc`, token);
+    const g = await get(`groups?section_id=in.(${secIds})&order=name.asc,id.asc&limit=5000`, token);
     setGroups(Array.isArray(g) ? g : []);
   };
 
