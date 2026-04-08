@@ -129,7 +129,32 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
           `catalog_items?select=id,group_id,code,name,unit,standard&or=(code.ilike.${v},name.ilike.${v})&order=code.asc&limit=600`,
           token
         );
-        setItems(Array.isArray(i) ? i : []);
+        const found = Array.isArray(i) ? i : [];
+        if (found.length > 0) {
+          setItems(found);
+          return;
+        }
+
+        // Fallback: find by readable section/group names, then fetch their items.
+        const ql = q.toLowerCase();
+        const matchedSectionIds = sections
+          .filter((s: any) => String(s.name || '').toLowerCase().includes(ql))
+          .map((s: any) => String(s.id));
+        const matchedGroupIds = groups
+          .filter((g: any) =>
+            String(g.name || '').toLowerCase().includes(ql) ||
+            matchedSectionIds.includes(String(g.section_id))
+          )
+          .map((g: any) => String(g.id));
+        if (!matchedGroupIds.length) {
+          setItems([]);
+          return;
+        }
+        const fallback = await get(
+          `catalog_items?group_id=in.(${matchedGroupIds.slice(0, 1500).join(',')})&select=id,group_id,code,name,unit,standard&order=code.asc&limit=600`,
+          token
+        );
+        setItems(Array.isArray(fallback) ? fallback : []);
         return;
       }
 
@@ -202,6 +227,13 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     if (!sid) return;
     const item = items.find((x: any) => String(x.id) === String(itemId));
     if (!item) return;
+    const inferredUnit = (() => {
+      const rawUnit = String(item.unit || '').trim();
+      if (rawUnit) return rawUnit;
+      const txt = `${item.name || ''} ${item.standard || ''}`.toLowerCase();
+      if (txt.includes('армат')) return 'шт';
+      return '';
+    })();
     const nextLine = (specRows[specRows.length - 1]?.line_no || 0) + 1;
     await post('specification_items', {
       specification_id: Number(sid),
@@ -209,7 +241,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
       item_id: item.id,
       name: item.name,
       code: item.code,
-      unit: item.unit,
+      unit: inferredUnit,
       type_mark: item.standard || '',
       plant: '',
       qty: 1,
