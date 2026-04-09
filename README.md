@@ -375,6 +375,13 @@ Frontend теперь подготавливает/валидирует данн
   - `system_name` ← название проекта (безопасный fallback)
 - Это убирает ложную блокировку скачивания, если проектные поля штампа не были вручную заполнены.
 
+**Обновление (ошибка генерации на Production):**
+- Добавлена упаковка шаблона в Vercel-function:
+  - `enghub-main/vercel.json` → `functions.api/spec-export.js.includeFiles = server/templates/**`
+- Улучшено сообщение ошибки на фронтенде:
+  - при падении `Скачать Excel` показывается причина от backend (`error`), а не только общий текст.
+- Это нужно для кейса, когда сервер не видит template-файл в окружении деплоя.
+
 **Что сделано в этой сессии (ключевое):**
 - Добавлен серверный endpoint генерации Excel: `enghub-main/api/spec-export.js`
 - В `SpecificationsTab` добавлена кнопка **"Скачать Excel"** (one-click), вызов `POST /api/spec-export`

@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/spec-export.js": {
+      "includeFiles": "server/templates/**"
+    }
+  },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],

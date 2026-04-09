@@ -557,12 +557,20 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
         body: JSON.stringify(payload),
       });
       if (!resp.ok) {
-        throw new Error(`HTTP ${resp.status}`);
+        let detail = `HTTP ${resp.status}`;
+        try {
+          const errBody = await resp.json();
+          if (errBody?.error) detail = String(errBody.error);
+        } catch {
+          // ignore parse error
+        }
+        throw new Error(detail);
       }
       const blob = await resp.blob();
       saveAs(blob, `${safe}.xlsx`);
-    } catch {
-      window.alert('Не удалось сформировать Excel на сервере. Попробуйте позже.');
+    } catch (e: any) {
+      const msg = String(e?.message || '').trim();
+      window.alert(`Не удалось сформировать Excel на сервере.\n${msg ? `Причина: ${msg}` : 'Попробуйте позже.'}`);
     } finally {
       setExcelLoading(false);
     }
