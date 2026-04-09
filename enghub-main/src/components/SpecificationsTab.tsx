@@ -147,6 +147,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
 
   const [saving, setSaving] = useState(false);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
   const [status, setStatus] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -537,6 +538,40 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     onExportPayloadJson();
   };
 
+  const onDownloadExcel = async () => {
+    const errors = validateBeforePrepare();
+    if (errors.length) {
+      window.alert(`Нельзя подготовить данные:\n\n- ${errors.join('\n- ')}`);
+      return;
+    }
+    if (warningCount > 0) {
+      const ok = window.confirm(
+        `Есть предупреждения по длине текста в ${warningCount} строк(ах).\nПродолжить формирование Excel?`
+      );
+      if (!ok) return;
+    }
+
+    const payload = buildSpecificationPayload(stampWithSheets, rowsForExport, ROWS_PER_PAGE);
+    const safe = (specName || 'spec').replace(/[^\w.-]+/g, '_');
+    setExcelLoading(true);
+    try {
+      const resp = await fetch('/api/spec-export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
+      const blob = await resp.blob();
+      saveAs(blob, `${safe}.xlsx`);
+    } catch {
+      window.alert('Не удалось сформировать Excel на сервере. Попробуйте позже.');
+    } finally {
+      setExcelLoading(false);
+    }
+  };
+
   const onExportPayloadJson = () => {
     const payload = buildSpecificationPayload(stampWithSheets, rowsForExport, ROWS_PER_PAGE);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
@@ -761,6 +796,15 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               <button type="button" className="btn btn-primary" style={{ fontWeight: 700 }} onClick={onPreparePayload}>
                 Подготовить данные (JSON)
               </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ fontWeight: 700 }}
+                onClick={() => void onDownloadExcel()}
+                disabled={excelLoading}
+              >
+                {excelLoading ? 'Формирование Excel…' : 'Скачать Excel'}
+              </button>
               <button type="button" className="btn btn-secondary" onClick={() => void clearAllRows()} disabled={saving || !specRows.length}>
                 Очистить
               </button>
@@ -788,7 +832,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               </span>
             </div>
             <div style={{ fontSize: 11, color: C.textMuted, marginTop: 10 }}>
-              Фронтенд не формирует Excel: только готовит чистые данные и структуру для backend.
+              Excel формируется на сервере по шаблону ГОСТ, фронтенд отправляет только структуру данных.
             </div>
           </div>
 
