@@ -1,199 +1,119 @@
-const path = require('path');
-const fs = require('fs');
+const ExcelJS = require('exceljs');
 
-const ROWS_PER_PAGE = 30;
-const START_ROW = 3;
-const TEMPLATE_ROW = 3;
-const DATA_COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+const runtime = 'nodejs';
 
-function splitPages(items) {
-  const src = Array.isArray(items) ? items : [];
-  const pages = [];
-  for (let i = 0; i < src.length; i += ROWS_PER_PAGE) {
-    pages.push(src.slice(i, i + ROWS_PER_PAGE));
-  }
-  return pages.length ? pages : [[]];
-}
-
-function resolveTemplatePath() {
-  const candidates = [
-    path.join(__dirname, '..', 'server', 'templates', 'AGSK3_spec_template.xlsx'),
-    path.join(process.cwd(), 'server', 'templates', 'AGSK3_spec_template.xlsx'),
-    path.join(process.cwd(), 'enghub-main', 'server', 'templates', 'AGSK3_spec_template.xlsx'),
-  ];
-  for (const p of candidates) {
-    if (fs.existsSync(p)) return p;
-  }
-  throw new Error(`Template file not found. Tried: ${candidates.join(' | ')}`);
-}
-
-function cloneModel(model) {
-  if (typeof structuredClone === 'function') return structuredClone(model);
-  return JSON.parse(JSON.stringify(model));
-}
-
-function cloneCellStyle(sourceCell, targetCell) {
-  const src = sourceCell.style || {};
-  targetCell.style = {
-    font: cloneModel(src.font || {}),
-    border: cloneModel(src.border || {}),
-    fill: cloneModel(src.fill || {}),
-    numFmt: src.numFmt || undefined,
-    alignment: cloneModel(src.alignment || {}),
-    protection: cloneModel(src.protection || {}),
-  };
-}
-
-function copyTemplateSheet(templateSheet, targetSheet) {
-  targetSheet.properties = cloneModel(templateSheet.properties || {});
-  targetSheet.pageSetup = cloneModel(templateSheet.pageSetup || {});
-  targetSheet.headerFooter = cloneModel(templateSheet.headerFooter || {});
-  targetSheet.views = cloneModel(templateSheet.views || []);
-  targetSheet.state = templateSheet.state || 'visible';
-
-  const colCount = Math.max(templateSheet.columnCount || 0, 60);
-  for (let c = 1; c <= colCount; c += 1) {
-    const srcCol = templateSheet.getColumn(c);
-    const dstCol = targetSheet.getColumn(c);
-    dstCol.width = srcCol.width;
-    dstCol.hidden = srcCol.hidden;
-    dstCol.outlineLevel = srcCol.outlineLevel;
-    dstCol.style = cloneModel(srcCol.style || {});
-  }
-
-  const rowCount = Math.max(templateSheet.rowCount || 0, 60);
-  for (let r = 1; r <= rowCount; r += 1) {
-    const srcRow = templateSheet.getRow(r);
-    const dstRow = targetSheet.getRow(r);
-    dstRow.height = srcRow.height;
-    dstRow.hidden = srcRow.hidden;
-    dstRow.outlineLevel = srcRow.outlineLevel;
-    srcRow.eachCell({ includeEmpty: true }, (srcCell, colNumber) => {
-      const dstCell = dstRow.getCell(colNumber);
-      dstCell.value = cloneModel(srcCell.value);
-      cloneCellStyle(srcCell, dstCell);
-    });
-  }
-
-  const merges = (templateSheet.model && templateSheet.model.merges) || [];
-  for (const range of merges) {
-    targetSheet.mergeCells(range);
-  }
-}
-
-function applyRowStyleFromTemplate(sheet, rowNum) {
-  for (const col of DATA_COLS) {
-    const source = sheet.getCell(`${col}${TEMPLATE_ROW}`);
-    const target = sheet.getCell(`${col}${rowNum}`);
-    cloneCellStyle(source, target);
-  }
-}
-
-function fillStamp(sheet, stamp, pageIndex, totalPages) {
-  const safe = stamp || {};
-  sheet.getCell('B34').value = String(safe.project_code || '');
-  sheet.getCell('B35').value = String(safe.object_name || '');
-  sheet.getCell('B36').value = String(safe.system_name || '');
-  sheet.getCell('B37').value = String(safe.stage || '');
-  sheet.getCell('B38').value = pageIndex + 1;
-  sheet.getCell('D38').value = totalPages;
-  sheet.getCell('B39').value = String(safe.author || '');
-  sheet.getCell('B40').value = String(safe.checker || '');
-  sheet.getCell('B41').value = String(safe.control || '');
-  sheet.getCell('B42').value = String(safe.approver || '');
-  sheet.getCell('B43').value = String(safe.date || '');
-}
-
-function reapplyTemplateStyles(templateSheet, sheet, addresses) {
-  for (const addr of addresses) {
-    cloneCellStyle(templateSheet.getCell(addr), sheet.getCell(addr));
-  }
-}
-
-function writePageRows(sheet, pageItems) {
-  for (let i = 0; i < ROWS_PER_PAGE; i += 1) {
-    const row = START_ROW + i;
-    applyRowStyleFromTemplate(sheet, row);
-    const item = pageItems[i];
-    if (!item) {
-      for (const col of DATA_COLS) sheet.getCell(`${col}${row}`).value = '';
-      continue;
-    }
-    sheet.getCell(`A${row}`).value = i + 1;
-    sheet.getCell(`B${row}`).value = String(item.name || '');
-    sheet.getCell(`C${row}`).value = String(item.type || '');
-    sheet.getCell(`D${row}`).value = String(item.code || '');
-    sheet.getCell(`E${row}`).value = String(item.factory || '');
-    sheet.getCell(`F${row}`).value = String(item.unit || '');
-    sheet.getCell(`G${row}`).value = Number(item.quantity || 0);
-  }
+function getStampValue(stamp, keySnake, keyCamel) {
+  return String(stamp?.[keySnake] ?? stamp?.[keyCamel] ?? '');
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method === 'GET') {
-    let excelReady = true;
-    let excelError = '';
-    try {
-      // Lazy-load to avoid crashing function during module init on runtime packaging issues.
-      require('exceljs');
-    } catch (e) {
-      excelReady = false;
-      excelError = String(e?.message || e);
-    }
-    return res.status(200).json({
-      ok: true,
-      route: 'spec-export',
-      expected: { stamp: 'object', items: 'array' },
-      exceljs_ready: excelReady,
-      exceljs_error: excelError || undefined,
-    });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
-    let ExcelJS;
-    try {
-      ExcelJS = require('exceljs');
-    } catch (e) {
-      return res.status(500).json({ error: `exceljs load failed: ${String(e?.message || e)}` });
+    const body =
+      typeof req.body === 'string'
+        ? (() => {
+            try {
+              return JSON.parse(req.body);
+            } catch (_e) {
+              return null;
+            }
+          })()
+        : req.body;
+
+    if (!body || typeof body !== 'object') {
+      return res.status(400).json({ error: 'Invalid JSON body' });
     }
 
-    const stamp = req.body?.stamp || {};
-    const items = Array.isArray(req.body?.items) ? req.body.items : [];
-    const pages = splitPages(items);
+    const stamp = body.stamp || {};
+    const items = Array.isArray(body.items) ? body.items : [];
 
-    const templatePath = resolveTemplatePath();
-    const wb = new ExcelJS.Workbook();
-    await wb.xlsx.readFile(templatePath);
-    const templateSheet = wb.worksheets[0];
-    if (!templateSheet) return res.status(500).json({ error: 'Template worksheet not found' });
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Спецификация');
 
-    templateSheet.name = '1';
+    sheet.columns = [
+      { header: '№', key: 'num', width: 5 },
+      { header: 'Наименование', key: 'name', width: 40 },
+      { header: 'Тип/марка', key: 'type', width: 25 },
+      { header: 'Код', key: 'code', width: 20 },
+      { header: 'Завод', key: 'factory', width: 20 },
+      { header: 'Ед.', key: 'unit', width: 8 },
+      { header: 'Кол-во', key: 'qty', width: 10 },
+      { header: 'Примечание', key: 'note', width: 20 },
+    ];
 
-    for (let i = 0; i < pages.length; i += 1) {
-      let sheet;
-      if (i === 0) {
-        sheet = templateSheet;
-      } else {
-        // ExcelJS has no direct copy_worksheet API; copy full worksheet structure from template.
-        sheet = wb.addWorksheet(`tmp_${i + 1}`);
-        copyTemplateSheet(templateSheet, sheet);
-        sheet.name = String(i + 1);
-      }
-      writePageRows(sheet, pages[i]);
-      fillStamp(sheet, stamp, i, pages.length);
-      reapplyTemplateStyles(templateSheet, sheet, ['B34', 'B35', 'B36', 'B37', 'B38', 'D38', 'B39', 'B40', 'B41', 'B42', 'B43']);
-    }
+    sheet.getRow(1).font = { bold: true };
 
-    const out = await wb.xlsx.writeBuffer();
+    items.forEach((item, i) => {
+      sheet.addRow({
+        num: i + 1,
+        name: item?.name || '',
+        type: item?.type || '',
+        code: item?.code || '',
+        factory: item?.factory || '',
+        unit: item?.unit || '',
+        qty: item?.qty ?? item?.quantity ?? 0,
+        note: item?.note || '',
+      });
+    });
+
+    sheet.eachRow((row) => {
+      row.alignment = { wrapText: true, vertical: 'middle' };
+    });
+
+    const startRow = items.length + 3;
+
+    sheet.getCell(`A${startRow}`).value = 'Шифр проекта';
+    sheet.getCell(`B${startRow}`).value = getStampValue(stamp, 'project_code', 'projectCode');
+
+    sheet.getCell(`A${startRow + 1}`).value = 'Наименование объекта';
+    sheet.getCell(`B${startRow + 1}`).value = getStampValue(stamp, 'object_name', 'objectName');
+
+    sheet.getCell(`A${startRow + 2}`).value = 'Наименование системы';
+    sheet.getCell(`B${startRow + 2}`).value = getStampValue(stamp, 'system_name', 'systemName');
+
+    sheet.getCell(`A${startRow + 3}`).value = 'Стадия';
+    sheet.getCell(`B${startRow + 3}`).value = getStampValue(stamp, 'stage', 'stage');
+
+    sheet.getCell(`A${startRow + 4}`).value = 'Разработал';
+    sheet.getCell(`B${startRow + 4}`).value = getStampValue(stamp, 'author', 'developer');
+
+    sheet.getCell(`A${startRow + 5}`).value = 'Проверил';
+    sheet.getCell(`B${startRow + 5}`).value = getStampValue(stamp, 'checker', 'checker');
+
+    sheet.getCell(`A${startRow + 6}`).value = 'Н. контроль';
+    sheet.getCell(`B${startRow + 6}`).value = getStampValue(stamp, 'control', 'control');
+
+    sheet.getCell(`A${startRow + 7}`).value = 'Утвердил';
+    sheet.getCell(`B${startRow + 7}`).value = getStampValue(stamp, 'approver', 'approver');
+
+    sheet.getCell(`A${startRow + 8}`).value = 'Дата';
+    sheet.getCell(`B${startRow + 8}`).value = getStampValue(stamp, 'date', 'date');
+
+    sheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename="spec.xlsx"');
-    return res.status(200).send(Buffer.from(out));
-  } catch (e) {
-    return res.status(500).json({ error: e?.message || 'Internal error' });
+    res.setHeader('Content-Disposition', 'attachment; filename=specification.xlsx');
+    return res.status(200).send(Buffer.from(buffer));
+  } catch (err) {
+    return res.status(500).json({
+      error: 'Excel generation failed',
+      details: err?.message || 'unknown error',
+    });
   }
 };
+
+module.exports.runtime = runtime;
+module.exports.config = { runtime };

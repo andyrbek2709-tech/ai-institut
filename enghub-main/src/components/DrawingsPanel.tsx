@@ -235,8 +235,8 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRo
         </div>
       )}
 
-      <div className="panel-surface" style={{ overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div className="panel-surface" style={{ overflowX: 'auto' }}>{/* FIX: auto scroll instead of hidden — prevents sidebar expansion on horizontal scroll */}
+        <table style={{ width: '100%', minWidth: 700, borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: C.surface2 }}>
               {['Код', 'Наименование', 'Дисциплина', 'Стадия', 'Ревизия', 'Статус', 'Срок', ''].map((h) => (

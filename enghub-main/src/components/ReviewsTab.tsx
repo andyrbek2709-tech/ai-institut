@@ -35,18 +35,19 @@ export function ReviewsTab({
     <div className="screen-fade">
       {(isGip || isLead) && (
         <div className="panel-surface" style={{ padding: 14, marginBottom: 14 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8 }}>
-            <input value={newReview.title} onChange={(e) => setNewReview({ ...newReview, title: e.target.value })} placeholder="Текст замечания" style={getInp(C)} />
-            <select value={newReview.severity} onChange={(e) => setNewReview({ ...newReview, severity: e.target.value })} style={getInp(C)}>
+          {/* FIX: changed from 4-column grid (button was cut off) to flex-wrap so button always visible */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+            <input value={newReview.title} onChange={(e) => setNewReview({ ...newReview, title: e.target.value })} placeholder="Текст замечания" style={{ ...getInp(C), flex: '2 1 200px', minWidth: 0 }} />
+            <select value={newReview.severity} onChange={(e) => setNewReview({ ...newReview, severity: e.target.value })} style={{ ...getInp(C), flex: '1 1 140px', minWidth: 0 }}>
               <option value="minor">Незначительное</option>
               <option value="major">Существенное</option>
               <option value="critical">Критическое</option>
             </select>
-            <select value={newReview.drawing_id} onChange={(e) => setNewReview({ ...newReview, drawing_id: e.target.value })} style={getInp(C)}>
+            <select value={newReview.drawing_id} onChange={(e) => setNewReview({ ...newReview, drawing_id: e.target.value })} style={{ ...getInp(C), flex: '1 1 140px', minWidth: 0 }}>
               <option value="">Без привязки</option>
               {drawings.map((d) => <option key={d.id} value={d.id}>{d.code}</option>)}
             </select>
-            <button className="btn btn-primary" onClick={submitReview}>+ Замечание</button>
+            <button className="btn btn-primary" style={{ flexShrink: 0 }} onClick={submitReview}>+ Замечание</button>
           </div>
         </div>
       )}

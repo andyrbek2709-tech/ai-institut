@@ -159,6 +159,66 @@ export function ConferenceRoom({
     await onLeave();
   };
 
+  const [isTalking, setIsTalking] = useState(false);
+  const isTalkingRef = useRef(false);
+  const talkTimeoutRef = useRef<any>(null);
+
+  // ── Voice detection (Talking status) ──
+  useEffect(() => {
+    if (!micEnabled || !micStreamRef.current) {
+        if (isTalkingRef.current) {
+            setIsTalking(false);
+            isTalkingRef.current = false;
+            onPresenceUpdate({ micEnabled: false, screenSharing, isTalking: false });
+        }
+        return;
+    }
+
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(micStreamRef.current);
+    const analyzer = audioCtx.createAnalyser();
+    analyzer.fftSize = 256;
+    source.connect(analyzer);
+
+    const bufferLength = analyzer.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const checkVolume = () => {
+      if (!micEnabled) return;
+      analyzer.getByteFrequencyData(dataArray);
+      let sum = 0;
+      for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
+      const average = sum / bufferLength;
+      const talkingNow = average > 10; // Threshold for talking
+
+      if (talkingNow !== isTalkingRef.current) {
+        if (talkingNow) {
+          // If started talking
+          clearTimeout(talkTimeoutRef.current);
+          setIsTalking(true);
+          isTalkingRef.current = true;
+          onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: true });
+        } else {
+          // Debounce stopping "talking" status
+          clearTimeout(talkTimeoutRef.current);
+          talkTimeoutRef.current = setTimeout(() => {
+            setIsTalking(false);
+            isTalkingRef.current = false;
+            onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
+          }, 400); 
+        }
+      }
+      requestAnimationFrame(checkVolume);
+    };
+
+    checkVolume();
+
+    return () => {
+        audioCtx.close();
+        clearTimeout(talkTimeoutRef.current);
+    };
+  }, [micEnabled, screenSharing]); // eslint-disable-line
+
   const toggleMic = async () => {
     try {
       if (!micEnabled) {
@@ -167,11 +227,13 @@ export function ConferenceRoom({
         }
         micStreamRef.current.getAudioTracks().forEach(t => { t.enabled = true; });
         setMicEnabled(true);
-        await onPresenceUpdate({ micEnabled: true, screenSharing });
+        await onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
       } else {
         micStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false; });
         setMicEnabled(false);
-        await onPresenceUpdate({ micEnabled: false, screenSharing });
+        setIsTalking(false);
+        isTalkingRef.current = false;
+        await onPresenceUpdate({ micEnabled: false, screenSharing, isTalking: false });
       }
     } catch {
       onSendMsg("Не удалось получить доступ к микрофону. Проверьте разрешения браузера.", "text");
@@ -491,17 +553,22 @@ export function ConferenceRoom({
               <div key={p.id} style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "8px 14px", borderRadius: 8, margin: "0 6px",
-                cursor: "default"
+                cursor: "default",
+                background: p.isTalking ? `rgba(16, 185, 129, 0.08)` : "transparent",
+                transition: "all 0.3s ease"
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = C.surface2)}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              onMouseEnter={e => { if(!p.isTalking) e.currentTarget.style.background = C.surface2 }}
+              onMouseLeave={e => { if(!p.isTalking) e.currentTarget.style.background = "transparent" }}
               >
-                <div style={{
-                  width: 34, height: 34, borderRadius: 9, flexShrink: 0,
-                  background: `linear-gradient(135deg, ${roleColors[p.role] || C.accent}, ${roleColors[p.role] || C.accent}90)`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 12, fontWeight: 700, color: "#fff", position: "relative"
-                }}>
+                <div 
+                  className={p.isTalking ? 'avatar-talking' : ''}
+                  style={{
+                    width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                    background: `linear-gradient(135deg, ${roleColors[p.role] || C.accent}, ${roleColors[p.role] || C.accent}90)`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 12, fontWeight: 700, color: "#fff", position: "relative"
+                  }}
+                >
                   {getInitials(p.full_name)}
                   <div style={{
                     position: "absolute", bottom: -1, right: -1,
@@ -510,7 +577,7 @@ export function ConferenceRoom({
                   }} />
                 </div>
                 <div style={{ flex: 1, overflow: "hidden" }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: p.isTalking ? "#10B981" : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {p.full_name?.split(" ").slice(0, 2).join(" ")}
                   </div>
                   <div style={{ fontSize: 10, color: C.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -518,7 +585,9 @@ export function ConferenceRoom({
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 3, flexShrink: 0, fontSize: 13 }}>
-                  <span>{p.micEnabled ? "🎤" : "🔇"}</span>
+                  <span style={{ transform: p.isTalking ? 'scale(1.2)' : 'scale(1)', transition: 'transform 0.2s' }}>
+                    {p.micEnabled ? (p.isTalking ? "🎤" : "🎙️") : "🔇"}
+                  </span>
                   {p.screenSharing && <span>🖥️</span>}
                 </div>
               </div>
@@ -706,24 +775,31 @@ export function ConferenceRoom({
                   Никого нет в зале
                 </div>
               ) : conferenceParticipants.map((p: any) => (
-                <div key={p.id} className="card" style={{ padding: "14px 18px", marginBottom: 10, display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: 12,
-                    background: `linear-gradient(135deg, ${roleColors[p.role] || C.accent}, ${roleColors[p.role] || C.accent}90)`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 15, fontWeight: 700, color: "#fff", position: "relative"
-                  }}>
+                <div key={p.id} className="card" style={{ 
+                  padding: "14px 18px", marginBottom: 10, display: "flex", alignItems: "center", gap: 14,
+                  border: p.isTalking ? `1px solid #10B981` : `1px solid ${C.border}`,
+                  boxShadow: p.isTalking ? `0 0 15px rgba(16, 185, 129, 0.15)` : 'none'
+                }}>
+                  <div 
+                    className={p.isTalking ? 'avatar-talking' : ''}
+                    style={{
+                      width: 44, height: 44, borderRadius: 12,
+                      background: `linear-gradient(135deg, ${roleColors[p.role] || C.accent}, ${roleColors[p.role] || C.accent}90)`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 15, fontWeight: 700, color: "#fff", position: "relative"
+                    }}
+                  >
                     {getInitials(p.full_name)}
                     <div style={{ position: "absolute", bottom: -2, right: -2, width: 12, height: 12, borderRadius: "50%", background: "#10B981", border: `3px solid ${C.surface}` }} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{p.full_name}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: p.isTalking ? "#10B981" : C.text }}>{p.full_name}</div>
                     <div style={{ fontSize: 12, color: C.textMuted }}>
                       {p.position || (p.role === "gip" ? "Главный Инженер Проекта" : p.role === "lead" ? "Руководитель отдела" : "Инженер")}
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 6, fontSize: 18 }}>
-                    <span>{p.micEnabled ? "🎤" : "🔇"}</span>
+                    <span>{p.micEnabled ? (p.isTalking ? "🎤" : "🎙️") : "🔇"}</span>
                     {p.screenSharing && <span>🖥️</span>}
                   </div>
                 </div>

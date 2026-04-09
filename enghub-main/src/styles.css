@@ -57,11 +57,16 @@
   padding: 0;
 }
 
+/* FIX: Prevent document-level scroll (fixes white screen on End key + ghost whitespace) */
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--text);
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
@@ -76,7 +81,8 @@ body {
 /* ===== APP LAYOUT ===== */
 .app-root {
   display: flex;
-  min-height: 100vh;
+  height: 100vh; /* FIX: fixed height instead of min-height to contain all scrolling */
+  overflow: hidden;
 }
 
 /* ===== SIDEBAR ===== */
@@ -197,7 +203,8 @@ body {
   margin-left: 220px;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh; /* FIX: fixed height to contain scroll within .content */
+  overflow: hidden;
 }
 
 /* ===== TOPBAR ===== */
@@ -288,8 +295,10 @@ body {
 /* ===== CONTENT ===== */
 .content {
   flex: 1;
+  min-height: 0; /* FIX: required for flex child to shrink and enable scroll */
   padding: 24px 28px;
   overflow-y: auto;
+  overflow-x: hidden; /* FIX: prevents horizontal scroll from expanding sidebar */
   background:
     radial-gradient(1200px 500px at 85% -180px, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%),
     var(--bg);
@@ -788,6 +797,8 @@ select.input option { background: var(--surface); color: var(--text); }
   border-radius: 8px;
   background: var(--surface2);
   border: 1px solid var(--border);
+  position: relative; /* FIX: ensures button sits above ::before pseudo-element */
+  z-index: 2;
   color: var(--text-muted);
   cursor: pointer;
   font-size: 16px;
@@ -1286,10 +1297,14 @@ select.input option { background: var(--surface); color: var(--text); }
   gap: 8px;
   margin-bottom: 24px;
   overflow-x: auto;
+  max-width: 100%; /* FIX: prevents tab strip from overflowing viewport width */
   padding: 6px;
+  padding-bottom: 8px; /* FIX: room for scrollbar on Windows */
   border: 1px solid var(--border);
   border-radius: 14px;
   background: color-mix(in srgb, var(--surface2) 55%, var(--surface));
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
 .screen-fade {
