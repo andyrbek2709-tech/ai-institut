@@ -397,6 +397,11 @@ Frontend теперь подготавливает/валидирует данн
   - `exceljs_error` (если модуль не загрузился)
 - Это исключает "молчаливое падение" функции на этапе инициализации модуля.
 
+**Обновление (Vercel runtime "Cannot find module 'exceljs'"):**
+- Причина: serverless runtime брал зависимости из корня репозитория, а в корневом `package.json` не было `exceljs`.
+- Исправление: `exceljs` добавлен в **корневые** зависимости (`D:/ai-site/package.json`).
+- Ожидаемый результат: backend `api/spec-export` больше не падает на загрузке модуля.
+
 **Что сделано в этой сессии (ключевое):**
 - Добавлен серверный endpoint генерации Excel: `enghub-main/api/spec-export.js`
 - В `SpecificationsTab` добавлена кнопка **"Скачать Excel"** (one-click), вызов `POST /api/spec-export`
