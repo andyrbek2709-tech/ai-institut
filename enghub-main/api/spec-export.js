@@ -20,9 +20,23 @@ function cloneModel(model) {
   return JSON.parse(JSON.stringify(model));
 }
 
+function cloneCellStyle(sourceCell, targetCell) {
+  const src = sourceCell.style || {};
+  targetCell.style = {
+    font: cloneModel(src.font || {}),
+    border: cloneModel(src.border || {}),
+    fill: cloneModel(src.fill || {}),
+    numFmt: src.numFmt || undefined,
+    alignment: cloneModel(src.alignment || {}),
+    protection: cloneModel(src.protection || {}),
+  };
+}
+
 function applyRowStyleFromTemplate(sheet, rowNum) {
   for (const col of DATA_COLS) {
-    sheet.getCell(`${col}${rowNum}`).style = cloneModel(sheet.getCell(`${col}${TEMPLATE_ROW}`).style || {});
+    const source = sheet.getCell(`${col}${TEMPLATE_ROW}`);
+    const target = sheet.getCell(`${col}${rowNum}`);
+    cloneCellStyle(source, target);
   }
 }
 
@@ -57,9 +71,6 @@ function writePageRows(sheet, pageItems) {
     sheet.getCell(`E${row}`).value = String(item.factory || '');
     sheet.getCell(`F${row}`).value = String(item.unit || '');
     sheet.getCell(`G${row}`).value = Number(item.quantity || 0);
-
-    const b = sheet.getCell(`B${row}`);
-    b.alignment = { ...(b.alignment || {}), wrapText: true };
   }
 }
 
@@ -95,6 +106,7 @@ module.exports = async function handler(req, res) {
       if (i === 0) {
         sheet = templateSheet;
       } else {
+        // ExcelJS has no direct copy_worksheet API; clone full template model as worksheet copy.
         sheet = wb.addWorksheet(String(i + 1));
         sheet.model = cloneModel(templateSheet.model);
         sheet.name = String(i + 1);
