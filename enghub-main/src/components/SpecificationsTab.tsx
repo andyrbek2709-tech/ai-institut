@@ -523,21 +523,6 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     ).length;
   }, [rowsForExport]);
 
-  const onPreparePayload = () => {
-    const errors = validateBeforePrepare();
-    if (errors.length) {
-      window.alert(`Нельзя подготовить данные:\n\n- ${errors.join('\n- ')}`);
-      return;
-    }
-    if (warningCount > 0) {
-      const ok = window.confirm(
-        `Есть предупреждения по длине текста в ${warningCount} строк(ах).\nПродолжить подготовку JSON?`
-      );
-      if (!ok) return;
-    }
-    onExportPayloadJson();
-  };
-
   const onDownloadExcel = async () => {
     const errors = validateBeforePrepare();
     if (errors.length) {
@@ -570,13 +555,6 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     } finally {
       setExcelLoading(false);
     }
-  };
-
-  const onExportPayloadJson = () => {
-    const payload = buildSpecificationPayload(stampWithSheets, rowsForExport, ROWS_PER_PAGE);
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
-    const safe = (specName || 'spec').replace(/[^\w.-]+/g, '_');
-    saveAs(blob, `${safe}_payload.json`);
   };
 
   const stampEmpty = (field: keyof Stamp) => !String(stamp[field] || '').trim();
@@ -793,9 +771,6 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               placeholder="Название спецификации"
             />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-              <button type="button" className="btn btn-primary" style={{ fontWeight: 700 }} onClick={onPreparePayload}>
-                Подготовить данные (JSON)
-              </button>
               <button
                 type="button"
                 className="btn btn-primary"
@@ -813,9 +788,6 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               </button>
               <button type="button" className="btn btn-secondary" onClick={() => setPreviewOpen(true)}>
                 Предпросмотр листов
-              </button>
-              <button type="button" className="btn btn-secondary" onClick={onPreparePayload} title="Данные для бэкенда (ГОСТ-шаблон)">
-                Скачать JSON
               </button>
               {canManage && (
                 <button type="button" className="btn btn-secondary" onClick={() => void createNewSpec()}>
