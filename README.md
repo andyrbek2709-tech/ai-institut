@@ -408,6 +408,11 @@ Frontend теперь подготавливает/валидирует данн
 - Это принудительно добавляет библиотеку в runtime-пакет функции и устраняет ошибку:
   - `Cannot find module 'exceljs'`.
 
+**Исправление schema-ошибки Vercel (`includeFiles should be string`):**
+- Поле `functions.api/spec-export.js.includeFiles` переведено в строковый формат с brace-pattern:
+  - `"{server/templates/**,node_modules/exceljs/**}"`
+- Это валидно для Vercel schema и сохраняет включение обоих путей.
+
 **Что сделано в этой сессии (ключевое):**
 - Добавлен серверный endpoint генерации Excel: `enghub-main/api/spec-export.js`
 - В `SpecificationsTab` добавлена кнопка **"Скачать Excel"** (one-click), вызов `POST /api/spec-export`

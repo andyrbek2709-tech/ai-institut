@@ -1,10 +1,7 @@
 {
   "functions": {
     "api/spec-export.js": {
-      "includeFiles": [
-        "server/templates/**",
-        "node_modules/exceljs/**"
-      ]
+      "includeFiles": "{server/templates/**,node_modules/exceljs/**}"
     }
   },
   "rewrites": [
