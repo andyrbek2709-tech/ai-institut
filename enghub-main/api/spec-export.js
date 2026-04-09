@@ -32,6 +32,43 @@ function cloneCellStyle(sourceCell, targetCell) {
   };
 }
 
+function copyTemplateSheet(templateSheet, targetSheet) {
+  targetSheet.properties = cloneModel(templateSheet.properties || {});
+  targetSheet.pageSetup = cloneModel(templateSheet.pageSetup || {});
+  targetSheet.headerFooter = cloneModel(templateSheet.headerFooter || {});
+  targetSheet.views = cloneModel(templateSheet.views || []);
+  targetSheet.state = templateSheet.state || 'visible';
+
+  const colCount = Math.max(templateSheet.columnCount || 0, 60);
+  for (let c = 1; c <= colCount; c += 1) {
+    const srcCol = templateSheet.getColumn(c);
+    const dstCol = targetSheet.getColumn(c);
+    dstCol.width = srcCol.width;
+    dstCol.hidden = srcCol.hidden;
+    dstCol.outlineLevel = srcCol.outlineLevel;
+    dstCol.style = cloneModel(srcCol.style || {});
+  }
+
+  const rowCount = Math.max(templateSheet.rowCount || 0, 60);
+  for (let r = 1; r <= rowCount; r += 1) {
+    const srcRow = templateSheet.getRow(r);
+    const dstRow = targetSheet.getRow(r);
+    dstRow.height = srcRow.height;
+    dstRow.hidden = srcRow.hidden;
+    dstRow.outlineLevel = srcRow.outlineLevel;
+    srcRow.eachCell({ includeEmpty: true }, (srcCell, colNumber) => {
+      const dstCell = dstRow.getCell(colNumber);
+      dstCell.value = cloneModel(srcCell.value);
+      cloneCellStyle(srcCell, dstCell);
+    });
+  }
+
+  const merges = (templateSheet.model && templateSheet.model.merges) || [];
+  for (const range of merges) {
+    targetSheet.mergeCells(range);
+  }
+}
+
 function applyRowStyleFromTemplate(sheet, rowNum) {
   for (const col of DATA_COLS) {
     const source = sheet.getCell(`${col}${TEMPLATE_ROW}`);
@@ -53,6 +90,12 @@ function fillStamp(sheet, stamp, pageIndex, totalPages) {
   sheet.getCell('B41').value = String(safe.control || '');
   sheet.getCell('B42').value = String(safe.approver || '');
   sheet.getCell('B43').value = String(safe.date || '');
+}
+
+function reapplyTemplateStyles(templateSheet, sheet, addresses) {
+  for (const addr of addresses) {
+    cloneCellStyle(templateSheet.getCell(addr), sheet.getCell(addr));
+  }
 }
 
 function writePageRows(sheet, pageItems) {
@@ -106,13 +149,14 @@ module.exports = async function handler(req, res) {
       if (i === 0) {
         sheet = templateSheet;
       } else {
-        // ExcelJS has no direct copy_worksheet API; clone full template model as worksheet copy.
-        sheet = wb.addWorksheet(String(i + 1));
-        sheet.model = cloneModel(templateSheet.model);
+        // ExcelJS has no direct copy_worksheet API; copy full worksheet structure from template.
+        sheet = wb.addWorksheet(`tmp_${i + 1}`);
+        copyTemplateSheet(templateSheet, sheet);
         sheet.name = String(i + 1);
       }
       writePageRows(sheet, pages[i]);
       fillStamp(sheet, stamp, i, pages.length);
+      reapplyTemplateStyles(templateSheet, sheet, ['B34', 'B35', 'B36', 'B37', 'B38', 'D38', 'B39', 'B40', 'B41', 'B42', 'B43']);
     }
 
     const out = await wb.xlsx.writeBuffer();
