@@ -2276,31 +2276,13 @@ export default function App() {
           {/* ===== SPECIFICATIONS ===== */}
           {screen === "specifications" && (
             <div className="screen-fade">
-              <div className="page-header">
-                <div>
-                  <div className="page-label">Спецификации</div>
-                  <div className="page-title">Создание спецификации по каталогу</div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, color: C.textMuted }}>Проект:</span>
-                  <select
-                    value={activeProject?.id || ''}
-                    onChange={(e) => {
-                      const p = projects.find((x: any) => String(x.id) === String(e.target.value));
-                      if (p) setActiveProject(p);
-                    }}
-                    style={{ ...getInp(C), minWidth: 260 }}
-                  >
-                    {projects.map((p: any) => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}
-                  </select>
-                </div>
-              </div>
-
               {activeProject ? (
                 <SpecificationsTab
                   C={C}
                   token={token!}
                   project={activeProject}
+                  projects={projects}
+                  onProjectChange={(p: any) => setActiveProject(p)}
                   currentUser={currentUserData}
                   isGip={isGip}
                   isLead={isLead}

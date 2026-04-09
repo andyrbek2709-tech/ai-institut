@@ -12,6 +12,8 @@ interface Props {
   C: any;
   token: string;
   project: any;
+  projects: any[];
+  onProjectChange: (project: any) => void;
   currentUser: any;
   isGip: boolean;
   isLead: boolean;
@@ -126,7 +128,7 @@ function AutoTextarea({
   );
 }
 
-export function SpecificationsTab({ C, token, project, currentUser, isGip, isLead }: Props) {
+export function SpecificationsTab({ C, token, project, projects, onProjectChange, currentUser, isGip, isLead }: Props) {
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [activeCatalogId, setActiveCatalogId] = useState<string>('');
   const [sections, setSections] = useState<any[]>([]);
@@ -602,10 +604,6 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ fontSize: 11, color: C.textMuted }}>
-        EngHub / Спецификация
-      </div>
-
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 300px) 1fr', gap: 10, alignItems: 'start' }}>
         {/* Блок 1 — штамп */}
         <div className="card" style={{ padding: 10, borderRadius: 10, position: 'sticky', top: 8 }}>
@@ -613,6 +611,21 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
             Штамп
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
+            <label style={{ fontSize: 10, color: C.textMuted }}>Проект</label>
+            <select
+              value={project?.id || ''}
+              onChange={(e) => {
+                const p = projects.find((x: any) => String(x.id) === String(e.target.value));
+                if (p) onProjectChange(p);
+              }}
+              style={inp}
+            >
+              {projects.map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.code} — {p.name}
+                </option>
+              ))}
+            </select>
             <label style={{ fontSize: 10, color: C.textMuted }}>Шифр проекта</label>
             <input
               style={{
