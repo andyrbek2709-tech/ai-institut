@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const p = path.join(__dirname, '../public/templates/AGSK3_spec_template.xlsx');
+const p = path.join(__dirname, '../server/templates/AGSK3_spec_template.xlsx');
 
 const wb = new ExcelJS.Workbook();
 await wb.xlsx.readFile(p);

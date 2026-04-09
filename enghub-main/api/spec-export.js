@@ -93,7 +93,7 @@ module.exports = async function handler(req, res) {
     const items = Array.isArray(req.body?.items) ? req.body.items : [];
     const pages = splitPages(items);
 
-    const templatePath = path.join(process.cwd(), 'public', 'templates', 'AGSK3_spec_template.xlsx');
+    const templatePath = path.join(process.cwd(), 'server', 'templates', 'AGSK3_spec_template.xlsx');
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.readFile(templatePath);
     const templateSheet = wb.worksheets[0];
