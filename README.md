@@ -390,6 +390,13 @@ Frontend теперь подготавливает/валидирует данн
 - Если шаблон не найден, backend возвращает явную ошибку с перечнем проверенных путей.
 - Во фронтенде разбор ошибок улучшен: читается и `JSON`, и plain text-ответ сервера.
 
+**Обновление (FUNCTION_INVOCATION_FAILED):**
+- Подключение `exceljs` переведено в lazy-load внутри handler.
+- Добавлена диагностика в `GET /api/spec-export`:
+  - `exceljs_ready: true/false`
+  - `exceljs_error` (если модуль не загрузился)
+- Это исключает "молчаливое падение" функции на этапе инициализации модуля.
+
 **Что сделано в этой сессии (ключевое):**
 - Добавлен серверный endpoint генерации Excel: `enghub-main/api/spec-export.js`
 - В `SpecificationsTab` добавлена кнопка **"Скачать Excel"** (one-click), вызов `POST /api/spec-export`

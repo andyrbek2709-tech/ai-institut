@@ -1,6 +1,5 @@
 const path = require('path');
 const fs = require('fs');
-const ExcelJS = require('exceljs');
 
 const ROWS_PER_PAGE = 30;
 const START_ROW = 3;
@@ -136,15 +135,33 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method === 'GET') {
+    let excelReady = true;
+    let excelError = '';
+    try {
+      // Lazy-load to avoid crashing function during module init on runtime packaging issues.
+      require('exceljs');
+    } catch (e) {
+      excelReady = false;
+      excelError = String(e?.message || e);
+    }
     return res.status(200).json({
       ok: true,
       route: 'spec-export',
       expected: { stamp: 'object', items: 'array' },
+      exceljs_ready: excelReady,
+      exceljs_error: excelError || undefined,
     });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   try {
+    let ExcelJS;
+    try {
+      ExcelJS = require('exceljs');
+    } catch (e) {
+      return res.status(500).json({ error: `exceljs load failed: ${String(e?.message || e)}` });
+    }
+
     const stamp = req.body?.stamp || {};
     const items = Array.isArray(req.body?.items) ? req.body.items : [];
     const pages = splitPages(items);
