@@ -402,6 +402,12 @@ Frontend теперь подготавливает/валидирует данн
 - Исправление: `exceljs` добавлен в **корневые** зависимости (`D:/ai-site/package.json`).
 - Ожидаемый результат: backend `api/spec-export` больше не падает на загрузке модуля.
 
+**Дополнительный фикс для Vercel function packaging:**
+- В `enghub-main/vercel.json` для `api/spec-export.js` добавлено явное включение:
+  - `node_modules/exceljs/**`
+- Это принудительно добавляет библиотеку в runtime-пакет функции и устраняет ошибку:
+  - `Cannot find module 'exceljs'`.
+
 **Что сделано в этой сессии (ключевое):**
 - Добавлен серверный endpoint генерации Excel: `enghub-main/api/spec-export.js`
 - В `SpecificationsTab` добавлена кнопка **"Скачать Excel"** (one-click), вызов `POST /api/spec-export`
