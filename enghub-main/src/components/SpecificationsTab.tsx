@@ -175,6 +175,17 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     return { ...stamp, sheet: t.sheet, total_sheets: t.total_sheets };
   }, [stamp, specRows.length]);
 
+  const effectiveStamp = useMemo(
+    () => ({
+      ...stampWithSheets,
+      project_code: String(stampWithSheets.project_code || project?.code || '').trim(),
+      object_name: String(stampWithSheets.object_name || project?.name || '').trim(),
+      // Если пользователь не заполнил систему, подставляем имя проекта как безопасный fallback.
+      system_name: String(stampWithSheets.system_name || project?.name || '').trim(),
+    }),
+    [stampWithSheets, project?.code, project?.name]
+  );
+
   const groupedOptions = useMemo(() => {
     return groups
       .filter((g: any) => !sectionId || String(g.section_id) === String(sectionId))
@@ -506,11 +517,11 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
     if (hasEmptyName) errors.push('Есть пустые строки: заполните поле "Наименование".');
     const hasZeroQty = rowsForExport.some((r: any) => Number(r.qty || 0) <= 0);
     if (hasZeroQty) errors.push('Есть позиции с количеством 0.');
-    if (!String(stampWithSheets.project_code || '').trim()) errors.push('Не заполнен шифр проекта в штампе.');
-    if (!String(stampWithSheets.object_name || '').trim()) errors.push('Не заполнено наименование объекта в штампе.');
-    if (!String(stampWithSheets.system_name || '').trim()) errors.push('Не заполнено наименование системы в штампе.');
-    if (!String(stampWithSheets.author || '').trim()) errors.push('Не заполнено поле "Разработал".');
-    if (!String(stampWithSheets.checker || '').trim()) errors.push('Не заполнено поле "Проверил".');
+    if (!String(effectiveStamp.project_code || '').trim()) errors.push('Не заполнен шифр проекта в штампе.');
+    if (!String(effectiveStamp.object_name || '').trim()) errors.push('Не заполнено наименование объекта в штампе.');
+    if (!String(effectiveStamp.system_name || '').trim()) errors.push('Не заполнено наименование системы в штампе.');
+    if (!String(effectiveStamp.author || '').trim()) errors.push('Не заполнено поле "Разработал".');
+    if (!String(effectiveStamp.checker || '').trim()) errors.push('Не заполнено поле "Проверил".');
     return errors;
   };
 
@@ -536,7 +547,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
       if (!ok) return;
     }
 
-    const payload = buildSpecificationPayload(stampWithSheets, rowsForExport, ROWS_PER_PAGE);
+    const payload = buildSpecificationPayload(effectiveStamp, rowsForExport, ROWS_PER_PAGE);
     const safe = (specName || 'spec').replace(/[^\w.-]+/g, '_');
     setExcelLoading(true);
     try {
