@@ -161,9 +161,9 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
       background: C.surface2,
       color: C.text,
       border: `1px solid ${C.border}`,
-      borderRadius: 8,
-      padding: '8px 10px',
-      fontSize: 12,
+      borderRadius: 6,
+      padding: '6px 8px',
+      fontSize: 11,
       outline: 'none',
       boxSizing: 'border-box' as const,
     }),
@@ -601,19 +601,19 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
   if (!project) return <div className="empty-state">Выберите проект</div>;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ fontSize: 12, color: C.textMuted }}>
-        <span style={{ color: C.text }}>Спецификации</span> → Создание
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ fontSize: 11, color: C.textMuted }}>
+        EngHub / Спецификация
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 340px) 1fr', gap: 16, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 300px) 1fr', gap: 10, alignItems: 'start' }}>
         {/* Блок 1 — штамп */}
-        <div className="card" style={{ padding: 16, borderRadius: 14, position: 'sticky', top: 12 }}>
-          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+        <div className="card" style={{ padding: 10, borderRadius: 10, position: 'sticky', top: 8 }}>
+          <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             Штамп
           </div>
-          <div style={{ display: 'grid', gap: 8 }}>
-            <label style={{ fontSize: 11, color: C.textMuted }}>Шифр проекта</label>
+          <div style={{ display: 'grid', gap: 6 }}>
+            <label style={{ fontSize: 10, color: C.textMuted }}>Шифр проекта</label>
             <input
               style={{
                 ...inp,
@@ -622,7 +622,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               value={stamp.project_code}
               onChange={(e) => setStamp({ ...stamp, project_code: e.target.value })}
             />
-            <label style={{ fontSize: 11, color: C.textMuted }}>Наименование объекта</label>
+            <label style={{ fontSize: 10, color: C.textMuted }}>Наименование объекта</label>
             <input
               style={{
                 ...inp,
@@ -631,7 +631,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               value={stamp.object_name}
               onChange={(e) => setStamp({ ...stamp, object_name: e.target.value })}
             />
-            <label style={{ fontSize: 11, color: C.textMuted }}>Наименование системы</label>
+            <label style={{ fontSize: 10, color: C.textMuted }}>Наименование системы</label>
             <input
               style={{
                 ...inp,
@@ -640,7 +640,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               value={stamp.system_name}
               onChange={(e) => setStamp({ ...stamp, system_name: e.target.value })}
             />
-            <label style={{ fontSize: 11, color: C.textMuted }}>Стадия</label>
+            <label style={{ fontSize: 10, color: C.textMuted }}>Стадия</label>
             <select
               style={inp}
               value={stamp.stage}
@@ -648,40 +648,50 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
             >
               <option value="РП">РП</option>
             </select>
-            <label style={{ fontSize: 11, color: C.textMuted }}>Лист / Листов</label>
+            <label style={{ fontSize: 10, color: C.textMuted }}>Лист / Листов</label>
             <input
               style={{ ...inp, opacity: 0.85, cursor: 'not-allowed' }}
               readOnly
               value={`${stampWithSheets.sheet} / ${stampWithSheets.total_sheets}`}
             />
-            <label style={{ fontSize: 11, color: C.textMuted }}>Разработал</label>
-            <input
-              style={{
-                ...inp,
-                borderColor: stampEmpty('author') ? '#c0392b' : C.border,
-              }}
-              value={stamp.author}
-              onChange={(e) => setStamp({ ...stamp, author: e.target.value })}
-            />
-            <label style={{ fontSize: 11, color: C.textMuted }}>Проверил</label>
-            <input
-              style={{ ...inp, borderColor: stampEmpty('checker') ? '#c0392b' : C.border }}
-              value={stamp.checker}
-              onChange={(e) => setStamp({ ...stamp, checker: e.target.value })}
-            />
-            <label style={{ fontSize: 11, color: C.textMuted }}>Н. контроль</label>
-            <input
-              style={inp}
-              value={stamp.control}
-              onChange={(e) => setStamp({ ...stamp, control: e.target.value })}
-            />
-            <label style={{ fontSize: 11, color: C.textMuted }}>Утвердил</label>
-            <input
-              style={inp}
-              value={stamp.approver}
-              onChange={(e) => setStamp({ ...stamp, approver: e.target.value })}
-            />
-            <label style={{ fontSize: 11, color: C.textMuted }}>Дата</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              <div>
+                <label style={{ fontSize: 10, color: C.textMuted }}>Разработал</label>
+                <input
+                  style={{
+                    ...inp,
+                    borderColor: stampEmpty('author') ? '#c0392b' : C.border,
+                  }}
+                  value={stamp.author}
+                  onChange={(e) => setStamp({ ...stamp, author: e.target.value })}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 10, color: C.textMuted }}>Проверил</label>
+                <input
+                  style={{ ...inp, borderColor: stampEmpty('checker') ? '#c0392b' : C.border }}
+                  value={stamp.checker}
+                  onChange={(e) => setStamp({ ...stamp, checker: e.target.value })}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 10, color: C.textMuted }}>Н. контроль</label>
+                <input
+                  style={inp}
+                  value={stamp.control}
+                  onChange={(e) => setStamp({ ...stamp, control: e.target.value })}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 10, color: C.textMuted }}>Утвердил</label>
+                <input
+                  style={inp}
+                  value={stamp.approver}
+                  onChange={(e) => setStamp({ ...stamp, approver: e.target.value })}
+                />
+              </div>
+            </div>
+            <label style={{ fontSize: 10, color: C.textMuted }}>Дата</label>
             <input
               style={inp}
               type="date"
@@ -689,16 +699,15 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               onChange={(e) => setStamp({ ...stamp, date: e.target.value })}
             />
           </div>
-          <div style={{ fontSize: 11, color: C.textMuted, marginTop: 12 }}>
-            Автосохранение штампа и названия (2 с). Статус:{' '}
-            <span style={{ color: status ? C.green : C.text }}>{status || (specId ? 'В работе' : 'Черновик')}</span>
+          <div style={{ fontSize: 10, color: C.textMuted, marginTop: 8 }}>
+            Статус: <span style={{ color: status ? C.green : C.text }}>{status || (specId ? 'В работе' : 'Черновик')}</span>
           </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
           {/* Блок 2 — каталог */}
-          <div className="card" style={{ padding: 14, borderRadius: 14 }}>
-            <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+          <div className="card" style={{ padding: 10, borderRadius: 10 }}>
+            <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.6 }}>
               Каталог
             </div>
             <div
@@ -711,7 +720,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
               }}
             >
               <div style={{ gridColumn: 'span 2', minWidth: 0 }}>
-                <label style={{ fontSize: 11, color: C.textMuted, display: 'block', marginBottom: 4 }}>Поиск</label>
+                <label style={{ fontSize: 10, color: C.textMuted, display: 'block', marginBottom: 3 }}>Поиск</label>
                 <input
                   style={inp}
                   placeholder="Код или наименование (глобально по каталогу)…"
@@ -720,7 +729,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
                 />
               </div>
               <div>
-                <label style={{ fontSize: 11, color: C.textMuted, display: 'block', marginBottom: 4 }}>Каталог</label>
+                <label style={{ fontSize: 10, color: C.textMuted, display: 'block', marginBottom: 3 }}>Каталог</label>
                 <select value={activeCatalogId} onChange={(e) => setActiveCatalogId(e.target.value)} style={inp}>
                   <option value="">—</option>
                   {catalogs.map((c: any) => (
@@ -731,7 +740,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 11, color: C.textMuted, display: 'block', marginBottom: 4 }}>Раздел</label>
+                <label style={{ fontSize: 10, color: C.textMuted, display: 'block', marginBottom: 3 }}>Раздел</label>
                 <select
                   value={sectionId}
                   onChange={(e) => {
@@ -749,7 +758,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 11, color: C.textMuted, display: 'block', marginBottom: 4 }}>Группа</label>
+                <label style={{ fontSize: 10, color: C.textMuted, display: 'block', marginBottom: 3 }}>Группа</label>
                 <select value={groupId} onChange={(e) => setGroupId(e.target.value)} style={inp}>
                   <option value="">—</option>
                   {groupedOptions.map((g) => (
@@ -760,7 +769,7 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
                 </select>
               </div>
               <div style={{ gridColumn: 'span 2', minWidth: 0 }}>
-                <label style={{ fontSize: 11, color: C.textMuted, display: 'block', marginBottom: 4 }}>Позиция</label>
+                <label style={{ fontSize: 10, color: C.textMuted, display: 'block', marginBottom: 3 }}>Позиция</label>
                 <select
                   value={selectedItemId}
                   onChange={(e) => setSelectedItemId(e.target.value)}
@@ -790,39 +799,52 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
           </div>
 
           {/* Название + кнопки */}
-          <div className="card" style={{ padding: 14, borderRadius: 14 }}>
+          <div className="card" style={{ padding: 10, borderRadius: 10 }}>
             <input
               style={{ ...inp, marginBottom: 12 }}
               value={specName}
               onChange={(e) => setSpecName(e.target.value)}
               placeholder="Название спецификации"
             />
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
               <button
                 type="button"
                 className="btn btn-primary"
-                style={{ fontWeight: 700 }}
+                style={{ fontWeight: 700, padding: '4px 10px', fontSize: 11, height: 30 }}
                 onClick={() => void onDownloadExcel()}
                 disabled={excelLoading}
               >
                 {excelLoading ? 'Формирование Excel…' : 'Скачать Excel'}
               </button>
-              <button type="button" className="btn btn-secondary" onClick={() => void clearAllRows()} disabled={saving || !specRows.length}>
-                Очистить
-              </button>
-              <button type="button" className="btn btn-secondary" onClick={() => void saveSpecMeta()} disabled={saving || !specId}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ padding: '4px 10px', fontSize: 11, height: 30 }}
+                onClick={() => void saveSpecMeta()}
+                disabled={saving || !specId}
+              >
                 {saving ? 'Сохранение…' : 'Сохранить'}
               </button>
-              <button type="button" className="btn btn-secondary" onClick={() => setPreviewOpen(true)}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ padding: '4px 10px', fontSize: 11, height: 30 }}
+                onClick={() => setPreviewOpen(true)}
+              >
                 Предпросмотр листов
               </button>
               {canManage && (
-                <button type="button" className="btn btn-secondary" onClick={() => void createNewSpec()}>
-                  Новая спецификация
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: 11, height: 30 }}
+                  onClick={() => void createNewSpec()}
+                >
+                  Новая
                 </button>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 14, marginTop: 10, fontSize: 12, color: C.text }}>
+            <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 11, color: C.text }}>
               <span>
                 Строк: <b>{specRows.length}</b> / {ROWS_PER_PAGE}
               </span>
@@ -830,22 +852,22 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
                 Листов будет: <b>{previewPages.length}</b>
               </span>
             </div>
-            <div style={{ fontSize: 11, color: C.textMuted, marginTop: 10 }}>
+            <div style={{ fontSize: 10, color: C.textMuted, marginTop: 8 }}>
               Excel формируется на сервере по шаблону ГОСТ, фронтенд отправляет только структуру данных.
             </div>
           </div>
 
           {/* Блок 3 — таблица */}
-          <div className="card" style={{ padding: 0, borderRadius: 14, overflow: 'hidden' }}>
+          <div className="card" style={{ padding: 0, borderRadius: 10, overflow: 'hidden' }}>
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: '44px minmax(120px, 1.4fr) minmax(80px, 0.9fr) 110px minmax(70px, 0.7fr) 52px 88px 44px',
                 gap: 6,
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: 700,
                 background: C.surface2,
-                padding: '10px 12px',
+                padding: '6px 8px',
                 borderBottom: `1px solid ${C.border}`,
               }}
             >
@@ -878,18 +900,18 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
                       gridTemplateColumns: '44px minmax(120px, 1.4fr) minmax(80px, 0.9fr) 110px minmax(70px, 0.7fr) 52px 88px 44px',
                       gap: 6,
                       alignItems: 'start',
-                      padding: '10px 12px',
+                      padding: '6px 8px',
                       borderTop: `1px solid ${C.border}`,
                       background: idx % 2 === 0 ? 'transparent' : C.surface + '80',
                     }}
                   >
-                    <div style={{ fontSize: 12, paddingTop: 8 }}>{idx + 1}</div>
+                    <div style={{ fontSize: 11, paddingTop: 6 }}>{idx + 1}</div>
                     <div>
                       <AutoTextarea
                         value={String(r.name || '')}
                         onChange={(v) => updateRow(r, { name: v })}
                         invalid={!String(r.name || '').trim()}
-                        style={{ ...inp, padding: '8px 10px', fontSize: 12, width: '100%' }}
+                        style={{ ...inp, padding: '6px 8px', fontSize: 11, width: '100%', minHeight: 32 }}
                       />
                       {nameLen > SPEC_LIMITS.name && (
                         <div style={{ fontSize: 10, color: '#c0392b' }}>Превышен лимит {SPEC_LIMITS.name} симв.</div>
@@ -899,13 +921,13 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
                       <input
                         value={String(r.type_mark || '')}
                         onChange={(e) => updateRow(r, { type_mark: e.target.value })}
-                        style={{ ...inp, padding: '8px 10px', fontSize: 12, width: '100%' }}
+                        style={{ ...inp, padding: '6px 8px', fontSize: 11, width: '100%' }}
                       />
                       {typeLen > SPEC_LIMITS.typeMark && (
                         <div style={{ fontSize: 10, color: '#c0392b' }}>Превышен лимит {SPEC_LIMITS.typeMark} симв.</div>
                       )}
                     </div>
-                    <div style={{ fontSize: 12, paddingTop: 8, wordBreak: 'break-all' }}>{r.code || ''}</div>
+                    <div style={{ fontSize: 11, paddingTop: 6, wordBreak: 'break-all' }}>{r.code || ''}</div>
                     <div>
                       <input
                         value={inferPlantFromCatalog(
@@ -917,14 +939,14 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
                         onChange={(e) => updateRow(r, { plant: e.target.value })}
                         style={{
                           ...inp,
-                          padding: '8px 10px',
-                          fontSize: 12,
+                          padding: '6px 8px',
+                          fontSize: 11,
                           width: '100%',
                           borderColor: plantLen > SPEC_LIMITS.factory ? '#c0392b' : C.border,
                         }}
                       />
                     </div>
-                    <div style={{ fontSize: 12, paddingTop: 8 }}>{u}</div>
+                    <div style={{ fontSize: 11, paddingTop: 6 }}>{u}</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 28px', gap: 4 }}>
                       <button
                         type="button"
