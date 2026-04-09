@@ -559,8 +559,16 @@ export function SpecificationsTab({ C, token, project, currentUser, isGip, isLea
       if (!resp.ok) {
         let detail = `HTTP ${resp.status}`;
         try {
-          const errBody = await resp.json();
-          if (errBody?.error) detail = String(errBody.error);
+          const text = await resp.text();
+          if (text) {
+            try {
+              const parsed = JSON.parse(text);
+              if (parsed?.error) detail = String(parsed.error);
+              else detail = text.slice(0, 180);
+            } catch {
+              detail = text.slice(0, 180);
+            }
+          }
         } catch {
           // ignore parse error
         }

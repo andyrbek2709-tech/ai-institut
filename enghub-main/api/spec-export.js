@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const ExcelJS = require('exceljs');
 
 const ROWS_PER_PAGE = 30;
@@ -13,6 +14,18 @@ function splitPages(items) {
     pages.push(src.slice(i, i + ROWS_PER_PAGE));
   }
   return pages.length ? pages : [[]];
+}
+
+function resolveTemplatePath() {
+  const candidates = [
+    path.join(__dirname, '..', 'server', 'templates', 'AGSK3_spec_template.xlsx'),
+    path.join(process.cwd(), 'server', 'templates', 'AGSK3_spec_template.xlsx'),
+    path.join(process.cwd(), 'enghub-main', 'server', 'templates', 'AGSK3_spec_template.xlsx'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  throw new Error(`Template file not found. Tried: ${candidates.join(' | ')}`);
 }
 
 function cloneModel(model) {
@@ -136,7 +149,7 @@ module.exports = async function handler(req, res) {
     const items = Array.isArray(req.body?.items) ? req.body.items : [];
     const pages = splitPages(items);
 
-    const templatePath = path.join(process.cwd(), 'server', 'templates', 'AGSK3_spec_template.xlsx');
+    const templatePath = resolveTemplatePath();
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.readFile(templatePath);
     const templateSheet = wb.worksheets[0];
