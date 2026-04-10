@@ -121,7 +121,17 @@ function applyTextWrap(cell) {
     ...(deepClone(cell.alignment || {})),
     wrapText: true,
     vertical: 'middle',
+    horizontal: 'left',
   };
+}
+
+function setMergedAwareValue(sheet, row, col, value) {
+  const cell = sheet.getCell(row, col);
+  if (cell.isMerged && cell.master) {
+    cell.master.value = value;
+    return;
+  }
+  cell.value = value;
 }
 
 function calcRowHeight(name, type) {
@@ -153,14 +163,14 @@ function writeItems(sheet, pageItems, startIndex) {
     const name = String(item?.name || '');
     const type = String(item?.type || '');
 
-    sheet.getCell(row, FIELD_COLS.num).value = startIndex + i + 1;
-    sheet.getCell(row, FIELD_COLS.name).value = name;
-    sheet.getCell(row, FIELD_COLS.type).value = type;
-    sheet.getCell(row, FIELD_COLS.code).value = String(item?.code || '');
-    sheet.getCell(row, FIELD_COLS.factory).value = String(item?.factory || '');
-    sheet.getCell(row, FIELD_COLS.unit).value = String(item?.unit || '');
-    sheet.getCell(row, FIELD_COLS.qty).value = getQty(item);
-    sheet.getCell(row, FIELD_COLS.note).value = String(item?.note || '');
+    setMergedAwareValue(sheet, row, FIELD_COLS.num, startIndex + i + 1);
+    setMergedAwareValue(sheet, row, FIELD_COLS.name, name);
+    setMergedAwareValue(sheet, row, FIELD_COLS.type, type);
+    setMergedAwareValue(sheet, row, FIELD_COLS.code, String(item?.code || ''));
+    setMergedAwareValue(sheet, row, FIELD_COLS.factory, String(item?.factory || ''));
+    setMergedAwareValue(sheet, row, FIELD_COLS.unit, String(item?.unit || ''));
+    setMergedAwareValue(sheet, row, FIELD_COLS.qty, getQty(item));
+    setMergedAwareValue(sheet, row, FIELD_COLS.note, String(item?.note || ''));
     sheet.getRow(row).height = calcRowHeight(name, type);
   }
 }
