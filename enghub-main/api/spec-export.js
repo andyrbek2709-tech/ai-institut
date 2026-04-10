@@ -30,8 +30,6 @@ const TABLE_COLS = [
   FIELD_COLS.qty,
   FIELD_COLS.note,
 ];
-// Stamp block starts at column B.
-const STAMP_COL_OFFSET = 2;
 
 function deepClone(value) {
   if (typeof structuredClone === 'function') return structuredClone(value);
@@ -176,23 +174,21 @@ function writeItems(sheet, pageItems, startIndex) {
 }
 
 function writeStamp(sheet, stamp, pageIndex, totalPages) {
-  const stampCol = STAMP_COL_OFFSET;
-  sheet.getCell(8, stampCol).value = getValue(stamp, 'project_code', 'projectCode');
-  sheet.getCell(9, stampCol).value = getValue(stamp, 'object_name', 'objectName');
-  sheet.getCell(10, stampCol).value = getValue(stamp, 'system_name', 'systemName');
-  sheet.getCell(11, stampCol).value = getValue(stamp, 'stage', 'stage');
-  sheet.getCell(12, stampCol).value = getValue(stamp, 'developer', 'author');
-  sheet.getCell(13, stampCol).value = getValue(stamp, 'checker', 'checker');
-  sheet.getCell(14, stampCol).value = getValue(stamp, 'control', 'control');
-  sheet.getCell(15, stampCol).value = getValue(stamp, 'approver', 'approver');
-  sheet.getCell(16, stampCol).value = getValue(stamp, 'date', 'date');
-  sheet.getCell(17, stampCol).value = pageIndex + 1;
-  try {
-    sheet.getCell(17, stampCol + 2).value = totalPages;
-  } catch (_err) {
-    // If B17:D17 is merged in template, keep compact value in B17.
-    sheet.getCell(17, stampCol).value = `Лист: ${pageIndex + 1}/${totalPages}`;
-  }
+  // Fixed title-block coordinates (bottom-right area of current template).
+  // Never calculate stamp position from table size.
+  setMergedAwareValue(sheet, 34, 17, getValue(stamp, 'project_code', 'projectCode')); // Q34 (Q34:Y35 merge)
+  setMergedAwareValue(sheet, 36, 17, getValue(stamp, 'object_name', 'objectName')); // Q36 (Q36:Y38 merge)
+  setMergedAwareValue(sheet, 34, 7, getValue(stamp, 'system_name', 'systemName')); // G34 (G34:I44 merge)
+
+  setMergedAwareValue(sheet, 40, 21, getValue(stamp, 'stage', 'stage')); // U40 (U40:V41 merge)
+  setMergedAwareValue(sheet, 39, 12, getValue(stamp, 'developer', 'author')); // L39 (L39:N39 merge)
+  setMergedAwareValue(sheet, 40, 12, getValue(stamp, 'checker', 'checker')); // L40 (L40:N40 merge)
+  setMergedAwareValue(sheet, 43, 12, getValue(stamp, 'control', 'control')); // L43 (L43:N43 merge)
+  setMergedAwareValue(sheet, 44, 12, getValue(stamp, 'approver', 'approver')); // L44 (L44:N44 merge)
+  setMergedAwareValue(sheet, 44, 16, getValue(stamp, 'date', 'date')); // P44
+
+  setMergedAwareValue(sheet, 40, 23, pageIndex + 1); // W40 (W40:W41 merge)
+  setMergedAwareValue(sheet, 40, 24, totalPages); // X40 (X40:Y41 merge)
 }
 
 function configurePrint(sheet) {
