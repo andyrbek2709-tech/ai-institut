@@ -7,16 +7,31 @@ const ROWS_PER_PAGE = 30;
 const START_ROW = 4;
 const TEMPLATE_ROW = 4;
 const PRINT_LAST_ROW = 44;
-// Real template columns (G:Y header groups).
-const COL_NUM = 'G';
-const COL_NAME = 'H';
-const COL_TYPE = 'I';
-const COL_CODE = 'J'; // merged group J:M
-const COL_FACTORY = 'N'; // merged group N:Q
-const COL_UNIT = 'R';
-const COL_QTY = 'S';
-const COL_NOTE = 'V'; // merged group V:Y
-const TABLE_COLS = [COL_NUM, COL_NAME, COL_TYPE, COL_CODE, COL_FACTORY, COL_UNIT, COL_QTY, COL_NOTE];
+// Real table starts at column G (where "Поз." is located in row 2).
+const COL_OFFSET = 7;
+// Relative offsets from COL_OFFSET for concrete template groups.
+const FIELD_COLS = {
+  num: COL_OFFSET + 0, // G
+  name: COL_OFFSET + 1, // H
+  type: COL_OFFSET + 2, // I
+  code: COL_OFFSET + 3, // J (group J:M)
+  factory: COL_OFFSET + 7, // N (group N:Q)
+  unit: COL_OFFSET + 11, // R
+  qty: COL_OFFSET + 12, // S
+  note: COL_OFFSET + 15, // V (group V:Y)
+};
+const TABLE_COLS = [
+  FIELD_COLS.num,
+  FIELD_COLS.name,
+  FIELD_COLS.type,
+  FIELD_COLS.code,
+  FIELD_COLS.factory,
+  FIELD_COLS.unit,
+  FIELD_COLS.qty,
+  FIELD_COLS.note,
+];
+// Stamp block starts at column B.
+const STAMP_COL_OFFSET = 2;
 
 function deepClone(value) {
   if (typeof structuredClone === 'function') return structuredClone(value);
@@ -94,8 +109,8 @@ function cloneSheetFromTemplate(workbook, templateSheet, name) {
 
 function copyRowStyleFromTemplate(sheet, targetRowNumber) {
   for (const col of TABLE_COLS) {
-    const src = sheet.getCell(`${col}${TEMPLATE_ROW}`);
-    const dst = sheet.getCell(`${col}${targetRowNumber}`);
+    const src = sheet.getCell(TEMPLATE_ROW, col);
+    const dst = sheet.getCell(targetRowNumber, col);
     dst.style = deepClone(src.style || {});
     dst.numFmt = src.numFmt;
   }
@@ -123,13 +138,13 @@ function writeItems(sheet, pageItems, startIndex) {
   for (let i = 0; i < ROWS_PER_PAGE; i += 1) {
     const row = START_ROW + i;
     copyRowStyleFromTemplate(sheet, row);
-    applyTextWrap(sheet.getCell(`${COL_NAME}${row}`));
-    applyTextWrap(sheet.getCell(`${COL_TYPE}${row}`));
+    applyTextWrap(sheet.getCell(row, FIELD_COLS.name));
+    applyTextWrap(sheet.getCell(row, FIELD_COLS.type));
 
     const item = pageItems[i];
     if (!item) {
       for (const col of TABLE_COLS) {
-        sheet.getCell(`${col}${row}`).value = '';
+        sheet.getCell(row, col).value = '';
       }
       sheet.getRow(row).height = 20;
       continue;
@@ -138,34 +153,35 @@ function writeItems(sheet, pageItems, startIndex) {
     const name = String(item?.name || '');
     const type = String(item?.type || '');
 
-    sheet.getCell(`${COL_NUM}${row}`).value = startIndex + i + 1;
-    sheet.getCell(`${COL_NAME}${row}`).value = name;
-    sheet.getCell(`${COL_TYPE}${row}`).value = type;
-    sheet.getCell(`${COL_CODE}${row}`).value = String(item?.code || '');
-    sheet.getCell(`${COL_FACTORY}${row}`).value = String(item?.factory || '');
-    sheet.getCell(`${COL_UNIT}${row}`).value = String(item?.unit || '');
-    sheet.getCell(`${COL_QTY}${row}`).value = getQty(item);
-    sheet.getCell(`${COL_NOTE}${row}`).value = String(item?.note || '');
+    sheet.getCell(row, FIELD_COLS.num).value = startIndex + i + 1;
+    sheet.getCell(row, FIELD_COLS.name).value = name;
+    sheet.getCell(row, FIELD_COLS.type).value = type;
+    sheet.getCell(row, FIELD_COLS.code).value = String(item?.code || '');
+    sheet.getCell(row, FIELD_COLS.factory).value = String(item?.factory || '');
+    sheet.getCell(row, FIELD_COLS.unit).value = String(item?.unit || '');
+    sheet.getCell(row, FIELD_COLS.qty).value = getQty(item);
+    sheet.getCell(row, FIELD_COLS.note).value = String(item?.note || '');
     sheet.getRow(row).height = calcRowHeight(name, type);
   }
 }
 
 function writeStamp(sheet, stamp, pageIndex, totalPages) {
-  sheet.getCell('B8').value = getValue(stamp, 'project_code', 'projectCode');
-  sheet.getCell('B9').value = getValue(stamp, 'object_name', 'objectName');
-  sheet.getCell('B10').value = getValue(stamp, 'system_name', 'systemName');
-  sheet.getCell('B11').value = getValue(stamp, 'stage', 'stage');
-  sheet.getCell('B12').value = getValue(stamp, 'developer', 'author');
-  sheet.getCell('B13').value = getValue(stamp, 'checker', 'checker');
-  sheet.getCell('B14').value = getValue(stamp, 'control', 'control');
-  sheet.getCell('B15').value = getValue(stamp, 'approver', 'approver');
-  sheet.getCell('B16').value = getValue(stamp, 'date', 'date');
-  sheet.getCell('B17').value = pageIndex + 1;
+  const stampCol = STAMP_COL_OFFSET;
+  sheet.getCell(8, stampCol).value = getValue(stamp, 'project_code', 'projectCode');
+  sheet.getCell(9, stampCol).value = getValue(stamp, 'object_name', 'objectName');
+  sheet.getCell(10, stampCol).value = getValue(stamp, 'system_name', 'systemName');
+  sheet.getCell(11, stampCol).value = getValue(stamp, 'stage', 'stage');
+  sheet.getCell(12, stampCol).value = getValue(stamp, 'developer', 'author');
+  sheet.getCell(13, stampCol).value = getValue(stamp, 'checker', 'checker');
+  sheet.getCell(14, stampCol).value = getValue(stamp, 'control', 'control');
+  sheet.getCell(15, stampCol).value = getValue(stamp, 'approver', 'approver');
+  sheet.getCell(16, stampCol).value = getValue(stamp, 'date', 'date');
+  sheet.getCell(17, stampCol).value = pageIndex + 1;
   try {
-    sheet.getCell('D17').value = totalPages;
+    sheet.getCell(17, stampCol + 2).value = totalPages;
   } catch (_err) {
     // If B17:D17 is merged in template, keep compact value in B17.
-    sheet.getCell('B17').value = `Лист: ${pageIndex + 1}/${totalPages}`;
+    sheet.getCell(17, stampCol).value = `Лист: ${pageIndex + 1}/${totalPages}`;
   }
 }
 
