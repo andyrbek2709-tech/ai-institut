@@ -3,9 +3,10 @@ const ExcelJS = require('exceljs');
 
 const runtime = 'nodejs';
 const TEMPLATE_PATH = path.join(__dirname, 'template.xlsx');
-const ROWS_PER_SHEET = 30;
-const TABLE_START_ROW = 2;
-const STYLE_TEMPLATE_ROW = 2;
+const ROWS_PER_PAGE = 30;
+const START_ROW = 2;
+const TEMPLATE_ROW = 2;
+const STAMP_LAST_ROW = 17;
 const TABLE_COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
 function deepClone(value) {
@@ -36,8 +37,8 @@ function getQty(item) {
 function chunkItems(items) {
   const src = Array.isArray(items) ? items : [];
   const pages = [];
-  for (let i = 0; i < src.length; i += ROWS_PER_SHEET) {
-    pages.push(src.slice(i, i + ROWS_PER_SHEET));
+  for (let i = 0; i < src.length; i += ROWS_PER_PAGE) {
+    pages.push(src.slice(i, i + ROWS_PER_PAGE));
   }
   return pages.length ? pages : [[]];
 }
@@ -84,17 +85,27 @@ function cloneSheetFromTemplate(workbook, templateSheet, name) {
 
 function copyRowStyleFromTemplate(sheet, targetRowNumber) {
   for (const col of TABLE_COLS) {
-    const src = sheet.getCell(`${col}${STYLE_TEMPLATE_ROW}`);
+    const src = sheet.getCell(`${col}${TEMPLATE_ROW}`);
     const dst = sheet.getCell(`${col}${targetRowNumber}`);
     dst.style = deepClone(src.style || {});
     dst.numFmt = src.numFmt;
   }
 }
 
-function writeItems(sheet, pageItems) {
-  for (let i = 0; i < ROWS_PER_SHEET; i += 1) {
-    const row = TABLE_START_ROW + i;
+function applyTextWrap(cell) {
+  cell.alignment = {
+    ...(deepClone(cell.alignment || {})),
+    wrapText: true,
+    vertical: 'middle',
+  };
+}
+
+function writeItems(sheet, pageItems, startIndex) {
+  for (let i = 0; i < ROWS_PER_PAGE; i += 1) {
+    const row = START_ROW + i;
     copyRowStyleFromTemplate(sheet, row);
+    applyTextWrap(sheet.getCell(`B${row}`));
+    applyTextWrap(sheet.getCell(`C${row}`));
 
     const item = pageItems[i];
     if (!item) {
@@ -104,7 +115,7 @@ function writeItems(sheet, pageItems) {
       continue;
     }
 
-    sheet.getCell(`A${row}`).value = i + 1;
+    sheet.getCell(`A${row}`).value = startIndex + i + 1;
     sheet.getCell(`B${row}`).value = String(item?.name || '');
     sheet.getCell(`C${row}`).value = String(item?.type || '');
     sheet.getCell(`D${row}`).value = String(item?.code || '');
@@ -125,7 +136,25 @@ function writeStamp(sheet, stamp, pageIndex, totalPages) {
   sheet.getCell('B14').value = getValue(stamp, 'control', 'control');
   sheet.getCell('B15').value = getValue(stamp, 'approver', 'approver');
   sheet.getCell('B16').value = getValue(stamp, 'date', 'date');
-  sheet.getCell('B17').value = `Лист: ${pageIndex + 1} / ${totalPages}`;
+  sheet.getCell('B17').value = pageIndex + 1;
+  try {
+    sheet.getCell('D17').value = totalPages;
+  } catch (_err) {
+    // If B17:D17 is merged in template, keep compact value in B17.
+    sheet.getCell('B17').value = `Лист: ${pageIndex + 1}/${totalPages}`;
+  }
+}
+
+function configurePrint(sheet) {
+  sheet.pageSetup = {
+    ...(deepClone(sheet.pageSetup || {})),
+    paperSize: 9, // A4
+    orientation: 'landscape',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 1,
+    printArea: `A1:H${STAMP_LAST_ROW}`,
+  };
 }
 
 module.exports = async function handler(req, res) {
@@ -149,12 +178,13 @@ module.exports = async function handler(req, res) {
       throw new Error('Template worksheet not found');
     }
 
-    templateSheet.name = '1';
+    templateSheet.name = 'Лист 1';
 
     for (let i = 0; i < pages.length; i += 1) {
-      const sheet = i === 0 ? templateSheet : cloneSheetFromTemplate(workbook, templateSheet, String(i + 1));
-      writeItems(sheet, pages[i]);
+      const sheet = i === 0 ? templateSheet : cloneSheetFromTemplate(workbook, templateSheet, `Лист ${i + 1}`);
+      writeItems(sheet, pages[i], i * ROWS_PER_PAGE);
       writeStamp(sheet, stamp, i, pages.length);
+      configurePrint(sheet);
     }
 
     const out = await workbook.xlsx.writeBuffer();
