@@ -1,9 +1,131 @@
+const path = require('path');
 const ExcelJS = require('exceljs');
 
 const runtime = 'nodejs';
+const TEMPLATE_PATH = path.join(__dirname, 'template.xlsx');
+const ROWS_PER_SHEET = 30;
+const TABLE_START_ROW = 2;
+const STYLE_TEMPLATE_ROW = 2;
+const TABLE_COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
-function getStampValue(stamp, keySnake, keyCamel) {
-  return String(stamp?.[keySnake] ?? stamp?.[keyCamel] ?? '');
+function deepClone(value) {
+  if (typeof structuredClone === 'function') return structuredClone(value);
+  return JSON.parse(JSON.stringify(value));
+}
+
+function readBody(body) {
+  if (typeof body === 'string') {
+    try {
+      return JSON.parse(body);
+    } catch (_err) {
+      return null;
+    }
+  }
+  return body;
+}
+
+function getValue(obj, snake, camel) {
+  return String(obj?.[snake] ?? obj?.[camel] ?? '');
+}
+
+function getQty(item) {
+  const raw = item?.qty ?? item?.quantity ?? '';
+  return raw === '' ? '' : Number(raw) || '';
+}
+
+function chunkItems(items) {
+  const src = Array.isArray(items) ? items : [];
+  const pages = [];
+  for (let i = 0; i < src.length; i += ROWS_PER_SHEET) {
+    pages.push(src.slice(i, i + ROWS_PER_SHEET));
+  }
+  return pages.length ? pages : [[]];
+}
+
+function cloneSheetFromTemplate(workbook, templateSheet, name) {
+  const sheet = workbook.addWorksheet(name);
+
+  sheet.properties = deepClone(templateSheet.properties || {});
+  sheet.pageSetup = deepClone(templateSheet.pageSetup || {});
+  sheet.headerFooter = deepClone(templateSheet.headerFooter || {});
+  sheet.views = deepClone(templateSheet.views || []);
+  sheet.state = templateSheet.state || 'visible';
+
+  const maxColumns = Math.max(templateSheet.columnCount || 0, 40);
+  for (let c = 1; c <= maxColumns; c += 1) {
+    const srcCol = templateSheet.getColumn(c);
+    const dstCol = sheet.getColumn(c);
+    dstCol.width = srcCol.width;
+    dstCol.hidden = srcCol.hidden;
+    dstCol.outlineLevel = srcCol.outlineLevel;
+    dstCol.style = deepClone(srcCol.style || {});
+  }
+
+  const maxRows = Math.max(templateSheet.rowCount || 0, 60);
+  for (let r = 1; r <= maxRows; r += 1) {
+    const srcRow = templateSheet.getRow(r);
+    const dstRow = sheet.getRow(r);
+    dstRow.height = srcRow.height;
+    dstRow.hidden = srcRow.hidden;
+    dstRow.outlineLevel = srcRow.outlineLevel;
+    srcRow.eachCell({ includeEmpty: true }, (srcCell, colNumber) => {
+      const dstCell = dstRow.getCell(colNumber);
+      dstCell.value = deepClone(srcCell.value);
+      dstCell.style = deepClone(srcCell.style || {});
+      dstCell.numFmt = srcCell.numFmt;
+    });
+  }
+
+  const merges = (templateSheet.model && templateSheet.model.merges) || [];
+  for (const range of merges) sheet.mergeCells(range);
+
+  return sheet;
+}
+
+function copyRowStyleFromTemplate(sheet, targetRowNumber) {
+  for (const col of TABLE_COLS) {
+    const src = sheet.getCell(`${col}${STYLE_TEMPLATE_ROW}`);
+    const dst = sheet.getCell(`${col}${targetRowNumber}`);
+    dst.style = deepClone(src.style || {});
+    dst.numFmt = src.numFmt;
+  }
+}
+
+function writeItems(sheet, pageItems) {
+  for (let i = 0; i < ROWS_PER_SHEET; i += 1) {
+    const row = TABLE_START_ROW + i;
+    copyRowStyleFromTemplate(sheet, row);
+
+    const item = pageItems[i];
+    if (!item) {
+      for (const col of TABLE_COLS) {
+        sheet.getCell(`${col}${row}`).value = '';
+      }
+      continue;
+    }
+
+    sheet.getCell(`A${row}`).value = i + 1;
+    sheet.getCell(`B${row}`).value = String(item?.name || '');
+    sheet.getCell(`C${row}`).value = String(item?.type || '');
+    sheet.getCell(`D${row}`).value = String(item?.code || '');
+    sheet.getCell(`E${row}`).value = String(item?.factory || '');
+    sheet.getCell(`F${row}`).value = String(item?.unit || '');
+    sheet.getCell(`G${row}`).value = getQty(item);
+    sheet.getCell(`H${row}`).value = String(item?.note || '');
+  }
+}
+
+function writeStamp(sheet, stamp, pageIndex, totalPages) {
+  sheet.getCell('B8').value = getValue(stamp, 'project_code', 'projectCode');
+  sheet.getCell('B9').value = getValue(stamp, 'object_name', 'objectName');
+  sheet.getCell('B10').value = getValue(stamp, 'system_name', 'systemName');
+  sheet.getCell('B11').value = getValue(stamp, 'stage', 'stage');
+  sheet.getCell('B12').value = getValue(stamp, 'developer', 'author');
+  sheet.getCell('B13').value = getValue(stamp, 'checker', 'checker');
+  sheet.getCell('B14').value = getValue(stamp, 'control', 'control');
+  sheet.getCell('B15').value = getValue(stamp, 'approver', 'approver');
+  sheet.getCell('B16').value = getValue(stamp, 'date', 'date');
+  sheet.getCell('B17').value = `Лист: ${pageIndex + 1} / ${totalPages}`;
 }
 
 module.exports = async function handler(req, res) {
@@ -12,101 +134,33 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const body =
-      typeof req.body === 'string'
-        ? (() => {
-            try {
-              return JSON.parse(req.body);
-            } catch (_e) {
-              return null;
-            }
-          })()
-        : req.body;
-
+    const body = readBody(req.body);
     if (!body || typeof body !== 'object') {
       return res.status(400).json({ error: 'Invalid JSON body' });
     }
 
     const stamp = body.stamp || {};
-    const items = Array.isArray(body.items) ? body.items : [];
+    const pages = chunkItems(body.items);
 
     const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Спецификация');
+    await workbook.xlsx.readFile(TEMPLATE_PATH);
+    const templateSheet = workbook.worksheets[0];
+    if (!templateSheet) {
+      throw new Error('Template worksheet not found');
+    }
 
-    sheet.columns = [
-      { header: '№', key: 'num', width: 5 },
-      { header: 'Наименование', key: 'name', width: 40 },
-      { header: 'Тип/марка', key: 'type', width: 25 },
-      { header: 'Код', key: 'code', width: 20 },
-      { header: 'Завод', key: 'factory', width: 20 },
-      { header: 'Ед.', key: 'unit', width: 8 },
-      { header: 'Кол-во', key: 'qty', width: 10 },
-      { header: 'Примечание', key: 'note', width: 20 },
-    ];
+    templateSheet.name = '1';
 
-    sheet.getRow(1).font = { bold: true };
+    for (let i = 0; i < pages.length; i += 1) {
+      const sheet = i === 0 ? templateSheet : cloneSheetFromTemplate(workbook, templateSheet, String(i + 1));
+      writeItems(sheet, pages[i]);
+      writeStamp(sheet, stamp, i, pages.length);
+    }
 
-    items.forEach((item, i) => {
-      sheet.addRow({
-        num: i + 1,
-        name: item?.name || '',
-        type: item?.type || '',
-        code: item?.code || '',
-        factory: item?.factory || '',
-        unit: item?.unit || '',
-        qty: item?.qty ?? item?.quantity ?? 0,
-        note: item?.note || '',
-      });
-    });
-
-    sheet.eachRow((row) => {
-      row.alignment = { wrapText: true, vertical: 'middle' };
-    });
-
-    const startRow = items.length + 3;
-
-    sheet.getCell(`A${startRow}`).value = 'Шифр проекта';
-    sheet.getCell(`B${startRow}`).value = getStampValue(stamp, 'project_code', 'projectCode');
-
-    sheet.getCell(`A${startRow + 1}`).value = 'Наименование объекта';
-    sheet.getCell(`B${startRow + 1}`).value = getStampValue(stamp, 'object_name', 'objectName');
-
-    sheet.getCell(`A${startRow + 2}`).value = 'Наименование системы';
-    sheet.getCell(`B${startRow + 2}`).value = getStampValue(stamp, 'system_name', 'systemName');
-
-    sheet.getCell(`A${startRow + 3}`).value = 'Стадия';
-    sheet.getCell(`B${startRow + 3}`).value = getStampValue(stamp, 'stage', 'stage');
-
-    sheet.getCell(`A${startRow + 4}`).value = 'Разработал';
-    sheet.getCell(`B${startRow + 4}`).value = getStampValue(stamp, 'author', 'developer');
-
-    sheet.getCell(`A${startRow + 5}`).value = 'Проверил';
-    sheet.getCell(`B${startRow + 5}`).value = getStampValue(stamp, 'checker', 'checker');
-
-    sheet.getCell(`A${startRow + 6}`).value = 'Н. контроль';
-    sheet.getCell(`B${startRow + 6}`).value = getStampValue(stamp, 'control', 'control');
-
-    sheet.getCell(`A${startRow + 7}`).value = 'Утвердил';
-    sheet.getCell(`B${startRow + 7}`).value = getStampValue(stamp, 'approver', 'approver');
-
-    sheet.getCell(`A${startRow + 8}`).value = 'Дата';
-    sheet.getCell(`B${startRow + 8}`).value = getStampValue(stamp, 'date', 'date');
-
-    sheet.eachRow((row) => {
-      row.eachCell((cell) => {
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' },
-        };
-      });
-    });
-
-    const buffer = await workbook.xlsx.writeBuffer();
+    const out = await workbook.xlsx.writeBuffer();
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=specification.xlsx');
-    return res.status(200).send(Buffer.from(buffer));
+    res.setHeader('Content-Disposition', 'attachment; filename=\"specification.xlsx\"');
+    return res.status(200).send(Buffer.from(out));
   } catch (err) {
     return res.status(500).json({
       error: 'Excel generation failed',

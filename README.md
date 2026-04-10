@@ -355,6 +355,26 @@ git push origin main
 
 ## 🧾 Agent Handover Log
 
+#### [2026-04-10] Спецификации — возврат к строгому шаблону `template.xlsx`
+
+**Что изменено (backend):**
+- `enghub-main/api/spec-export.js` полностью переведён на алгоритм `открыть шаблон → заполнить → скачать`.
+- Убрана генерация Excel "с нуля"; теперь endpoint читает только `api/template.xlsx`.
+- Заполнение таблицы идёт строго в колонки `A..H`, старт с `2` строки:
+  - `A` номер, `B` наименование, `C` тип/марка, `D` код, `E` завод, `F` ед., `G` кол-во, `H` примечание.
+- Для каждой строки данных копируется стиль из строки `2` (чтобы не ломать рамки/стиль ГОСТ).
+- Штамп заполняется жёстко по ячейкам:
+  - `B8..B16` (`project_code`, `object_name`, `system_name`, `stage`, `developer`, `checker`, `control`, `approver`, `date`).
+- При `items > 30` создаются дополнительные листы копированием структуры шаблона (columns/rows/merges/styles/page setup), затем продолжается заполнение.
+
+**Шаблон:**
+- Корневой `.xlsx` скопирован в `enghub-main/api/template.xlsx` (обязательное условие задачи).
+- В `enghub-main/vercel.json` обновлён include для функции:
+  - `api/spec-export.js.includeFiles = "{api/template.xlsx,node_modules/exceljs/**}"`.
+
+**Проверка:**
+- Локальный smoke-тест handler с payload (`stamp + items=32`) прошёл успешно: HTTP `200`, файл формируется.
+
 #### [2026-04-10] Vercel — Deployment Blocked (автор коммита без Vercel)
 
 **Проблема:** деплой на Vercel в статусе **Blocked**: GitHub-пользователь, от имени которого пришёл push (например `ILGORJON`), не имеет аккаунта Vercel, привязанного к этому GitHub — политика команды не пускает такой коммит в production.
