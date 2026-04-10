@@ -250,7 +250,11 @@ module.exports = async function handler(req, res) {
     const safeCode = code.replace(/[^\wА-Яа-я.-]+/g, '_');
     const fileName = `${safeCode}_Спец_${fileDate}.xlsx`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=\"${fileName}\"`);
+    const encodedName = encodeURIComponent(fileName);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="specification.xlsx"; filename*=UTF-8''${encodedName}`
+    );
     return res.status(200).send(Buffer.from(out));
   } catch (err) {
     return res.status(500).json({

@@ -355,6 +355,22 @@ git push origin main
 
 ## 🧾 Agent Handover Log
 
+#### [2026-04-10] Спецификации — фикс production 500 при скачивании (Content-Disposition)
+
+**Симптом:** на production при `Скачать Excel` всплывал `Excel generation failed`.
+
+**Причина:** в заголовке `Content-Disposition` использовалось имя файла с кириллицей (`..._Спец_...xlsx`), что на части Node/Vercel рантаймов может вызывать `ERR_INVALID_CHAR` при установке header и приводить к `500`.
+
+**Исправление в `enghub-main/api/spec-export.js`:**
+- Переведён `Content-Disposition` на безопасный формат:
+  - ASCII fallback: `filename=\"specification.xlsx\"`
+  - UTF-8 имя через RFC5987: `filename*=UTF-8''<urlencoded>`
+- Логическое имя файла сохранено (`${project_code}_Спец_${date}.xlsx`), но передаётся в encoded-виде.
+
+**Проверка:**
+- Локальный вызов с кириллицей в `project_code` возвращает `200` и корректный header:
+  - `attachment; filename=\"specification.xlsx\"; filename*=UTF-8''...`
+
 #### [2026-04-10] Спецификации — печать ГОСТ-режим + мягкий штамп + имя файла
 
 **Что изменено:**
