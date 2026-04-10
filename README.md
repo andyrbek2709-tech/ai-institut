@@ -355,6 +355,16 @@ git push origin main
 
 ## 🧾 Agent Handover Log
 
+#### [2026-04-10] Vercel — Deployment Blocked (автор коммита без Vercel)
+
+**Проблема:** деплой на Vercel в статусе **Blocked**: GitHub-пользователь, от имени которого пришёл push (например `ILGORJON`), не имеет аккаунта Vercel, привязанного к этому GitHub — политика команды не пускает такой коммит в production.
+
+**Решение:** технический пустой коммит с **author + committer** = owner-аккаунт репозитория (`andyrbek2709-tech <andyrbek2709@gmail.com>`), затем `git push origin main` для нового деплоя.
+
+**Коммит:** `2dbd5df` — `chore: retrigger vercel deploy with owner identity`
+
+**На будущее:** либо привязать GitHub к Vercel / принять инвайт в команду проекта, либо пушить коммиты с аккаунта, который уже в команде Vercel.
+
 #### [2026-04-09] Спецификации (AGSK) — server-side Excel, шаблон и деплой
 
 **Контекст и итог:** модуль `Спецификации` переведён на backend-генерацию Excel по шаблону ГОСТ.  
