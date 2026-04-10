@@ -4,10 +4,19 @@ const ExcelJS = require('exceljs');
 const runtime = 'nodejs';
 const TEMPLATE_PATH = path.join(__dirname, 'template.xlsx');
 const ROWS_PER_PAGE = 30;
-const START_ROW = 2;
-const TEMPLATE_ROW = 2;
-const STAMP_LAST_ROW = 17;
-const TABLE_COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+const START_ROW = 4;
+const TEMPLATE_ROW = 4;
+const PRINT_LAST_ROW = 44;
+// Real template columns (G:Y header groups).
+const COL_NUM = 'G';
+const COL_NAME = 'H';
+const COL_TYPE = 'I';
+const COL_CODE = 'J'; // merged group J:M
+const COL_FACTORY = 'N'; // merged group N:Q
+const COL_UNIT = 'R';
+const COL_QTY = 'S';
+const COL_NOTE = 'V'; // merged group V:Y
+const TABLE_COLS = [COL_NUM, COL_NAME, COL_TYPE, COL_CODE, COL_FACTORY, COL_UNIT, COL_QTY, COL_NOTE];
 
 function deepClone(value) {
   if (typeof structuredClone === 'function') return structuredClone(value);
@@ -114,8 +123,8 @@ function writeItems(sheet, pageItems, startIndex) {
   for (let i = 0; i < ROWS_PER_PAGE; i += 1) {
     const row = START_ROW + i;
     copyRowStyleFromTemplate(sheet, row);
-    applyTextWrap(sheet.getCell(`B${row}`));
-    applyTextWrap(sheet.getCell(`C${row}`));
+    applyTextWrap(sheet.getCell(`${COL_NAME}${row}`));
+    applyTextWrap(sheet.getCell(`${COL_TYPE}${row}`));
 
     const item = pageItems[i];
     if (!item) {
@@ -129,14 +138,14 @@ function writeItems(sheet, pageItems, startIndex) {
     const name = String(item?.name || '');
     const type = String(item?.type || '');
 
-    sheet.getCell(`A${row}`).value = startIndex + i + 1;
-    sheet.getCell(`B${row}`).value = name;
-    sheet.getCell(`C${row}`).value = type;
-    sheet.getCell(`D${row}`).value = String(item?.code || '');
-    sheet.getCell(`E${row}`).value = String(item?.factory || '');
-    sheet.getCell(`F${row}`).value = String(item?.unit || '');
-    sheet.getCell(`G${row}`).value = getQty(item);
-    sheet.getCell(`H${row}`).value = String(item?.note || '');
+    sheet.getCell(`${COL_NUM}${row}`).value = startIndex + i + 1;
+    sheet.getCell(`${COL_NAME}${row}`).value = name;
+    sheet.getCell(`${COL_TYPE}${row}`).value = type;
+    sheet.getCell(`${COL_CODE}${row}`).value = String(item?.code || '');
+    sheet.getCell(`${COL_FACTORY}${row}`).value = String(item?.factory || '');
+    sheet.getCell(`${COL_UNIT}${row}`).value = String(item?.unit || '');
+    sheet.getCell(`${COL_QTY}${row}`).value = getQty(item);
+    sheet.getCell(`${COL_NOTE}${row}`).value = String(item?.note || '');
     sheet.getRow(row).height = calcRowHeight(name, type);
   }
 }
@@ -168,7 +177,7 @@ function configurePrint(sheet) {
     fitToPage: true,
     fitToWidth: 1,
     fitToHeight: 1,
-    printArea: `A1:H${STAMP_LAST_ROW}`,
+    printArea: `A1:Y${PRINT_LAST_ROW}`,
   };
 }
 
