@@ -100,6 +100,16 @@ function applyTextWrap(cell) {
   };
 }
 
+function calcRowHeight(name, type) {
+  const totalLength = String(name || '').length + String(type || '').length;
+  if (totalLength === 0) return 20;
+  if (totalLength < 40) return 20;
+  if (totalLength < 80) return 35;
+  if (totalLength < 120) return 50;
+  if (totalLength < 180) return 70;
+  return 90;
+}
+
 function writeItems(sheet, pageItems, startIndex) {
   for (let i = 0; i < ROWS_PER_PAGE; i += 1) {
     const row = START_ROW + i;
@@ -112,17 +122,22 @@ function writeItems(sheet, pageItems, startIndex) {
       for (const col of TABLE_COLS) {
         sheet.getCell(`${col}${row}`).value = '';
       }
+      sheet.getRow(row).height = 20;
       continue;
     }
 
+    const name = String(item?.name || '');
+    const type = String(item?.type || '');
+
     sheet.getCell(`A${row}`).value = startIndex + i + 1;
-    sheet.getCell(`B${row}`).value = String(item?.name || '');
-    sheet.getCell(`C${row}`).value = String(item?.type || '');
+    sheet.getCell(`B${row}`).value = name;
+    sheet.getCell(`C${row}`).value = type;
     sheet.getCell(`D${row}`).value = String(item?.code || '');
     sheet.getCell(`E${row}`).value = String(item?.factory || '');
     sheet.getCell(`F${row}`).value = String(item?.unit || '');
     sheet.getCell(`G${row}`).value = getQty(item);
     sheet.getCell(`H${row}`).value = String(item?.note || '');
+    sheet.getRow(row).height = calcRowHeight(name, type);
   }
 }
 
