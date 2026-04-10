@@ -182,8 +182,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
       ...stampWithSheets,
       project_code: String(stampWithSheets.project_code || project?.code || '').trim(),
       object_name: String(stampWithSheets.object_name || project?.name || '').trim(),
-      // Если пользователь не заполнил систему, подставляем имя проекта как безопасный fallback.
-      system_name: String(stampWithSheets.system_name || project?.name || '').trim(),
+      system_name: String(stampWithSheets.system_name || '-').trim(),
     }),
     [stampWithSheets, project?.code, project?.name]
   );
@@ -539,11 +538,6 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     if (hasEmptyName) errors.push('Есть пустые строки: заполните поле "Наименование".');
     const hasZeroQty = rowsForExport.some((r: any) => Number(r.qty || 0) <= 0);
     if (hasZeroQty) errors.push('Есть позиции с количеством 0.');
-    if (!String(effectiveStamp.project_code || '').trim()) errors.push('Не заполнен шифр проекта в штампе.');
-    if (!String(effectiveStamp.object_name || '').trim()) errors.push('Не заполнено наименование объекта в штампе.');
-    if (!String(effectiveStamp.system_name || '').trim()) errors.push('Не заполнено наименование системы в штампе.');
-    if (!String(effectiveStamp.author || '').trim()) errors.push('Не заполнено поле "Разработал".');
-    if (!String(effectiveStamp.checker || '').trim()) errors.push('Не заполнено поле "Проверил".');
     return errors;
   };
 
@@ -570,13 +564,18 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     }
 
     const payload = buildSpecificationPayload(effectiveStamp, rowsForExport, ROWS_PER_PAGE);
-    const safe = (specName || 'spec').replace(/[^\w.-]+/g, '_');
+    const exportDate = String(effectiveStamp.date || new Date().toISOString().slice(0, 10)).slice(0, 10);
+    const exportCode = String(effectiveStamp.project_code || project?.code || 'SPEC').replace(/[^\wА-Яа-я.-]+/g, '_');
+    const downloadName = `${exportCode}_Спец_${exportDate}.xlsx`;
     setExcelLoading(true);
     try {
       const resp = await fetch('/api/spec-export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          project: { code: project?.code || '', name: project?.name || '' },
+        }),
       });
       if (!resp.ok) {
         let detail = `HTTP ${resp.status}`;
@@ -597,7 +596,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
         throw new Error(detail);
       }
       const blob = await resp.blob();
-      saveAs(blob, `${safe}.xlsx`);
+      saveAs(blob, downloadName);
     } catch (e: any) {
       const msg = String(e?.message || '').trim();
       window.alert(`Не удалось сформировать Excel на сервере.\n${msg ? `Причина: ${msg}` : 'Попробуйте позже.'}`);
