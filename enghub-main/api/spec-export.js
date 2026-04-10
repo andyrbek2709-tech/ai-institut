@@ -192,15 +192,25 @@ function writeStamp(sheet, stamp, pageIndex, totalPages) {
 }
 
 function configurePrint(sheet) {
-  sheet.pageSetup = {
+  const nextPageSetup = {
     ...(deepClone(sheet.pageSetup || {})),
     paperSize: 9, // A4
     orientation: 'landscape',
-    fitToPage: true,
-    fitToWidth: 1,
-    fitToHeight: 1,
+    fitToPage: false,
+    fitToWidth: 0,
+    fitToHeight: 0,
+    scale: 100,
     printArea: `A1:Y${PRINT_LAST_ROW}`,
+    margins: {
+      left: 0.3,
+      right: 0.3,
+      top: 0.5,
+      bottom: 0.5,
+      header: 0.3,
+      footer: 0.3,
+    },
   };
+  sheet.pageSetup = nextPageSetup;
 }
 
 module.exports = async function handler(req, res) {
