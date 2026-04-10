@@ -209,13 +209,21 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
   };
 
   const loadSpecs = async () => {
-    if (!project?.id) return;
-    const rows = await get(`specifications?project_id=eq.${project.id}&order=created_at.desc`, token);
-    setSpecs(Array.isArray(rows) ? rows : []);
-    if (Array.isArray(rows) && rows[0] && !specId) {
-      setSpecId(String(rows[0].id));
-      setSpecName(rows[0].name || 'Спецификация оборудования');
-      setStamp(normalizeStamp(rows[0].stamp));
+    if (!project?.id || !currentUser?.id) return;
+    const rows = await get(
+      `specifications?project_id=eq.${project.id}&user_id=eq.${currentUser.id}&order=created_at.desc`,
+      token
+    );
+    const list = Array.isArray(rows) ? rows : [];
+    setSpecs(list);
+    if (list[0] && !specId) {
+      setSpecId(String(list[0].id));
+      setSpecName(list[0].name || 'Спецификация оборудования');
+      setStamp(normalizeStamp(list[0].stamp));
+    } else if (!list.length) {
+      setSpecId('');
+      setSpecRows([]);
+      setSpecName('Спецификация оборудования');
     }
   };
 
@@ -297,14 +305,22 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
 
   const loadSpecRows = async (id: string) => {
     if (!id) return;
-    const rows = await get(`specification_items?specification_id=eq.${id}&order=line_no.asc,id.asc`, token);
-    setSpecRows(Array.isArray(rows) ? rows : []);
+    const rows = await get(`spec_items?spec_id=eq.${id}&order=line_no.asc,id.asc`, token);
+    const normalized = Array.isArray(rows)
+      ? rows.map((r: any) => ({
+          ...r,
+          type: String(r.type ?? r.type_mark ?? ''),
+          factory: String(r.factory ?? r.plant ?? ''),
+          note: String(r.note ?? ''),
+        }))
+      : [];
+    setSpecRows(normalized);
   };
 
   useEffect(() => {
     loadCatalogData();
     loadSpecs();
-  }, [project?.id]);
+  }, [project?.id, currentUser?.id]);
 
   useEffect(() => {
     if (activeCatalogId) loadCatalogTree(activeCatalogId);
@@ -391,6 +407,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     const created = await post(
       'specifications',
       {
+        user_id: currentUser?.id || null,
         project_id: project.id,
         name: specName || 'Спецификация оборудования',
         catalog_id: activeCatalogId ? Number(activeCatalogId) : null,
@@ -407,10 +424,10 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
   };
 
   const renumberLines = async (sid: string) => {
-    const rows = await get(`specification_items?specification_id=eq.${sid}&order=line_no.asc,id.asc`, token);
+    const rows = await get(`spec_items?spec_id=eq.${sid}&order=line_no.asc,id.asc`, token);
     if (!Array.isArray(rows)) return;
     await Promise.all(
-      rows.map((r: any, i: number) => patch(`specification_items?id=eq.${r.id}`, { line_no: i + 1 }, token))
+      rows.map((r: any, i: number) => patch(`spec_items?id=eq.${r.id}`, { line_no: i + 1 }, token))
     );
     await loadSpecRows(sid);
   };
@@ -424,22 +441,22 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     const inferredUnit = inferUnitFromText(String(item.name || ''), String(item.standard || ''), String(item.unit || ''));
     const nextLine = (specRows[specRows.length - 1]?.line_no || 0) + 1;
     await post(
-      'specification_items',
+      'spec_items',
       {
-        specification_id: Number(sid),
+        spec_id: Number(sid),
         line_no: nextLine,
-        item_id: item.id,
         name: item.name,
+        type: item.standard || '',
         code: item.code,
-        unit: inferredUnit,
-        type_mark: item.standard || '',
-        plant: inferPlantFromCatalog(
+        factory: inferPlantFromCatalog(
           String(item.name || ''),
           String(item.standard || ''),
           String(item.code || ''),
           String((item as any).plant || '')
         ),
+        unit: inferredUnit,
         qty: 1,
+        note: '',
       },
       token
     );
@@ -448,13 +465,13 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
   };
 
   const updateRow = async (row: any, data: any) => {
-    await patch(`specification_items?id=eq.${row.id}`, data, token);
+    await patch(`spec_items?id=eq.${row.id}`, data, token);
     await loadSpecRows(specId);
   };
 
   const removeRow = async (row: any) => {
     if (!specId) return;
-    await del(`specification_items?id=eq.${row.id}`, token);
+    await del(`spec_items?id=eq.${row.id}`, token);
     await renumberLines(specId);
   };
 
@@ -466,7 +483,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     setSaving(true);
     try {
       for (const r of specRows) {
-        await del(`specification_items?id=eq.${r.id}`, token);
+        await del(`spec_items?id=eq.${r.id}`, token);
       }
       await loadSpecRows(specId);
       setStatus('Таблица очищена');
@@ -480,6 +497,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     const created = await post(
       'specifications',
       {
+        user_id: currentUser?.id || null,
         project_id: project.id,
         name: `Спецификация ${new Date().toLocaleDateString('ru-RU')}`,
         catalog_id: activeCatalogId ? Number(activeCatalogId) : null,
@@ -503,13 +521,15 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
   const rowsForExport = useMemo(() => {
     return specRows.map((r: any) => ({
       ...r,
-      unit: inferUnitFromText(String(r.name || ''), String(r.type_mark || ''), String(r.unit || '')),
+      type_mark: String(r.type || ''),
       plant: inferPlantFromCatalog(
         String(r.name || ''),
-        String(r.type_mark || ''),
+        String(r.type || ''),
         String(r.code || ''),
-        String(r.plant || '')
+        String(r.factory || '')
       ),
+      note: String(r.note || ''),
+      unit: inferUnitFromText(String(r.name || ''), String(r.type || ''), String(r.unit || '')),
     }));
   }, [specRows]);
 
@@ -531,7 +551,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     return rowsForExport.filter(
       (r: any) =>
         String(r.name || '').length > SPEC_LIMITS.name ||
-        String(r.type_mark || '').length > SPEC_LIMITS.typeMark ||
+        String(r.type || '').length > SPEC_LIMITS.typeMark ||
         String(r.plant || '').length > SPEC_LIMITS.factory
     ).length;
   }, [rowsForExport]);
@@ -899,11 +919,11 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
             {[...specRows]
               .sort((a: any, b: any) => (a.line_no || 0) - (b.line_no || 0))
               .map((r: any, idx: number) => {
-                const u = inferUnitFromText(String(r.name || ''), String(r.type_mark || ''), String(r.unit || ''));
+                const u = inferUnitFromText(String(r.name || ''), String(r.type || ''), String(r.unit || ''));
                 const nameLen = String(r.name || '').length;
-                const typeLen = String(r.type_mark || '').length;
+                const typeLen = String(r.type || '').length;
                 const plantLen = String(
-                  inferPlantFromCatalog(String(r.name || ''), String(r.type_mark || ''), String(r.code || ''), String(r.plant || ''))
+                  inferPlantFromCatalog(String(r.name || ''), String(r.type || ''), String(r.code || ''), String(r.factory || ''))
                 ).length;
                 return (
                   <div
@@ -932,8 +952,8 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
                     </div>
                     <div>
                       <input
-                        value={String(r.type_mark || '')}
-                        onChange={(e) => updateRow(r, { type_mark: e.target.value })}
+                        value={String(r.type || '')}
+                        onChange={(e) => updateRow(r, { type: e.target.value })}
                         style={{ ...inp, padding: '6px 8px', fontSize: 11, width: '100%' }}
                       />
                       {typeLen > SPEC_LIMITS.typeMark && (
@@ -945,11 +965,11 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
                       <input
                         value={inferPlantFromCatalog(
                           String(r.name || ''),
-                          String(r.type_mark || ''),
+                          String(r.type || ''),
                           String(r.code || ''),
-                          String(r.plant || '')
+                          String(r.factory || '')
                         )}
-                        onChange={(e) => updateRow(r, { plant: e.target.value })}
+                        onChange={(e) => updateRow(r, { factory: e.target.value })}
                         style={{
                           ...inp,
                           padding: '6px 8px',
@@ -1075,7 +1095,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
                         <div>{globalIdx + 1}</div>
                         <div>{row.name || ''}</div>
                         <div style={{ wordBreak: 'break-all' }}>{row.code || ''}</div>
-                        <div>{inferUnitFromText(String(row.name || ''), String(row.type_mark || ''), String(row.unit || ''))}</div>
+                        <div>{inferUnitFromText(String(row.name || ''), String(row.type || ''), String(row.unit || ''))}</div>
                         <div>{row.qty ?? ''}</div>
                       </div>
                     );

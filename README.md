@@ -355,6 +355,39 @@ git push origin main
 
 ## 🧾 Agent Handover Log
 
+#### [2026-04-10] Спецификации — изоляция по `user_id + project_id + spec_id`
+
+**Проблема:** спецификации были видны всем пользователям проекта и правились как "общие", без жёсткой привязки к владельцу.
+
+**Что сделано:**
+- Добавлена миграция `supabase/migrations/014_specifications_user_scope.sql`:
+  - в `specifications` добавлен `user_id`,
+  - создана новая таблица `spec_items` (`id`, `spec_id`, `line_no`, `name`, `type`, `code`, `factory`, `unit`, `qty`, `note`, `created_at`),
+  - добавлены индексы по `specifications(user_id, project_id)` и `spec_items(spec_id, line_no)`,
+  - добавлен backfill из legacy `specification_items` в `spec_items` (идемпотентный),
+  - включен RLS/policies для `spec_items` (authenticated).
+
+**Изменения во фронте (`enghub-main/src/components/SpecificationsTab.tsx`):**
+- Загрузка списка спецификаций теперь только для текущего пользователя:
+  - `specifications?project_id=...&user_id=eq.${currentUser.id}`.
+- При создании спецификации всегда записывается:
+  - `user_id`, `project_id`, `spec_id` (через `specifications.id`).
+- Все операции с позициями переведены на новую таблицу `spec_items` и ключ `spec_id`:
+  - load / add / update / delete / renumber.
+- Убрано глобальное хранение позиций в UI-операциях.
+- Нормализованы поля строки позиции под новую модель:
+  - `type` (вместо `type_mark`),
+  - `factory` (вместо `plant`),
+  - `note`.
+- Для экспорта сохранена совместимость payload:
+  - `type_mark` и `plant` формируются из `type` и `factory`.
+
+**Результат:**
+- пользователь видит только свои спецификации в рамках проекта,
+- каждая спецификация имеет собственный `spec_id`,
+- позиции хранятся строго через `spec_id`,
+- параллельная работа пользователей больше не пишет в одну "глобальную" спецификацию.
+
 #### [2026-04-10] Спецификации — финальный фикс row offset + фиксированный штамп
 
 **Подтверждённый старт данных:**
