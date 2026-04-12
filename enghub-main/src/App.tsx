@@ -29,6 +29,124 @@ import { ProjectReportPDF } from './components/ProjectReportPDF';
 import { GipDashboard } from './components/GipDashboard';
 import { BIMPanel } from './components/BIMPanel';
 
+const TAB_HELP: Record<string, { title: string; sections: { heading: string; text: string }[] }> = {
+  conference: {
+    title: "🗣 Совещание",
+    sections: [
+      { heading: "Что это", text: "Голосовые совещания в реальном времени прямо внутри проекта. Все участники видят чат и историю переговоров." },
+      { heading: "Как войти", text: "Нажмите «Войти в совещание». Можно включить микрофон (🎙) и демонстрацию экрана (🖥)." },
+      { heading: "Пригласить участников", text: "Нажмите кнопку «Пригласить» → выберите сотрудников из списка → нажмите «Отправить». У них появится всплывающее уведомление." },
+      { heading: "Выход", text: "Кнопка «Покинуть» завершает ваше участие. Чат и история совещания сохраняются." },
+    ],
+  },
+  tasks: {
+    title: "⊙ Задачи",
+    sections: [
+      { heading: "Что это", text: "Список всех задач по проекту с назначением ответственных, сроками и приоритетами." },
+      { heading: "Создание задачи", text: "ГИП нажимает «+ Новая задача», заполняет название, отдел, исполнителя, срок и приоритет." },
+      { heading: "Жизненный цикл", text: "Задача проходит стадии: Ожидает → В работе → На проверке руководителя → На проверке ГИПа → Завершена. Каждый участник переводит задачу в следующий статус кнопкой в карточке." },
+      { heading: "Фильтры", text: "Задачи можно фильтровать по отделу через выпадающий список над списком задач." },
+    ],
+  },
+  drawings: {
+    title: "📐 Чертежи",
+    sections: [
+      { heading: "Что это", text: "Реестр всех чертежей и технических документов проекта." },
+      { heading: "Загрузка", text: "Кнопка «+ Добавить» или перетащите файл (PDF, DWG). Укажите номер, название и марку." },
+      { heading: "Версии", text: "На каждый чертёж можно выпустить новую ревизию через вкладку «Ревизии» — старые версии сохраняются." },
+      { heading: "Просмотр", text: "Нажмите на чертёж → откроется встроенный просмотрщик. Для PDF работает прямо в браузере." },
+    ],
+  },
+  revisions: {
+    title: "🧾 Ревизии",
+    sections: [
+      { heading: "Что это", text: "История изменений чертежей. Каждая ревизия — это новая версия документа с датой, автором и статусом." },
+      { heading: "Создание ревизии", text: "Откройте чертёж → нажмите «Создать ревизию» → загрузите новый файл и укажите описание изменений." },
+      { heading: "Статусы", text: "Ревизия проходит: Черновик → На проверке → Утверждена / Отклонена." },
+      { heading: "Актуальная версия", text: "В реестре чертежей всегда показывается последняя актуальная ревизия." },
+    ],
+  },
+  reviews: {
+    title: "📝 Замечания",
+    sections: [
+      { heading: "Что это", text: "Журнал замечаний к документации — от проверяющих, ГИПа или заказчика." },
+      { heading: "Создание", text: "Нажмите «+ Замечание», укажите чертёж, текст замечания и ответственного за устранение." },
+      { heading: "Устранение", text: "Исполнитель устраняет замечание и меняет статус на «Устранено». Автор замечания подтверждает." },
+      { heading: "Отслеживание", text: "Список показывает открытые и закрытые замечания. Фильтруйте по чертежу или статусу." },
+    ],
+  },
+  transmittals: {
+    title: "📦 Трансмитталы",
+    sections: [
+      { heading: "Что это", text: "Трансмиттал — официальный документ передачи пакета чертежей заказчику или смежной организации." },
+      { heading: "Создание", text: "Нажмите «+ Трансмиттал» → добавьте чертежи в пакет → укажите получателя и дату." },
+      { heading: "Статусы", text: "Черновик → Отправлен → Получен подтверждение. Статус меняется вручную." },
+      { heading: "Экспорт", text: "Готовый трансмиттал можно сохранить в PDF для официальной отправки." },
+    ],
+  },
+  assignments: {
+    title: "✉ Увязка",
+    sections: [
+      { heading: "Что это", text: "Инструмент для увязки задач с чертежами и исполнителями. Помогает контролировать, какой чертёж к какой задаче относится." },
+      { heading: "Привязка", text: "Откройте задачу → в поле «Чертёж» выберите документ из реестра. Связь отображается в обоих местах." },
+      { heading: "Контроль", text: "Список показывает все задачи с привязанными чертежами. Удобно для проверки комплектности." },
+    ],
+  },
+  gantt: {
+    title: "📊 Диаграмма Ганта",
+    sections: [
+      { heading: "Что это", text: "Визуализация сроков всех задач на временной шкале." },
+      { heading: "Как читать", text: "Каждая строка — задача, полоска — период выполнения (от создания до дедлайна). Цвет зависит от статуса." },
+      { heading: "Просроченные", text: "Задачи с истёкшим сроком подсвечиваются красным." },
+    ],
+  },
+  timeline: {
+    title: "🗺 Timeline",
+    sections: [
+      { heading: "Что это", text: "Временная шкала ключевых событий и вех проекта." },
+      { heading: "Добавление вехи", text: "Нажмите «+ Веха» → укажите название, дату и тип события." },
+      { heading: "Назначение", text: "Используйте Timeline для фиксации контрольных точек: сдача разделов, согласования, экспертиза." },
+    ],
+  },
+  meetings: {
+    title: "🗒 Протоколы",
+    sections: [
+      { heading: "Что это", text: "Журнал протоколов совещаний и рабочих встреч по проекту." },
+      { heading: "Создание протокола", text: "Нажмите «+ Протокол» → укажите дату, участников, повестку и принятые решения." },
+      { heading: "Поручения", text: "В каждом пункте протокола можно назначить ответственного и срок — они попадают в раздел задач." },
+      { heading: "История", text: "Все протоколы хранятся в хронологическом порядке. Можно экспортировать в PDF." },
+    ],
+  },
+  timelog: {
+    title: "⏱ Табель",
+    sections: [
+      { heading: "Что это", text: "Учёт рабочего времени сотрудников по проекту." },
+      { heading: "Заполнение", text: "Каждый сотрудник вносит затраченное время на задачу: кнопка «+ Запись» → выберите задачу, дату и часы." },
+      { heading: "Просмотр", text: "ГИП и руководители видят сводку по всем сотрудникам и задачам." },
+      { heading: "Экспорт", text: "Табель можно выгрузить в Excel для передачи в бухгалтерию или отчётность." },
+    ],
+  },
+  gipdash: {
+    title: "🏛 Панель ГИПа",
+    sections: [
+      { heading: "Что это", text: "Сводная аналитика для Главного Инженера Проекта по всем задачам, отделам и исполнителям." },
+      { heading: "Нагрузка", text: "График показывает загруженность каждого сотрудника: сколько задач в работе, на проверке, завершено." },
+      { heading: "Контроль качества", text: "Замечания и ревизии по всем разделам — видно где узкие места." },
+      { heading: "Доступ", text: "Раздел виден только пользователям с ролью ГИП." },
+    ],
+  },
+  bim: {
+    title: "🏗 BIM",
+    sections: [
+      { heading: "Что это", text: "Просмотр информационной модели здания (BIM) прямо в браузере." },
+      { heading: "Загрузка модели", text: "Загрузите IFC-файл через кнопку «Загрузить модель». Поддерживается формат IFC 2x3 и IFC 4." },
+      { heading: "Навигация", text: "Мышь: вращение — левая кнопка, панорама — средняя кнопка / Shift+ЛКМ, масштаб — колесо." },
+      { heading: "Обсуждение", text: "Рядом с моделью доступен чат для обсуждения конкретных элементов модели." },
+      { heading: "Доступ", text: "Раздел виден ГИПу и руководителям отделов." },
+    ],
+  },
+};
+
 export default function App() {
   const [dark, setDark] = useState(false); // Светлая тема по умолчанию
   const C = dark ? DARK : LIGHT;
@@ -142,10 +260,63 @@ export default function App() {
 
   // Copilot AI Module States
   const [showCopilot, setShowCopilot] = useState(false);
+  const [showTabHelp, setShowTabHelp] = useState(false);
 
   const [incomingCall, setIncomingCall] = useState<any>(null); // { project_id, project_name, initiator_name }
   const [conferenceParticipants, setConferenceParticipants] = useState<any[]>([]);
   const presenceChannelRef = useRef<any>(null);
+  const activeConferenceProjectRef = useRef<any>(null); // { id, name } of current conference project
+  const sessionId = useRef<string>(Math.random().toString(36).slice(2) + Date.now().toString(36));
+  const sessionChannelRef = useRef<any>(null);
+
+  // ── Одна сессия на пользователя: при новом входе выбиваем старые сессии ──
+  useEffect(() => {
+    if (!currentUserData?.id || !token) {
+      if (sessionChannelRef.current) {
+        const { ch, supa } = sessionChannelRef.current;
+        supa.removeChannel(ch);
+        sessionChannelRef.current = null;
+      }
+      return;
+    }
+    const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
+    const ch = supa.channel(`session:${currentUserData.id}`, {
+      config: { broadcast: { self: false, ack: false } }
+    });
+    ch.on('broadcast', { event: 'login' }, ({ payload }: any) => {
+      if (payload?.sessionId && payload.sessionId !== sessionId.current) {
+        // Другое устройство/вкладка вошло под этим аккаунтом — выходим
+        handleLogout();
+      }
+    }).subscribe((status: string) => {
+      if (status === 'SUBSCRIBED') {
+        ch.send({ type: 'broadcast', event: 'login', payload: { sessionId: sessionId.current } });
+        sessionChannelRef.current = { ch, supa };
+      }
+    });
+    return () => {
+      supa.removeChannel(ch);
+      sessionChannelRef.current = null;
+    };
+  }, [currentUserData?.id]); // eslint-disable-line
+
+  // ── Уведомления о входящих вызовах (bypass RLS через broadcast) ──
+  useEffect(() => {
+    if (!currentUserData?.id || !token) return;
+    const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
+    const ch = supa.channel(`callnotify:${currentUserData.id}`, {
+      config: { broadcast: { self: false, ack: false } }
+    });
+    ch.on('broadcast', { event: 'call_invite' }, ({ payload }: any) => {
+      if (!payload) return;
+      setIncomingCall({
+        project_id: payload.project_id,
+        project_name: payload.project_name || 'Проект',
+        initiator_name: payload.initiator_name || 'Участник',
+      });
+    }).subscribe();
+    return () => { supa.removeChannel(ch); };
+  }, [currentUserData?.id]); // eslint-disable-line
 
   // Перезагружаем задачи когда currentUserData загрузился
   useEffect(() => { if (activeProject && token && currentUserData) { loadAllTasks(activeProject.id); } }, [currentUserData?.id]);
@@ -388,7 +559,7 @@ export default function App() {
   useEffect(() => { msgsRef.current = msgs; }, [msgs]);
   useEffect(() => { projectsRef.current = projects; }, [projects]);
   useEffect(() => { sideTabRef.current = sideTab; }, [sideTab]);
-  useEffect(() => { window.scrollTo(0, 0); }, [sideTab]);
+  useEffect(() => { window.scrollTo(0, 0); setShowTabHelp(false); }, [sideTab]);
 
   // ── Supabase Realtime: подписка на изменения задач ──
   useEffect(() => {
@@ -469,21 +640,7 @@ export default function App() {
             addNotifRef.current(`💬 ${sender?.full_name || 'Участник'}: новое сообщение в "${proj.name}"`, 'info');
           }
         }
-        // Обработка приглашения на совещание
-        if (m.type === 'call_invite') {
-          try {
-            const data = JSON.parse(m.text || '{}');
-            if (String(data.target_user_id) === String(me.id)) {
-              const sender = appUsersRef.current.find((u: any) => String(u.id) === String(m.user_id));
-              const proj = projectsRef.current.find((p: any) => p.id === m.project_id);
-              setIncomingCall({
-                project_id: m.project_id,
-                project_name: proj?.name || data.project_name || 'Проект',
-                initiator_name: sender?.full_name || 'Участник'
-              });
-            }
-          } catch {}
-        }
+        // call_invite обрабатывается только через broadcast-канал (callnotify)
       })
       .subscribe();
     return () => { supa.removeChannel(channel); };
@@ -525,10 +682,7 @@ export default function App() {
       if (Array.isArray(msgData) && msgData.length > 0) {
         const call = msgData[0];
         const callTime = new Date(call.created_at).getTime();
-        if (Date.now() - callTime < 30000 && sideTab !== 'conference') {
-          const initiator = getUserById(call.user_id);
-          setIncomingCall({ project_id: activeProject.id, project_name: activeProject.name, initiator_name: initiator?.full_name || "ГИП" });
-        }
+        // call_start просто обновляет список — уведомление только через явное приглашение (callnotify broadcast)
       }
     }, 10000);
     return () => clearInterval(interval);
@@ -569,8 +723,16 @@ export default function App() {
   }, [newTask.name, showNewTask]); // eslint-disable-line
 
   // ── Presence: управление присутствием в зале совещания ──
-  const joinConference = (initialMic = false, initialScreen = false) => {
+  const joinConference = async (initialMic = false, initialScreen = false) => {
     if (!activeProject?.id || !currentUserData) return;
+
+    // Запретить вход в другое совещание — предложить сначала выйти
+    if (presenceChannelRef.current && String(activeConferenceProjectRef.current?.id) !== String(activeProject.id)) {
+      const otherName = activeConferenceProjectRef.current?.name || 'другом проекте';
+      const ok = window.confirm(`Вы уже в совещании по проекту "${otherName}".\nВыйти из него и войти в это совещание?`);
+      if (!ok) return;
+      await leaveConference();
+    }
     const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
     const ch = supa.channel(`presence:${activeProject.id}`, {
       config: { presence: { key: String(currentUserData.id) } }
@@ -640,6 +802,7 @@ export default function App() {
           screenSharing: initialScreen,
           joinedAt: new Date().toISOString()
         });
+        activeConferenceProjectRef.current = { id: String(activeProject.id), name: activeProject.name };
       }
     });
     presenceChannelRef.current = { ch, supa };
@@ -652,6 +815,7 @@ export default function App() {
       supa.removeChannel(ch);
       presenceChannelRef.current = null;
     }
+    activeConferenceProjectRef.current = null;
     setConferenceParticipants([]);
   };
 
@@ -1313,7 +1477,15 @@ export default function App() {
                   <div style={{ fontSize: 13, color: C.textDim }}>{incomingCall.initiator_name} приглашает вас в проект "{incomingCall.project_name}"</div>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-primary" onClick={() => { setScreen('project'); setSideTab('conference'); setIncomingCall(null); }}>Открыть совещание</button>
+                  <button className="btn btn-primary" onClick={() => {
+                    if (incomingCall?.project_id) {
+                      const p = projects.find((x: any) => String(x.id) === String(incomingCall.project_id));
+                      if (p) setActiveProject(p);
+                    }
+                    setScreen('project');
+                    setSideTab('conference');
+                    setIncomingCall(null);
+                  }}>Открыть совещание</button>
                   <button className="btn btn-ghost" onClick={() => setIncomingCall(null)}>Позже</button>
               </div>
           </div>
@@ -1895,13 +2067,40 @@ export default function App() {
               )}
 
               {/* Tabs */}
-              <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-                {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
-                  <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
-                  </button>
-                ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
+                <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch', flex: 1, marginBottom: 0 } as React.CSSProperties}>
+                  {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
+                    <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
+                    </button>
+                  ))}
+                </div>
+                {TAB_HELP[sideTab] && (
+                  <button
+                    title="Инструкция по разделу"
+                    onClick={() => setShowTabHelp(true)}
+                    style={{ flexShrink: 0, width: 30, height: 30, borderRadius: '50%', border: `1.5px solid ${C.border}`, background: C.surface2, color: C.textDim, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                  >?</button>
+                )}
               </div>
+
+              {/* Tab Help Modal */}
+              {showTabHelp && TAB_HELP[sideTab] && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowTabHelp(false)}>
+                  <div style={{ background: C.surface, borderRadius: 16, padding: '28px 32px', maxWidth: 520, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.35)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+                    <button onClick={() => setShowTabHelp(false)} style={{ position: 'absolute', top: 14, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.textDim, lineHeight: 1 }}>×</button>
+                    <div style={{ fontWeight: 700, fontSize: 18, color: C.text, marginBottom: 20 }}>{TAB_HELP[sideTab].title} — инструкция</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      {TAB_HELP[sideTab].sections.map((s, i) => (
+                        <div key={i}>
+                          <div style={{ fontWeight: 600, fontSize: 13, color: C.accent, marginBottom: 3 }}>{s.heading}</div>
+                          <div style={{ fontSize: 13, color: C.text, lineHeight: 1.55 }}>{s.text}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {sideTab === "tasks" && (
                 <div>

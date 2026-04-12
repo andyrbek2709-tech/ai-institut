@@ -19,6 +19,12 @@ interface ConferenceProps {
 const ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 const SURL_CONST = process.env.REACT_APP_SUPABASE_URL || '';
 
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+];
+
 export function ConferenceRoom({
   project, currentUser, appUsers, msgs, C, token,
   onSendMsg, getUserById,
@@ -32,8 +38,8 @@ export function ConferenceRoom({
   const [activeTab, setActiveTab] = useState<"chat" | "participants">("chat");
   const [showInviteMenu, setShowInviteMenu] = useState(false);
   const [selectedInvitees, setSelectedInvitees] = useState<Set<number>>(new Set());
-  // Remote screen share: base64 JPEG data URL received from another participant
-  const [remoteScreenData, setRemoteScreenData] = useState<string | null>(null);
+  // Remote screen share: MediaStream received via WebRTC
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,7 +47,10 @@ export function ConferenceRoom({
   const screenStreamRef = useRef<MediaStream | null>(null);
   const screenVideoRef = useRef<HTMLVideoElement>(null);
   const inviteMenuRef = useRef<HTMLDivElement>(null);
-  const broadcastRef = useRef<any>(null); // { ch, supa } for screen share broadcast
+  const broadcastRef = useRef<any>(null); // { ch, supa } Supabase signaling channel
+  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const screenSharingRef = useRef(false);
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
@@ -53,68 +62,166 @@ export function ConferenceRoom({
     }
   }, [screenSharing]);
 
-  // ── Subscribe to remote screen share broadcasts when in room ──
+  // ── Attach remote WebRTC stream to video element ──
+  useEffect(() => {
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = remoteStream || null;
+    }
+  }, [remoteStream]);
+
+  // ── WebRTC signaling channel ──
   useEffect(() => {
     if (!isInRoom || !project?.id || !SURL_CONST || !SERVICE_KEY) return;
     const supa = createClient(SURL_CONST, SERVICE_KEY);
-    const ch = supa.channel(`screen:${project.id}`, {
+    const ch = supa.channel(`webrtc:${project.id}`, {
       config: { broadcast: { self: false, ack: false } }
     });
-    ch.on('broadcast', { event: 'frame' }, ({ payload }: any) => {
-      if (payload?.userId && String(payload.userId) !== String(currentUser?.id)) {
-        setRemoteScreenData(payload.imageData || null);
+
+    ch.on('broadcast', { event: 'offer' }, async ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      if (screenSharingRef.current) return;
+
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+      peerConnectionsRef.current.set(payload.from, pc);
+
+      pc.onicecandidate = ({ candidate }) => {
+        if (candidate) ch.send({ type: 'broadcast', event: 'ice',
+          payload: { from: String(currentUser?.id), to: payload.from, candidate: candidate.toJSON() } });
+      };
+      pc.ontrack = (e) => { if (e.streams[0]) setRemoteStream(e.streams[0]); };
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+          setRemoteStream(null);
+          peerConnectionsRef.current.delete(payload.from);
+        }
+      };
+
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        ch.send({ type: 'broadcast', event: 'answer',
+          payload: { from: String(currentUser?.id), to: payload.from, sdp: answer } });
+      } catch { /* ignore */ }
+    })
+    .on('broadcast', { event: 'answer' }, async ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      const pc = peerConnectionsRef.current.get(payload.from);
+      if (pc && pc.signalingState !== 'stable') {
+        try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch { /* ignore */ }
       }
-    }).on('broadcast', { event: 'stop' }, ({ payload }: any) => {
-      if (payload?.userId && String(payload.userId) !== String(currentUser?.id)) {
-        setRemoteScreenData(null);
+    })
+    .on('broadcast', { event: 'ice' }, async ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      const pc = peerConnectionsRef.current.get(payload.from);
+      if (pc && payload.candidate) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch { /* ignore */ }
       }
-    }).subscribe((status: string) => {
-      if (status === 'SUBSCRIBED') {
-        broadcastRef.current = { ch, supa };
-      }
+    })
+    .on('broadcast', { event: 'stop' }, ({ payload }: any) => {
+      if (payload?.from === String(currentUser?.id)) return;
+      const pc = peerConnectionsRef.current.get(payload.from);
+      if (pc) { pc.close(); peerConnectionsRef.current.delete(payload.from); }
+      setRemoteStream(null);
+    })
+    .on('broadcast', { event: 'request' }, async ({ payload }: any) => {
+      if (!screenSharingRef.current || payload?.from === String(currentUser?.id)) return;
+      const viewerId = String(payload.from);
+      const stream = screenStreamRef.current;
+      if (!stream) return;
+
+      const existingPc = peerConnectionsRef.current.get(viewerId);
+      if (existingPc) { existingPc.close(); peerConnectionsRef.current.delete(viewerId); }
+
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+      peerConnectionsRef.current.set(viewerId, pc);
+      pc.onicecandidate = ({ candidate }) => {
+        if (candidate) ch.send({ type: 'broadcast', event: 'ice',
+          payload: { from: String(currentUser?.id), to: viewerId, candidate: candidate.toJSON() } });
+      };
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ch.send({ type: 'broadcast', event: 'offer',
+          payload: { from: String(currentUser?.id), to: viewerId, sdp: offer } });
+      } catch { /* ignore */ }
+    })
+    .subscribe((status: string) => {
+      if (status === 'SUBSCRIBED') broadcastRef.current = { ch, supa };
     });
+
     return () => {
+      peerConnectionsRef.current.forEach(pc => pc.close());
+      peerConnectionsRef.current.clear();
+      setRemoteStream(null);
       supa.removeChannel(ch);
       broadcastRef.current = null;
     };
   }, [isInRoom, project?.id]); // eslint-disable-line
 
-  // ── Capture and broadcast screen frames at ~2fps ──
+  // ── Send WebRTC offers to all participants when screen sharing starts/stops ──
   useEffect(() => {
+    screenSharingRef.current = screenSharing;
+
     if (!screenSharing) {
-      // Notify others that sharing stopped
-      broadcastRef.current?.ch?.send({
-        type: 'broadcast', event: 'stop',
-        payload: { userId: String(currentUser?.id) }
-      });
+      broadcastRef.current?.ch?.send({ type: 'broadcast', event: 'stop',
+        payload: { from: String(currentUser?.id) } });
+      peerConnectionsRef.current.forEach(pc => pc.close());
+      peerConnectionsRef.current.clear();
       return;
     }
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const interval = setInterval(() => {
-      const video = screenVideoRef.current;
-      if (!video || !ctx || video.videoWidth === 0) return;
-      // Downsample to max 480x270 to fit in broadcast payload
-      const scale = Math.min(480 / video.videoWidth, 270 / video.videoHeight, 1);
-      canvas.width = Math.floor(video.videoWidth * scale);
-      canvas.height = Math.floor(video.videoHeight * scale);
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = canvas.toDataURL('image/jpeg', 0.55);
-      broadcastRef.current?.ch?.send({
-        type: 'broadcast', event: 'frame',
-        payload: { userId: String(currentUser?.id), imageData }
-      });
-    }, 500);
-    return () => clearInterval(interval);
+
+    const ch = broadcastRef.current?.ch;
+    const stream = screenStreamRef.current;
+    if (!ch || !stream) return;
+
+    const sendOffers = async () => {
+      const others = conferenceParticipants.filter(
+        (p: any) => String(p.id) !== String(currentUser?.id)
+      );
+      for (const participant of others) {
+        const viewerId = String(participant.id);
+        const existing = peerConnectionsRef.current.get(viewerId);
+        if (existing) { existing.close(); peerConnectionsRef.current.delete(viewerId); }
+
+        const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+        peerConnectionsRef.current.set(viewerId, pc);
+        pc.onicecandidate = ({ candidate }) => {
+          if (candidate) ch.send({ type: 'broadcast', event: 'ice',
+            payload: { from: String(currentUser?.id), to: viewerId, candidate: candidate.toJSON() } });
+        };
+        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+        try {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          ch.send({ type: 'broadcast', event: 'offer',
+            payload: { from: String(currentUser?.id), to: viewerId, sdp: offer } });
+        } catch { /* ignore */ }
+      }
+    };
+    void sendOffers();
   }, [screenSharing]); // eslint-disable-line
 
-  // ── Clear remote screen data when sharer leaves ──
+  // ── Request screen stream when someone is already sharing on join ──
+  useEffect(() => {
+    if (!isInRoom || screenSharing || !broadcastRef.current?.ch) return;
+    const sharingP = conferenceParticipants.find(
+      (p: any) => p.screenSharing && String(p.id) !== String(currentUser?.id)
+    );
+    if (sharingP && !remoteStream) {
+      broadcastRef.current.ch.send({ type: 'broadcast', event: 'request',
+        payload: { from: String(currentUser?.id) } });
+    }
+  }, [conferenceParticipants, isInRoom]); // eslint-disable-line
+
+  // ── Clear remote stream when sharer leaves ──
   useEffect(() => {
     const sharingIds = conferenceParticipants
       .filter((p: any) => p.screenSharing)
       .map((p: any) => String(p.id));
-    if (remoteScreenData && sharingIds.length === 0) {
-      setRemoteScreenData(null);
+    if (remoteStream && sharingIds.length === 0) {
+      setRemoteStream(null);
     }
   }, [conferenceParticipants]); // eslint-disable-line
 
@@ -243,7 +350,10 @@ export function ConferenceRoom({
   const toggleScreenShare = async () => {
     try {
       if (!screenSharing) {
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
+          audio: false,
+        });
         screenStreamRef.current = stream;
         setScreenSharing(true);
         await onPresenceUpdate({ micEnabled, screenSharing: true });
@@ -317,6 +427,30 @@ export function ConferenceRoom({
         JSON.stringify({ type: 'call_invite', target_user_id: String(user.id), project_name: project?.name }),
         'call_invite'
       );
+      // Надёжный broadcast через REST API — без подписки, один HTTP-запрос
+      await fetch(`${SURL}/realtime/v1/api/broadcast`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SERVICE_KEY,
+          'Authorization': `Bearer ${SERVICE_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: [{
+            topic: `realtime:callnotify:${user.id}`,
+            event: 'broadcast',
+            payload: {
+              type: 'broadcast',
+              event: 'call_invite',
+              payload: {
+                project_id: String(project?.id),
+                project_name: project?.name || 'Проект',
+                initiator_name: currentUser?.full_name || currentUser?.email || 'Участник',
+              },
+            },
+          }],
+        }),
+      });
     }
     setSelectedInvitees(new Set());
     setShowInviteMenu(false);
@@ -334,7 +468,7 @@ export function ConferenceRoom({
   const sharingParticipant = conferenceParticipants.find(
     (p: any) => p.screenSharing && String(p.id) !== String(currentUser?.id)
   );
-  const hasScreenContent = screenSharing || (remoteScreenData && sharingParticipant);
+  const hasScreenContent = screenSharing || (remoteStream && sharingParticipant);
 
   if (!project) return <div className="empty-state" style={{ padding: 60 }}>Выберите проект</div>;
 
@@ -624,12 +758,12 @@ export function ConferenceRoom({
                   </div>
                 </>
               )}
-              {/* Удалённый экран (принятые фреймы) */}
-              {!screenSharing && remoteScreenData && (
+              {/* Удалённый экран (WebRTC поток) */}
+              {!screenSharing && remoteStream && (
                 <>
-                  <img
-                    src={remoteScreenData}
-                    alt="screen share"
+                  <video
+                    ref={remoteVideoRef}
+                    autoPlay
                     style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
                   />
                   {sharingParticipant && (
@@ -649,7 +783,7 @@ export function ConferenceRoom({
           )}
 
           {/* ── Если в зале кто-то делится, но фрейм ещё не пришёл ── */}
-          {!screenSharing && sharingParticipant && !remoteScreenData && (
+          {!screenSharing && sharingParticipant && !remoteStream && (
             <div style={{
               flex: "0 0 40%", background: "#080808",
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12
