@@ -61,6 +61,7 @@ export function ConferenceRoom({
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const screenSharingRef = useRef(false);
+  const requestedFromRef = useRef<string | null>(null); // prevent repeated WebRTC requests on each presence heartbeat
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
@@ -254,21 +255,21 @@ export function ConferenceRoom({
     const sharingP = conferenceParticipants.find(
       (p: any) => p.screenSharing && String(p.id) !== String(currentUser?.id)
     );
-    if (sharingP && !remoteStream) {
-      broadcastRef.current.ch.send({ type: 'broadcast', event: 'request',
-        payload: { from: String(currentUser?.id) } });
+    if (sharingP) {
+      const sharerId = String(sharingP.id);
+      // Only send one request per sharer — not on every presence heartbeat
+      if (!remoteStream && requestedFromRef.current !== sharerId) {
+        requestedFromRef.current = sharerId;
+        broadcastRef.current.ch.send({ type: 'broadcast', event: 'request',
+          payload: { from: String(currentUser?.id) } });
+      }
+    } else {
+      requestedFromRef.current = null;
     }
   }, [conferenceParticipants, isInRoom]); // eslint-disable-line
 
-  // ── Clear remote stream when sharer leaves ──
-  useEffect(() => {
-    const sharingIds = conferenceParticipants
-      .filter((p: any) => p.screenSharing)
-      .map((p: any) => String(p.id));
-    if (remoteStream && sharingIds.length === 0) {
-      setRemoteStream(null);
-    }
-  }, [conferenceParticipants]); // eslint-disable-line
+  // NOTE: remote stream is cleared by WebRTC 'stop' event / onconnectionstatechange — NOT by presence,
+  // because presence heartbeats can briefly show screenSharing=false and cause a flicker frame.
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -562,7 +563,8 @@ export function ConferenceRoom({
   const sharingParticipant = conferenceParticipants.find(
     (p: any) => p.screenSharing && String(p.id) !== String(currentUser?.id)
   );
-  const hasScreenContent = screenSharing || (remoteStream && sharingParticipant);
+  // Use WebRTC remoteStream as ground truth — NOT presence, which flickers on heartbeats
+  const hasScreenContent = screenSharing || !!remoteStream;
 
   if (!project) return <div className="empty-state" style={{ padding: 60 }}>Выберите проект</div>;
 
@@ -796,7 +798,7 @@ export function ConferenceRoom({
         <div style={{ flex: 1, position: "relative", background: "#050505", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {/* Видео на весь экран */}
           {screenSharing && (
-            <div style={{ position: "relative", width: "100%", height: "100%" }}>
+            <div style={{ position: "absolute", inset: 0 }}>
               <video
                 ref={screenVideoRef}
                 autoPlay muted playsInline
@@ -807,19 +809,19 @@ export function ConferenceRoom({
                   position: "absolute",
                   left: `${remoteCursor.x * 100}%`,
                   top: `${remoteCursor.y * 100}%`,
-                  width: 20, height: 20, borderRadius: "50%",
-                  border: "2px solid #EF4444",
+                  width: 22, height: 22, borderRadius: "50%",
+                  border: "2.5px solid #EF4444",
                   background: "rgba(239,68,68,0.25)",
                   transform: "translate(-50%,-50%)",
                   pointerEvents: "none",
-                  zIndex: 10,
-                  boxShadow: "0 0 8px #EF444480"
+                  zIndex: 20,
+                  boxShadow: "0 0 10px #EF444499, 0 0 0 4px rgba(239,68,68,0.1)"
                 }} />
               )}
             </div>
           )}
-          {!screenSharing && remoteStream && (
-            <div style={{ position: "relative", width: "100%", height: "100%" }}>
+          {!screenSharing && !!remoteStream && (
+            <div style={{ position: "absolute", inset: 0 }}>
               <video
                 ref={remoteVideoCallbackRef}
                 autoPlay playsInline
