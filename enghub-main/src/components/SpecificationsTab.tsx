@@ -152,6 +152,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
   const [excelLoading, setExcelLoading] = useState(false);
   const [status, setStatus] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [specStatus, setSpecStatus] = useState<'Заполняется' | 'Сформировано' | 'Завершено'>('Заполняется');
 
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipAutosave = useRef(true);
@@ -332,6 +333,11 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
   useEffect(() => {
     if (specId) loadSpecRows(specId);
   }, [specId]);
+
+  useEffect(() => {
+    if (!selectedItemId) return;
+    void addItemToSpec();
+  }, [selectedItemId]); // eslint-disable-line
 
   useEffect(() => {
     if (!project?.id) return;
@@ -621,397 +627,270 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
 
   if (!project) return <div className="empty-state">Выберите проект</div>;
 
+  const shortDate = stamp.date ? stamp.date.slice(5, 7) + '.' + stamp.date.slice(2, 4) : '';
+  const codeColor = (C as any).accent || '#5b9cf6';
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 300px) 1fr', gap: 10, alignItems: 'start' }}>
-        {/* Блок 1 — штамп */}
-        <div className="card" style={{ padding: 10, borderRadius: 10, position: 'sticky', top: 8 }}>
-          <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            Штамп
-          </div>
-          <div style={{ display: 'grid', gap: 6 }}>
-            <label style={{ fontSize: 10, color: C.textMuted }}>Проект</label>
-            <select
-              value={project?.id || ''}
-              onChange={(e) => {
-                const p = projects.find((x: any) => String(x.id) === String(e.target.value));
-                if (p) onProjectChange(p);
-              }}
-              style={inp}
-            >
-              {projects.map((p: any) => (
-                <option key={p.id} value={p.id}>
-                  {p.code} — {p.name}
-                </option>
-              ))}
-            </select>
-            <label style={{ fontSize: 10, color: C.textMuted }}>Шифр проекта</label>
-            <input
-              style={{
-                ...inp,
-                borderColor: stampEmpty('project_code') ? '#c0392b' : C.border,
-              }}
-              value={stamp.project_code}
-              onChange={(e) => setStamp({ ...stamp, project_code: e.target.value })}
-            />
-            <label style={{ fontSize: 10, color: C.textMuted }}>Наименование объекта</label>
-            <input
-              style={{
-                ...inp,
-                borderColor: stampEmpty('object_name') ? '#c0392b' : C.border,
-              }}
-              value={stamp.object_name}
-              onChange={(e) => setStamp({ ...stamp, object_name: e.target.value })}
-            />
-            <label style={{ fontSize: 10, color: C.textMuted }}>Наименование системы</label>
-            <input
-              style={{
-                ...inp,
-                borderColor: stampEmpty('system_name') ? '#c0392b' : C.border,
-              }}
-              value={stamp.system_name}
-              onChange={(e) => setStamp({ ...stamp, system_name: e.target.value })}
-            />
-            <label style={{ fontSize: 10, color: C.textMuted }}>Стадия</label>
-            <select
-              style={inp}
-              value={stamp.stage}
-              onChange={(e) => setStamp({ ...stamp, stage: e.target.value })}
-            >
-              <option value="РП">РП</option>
-            </select>
-            <label style={{ fontSize: 10, color: C.textMuted }}>Лист / Листов</label>
-            <input
-              style={{ ...inp, opacity: 0.85, cursor: 'not-allowed' }}
-              readOnly
-              value={`${stampWithSheets.sheet} / ${stampWithSheets.total_sheets}`}
-            />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              <div>
-                <label style={{ fontSize: 10, color: C.textMuted }}>Разработал</label>
-                <input
-                  style={{
-                    ...inp,
-                    borderColor: stampEmpty('author') ? '#c0392b' : C.border,
-                  }}
-                  value={stamp.author}
-                  onChange={(e) => setStamp({ ...stamp, author: e.target.value })}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: C.textMuted }}>Проверил</label>
-                <input
-                  style={{ ...inp, borderColor: stampEmpty('checker') ? '#c0392b' : C.border }}
-                  value={stamp.checker}
-                  onChange={(e) => setStamp({ ...stamp, checker: e.target.value })}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: C.textMuted }}>Н. контроль</label>
-                <input
-                  style={inp}
-                  value={stamp.control}
-                  onChange={(e) => setStamp({ ...stamp, control: e.target.value })}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: C.textMuted }}>Утвердил</label>
-                <input
-                  style={inp}
-                  value={stamp.approver}
-                  onChange={(e) => setStamp({ ...stamp, approver: e.target.value })}
-                />
-              </div>
-            </div>
-            <label style={{ fontSize: 10, color: C.textMuted }}>Дата</label>
-            <input
-              style={inp}
-              type="date"
-              value={stamp.date}
-              onChange={(e) => setStamp({ ...stamp, date: e.target.value })}
-            />
-          </div>
-          <div style={{ fontSize: 10, color: C.textMuted, marginTop: 8 }}>
-            Статус: <span style={{ color: status ? C.green : C.text }}>{status || (specId ? 'В работе' : 'Черновик')}</span>
-          </div>
+    <div style={{ display: 'flex', minHeight: 0 }}>
+      {/* ═══ ЛЕВАЯ ПАНЕЛЬ ═══ */}
+      <div style={{
+        width: 210,
+        minWidth: 210,
+        borderRight: `1px solid ${C.border}`,
+        padding: '16px 12px',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'sticky',
+        top: 0,
+        maxHeight: '100vh',
+        overflowY: 'auto',
+      }}>
+        {/* Выбор проекта */}
+        <select
+          value={project?.id || ''}
+          onChange={(e) => {
+            const p = projects.find((x: any) => String(x.id) === String(e.target.value));
+            if (p) onProjectChange(p);
+          }}
+          style={{ ...inp, marginBottom: 12, fontSize: 11 }}
+        >
+          {projects.map((p: any) => (
+            <option key={p.id} value={p.id}>{p.code} — {p.name}</option>
+          ))}
+        </select>
+
+        {/* ПРОЕКТ */}
+        <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.8, marginBottom: 6, fontWeight: 600 }}>ПРОЕКТ</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '4px 8px', fontSize: 12, marginBottom: 14, paddingBottom: 14, borderBottom: `1px solid ${C.border}` }}>
+          <span style={{ color: C.textMuted }}>Дата</span>
+          <span style={{ fontWeight: 600 }}>{new Date().toLocaleDateString('ru-RU')}</span>
+          <span style={{ color: C.textMuted }}>Позиций</span>
+          <span style={{ fontWeight: 600 }}>{specRows.length}</span>
+          <span style={{ color: C.textMuted }}>Оборудование</span>
+          <span style={{ fontWeight: 600 }}>{specRows.length}</span>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-          {/* Блок 2 — каталог */}
-          <div className="card" style={{ padding: 10, borderRadius: 10 }}>
-            <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-              Каталог
+        {/* Главная кнопка */}
+        <button
+          type="button"
+          className="btn btn-primary"
+          style={{ width: '100%', fontWeight: 700, padding: '9px 8px', fontSize: 12, marginBottom: 6, borderRadius: 8, lineHeight: 1.4, whiteSpace: 'pre-wrap' }}
+          onClick={() => void onDownloadExcel()}
+          disabled={excelLoading}
+        >
+          {excelLoading ? 'Формирование…' : 'Сформировать\nспецификацию'}
+        </button>
+        <button
+          type="button"
+          style={{ background: 'none', border: 'none', color: C.textMuted, fontSize: 12, cursor: 'pointer', textDecoration: 'underline', marginBottom: 14, padding: '2px 0', textAlign: 'center', width: '100%' }}
+          onClick={() => void clearAllRows()}
+        >
+          Очистить всё
+        </button>
+
+        {/* СТАТУС */}
+        <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.8, marginBottom: 8, fontWeight: 600 }}>СТАТУС</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14, paddingBottom: 14, borderBottom: `1px solid ${C.border}` }}>
+          {(['Заполняется', 'Сформировано', 'Завершено'] as const).map((s) => (
+            <label key={s} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, cursor: 'pointer' }}>
+              <input type="radio" name="specStatus" value={s} checked={specStatus === s} onChange={() => setSpecStatus(s)} />
+              <span style={{ color: specStatus === s ? codeColor : C.text, fontWeight: specStatus === s ? 600 : 400 }}>{s}</span>
+            </label>
+          ))}
+        </div>
+
+        {/* ШТАМП СПЕЦИФИКАЦИИ */}
+        <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.8, marginBottom: 8, fontWeight: 600 }}>ШТАМП СПЕЦИФИКАЦИИ</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.5 }}>ШИФР ПРОЕКТА</div>
+          <input style={{ ...inp, borderColor: stampEmpty('project_code') ? '#c0392b' : C.border }}
+            value={stamp.project_code} onChange={(e) => setStamp({ ...stamp, project_code: e.target.value })} />
+
+          <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.5 }}>НАИМЕНОВАНИЕ ОБЪЕКТА</div>
+          <input style={{ ...inp, borderColor: stampEmpty('object_name') ? '#c0392b' : C.border }}
+            value={stamp.object_name} onChange={(e) => setStamp({ ...stamp, object_name: e.target.value })} />
+
+          <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.5 }}>НАИМЕНОВАНИЕ СИСТЕМЫ</div>
+          <input style={{ ...inp, borderColor: stampEmpty('system_name') ? '#c0392b' : C.border }}
+            value={stamp.system_name} onChange={(e) => setStamp({ ...stamp, system_name: e.target.value })} />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            <div>
+              <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.5 }}>СТАДИЯ</div>
+              <select style={inp} value={stamp.stage} onChange={(e) => setStamp({ ...stamp, stage: e.target.value })}>
+                <option value="РП">РП</option>
+              </select>
             </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                gap: 8,
-                marginBottom: 10,
-                alignItems: 'end',
-              }}
-            >
-              <div style={{ gridColumn: 'span 2', minWidth: 0 }}>
-                <label style={{ fontSize: 10, color: C.textMuted, display: 'block', marginBottom: 3 }}>Поиск</label>
-                <input
-                  style={inp}
-                  placeholder="Код или наименование (глобально по каталогу)…"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: C.textMuted, display: 'block', marginBottom: 3 }}>Каталог</label>
-                <select value={activeCatalogId} onChange={(e) => setActiveCatalogId(e.target.value)} style={inp}>
-                  <option value="">—</option>
-                  {catalogs.map((c: any) => (
-                    <option key={c.id} value={c.id}>
-                      {c.version} ({c.catalog_date}){c.is_active ? ' *' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: C.textMuted, display: 'block', marginBottom: 3 }}>Раздел</label>
-                <select
-                  value={sectionId}
-                  onChange={(e) => {
-                    setSectionId(e.target.value);
-                    setGroupId('');
-                  }}
-                  style={inp}
-                >
-                  <option value="">—</option>
-                  {sections.map((s: any) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: C.textMuted, display: 'block', marginBottom: 3 }}>Группа</label>
-                <select value={groupId} onChange={(e) => setGroupId(e.target.value)} style={inp}>
-                  <option value="">—</option>
-                  {groupedOptions.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ gridColumn: 'span 2', minWidth: 0 }}>
-                <label style={{ fontSize: 10, color: C.textMuted, display: 'block', marginBottom: 3 }}>Позиция</label>
-                <select
-                  value={selectedItemId}
-                  onChange={(e) => setSelectedItemId(e.target.value)}
-                  style={inp}
-                >
-                  <option value="">Выберите позицию…</option>
-                  {items.slice(0, 1000).map((it: any) => (
-                    <option key={it.id} value={it.id}>
-                      {it.code} — {it.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  style={{ height: 38, fontWeight: 600, width: '100%' }}
-                  disabled={!selectedItemId}
-                  onClick={() => void addItemToSpec()}
-                >
-                  Добавить
-                </button>
-              </div>
+            <div>
+              <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.5 }}>ЛИСТ / ЛИСТОВ</div>
+              <input style={{ ...inp, opacity: 0.85, cursor: 'not-allowed' }} readOnly
+                value={`${stampWithSheets.sheet} / ${stampWithSheets.total_sheets}`} />
             </div>
-            {itemsLoading && <div style={{ fontSize: 12, color: C.textMuted }}>Загрузка позиций…</div>}
           </div>
 
-          {/* Название + кнопки */}
-          <div className="card" style={{ padding: 10, borderRadius: 10 }}>
+          <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.5 }}>РАЗРАБОТАЛ</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px', gap: 4 }}>
+            <input style={{ ...inp, borderColor: stampEmpty('author') ? '#c0392b' : C.border }}
+              value={stamp.author} placeholder="ФИО" onChange={(e) => setStamp({ ...stamp, author: e.target.value })} />
+            <input style={{ ...inp, textAlign: 'center', fontSize: 10 }} value={shortDate} readOnly />
+          </div>
+
+          <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.5 }}>ПРОВЕРИЛ</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px', gap: 4 }}>
+            <input style={{ ...inp, borderColor: stampEmpty('checker') ? '#c0392b' : C.border }}
+              value={stamp.checker} placeholder="ФИО" onChange={(e) => setStamp({ ...stamp, checker: e.target.value })} />
+            <input style={{ ...inp, textAlign: 'center', fontSize: 10 }} value={shortDate} readOnly />
+          </div>
+
+          <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.5 }}>Н. КОНТРОЛЬ</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px', gap: 4 }}>
+            <input style={inp} value={stamp.control} placeholder="ФИО"
+              onChange={(e) => setStamp({ ...stamp, control: e.target.value })} />
+            <input style={{ ...inp, textAlign: 'center', fontSize: 10 }} value={shortDate} readOnly />
+          </div>
+
+          <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.5 }}>УТВЕРДИЛ</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px', gap: 4 }}>
+            <input style={inp} value={stamp.approver} placeholder="ФИО"
+              onChange={(e) => setStamp({ ...stamp, approver: e.target.value })} />
+            <input style={{ ...inp, textAlign: 'center', fontSize: 10 }} value={shortDate} readOnly />
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ ОСНОВНАЯ ОБЛАСТЬ ═══ */}
+      <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0, overflowY: 'auto' }}>
+        {/* Строка поиска */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: C.textMuted, fontSize: 14, pointerEvents: 'none' }}>🔍</span>
             <input
-              style={{ ...inp, marginBottom: 12 }}
-              value={specName}
-              onChange={(e) => setSpecName(e.target.value)}
-              placeholder="Название спецификации"
+              style={{ ...inp, paddingLeft: 32, fontSize: 13, height: 40, boxSizing: 'border-box' }}
+              placeholder="Искать в каталоге АГСК-3 и добавить в спецификацию…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
-              <button
-                type="button"
-                className="btn btn-primary"
-                style={{ fontWeight: 700, padding: '4px 10px', fontSize: 11, height: 30 }}
-                onClick={() => void onDownloadExcel()}
-                disabled={excelLoading}
-              >
-                {excelLoading ? 'Формирование Excel…' : 'Скачать Excel'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ padding: '4px 10px', fontSize: 11, height: 30 }}
-                onClick={() => void saveSpecMeta()}
-                disabled={saving || !specId}
-              >
-                {saving ? 'Сохранение…' : 'Сохранить'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ padding: '4px 10px', fontSize: 11, height: 30 }}
-                onClick={() => setPreviewOpen(true)}
-              >
-                Предпросмотр листов
-              </button>
-              {canManage && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ padding: '4px 10px', fontSize: 11, height: 30 }}
-                  onClick={() => void createNewSpec()}
-                >
-                  Новая
-                </button>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 11, color: C.text }}>
-              <span>
-                Строк: <b>{specRows.length}</b> / {ROWS_PER_PAGE}
-              </span>
-              <span>
-                Листов будет: <b>{previewPages.length}</b>
-              </span>
-            </div>
-            <div style={{ fontSize: 10, color: C.textMuted, marginTop: 8 }}>
-              Excel формируется на сервере по шаблону ГОСТ, фронтенд отправляет только структуру данных.
-            </div>
           </div>
+          <select
+            value={activeCatalogId}
+            onChange={(e) => setActiveCatalogId(e.target.value)}
+            style={{ ...inp, height: 40, width: 'auto', minWidth: 130, fontSize: 11, boxSizing: 'border-box' }}
+          >
+            <option value="">— Каталог —</option>
+            {catalogs.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.version} ({c.catalog_date}){c.is_active ? ' *' : ''}</option>
+            ))}
+          </select>
+        </div>
 
-          {/* Блок 3 — таблица */}
-          <div className="card" style={{ padding: 0, borderRadius: 10, overflow: 'hidden' }}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '44px minmax(120px, 1.4fr) minmax(80px, 0.9fr) 110px minmax(70px, 0.7fr) 52px 88px 44px',
-                gap: 6,
-                fontSize: 10,
-                fontWeight: 700,
-                background: C.surface2,
-                padding: '6px 8px',
-                borderBottom: `1px solid ${C.border}`,
-              }}
-            >
+        {/* Строка дропдаунов */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          <select
+            value={sectionId}
+            onChange={(e) => { setSectionId(e.target.value); setGroupId(''); setSelectedItemId(''); }}
+            style={{ ...inp, fontSize: 12 }}
+          >
+            <option value="">— Раздел АГСК-3 —</option>
+            {sections.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <select
+            value={groupId}
+            onChange={(e) => { setGroupId(e.target.value); setSelectedItemId(''); }}
+            style={{ ...inp, fontSize: 12 }}
+          >
+            <option value="">— Группа —</option>
+            {groupedOptions.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+          </select>
+          <select
+            value={selectedItemId}
+            onChange={(e) => setSelectedItemId(e.target.value)}
+            style={{ ...inp, fontSize: 12 }}
+          >
+            <option value="">— Выбрать из каталога —</option>
+            {items.slice(0, 1000).map((it: any) => (
+              <option key={it.id} value={it.id}>{it.code} — {it.name}</option>
+            ))}
+          </select>
+        </div>
+        {itemsLoading && <div style={{ fontSize: 11, color: C.textMuted }}>Загрузка позиций…</div>}
+
+        {/* Таблица спецификации */}
+        {specRows.length === 0 ? (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textMuted, fontSize: 13, padding: 60 }}>
+            Спецификация пуста. Введите наименование оборудования в строке поиска выше.
+          </div>
+        ) : (
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.6, color: C.text, marginBottom: 6 }}>
+              ОБОРУДОВАНИЕ ({specRows.length})
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '44px minmax(120px, 1.4fr) minmax(80px, 0.9fr) 120px minmax(70px, 0.7fr) 52px 88px 44px',
+              gap: 6, fontSize: 10, fontWeight: 700, color: C.textMuted,
+              padding: '6px 8px', borderBottom: `1px solid ${C.border}`, letterSpacing: 0.4,
+            }}>
               <div>№</div>
-              <div>Наименование</div>
-              <div>Тип/марка</div>
-              <div>Код</div>
-              <div>Завод</div>
-              <div>Ед.</div>
-              <div>Кол-во</div>
+              <div>СТ.2 НАИМЕНОВАНИЕ</div>
+              <div>СТ.3 ТИП, МАРКА</div>
+              <div>СТ.4 КОД АГСК-3</div>
+              <div>СТ.5 ЗАВОД</div>
+              <div>ЕД.</div>
+              <div>КОЛ-ВО</div>
               <div />
             </div>
-            {specRows.length === 0 && (
-              <div style={{ padding: 24, color: C.textMuted, fontSize: 13 }}>Добавьте позиции из каталога</div>
-            )}
-            {[...specRows]
-              .sort((a: any, b: any) => (a.line_no || 0) - (b.line_no || 0))
-              .map((r: any, idx: number) => {
-                const u = inferUnitFromText(String(r.name || ''), String(r.type || ''), String(r.unit || ''));
-                const nameLen = String(r.name || '').length;
-                const typeLen = String(r.type || '').length;
-                const plantLen = String(
-                  inferPlantFromCatalog(String(r.name || ''), String(r.type || ''), String(r.code || ''), String(r.factory || ''))
-                ).length;
-                return (
-                  <div
-                    key={r.id}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '44px minmax(120px, 1.4fr) minmax(80px, 0.9fr) 110px minmax(70px, 0.7fr) 52px 88px 44px',
-                      gap: 6,
-                      alignItems: 'start',
-                      padding: '6px 8px',
-                      borderTop: `1px solid ${C.border}`,
-                      background: idx % 2 === 0 ? 'transparent' : C.surface + '80',
-                    }}
-                  >
-                    <div style={{ fontSize: 11, paddingTop: 6 }}>{idx + 1}</div>
-                    <div>
-                      <AutoTextarea
-                        value={String(r.name || '')}
-                        onChange={(v) => updateRow(r, { name: v })}
-                        invalid={!String(r.name || '').trim()}
-                        style={{ ...inp, padding: '6px 8px', fontSize: 11, width: '100%', minHeight: 32 }}
-                      />
-                      {nameLen > SPEC_LIMITS.name && (
-                        <div style={{ fontSize: 10, color: '#c0392b' }}>Превышен лимит {SPEC_LIMITS.name} симв.</div>
-                      )}
-                    </div>
-                    <div>
-                      <input
-                        value={String(r.type || '')}
-                        onChange={(e) => updateRow(r, { type: e.target.value })}
-                        style={{ ...inp, padding: '6px 8px', fontSize: 11, width: '100%' }}
-                      />
-                      {typeLen > SPEC_LIMITS.typeMark && (
-                        <div style={{ fontSize: 10, color: '#c0392b' }}>Превышен лимит {SPEC_LIMITS.typeMark} симв.</div>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 11, paddingTop: 6, wordBreak: 'break-all' }}>{r.code || ''}</div>
-                    <div>
-                      <input
-                        value={inferPlantFromCatalog(
-                          String(r.name || ''),
-                          String(r.type || ''),
-                          String(r.code || ''),
-                          String(r.factory || '')
-                        )}
-                        onChange={(e) => updateRow(r, { factory: e.target.value })}
-                        style={{
-                          ...inp,
-                          padding: '6px 8px',
-                          fontSize: 11,
-                          width: '100%',
-                          borderColor: plantLen > SPEC_LIMITS.factory ? '#c0392b' : C.border,
-                        }}
-                      />
-                    </div>
-                    <div style={{ fontSize: 11, paddingTop: 6 }}>{u}</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 28px', gap: 4 }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ padding: 0, height: 28 }}
-                        onClick={() => updateRow(r, { qty: Math.max(0, Number(r.qty || 0) - 1) })}
-                      >
-                        −
-                      </button>
-                      <input
-                        type="number"
-                        min={0}
-                        value={String(r.qty ?? 0)}
-                        onChange={(e) => updateRow(r, { qty: Number(e.target.value || 0) })}
-                        style={{ ...inp, textAlign: 'center', padding: '5px 6px' }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ padding: 0, height: 28 }}
-                        onClick={() => updateRow(r, { qty: Number(r.qty || 0) + 1 })}
-                      >
-                        +
-                      </button>
-                    </div>
-                    <button type="button" className="btn btn-danger btn-sm" onClick={() => void removeRow(r)}>
-                      ×
-                    </button>
+            {[...specRows].sort((a: any, b: any) => (a.line_no || 0) - (b.line_no || 0)).map((r: any, idx: number) => {
+              const u = inferUnitFromText(String(r.name || ''), String(r.type || ''), String(r.unit || ''));
+              const nameLen = String(r.name || '').length;
+              const typeLen = String(r.type || '').length;
+              const plantVal = inferPlantFromCatalog(String(r.name || ''), String(r.type || ''), String(r.code || ''), String(r.factory || ''));
+              const plantLen = plantVal.length;
+              return (
+                <div key={r.id} style={{
+                  display: 'grid',
+                  gridTemplateColumns: '44px minmax(120px, 1.4fr) minmax(80px, 0.9fr) 120px minmax(70px, 0.7fr) 52px 88px 44px',
+                  gap: 6, alignItems: 'start',
+                  padding: '6px 8px',
+                  borderBottom: `1px solid ${C.border}`,
+                  background: idx % 2 === 0 ? 'transparent' : C.surface + '80',
+                }}>
+                  <div style={{ fontSize: 11, paddingTop: 6 }}>{idx + 1}</div>
+                  <div>
+                    <AutoTextarea value={String(r.name || '')} onChange={(v) => updateRow(r, { name: v })}
+                      invalid={!String(r.name || '').trim()}
+                      style={{ ...inp, padding: '6px 8px', fontSize: 11, width: '100%', minHeight: 32 }} />
+                    {nameLen > SPEC_LIMITS.name && (
+                      <div style={{ fontSize: 10, color: '#c0392b' }}>Превышен лимит {SPEC_LIMITS.name} симв.</div>
+                    )}
                   </div>
-                );
-              })}
+                  <div>
+                    <input value={String(r.type || '')} onChange={(e) => updateRow(r, { type: e.target.value })}
+                      style={{ ...inp, padding: '6px 8px', fontSize: 11, width: '100%' }} />
+                    {typeLen > SPEC_LIMITS.typeMark && (
+                      <div style={{ fontSize: 10, color: '#c0392b' }}>Превышен лимит {SPEC_LIMITS.typeMark} симв.</div>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 11, paddingTop: 6, wordBreak: 'break-all', color: codeColor }}>{r.code || ''}</div>
+                  <div>
+                    <input value={plantVal} onChange={(e) => updateRow(r, { factory: e.target.value })}
+                      style={{ ...inp, padding: '6px 8px', fontSize: 11, width: '100%', borderColor: plantLen > SPEC_LIMITS.factory ? '#c0392b' : C.border }} />
+                  </div>
+                  <div style={{ fontSize: 11, paddingTop: 6 }}>{u}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 28px', gap: 4 }}>
+                    <button type="button" className="btn btn-secondary" style={{ padding: 0, height: 28 }}
+                      onClick={() => updateRow(r, { qty: Math.max(0, Number(r.qty || 0) - 1) })}>−</button>
+                    <input type="number" min={0} value={String(r.qty ?? 0)}
+                      onChange={(e) => updateRow(r, { qty: Number(e.target.value || 0) })}
+                      style={{ ...inp, textAlign: 'center', padding: '5px 6px' }} />
+                    <button type="button" className="btn btn-secondary" style={{ padding: 0, height: 28 }}
+                      onClick={() => updateRow(r, { qty: Number(r.qty || 0) + 1 })}>+</button>
+                  </div>
+                  <button type="button" className="btn btn-danger btn-sm" onClick={() => void removeRow(r)}>×</button>
+                </div>
+              );
+            })}
           </div>
-        </div>
+        )}
       </div>
 
       {previewOpen && (
