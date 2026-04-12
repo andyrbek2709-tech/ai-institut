@@ -264,6 +264,8 @@ export default function App() {
 
   const [incomingCall, setIncomingCall] = useState<any>(null); // { project_id, project_name, initiator_name }
   const [conferenceParticipants, setConferenceParticipants] = useState<any[]>([]);
+  // Производное: идёт демонстрация экрана в совещании
+  const conferenceScreenActive = sideTab === 'conference' && conferenceParticipants.some((p: any) => p.screenSharing);
   const presenceChannelRef = useRef<any>(null);
   const activeConferenceProjectRef = useRef<any>(null); // { id, name } of current conference project
   const sessionId = useRef<string>(Math.random().toString(36).slice(2) + Date.now().toString(36));
@@ -1991,7 +1993,7 @@ export default function App() {
           {screen === "project" && activeProject && (
             <div className="screen-fade">
               {/* Back + Meta Bar */}
-              <div className="project-meta-bar">
+              <div className="project-meta-bar" style={{ display: conferenceScreenActive ? 'none' : undefined }}>
                 <button onClick={() => setScreen("dashboard")} className="btn btn-ghost">← Dashboard</button>
                 <span className="project-meta-badge" style={{ color: C.accent, borderColor: C.accent + "40", background: C.accent + "10" }}>{activeProject.code}</span>
                 <span className="project-meta-badge" style={{ color: C.green, borderColor: C.green + "40", background: C.green + "10" }}>{activeProject.status === "active" ? "В работе" : "На проверке"}</span>
@@ -2067,7 +2069,7 @@ export default function App() {
               )}
 
               {/* Tabs */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
+              <div style={{ display: conferenceScreenActive ? 'none' : 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
                 <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch', flex: 1, marginBottom: 0 } as React.CSSProperties}>
                   {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
                     <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -2293,6 +2295,7 @@ export default function App() {
                   onJoin={joinConference}
                   onLeave={leaveConference}
                   onPresenceUpdate={updatePresence}
+                  screenShareActive={conferenceScreenActive}
                 />
               )}
             </div>
