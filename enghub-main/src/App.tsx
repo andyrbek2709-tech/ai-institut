@@ -264,8 +264,17 @@ export default function App() {
 
   const [incomingCall, setIncomingCall] = useState<any>(null); // { project_id, project_name, initiator_name }
   const [conferenceParticipants, setConferenceParticipants] = useState<any[]>([]);
-  // Производное: идёт демонстрация экрана в совещании
-  const conferenceScreenActive = sideTab === 'conference' && conferenceParticipants.some((p: any) => p.screenSharing);
+  // Debounced: turns OFF only after 2s without a sharer, so 1-frame presence heartbeats don't cause layout flicker
+  const [conferenceScreenActive, setConferenceScreenActive] = useState(false);
+  const rawConferenceScreenActive = sideTab === 'conference' && conferenceParticipants.some((p: any) => p.screenSharing);
+  useEffect(() => {
+    if (rawConferenceScreenActive) {
+      setConferenceScreenActive(true);
+    } else {
+      const t = setTimeout(() => setConferenceScreenActive(false), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [rawConferenceScreenActive]); // eslint-disable-line
   const presenceChannelRef = useRef<any>(null);
   const activeConferenceProjectRef = useRef<any>(null); // { id, name } of current conference project
   const sessionId = useRef<string>(Math.random().toString(36).slice(2) + Date.now().toString(36));
