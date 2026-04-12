@@ -14,6 +14,7 @@ interface ConferenceProps {
   onJoin: (micEnabled?: boolean, screenSharing?: boolean) => void;
   onLeave: () => Promise<void>;
   onPresenceUpdate: (updates: any) => Promise<void>;
+  screenShareActive?: boolean;
 }
 
 const ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
@@ -28,7 +29,8 @@ const ICE_SERVERS = [
 export function ConferenceRoom({
   project, currentUser, appUsers, msgs, C, token,
   onSendMsg, getUserById,
-  conferenceParticipants, onJoin, onLeave, onPresenceUpdate
+  conferenceParticipants, onJoin, onLeave, onPresenceUpdate,
+  screenShareActive
 }: ConferenceProps) {
   const [chatInput, setChatInput] = useState("");
   const [isInRoom, setIsInRoom] = useState(false);
@@ -42,6 +44,12 @@ export function ConferenceRoom({
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
 
   const [showFloatingChat, setShowFloatingChat] = useState(false);
+  // ── Управление мышью ──
+  const [mouseCtrl, setMouseCtrl] = useState<'idle' | 'requesting' | 'granted'>('idle');
+  const [mouseCtrlPending, setMouseCtrlPending] = useState<{id: string; name: string} | null>(null);
+  const [mouseCtrlGrantedTo, setMouseCtrlGrantedTo] = useState<string | null>(null);
+  const [remoteCursor, setRemoteCursor] = useState<{x: number; y: number} | null>(null);
+  const lastMouseSendRef = useRef(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
@@ -159,6 +167,30 @@ export function ConferenceRoom({
         ch.send({ type: 'broadcast', event: 'offer',
           payload: { from: String(currentUser?.id), to: viewerId, sdp: offer } });
       } catch { /* ignore */ }
+    })
+    // ── Mouse control events ──
+    .on('broadcast', { event: 'mouse_request' }, ({ payload }: any) => {
+      if (!screenSharingRef.current || payload?.from === String(currentUser?.id)) return;
+      const requester = appUsers.find((u: any) => String(u.id) === String(payload.from));
+      setMouseCtrlPending({ id: String(payload.from), name: requester?.full_name || 'Участник' });
+    })
+    .on('broadcast', { event: 'mouse_grant' }, ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      setMouseCtrl('granted');
+    })
+    .on('broadcast', { event: 'mouse_deny' }, ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      setMouseCtrl('idle');
+    })
+    .on('broadcast', { event: 'mouse_revoke' }, () => {
+      setMouseCtrl('idle');
+      setMouseCtrlPending(null);
+      setMouseCtrlGrantedTo(null);
+      setRemoteCursor(null);
+    })
+    .on('broadcast', { event: 'mouse_move' }, ({ payload }: any) => {
+      if (!screenSharingRef.current) return;
+      setRemoteCursor({ x: payload.x, y: payload.y });
     })
     .subscribe((status: string) => {
       if (status === 'SUBSCRIBED') broadcastRef.current = { ch, supa };
@@ -425,6 +457,55 @@ export function ConferenceRoom({
     }
   };
 
+  // ── Mouse control helpers ──
+  const requestMouseControl = () => {
+    setMouseCtrl('requesting');
+    broadcastRef.current?.ch?.send({
+      type: 'broadcast', event: 'mouse_request',
+      payload: { from: String(currentUser?.id) }
+    });
+  };
+  const grantMouseControl = () => {
+    if (!mouseCtrlPending) return;
+    setMouseCtrlGrantedTo(mouseCtrlPending.id);
+    broadcastRef.current?.ch?.send({
+      type: 'broadcast', event: 'mouse_grant',
+      payload: { from: String(currentUser?.id), to: mouseCtrlPending.id }
+    });
+    setMouseCtrlPending(null);
+  };
+  const denyMouseControl = () => {
+    if (!mouseCtrlPending) return;
+    broadcastRef.current?.ch?.send({
+      type: 'broadcast', event: 'mouse_deny',
+      payload: { from: String(currentUser?.id), to: mouseCtrlPending.id }
+    });
+    setMouseCtrlPending(null);
+  };
+  const revokeMouseControl = () => {
+    setMouseCtrl('idle');
+    setMouseCtrlPending(null);
+    setMouseCtrlGrantedTo(null);
+    setRemoteCursor(null);
+    broadcastRef.current?.ch?.send({
+      type: 'broadcast', event: 'mouse_revoke',
+      payload: { from: String(currentUser?.id) }
+    });
+  };
+  const handleVideoMouseMove = (e: React.MouseEvent<HTMLVideoElement>) => {
+    if (mouseCtrl !== 'granted') return;
+    const now = Date.now();
+    if (now - lastMouseSendRef.current < 50) return; // 20fps throttle
+    lastMouseSendRef.current = now;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    broadcastRef.current?.ch?.send({
+      type: 'broadcast', event: 'mouse_move',
+      payload: { from: String(currentUser?.id), x, y }
+    });
+  };
+
   const toggleInvitee = (userId: number) => {
     setSelectedInvitees(prev => {
       const next = new Set(prev);
@@ -490,7 +571,7 @@ export function ConferenceRoom({
       className="conf-root screen-fade"
       style={{
         display: "flex", flexDirection: "column",
-        height: "calc(100vh - 170px)", minHeight: 540,
+        height: screenShareActive ? "calc(100vh - 60px)" : "calc(100vh - 170px)", minHeight: 540,
         gap: 0, borderRadius: 16, overflow: "hidden",
         border: `1px solid ${C.border}`
       }}
@@ -558,6 +639,39 @@ export function ConferenceRoom({
                 color: screenSharing ? "#3B82F6" : C.textMuted,
                 fontSize: 17, display: "flex", alignItems: "center", justifyContent: "center"
               }}>🖥️</button>
+
+              {/* ── Управление мышью (только для зрителя) ── */}
+              {!screenSharing && sharingParticipant && (
+                <>
+                  {mouseCtrl === 'idle' && (
+                    <button onClick={requestMouseControl} title="Запросить управление мышью" style={{
+                      height: 38, padding: "0 12px", borderRadius: 10, border: "none", cursor: "pointer",
+                      background: C.surface2, color: C.textMuted,
+                      fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 5
+                    }}>🖱 Управление</button>
+                  )}
+                  {mouseCtrl === 'requesting' && (
+                    <div style={{ height: 38, padding: "0 12px", borderRadius: 10, background: "#F59E0B20", color: "#F59E0B", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
+                      ⏳ Запрос отправлен...
+                    </div>
+                  )}
+                  {mouseCtrl === 'granted' && (
+                    <button onClick={revokeMouseControl} title="Отдать управление" style={{
+                      height: 38, padding: "0 12px", borderRadius: 10, border: "none", cursor: "pointer",
+                      background: "#10B98120", color: "#10B981",
+                      fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 5
+                    }}>🖱 Отдать управление</button>
+                  )}
+                </>
+              )}
+              {/* ── Запрос управления (для демонстратора) ── */}
+              {screenSharing && mouseCtrlGrantedTo && (
+                <button onClick={revokeMouseControl} title="Отозвать управление" style={{
+                  height: 38, padding: "0 12px", borderRadius: 10, border: "none", cursor: "pointer",
+                  background: "#EF444420", color: "#EF4444",
+                  fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 5
+                }}>🖱 Отозвать</button>
+              )}
 
               {/* ── Пригласить (мульти-выбор) ── */}
               <div style={{ position: "relative" }} ref={inviteMenuRef}>
@@ -682,18 +796,37 @@ export function ConferenceRoom({
         <div style={{ flex: 1, position: "relative", background: "#050505", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {/* Видео на весь экран */}
           {screenSharing && (
-            <video
-              ref={screenVideoRef}
-              autoPlay muted playsInline
-              style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
-            />
+            <div style={{ position: "relative", width: "100%", height: "100%" }}>
+              <video
+                ref={screenVideoRef}
+                autoPlay muted playsInline
+                style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+              />
+              {remoteCursor && (
+                <div style={{
+                  position: "absolute",
+                  left: `${remoteCursor.x * 100}%`,
+                  top: `${remoteCursor.y * 100}%`,
+                  width: 20, height: 20, borderRadius: "50%",
+                  border: "2px solid #EF4444",
+                  background: "rgba(239,68,68,0.25)",
+                  transform: "translate(-50%,-50%)",
+                  pointerEvents: "none",
+                  zIndex: 10,
+                  boxShadow: "0 0 8px #EF444480"
+                }} />
+              )}
+            </div>
           )}
           {!screenSharing && remoteStream && (
-            <video
-              ref={remoteVideoCallbackRef}
-              autoPlay playsInline
-              style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
-            />
+            <div style={{ position: "relative", width: "100%", height: "100%" }}>
+              <video
+                ref={remoteVideoCallbackRef}
+                autoPlay playsInline
+                onMouseMove={handleVideoMouseMove}
+                style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: mouseCtrl === 'granted' ? 'crosshair' : 'default' }}
+              />
+            </div>
           )}
           {!screenSharing && sharingParticipant && !remoteStream && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
@@ -717,6 +850,31 @@ export function ConferenceRoom({
               {screenSharing
                 ? "Вы демонстрируете экран"
                 : `${sharingParticipant?.full_name?.split(" ").slice(0,2).join(" ")} демонстрирует экран`}
+            </div>
+          )}
+
+          {/* Уведомление запроса управления (для демонстратора) */}
+          {screenSharing && mouseCtrlPending && (
+            <div style={{
+              position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
+              background: "rgba(15,15,15,0.92)", border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: 14, padding: "14px 20px", zIndex: 50,
+              display: "flex", flexDirection: "column", gap: 10, alignItems: "center",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)", minWidth: 280
+            }}>
+              <div style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>
+                🖱 {mouseCtrlPending.name} запрашивает управление
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={grantMouseControl} style={{
+                  padding: "7px 18px", borderRadius: 8, border: "none", cursor: "pointer",
+                  background: "#10B981", color: "#fff", fontSize: 13, fontWeight: 700
+                }}>Разрешить</button>
+                <button onClick={denyMouseControl} style={{
+                  padding: "7px 18px", borderRadius: 8, border: "none", cursor: "pointer",
+                  background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 13, fontWeight: 700
+                }}>Отклонить</button>
+              </div>
             </div>
           )}
 
