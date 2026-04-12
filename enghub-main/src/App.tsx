@@ -2079,8 +2079,8 @@ export default function App() {
                   <button
                     title="Инструкция по разделу"
                     onClick={() => setShowTabHelp(true)}
-                    style={{ flexShrink: 0, width: 30, height: 30, borderRadius: '50%', border: `1.5px solid ${C.border}`, background: C.surface2, color: C.textDim, fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
-                  >?</button>
+                    style={{ flexShrink: 0, whiteSpace: 'nowrap', padding: '0 12px', height: 30, borderRadius: 8, border: `1.5px solid ${C.border}`, background: C.surface2, color: C.textDim, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                  >Инструкция</button>
                 )}
               </div>
 
