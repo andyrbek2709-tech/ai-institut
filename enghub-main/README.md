@@ -477,3 +477,66 @@ WHERE text ILIKE '%парпрарп%'
 - **RLS (Row Level Security):** Политики Supabase настроены на уровне ролей. При добавлении новых таблиц необходимо явно прописывать RLS-политики.
 - **Offline-режим (PWA):** Service Worker кэширует статику, но API-запросы к Supabase при отсутствии сети не обрабатываются — необходим offline-fallback.
 - **Нормативная база:** Документы индексируются вручную через AdminPanel. Автоматической переиндексации нет.
+
+---
+
+## Changelog
+
+### 2026-04-13
+**fix: eliminate flicker and fix mouse control coordinate mapping**
+- Файлы: `enghub-main/src/pages/ConferenceRoom.tsx`
+- `hasScreenContent` — дебаунсированный стейт (1.5s off-delay), layout не переключается при кратком разрыве WebRTC
+- `requestedFromRef` не сбрасывается при presence heartbeat — только при явном `stop`/disconnect
+- `hasRemoteRef` предотвращает повторные WebRTC-переговоры пока стрим активен
+- Координаты мыши вычисляются с учётом letterboxing `objectFit:contain` на обеих сторонах
+- Курсор-оверлей позиционируется через pixel-расчёт границ видео (не наивные проценты)
+
+### 2026-04-13
+**fix: eliminate screen-share flicker and stabilise mouse cursor overlay**
+- Файлы: `src/App.tsx`, `src/pages/ConferenceRoom.tsx`
+- Удалён presence-based `setRemoteStream(null)` — обнулял стрим на каждом heartbeat
+- `hasScreenContent` использует стабильный WebRTC `remoteStream`, а не `sharingParticipant` из presence
+- `requestedFromRef` предотвращает повторную отправку WebRTC `request` при каждом presence update
+- Дебаунс `conferenceScreenActive` в App.tsx (2s задержка перед скрытием мета-бара/табов)
+- Видео-врапперы используют `position:absolute inset:0` для корректного рендера курсора
+
+### 2026-04-13
+**feat: screen share fullscreen + remote mouse control**
+- Файлы: `src/App.tsx`, `src/pages/ConferenceRoom.tsx`
+- Скрыты project-meta-bar, tab strip и заголовок при активной демонстрации экрана
+- ConferenceRoom заполняет весь viewport при `screenShareActive`
+- Зритель может запросить управление мышью; шарер одобряет/отклоняет через уведомление
+- Курсор зрителя отображается красным кружком поверх трансляции шарера
+- Любая сторона может отозвать управление; все состояния broadcast через WebRTC-канал
+- Исправлен чёрный экран у получателя стрима (callback ref + явный `video.play()`)
+- Уведомления о звонке через Supabase REST broadcast API (обходит RLS)
+
+### 2026-04-12
+**feat: fullscreen screen share mode with floating chat, fix black screen**
+- Файлы: `src/pages/ConferenceRoom.tsx`
+- WebRTC P2P screen share вместо canvas/JPEG
+- Полноэкранный режим при демонстрации: sidebar и табы скрыты
+- Плавающие аватары участников и кнопка чата в fullscreen-режиме
+
+### 2026-04-12
+**feat: rename ? button to Инструкция in tab strip**
+- Файлы: `src/App.tsx`
+- Кнопка контекстной помощи переименована из `?` в `Инструкция`
+
+### 2026-04-11
+**feat: add tab help modals, fix call invite notifications, WebRTC screen share**
+- Файлы: `src/App.tsx`, `src/pages/ConferenceRoom.tsx`
+- Контекстная кнопка `Инструкция` с описанием каждого раздела
+- Надёжные уведомления о входящих звонках через Supabase REST broadcast API
+- Реализован WebRTC P2P для передачи демонстрации экрана
+
+### 2026-04-10
+**fix: ГОСТ spec export — шаблонный подход, исправления маппинга ячеек**
+- Файлы: `src/App.tsx`, `src/calculations/`, `src/utils/export.ts`
+- Экспорт спецификаций строго по шаблону ГОСТ
+- Исправлен маппинг колонок, объединённые ячейки, высота строк по тексту
+- Блокировка масштаба печати на 100%, кодировка UTF-8 в заголовке ответа
+
+---
+
+*README обновляется автоматически после каждого `git push` через hook `.claude/settings.json` → `PostToolUse(Bash[git push])`*
