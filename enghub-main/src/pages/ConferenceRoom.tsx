@@ -68,6 +68,7 @@ export function ConferenceRoom({
   // ── Audio WebRTC (separate from screen-share PCs) ──
   const audioPCsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const micEnabledRef = useRef(false); // ref copy to avoid stale closures in broadcast handlers
+  const sendAudioOfferRef = useRef<((peerId: string) => Promise<void>) | null>(null);
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
@@ -141,18 +142,8 @@ export function ConferenceRoom({
       }
     };
 
-    // When tracks are added, automatically create and send an offer
-    pc.onnegotiationneeded = async () => {
-      if (pc.signalingState !== 'stable') return; // avoid collision
-      try {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        broadcastRef.current?.ch?.send({
-          type: 'broadcast', event: 'audio_offer',
-          payload: { from: String(currentUser?.id), to: peerId, sdp: offer }
-        });
-      } catch { /* ignore */ }
-    };
+    // NOTE: onnegotiationneeded intentionally omitted — all offers are sent explicitly
+    // via sendAudioOfferRef to avoid race conditions after setLocalDescription(answer).
 
     return pc;
   }; // eslint-disable-line
@@ -174,6 +165,32 @@ export function ConferenceRoom({
     const ch = supa.channel(`webrtc:${project.id}`, {
       config: { broadcast: { self: false, ack: false } }
     });
+
+    // ── Explicit audio offer (no onnegotiationneeded) ──
+    // Defined here so it captures `ch` from this closure.
+    const sendAudioOffer = async (peerId: string) => {
+      if (!micStreamRef.current) return;
+      const existing = audioPCsRef.current.get(peerId);
+      let pc: RTCPeerConnection;
+      if (existing && !['closed', 'failed'].includes(existing.connectionState)) {
+        pc = existing;
+      } else {
+        if (existing) existing.close();
+        pc = createAudioPC(peerId);
+      }
+      // Add our mic track if not already there
+      const hasSender = pc.getSenders().some(s => s.track?.kind === 'audio');
+      if (!hasSender) {
+        micStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, micStreamRef.current!));
+      }
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ch.send({ type: 'broadcast', event: 'audio_offer',
+          payload: { from: String(currentUser?.id), to: peerId, sdp: offer } });
+      } catch { /* ignore */ }
+    };
+    sendAudioOfferRef.current = sendAudioOffer;
 
     ch.on('broadcast', { event: 'offer' }, async ({ payload }: any) => {
       if (payload?.to !== String(currentUser?.id)) return;
@@ -275,16 +292,11 @@ export function ConferenceRoom({
     })
     // ── Audio WebRTC events ──
     .on('broadcast', { event: 'audio_hello' }, ({ payload }: any) => {
-      // A participant just joined — if our mic is on, connect audio to them
+      // A participant just joined — if our mic is on, send them an offer
       if (payload?.from === String(currentUser?.id)) return;
       if (!micEnabledRef.current || !micStreamRef.current) return;
       const peerId = String(payload.from);
-      const pc = createAudioPC(peerId);
-      const hasSender = pc.getSenders().some(s => s.track?.kind === 'audio');
-      if (!hasSender) {
-        micStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, micStreamRef.current!));
-        // onnegotiationneeded fires → offer sent automatically
-      }
+      sendAudioOffer(peerId);
     })
     .on('broadcast', { event: 'audio_offer' }, async ({ payload }: any) => {
       if (payload?.to !== String(currentUser?.id)) return;
@@ -339,6 +351,7 @@ export function ConferenceRoom({
     });
 
     return () => {
+      sendAudioOfferRef.current = null;
       peerConnectionsRef.current.forEach(pc => pc.close());
       peerConnectionsRef.current.clear();
       setRemoteStream(null);
@@ -537,20 +550,14 @@ export function ConferenceRoom({
         micEnabledRef.current = true;
         await onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
 
-        // Establish audio connections with every other participant
-        // Each createAudioPC call triggers onnegotiationneeded → offer sent automatically
-        if (broadcastRef.current?.ch) {
+        // Establish audio connections with every other participant via explicit offer
+        if (sendAudioOfferRef.current && broadcastRef.current?.ch) {
           const others = conferenceParticipants.filter(
             (p: any) => String(p.id) !== String(currentUser?.id)
           );
           for (const participant of others) {
             const peerId = String(participant.id);
-            const pc = createAudioPC(peerId);
-            const hasSender = pc.getSenders().some(s => s.track?.kind === 'audio');
-            if (!hasSender) {
-              micStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, micStreamRef.current!));
-              // onnegotiationneeded fires → offer sent automatically
-            }
+            sendAudioOfferRef.current(peerId);
           }
         }
       } else {
