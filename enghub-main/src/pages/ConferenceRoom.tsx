@@ -65,6 +65,9 @@ export function ConferenceRoom({
   const screenSharingRef = useRef(false);
   const requestedFromRef = useRef<string | null>(null); // set once per sharer, never reset by presence heartbeat
   const hasRemoteRef = useRef(false); // sticky: stays true until explicit stop/disconnect
+  // ── Audio WebRTC (separate from screen-share PCs) ──
+  const audioPCsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const micEnabledRef = useRef(false); // ref copy to avoid stale closures in broadcast handlers
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
@@ -96,6 +99,63 @@ export function ConferenceRoom({
       if (remoteStream) remoteVideoRef.current.play().catch(() => {});
     }
   }, [remoteStream]);
+
+  // Keep micEnabledRef in sync so broadcast handlers (stale closures) can read current value
+  useEffect(() => { micEnabledRef.current = micEnabled; }, [micEnabled]);
+
+  // ── Create/reuse an audio RTCPeerConnection for one peer ──
+  // Defined at component level (uses stable refs) so toggleMic can call it directly.
+  const createAudioPC = (peerId: string): RTCPeerConnection => {
+    const existing = audioPCsRef.current.get(peerId);
+    if (existing && !['closed', 'failed'].includes(existing.connectionState)) return existing;
+    if (existing) existing.close();
+
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    audioPCsRef.current.set(peerId, pc);
+
+    pc.onicecandidate = ({ candidate }) => {
+      if (!candidate) return;
+      broadcastRef.current?.ch?.send({
+        type: 'broadcast', event: 'audio_ice',
+        payload: { from: String(currentUser?.id), to: peerId, candidate: candidate.toJSON() }
+      });
+    };
+
+    pc.ontrack = ({ streams, track }) => {
+      const stream = streams[0] || new MediaStream([track]);
+      let el = document.getElementById(`raudio-${peerId}`) as HTMLAudioElement | null;
+      if (!el) {
+        el = document.createElement('audio');
+        el.id = `raudio-${peerId}`;
+        el.autoplay = true;
+        document.body.appendChild(el);
+      }
+      el.srcObject = stream;
+      el.play().catch(() => {});
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (['failed', 'closed'].includes(pc.connectionState)) {
+        audioPCsRef.current.delete(peerId);
+        document.getElementById(`raudio-${peerId}`)?.remove();
+      }
+    };
+
+    // When tracks are added, automatically create and send an offer
+    pc.onnegotiationneeded = async () => {
+      if (pc.signalingState !== 'stable') return; // avoid collision
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        broadcastRef.current?.ch?.send({
+          type: 'broadcast', event: 'audio_offer',
+          payload: { from: String(currentUser?.id), to: peerId, sdp: offer }
+        });
+      } catch { /* ignore */ }
+    };
+
+    return pc;
+  }; // eslint-disable-line
 
   // ── Debounced hasScreenContent: turns off only after 1.5s gap to avoid flicker ──
   useEffect(() => {
@@ -213,14 +273,81 @@ export function ConferenceRoom({
       if (!screenSharingRef.current) return;
       setRemoteCursor({ x: payload.x, y: payload.y });
     })
+    // ── Audio WebRTC events ──
+    .on('broadcast', { event: 'audio_hello' }, ({ payload }: any) => {
+      // A participant just joined — if our mic is on, connect audio to them
+      if (payload?.from === String(currentUser?.id)) return;
+      if (!micEnabledRef.current || !micStreamRef.current) return;
+      const peerId = String(payload.from);
+      const pc = createAudioPC(peerId);
+      const hasSender = pc.getSenders().some(s => s.track?.kind === 'audio');
+      if (!hasSender) {
+        micStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, micStreamRef.current!));
+        // onnegotiationneeded fires → offer sent automatically
+      }
+    })
+    .on('broadcast', { event: 'audio_offer' }, async ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      const peerId = String(payload.from);
+      // Close any conflicting PC
+      const old = audioPCsRef.current.get(peerId);
+      if (old && old.signalingState !== 'stable') { old.close(); audioPCsRef.current.delete(peerId); }
+      const pc = createAudioPC(peerId);
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        // Include our own audio track in the answer so they can hear us too
+        if (micEnabledRef.current && micStreamRef.current) {
+          const hasSender = pc.getSenders().some(s => s.track?.kind === 'audio');
+          if (!hasSender) {
+            micStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, micStreamRef.current!));
+          }
+        }
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        ch.send({ type: 'broadcast', event: 'audio_answer',
+          payload: { from: String(currentUser?.id), to: peerId, sdp: answer } });
+      } catch { /* ignore */ }
+    })
+    .on('broadcast', { event: 'audio_answer' }, async ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      const pc = audioPCsRef.current.get(String(payload.from));
+      if (pc && pc.signalingState !== 'stable') {
+        try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch { /* ignore */ }
+      }
+    })
+    .on('broadcast', { event: 'audio_ice' }, async ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      const pc = audioPCsRef.current.get(String(payload.from));
+      if (pc && payload.candidate) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch { /* ignore */ }
+      }
+    })
+    .on('broadcast', { event: 'audio_stop' }, ({ payload }: any) => {
+      if (payload?.from === String(currentUser?.id)) return;
+      const peerId = String(payload.from);
+      audioPCsRef.current.get(peerId)?.close();
+      audioPCsRef.current.delete(peerId);
+      document.getElementById(`raudio-${peerId}`)?.remove();
+    })
     .subscribe((status: string) => {
-      if (status === 'SUBSCRIBED') broadcastRef.current = { ch, supa };
+      if (status === 'SUBSCRIBED') {
+        broadcastRef.current = { ch, supa };
+        // Announce our arrival — participants with mics will send audio offers
+        ch.send({ type: 'broadcast', event: 'audio_hello',
+          payload: { from: String(currentUser?.id) } });
+      }
     });
 
     return () => {
       peerConnectionsRef.current.forEach(pc => pc.close());
       peerConnectionsRef.current.clear();
       setRemoteStream(null);
+      // Clean up audio connections and <audio> elements
+      audioPCsRef.current.forEach((pc, peerId) => {
+        pc.close();
+        document.getElementById(`raudio-${peerId}`)?.remove();
+      });
+      audioPCsRef.current.clear();
       supa.removeChannel(ch);
       broadcastRef.current = null;
     };
@@ -322,11 +449,20 @@ export function ConferenceRoom({
   const leaveRoom = async () => {
     setIsInRoom(false);
     setMicEnabled(false);
+    micEnabledRef.current = false;
     setScreenSharing(false);
     micStreamRef.current?.getTracks().forEach(t => t.stop());
     micStreamRef.current = null;
     screenStreamRef.current?.getTracks().forEach(t => t.stop());
     screenStreamRef.current = null;
+    // Broadcast audio stop and clean up audio elements
+    broadcastRef.current?.ch?.send({ type: 'broadcast', event: 'audio_stop',
+      payload: { from: String(currentUser?.id) } });
+    audioPCsRef.current.forEach((pc, peerId) => {
+      pc.close();
+      document.getElementById(`raudio-${peerId}`)?.remove();
+    });
+    audioPCsRef.current.clear();
     await onLeave();
   };
 
@@ -398,13 +534,33 @@ export function ConferenceRoom({
         }
         micStreamRef.current.getAudioTracks().forEach(t => { t.enabled = true; });
         setMicEnabled(true);
+        micEnabledRef.current = true;
         await onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
+
+        // Establish audio connections with every other participant
+        // Each createAudioPC call triggers onnegotiationneeded → offer sent automatically
+        if (broadcastRef.current?.ch) {
+          const others = conferenceParticipants.filter(
+            (p: any) => String(p.id) !== String(currentUser?.id)
+          );
+          for (const participant of others) {
+            const peerId = String(participant.id);
+            const pc = createAudioPC(peerId);
+            const hasSender = pc.getSenders().some(s => s.track?.kind === 'audio');
+            if (!hasSender) {
+              micStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, micStreamRef.current!));
+              // onnegotiationneeded fires → offer sent automatically
+            }
+          }
+        }
       } else {
         micStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false; });
         setMicEnabled(false);
+        micEnabledRef.current = false;
         setIsTalking(false);
         isTalkingRef.current = false;
         await onPresenceUpdate({ micEnabled: false, screenSharing, isTalking: false });
+        // Note: audio PCs stay alive — if mic is re-enabled, tracks just need re-enabling
       }
     } catch {
       onSendMsg("Не удалось получить доступ к микрофону. Проверьте разрешения браузера.", "text");
