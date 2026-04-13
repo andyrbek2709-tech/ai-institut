@@ -42,6 +42,8 @@ export function ConferenceRoom({
   const [selectedInvitees, setSelectedInvitees] = useState<Set<number>>(new Set());
   // Remote screen share: MediaStream received via WebRTC
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  // Sticky: turns false only after 1.5s without stream — avoids 1-frame layout flickers
+  const [hasScreenContent, setHasScreenContent] = useState(false);
 
   const [showFloatingChat, setShowFloatingChat] = useState(false);
   // ── Управление мышью ──
@@ -61,7 +63,8 @@ export function ConferenceRoom({
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const screenSharingRef = useRef(false);
-  const requestedFromRef = useRef<string | null>(null); // prevent repeated WebRTC requests on each presence heartbeat
+  const requestedFromRef = useRef<string | null>(null); // set once per sharer, never reset by presence heartbeat
+  const hasRemoteRef = useRef(false); // sticky: stays true until explicit stop/disconnect
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
@@ -85,11 +88,24 @@ export function ConferenceRoom({
 
   useEffect(() => {
     remoteStreamRef.current = remoteStream;
+    if (remoteStream) {
+      hasRemoteRef.current = true;
+    }
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = remoteStream || null;
       if (remoteStream) remoteVideoRef.current.play().catch(() => {});
     }
   }, [remoteStream]);
+
+  // ── Debounced hasScreenContent: turns off only after 1.5s gap to avoid flicker ──
+  useEffect(() => {
+    if (screenSharing || remoteStream) {
+      setHasScreenContent(true);
+    } else {
+      const t = setTimeout(() => setHasScreenContent(false), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [screenSharing, remoteStream]);
 
   // ── WebRTC signaling channel ──
   useEffect(() => {
@@ -114,6 +130,8 @@ export function ConferenceRoom({
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
           setRemoteStream(null);
+          hasRemoteRef.current = false;
+          requestedFromRef.current = null;
           peerConnectionsRef.current.delete(payload.from);
         }
       };
@@ -144,6 +162,8 @@ export function ConferenceRoom({
       if (payload?.from === String(currentUser?.id)) return;
       const pc = peerConnectionsRef.current.get(payload.from);
       if (pc) { pc.close(); peerConnectionsRef.current.delete(payload.from); }
+      hasRemoteRef.current = false;
+      requestedFromRef.current = null;
       setRemoteStream(null);
     })
     .on('broadcast', { event: 'request' }, async ({ payload }: any) => {
@@ -250,21 +270,19 @@ export function ConferenceRoom({
   }, [screenSharing]); // eslint-disable-line
 
   // ── Request screen stream when someone is already sharing on join ──
+  // IMPORTANT: never reset requestedFromRef based on presence — heartbeats can briefly drop sharingP
   useEffect(() => {
     if (!isInRoom || screenSharing || !broadcastRef.current?.ch) return;
     const sharingP = conferenceParticipants.find(
       (p: any) => p.screenSharing && String(p.id) !== String(currentUser?.id)
     );
-    if (sharingP) {
+    if (sharingP && !hasRemoteRef.current) {
       const sharerId = String(sharingP.id);
-      // Only send one request per sharer — not on every presence heartbeat
-      if (!remoteStream && requestedFromRef.current !== sharerId) {
+      if (requestedFromRef.current !== sharerId) {
         requestedFromRef.current = sharerId;
         broadcastRef.current.ch.send({ type: 'broadcast', event: 'request',
           payload: { from: String(currentUser?.id) } });
       }
-    } else {
-      requestedFromRef.current = null;
     }
   }, [conferenceParticipants, isInRoom]); // eslint-disable-line
 
@@ -498,9 +516,22 @@ export function ConferenceRoom({
     const now = Date.now();
     if (now - lastMouseSendRef.current < 50) return; // 20fps throttle
     lastMouseSendRef.current = now;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
+    const vid = e.currentTarget;
+    const rect = vid.getBoundingClientRect();
+    // Account for objectFit:contain letterboxing
+    const vidAspect = (vid.videoWidth || rect.width) / (vid.videoHeight || rect.height);
+    const boxAspect = rect.width / rect.height;
+    let contentW = rect.width, contentH = rect.height, offsetX = 0, offsetY = 0;
+    if (vidAspect > boxAspect) {
+      contentH = rect.width / vidAspect;
+      offsetY = (rect.height - contentH) / 2;
+    } else {
+      contentW = rect.height * vidAspect;
+      offsetX = (rect.width - contentW) / 2;
+    }
+    const x = (e.clientX - rect.left - offsetX) / contentW;
+    const y = (e.clientY - rect.top - offsetY) / contentH;
+    if (x < 0 || x > 1 || y < 0 || y > 1) return; // outside actual video content
     broadcastRef.current?.ch?.send({
       type: 'broadcast', event: 'mouse_move',
       payload: { from: String(currentUser?.id), x, y }
@@ -563,8 +594,6 @@ export function ConferenceRoom({
   const sharingParticipant = conferenceParticipants.find(
     (p: any) => p.screenSharing && String(p.id) !== String(currentUser?.id)
   );
-  // Use WebRTC remoteStream as ground truth — NOT presence, which flickers on heartbeats
-  const hasScreenContent = screenSharing || !!remoteStream;
 
   if (!project) return <div className="empty-state" style={{ padding: 60 }}>Выберите проект</div>;
 
@@ -794,7 +823,7 @@ export function ConferenceRoom({
 
       {/* ===== ТЕЛО ===== */}
       {/* ── РЕЖИМ ДЕМОНСТРАЦИИ ЭКРАНА (полноэкранный) ── */}
-      {(hasScreenContent || (!screenSharing && sharingParticipant && !remoteStream)) ? (
+      {hasScreenContent ? (
         <div style={{ flex: 1, position: "relative", background: "#050505", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {/* Видео на весь экран */}
           {screenSharing && (
@@ -804,20 +833,34 @@ export function ConferenceRoom({
                 autoPlay muted playsInline
                 style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
               />
-              {remoteCursor && (
-                <div style={{
-                  position: "absolute",
-                  left: `${remoteCursor.x * 100}%`,
-                  top: `${remoteCursor.y * 100}%`,
-                  width: 22, height: 22, borderRadius: "50%",
-                  border: "2.5px solid #EF4444",
-                  background: "rgba(239,68,68,0.25)",
-                  transform: "translate(-50%,-50%)",
-                  pointerEvents: "none",
-                  zIndex: 20,
-                  boxShadow: "0 0 10px #EF444499, 0 0 0 4px rgba(239,68,68,0.1)"
-                }} />
-              )}
+              {remoteCursor && screenVideoRef.current && (() => {
+                const vid = screenVideoRef.current!;
+                const rect = vid.getBoundingClientRect();
+                const vidAspect = (vid.videoWidth || rect.width) / (vid.videoHeight || rect.height);
+                const boxAspect = rect.width / rect.height;
+                let contentW = rect.width, contentH = rect.height, offsetX = 0, offsetY = 0;
+                if (vidAspect > boxAspect) {
+                  contentH = rect.width / vidAspect;
+                  offsetY = (rect.height - contentH) / 2;
+                } else {
+                  contentW = rect.height * vidAspect;
+                  offsetX = (rect.width - contentW) / 2;
+                }
+                return (
+                  <div style={{
+                    position: "absolute",
+                    left: offsetX + remoteCursor.x * contentW,
+                    top: offsetY + remoteCursor.y * contentH,
+                    width: 22, height: 22, borderRadius: "50%",
+                    border: "2.5px solid #EF4444",
+                    background: "rgba(239,68,68,0.25)",
+                    transform: "translate(-50%,-50%)",
+                    pointerEvents: "none",
+                    zIndex: 20,
+                    boxShadow: "0 0 10px #EF444499, 0 0 0 4px rgba(239,68,68,0.1)"
+                  }} />
+                );
+              })()}
             </div>
           )}
           {!screenSharing && !!remoteStream && (
