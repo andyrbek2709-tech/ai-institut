@@ -77,6 +77,8 @@ export function ConferenceRoom({
   const sendAudioOfferRef = useRef<((peerId: string) => Promise<void>) | null>(null);
   // Audio PC states for UI indicator: peerId → connectionState string
   const [audioPCStates, setAudioPCStates] = useState<Record<string, string>>({});
+  // Remote audio streams: peerId → MediaStream (rendered as <audio> in JSX)
+  const [remoteAudioStreams, setRemoteAudioStreams] = useState<Record<string, MediaStream>>({});
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
@@ -131,26 +133,10 @@ export function ConferenceRoom({
     };
 
     pc.ontrack = ({ streams, track }) => {
-      console.log(`[Audio] ontrack from ${peerId}, kind=${track.kind}, streams=${streams.length}`);
+      console.log(`[Audio] ontrack from ${peerId}, kind=${track.kind}, streams=${streams.length}, trackEnabled=${track.enabled}, readyState=${track.readyState}`);
       const stream = streams[0] || new MediaStream([track]);
-      let el = document.getElementById(`raudio-${peerId}`) as HTMLAudioElement | null;
-      if (!el) {
-        el = document.createElement('audio');
-        el.id = `raudio-${peerId}`;
-        el.autoplay = true;
-        el.muted = false;
-        document.body.appendChild(el);
-      }
-      el.srcObject = stream;
-      // Use a promise chain so autoplay errors are visible in console
-      el.play().then(() => {
-        console.log(`[Audio] playing stream from ${peerId}`);
-      }).catch(err => {
-        console.warn(`[Audio] autoplay blocked for ${peerId}:`, err);
-        // Retry on next user gesture
-        const retry = () => { el?.play().catch(() => {}); document.removeEventListener('click', retry); };
-        document.addEventListener('click', retry, { once: true });
-      });
+      // Store in React state → rendered as <audio autoPlay> in JSX (avoids dynamic DOM autoplay issues)
+      setRemoteAudioStreams(prev => ({ ...prev, [peerId]: stream }));
     };
 
     pc.onconnectionstatechange = () => {
@@ -158,8 +144,8 @@ export function ConferenceRoom({
       setAudioPCStates(prev => ({ ...prev, [peerId]: pc.connectionState }));
       if (['failed', 'closed'].includes(pc.connectionState)) {
         audioPCsRef.current.delete(peerId);
-        document.getElementById(`raudio-${peerId}`)?.remove();
         setAudioPCStates(prev => { const next = { ...prev }; delete next[peerId]; return next; });
+        setRemoteAudioStreams(prev => { const next = { ...prev }; delete next[peerId]; return next; });
       }
     };
 
@@ -374,7 +360,7 @@ export function ConferenceRoom({
       const peerId = String(payload.from);
       audioPCsRef.current.get(peerId)?.close();
       audioPCsRef.current.delete(peerId);
-      document.getElementById(`raudio-${peerId}`)?.remove();
+      setRemoteAudioStreams(prev => { const next = { ...prev }; delete next[peerId]; return next; });
     })
     .subscribe((status: string) => {
       if (status === 'SUBSCRIBED') {
@@ -390,12 +376,10 @@ export function ConferenceRoom({
       peerConnectionsRef.current.forEach(pc => pc.close());
       peerConnectionsRef.current.clear();
       setRemoteStream(null);
-      // Clean up audio connections and <audio> elements
-      audioPCsRef.current.forEach((pc, peerId) => {
-        pc.close();
-        document.getElementById(`raudio-${peerId}`)?.remove();
-      });
+      audioPCsRef.current.forEach(pc => pc.close());
       audioPCsRef.current.clear();
+      setRemoteAudioStreams({});
+      setAudioPCStates({});
       supa.removeChannel(ch);
       broadcastRef.current = null;
     };
@@ -503,14 +487,12 @@ export function ConferenceRoom({
     micStreamRef.current = null;
     screenStreamRef.current?.getTracks().forEach(t => t.stop());
     screenStreamRef.current = null;
-    // Broadcast audio stop and clean up audio elements
     broadcastRef.current?.ch?.send({ type: 'broadcast', event: 'audio_stop',
       payload: { from: String(currentUser?.id) } });
-    audioPCsRef.current.forEach((pc, peerId) => {
-      pc.close();
-      document.getElementById(`raudio-${peerId}`)?.remove();
-    });
+    audioPCsRef.current.forEach(pc => pc.close());
     audioPCsRef.current.clear();
+    setRemoteAudioStreams({});
+    setAudioPCStates({});
     await onLeave();
   };
 
@@ -805,6 +787,32 @@ export function ConferenceRoom({
         border: `1px solid ${C.border}`
       }}
     >
+      {/* ── Hidden audio elements for remote participants ──
+          Rendered in React DOM so srcObject is set reliably via ref callback.
+          autoPlay + playsInline ensures playback without user gesture after mic enabled. */}
+      {Object.entries(remoteAudioStreams).map(([peerId, stream]) => (
+        <audio
+          key={peerId}
+          autoPlay
+          playsInline
+          style={{ display: 'none' }}
+          ref={el => {
+            if (el && el.srcObject !== stream) {
+              el.srcObject = stream;
+              el.volume = 1;
+              el.muted = false;
+              el.play().then(() => {
+                console.log(`[Audio] ✓ playing from ${peerId}`);
+              }).catch(err => {
+                console.warn(`[Audio] autoplay blocked for ${peerId}:`, err);
+                const retry = () => { el.play().catch(() => {}); };
+                document.addEventListener('click', retry, { once: true });
+              });
+            }
+          }}
+        />
+      ))}
+
       {/* ===== HEADER ===== */}
       <div className="conf-header" style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
