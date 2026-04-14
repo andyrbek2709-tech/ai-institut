@@ -73,6 +73,8 @@ export function ConferenceRoom({
   // ── Audio WebRTC ──
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioPeersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  // Buffer ICE candidates that arrive before setRemoteDescription is called
+  const audioIceBufRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
   const [remoteAudioStreams, setRemoteAudioStreams] = useState<Map<string, MediaStream>>(new Map());
   const conferenceParticipantsRef = useRef<any[]>([]);
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
@@ -230,49 +232,79 @@ export function ConferenceRoom({
     // ── Audio WebRTC ──
     .on('broadcast', { event: 'audio_offer' }, async ({ payload }: any) => {
       if (payload?.to !== String(currentUser?.id)) return;
-      const existing = audioPeersRef.current.get(payload.from);
-      if (existing) { existing.close(); audioPeersRef.current.delete(payload.from); }
+      const myId = String(currentUser?.id);
+      const fromId = String(payload.from);
+
+      // Glare resolution: both sides sent an offer simultaneously.
+      // Lower ID keeps their offer; higher ID backs off and accepts the incoming one.
+      const existing = audioPeersRef.current.get(fromId);
+      if (existing) {
+        if (existing.signalingState === 'have-local-offer' && myId < fromId) {
+          return; // We win — wait for them to back off
+        }
+        existing.close();
+        audioPeersRef.current.delete(fromId);
+      }
+      audioIceBufRef.current.delete(fromId);
 
       const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-      audioPeersRef.current.set(payload.from, pc);
+      audioPeersRef.current.set(fromId, pc);
 
       pc.onicecandidate = ({ candidate }) => {
         if (candidate) ch.send({ type: 'broadcast', event: 'audio_ice',
-          payload: { from: String(currentUser?.id), to: payload.from, candidate: candidate.toJSON() } });
+          payload: { from: myId, to: fromId, candidate: candidate.toJSON() } });
       };
       pc.ontrack = (e) => {
-        if (e.streams[0]) setRemoteAudioStreams(prev => new Map(prev).set(payload.from, e.streams[0]));
+        const stream = e.streams[0] ?? new MediaStream([e.track]);
+        setRemoteAudioStreams(prev => new Map(prev).set(fromId, stream));
       };
-      // Include our own mic track so the other side hears us too
       if (audioStreamRef.current) {
         audioStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, audioStreamRef.current!));
       }
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        // Flush any ICE candidates that arrived before remote description
+        const buf = audioIceBufRef.current.get(fromId) || [];
+        for (const c of buf) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch {} }
+        audioIceBufRef.current.delete(fromId);
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         ch.send({ type: 'broadcast', event: 'audio_answer',
-          payload: { from: String(currentUser?.id), to: payload.from, sdp: answer } });
+          payload: { from: myId, to: fromId, sdp: answer } });
       } catch { /* ignore */ }
     })
     .on('broadcast', { event: 'audio_answer' }, async ({ payload }: any) => {
       if (payload?.to !== String(currentUser?.id)) return;
       const pc = audioPeersRef.current.get(payload.from);
-      if (pc && pc.signalingState !== 'stable') {
-        try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch { /* ignore */ }
+      if (pc && pc.signalingState === 'have-local-offer') {
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          // Flush buffered ICE candidates
+          const buf = audioIceBufRef.current.get(payload.from) || [];
+          for (const c of buf) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch {} }
+          audioIceBufRef.current.delete(payload.from);
+        } catch { /* ignore */ }
       }
     })
     .on('broadcast', { event: 'audio_ice' }, async ({ payload }: any) => {
       if (payload?.to !== String(currentUser?.id)) return;
       const pc = audioPeersRef.current.get(payload.from);
-      if (pc && payload.candidate) {
-        try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch { /* ignore */ }
+      if (!pc || !payload.candidate) return;
+      if (pc.remoteDescription) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch {}
+      } else {
+        // Buffer until remote description is set
+        const buf = audioIceBufRef.current.get(payload.from) || [];
+        buf.push(payload.candidate);
+        audioIceBufRef.current.set(payload.from, buf);
       }
     })
     .on('broadcast', { event: 'audio_stop' }, ({ payload }: any) => {
       if (payload?.from === String(currentUser?.id)) return;
       const pc = audioPeersRef.current.get(payload.from);
       if (pc) { pc.close(); audioPeersRef.current.delete(payload.from); }
+      audioIceBufRef.current.delete(payload.from);
       setRemoteAudioStreams(prev => { const n = new Map(prev); n.delete(payload.from); return n; });
     })
     .subscribe((status: string) => {
@@ -286,6 +318,7 @@ export function ConferenceRoom({
       peerConnectionsRef.current.clear();
       audioPeersRef.current.forEach(pc => pc.close());
       audioPeersRef.current.clear();
+      audioIceBufRef.current.clear();
       audioStreamRef.current?.getTracks().forEach(t => t.stop());
       audioStreamRef.current = null;
       setRemoteStream(null);
@@ -443,6 +476,7 @@ export function ConferenceRoom({
           const peerId = String(participant.id);
           const old = audioPeersRef.current.get(peerId);
           if (old) { old.close(); audioPeersRef.current.delete(peerId); }
+          audioIceBufRef.current.delete(peerId);
 
           const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
           audioPeersRef.current.set(peerId, pc);
@@ -452,7 +486,8 @@ export function ConferenceRoom({
               payload: { from: String(currentUser?.id), to: peerId, candidate: candidate.toJSON() } });
           };
           pc.ontrack = (e) => {
-            if (e.streams[0]) setRemoteAudioStreams(prev => new Map(prev).set(peerId, e.streams[0]));
+            const s = e.streams[0] ?? new MediaStream([e.track]);
+            setRemoteAudioStreams(prev => new Map(prev).set(peerId, s));
           };
           stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
           try {
