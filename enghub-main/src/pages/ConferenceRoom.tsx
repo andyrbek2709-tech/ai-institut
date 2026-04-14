@@ -60,7 +60,6 @@ export function ConferenceRoom({
   const lastMouseSendRef = useRef(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const micStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const screenVideoRef = useRef<HTMLVideoElement>(null);
   const inviteMenuRef = useRef<HTMLDivElement>(null);
@@ -71,14 +70,10 @@ export function ConferenceRoom({
   const screenSharingRef = useRef(false);
   const requestedFromRef = useRef<string | null>(null); // set once per sharer, never reset by presence heartbeat
   const hasRemoteRef = useRef(false); // sticky: stays true until explicit stop/disconnect
-  // ── Audio WebRTC (separate from screen-share PCs) ──
-  const audioPCsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
-  const micEnabledRef = useRef(false); // ref copy to avoid stale closures in broadcast handlers
-  const sendAudioOfferRef = useRef<((peerId: string) => Promise<void>) | null>(null);
-  // Audio PC states for UI indicator: peerId → connectionState string
-  const [audioPCStates, setAudioPCStates] = useState<Record<string, string>>({});
-  // Remote audio streams: peerId → MediaStream (rendered as <audio> in JSX)
-  const [remoteAudioStreams, setRemoteAudioStreams] = useState<Record<string, MediaStream>>({});
+  // ── Jitsi Meet (voice audio) ──
+  const jitsiApiRef = useRef<any>(null);
+  const jitsiContainerRef = useRef<HTMLDivElement>(null);
+  const [jitsiReady, setJitsiReady] = useState(false);
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
@@ -111,56 +106,6 @@ export function ConferenceRoom({
     }
   }, [remoteStream]);
 
-  // Keep micEnabledRef in sync so broadcast handlers (stale closures) can read current value
-  useEffect(() => { micEnabledRef.current = micEnabled; }, [micEnabled]);
-
-  // ── Create/reuse an audio RTCPeerConnection for one peer ──
-  // Defined at component level (uses stable refs) so toggleMic can call it directly.
-  const createAudioPC = (peerId: string): RTCPeerConnection => {
-    const existing = audioPCsRef.current.get(peerId);
-    if (existing && !['closed', 'failed'].includes(existing.connectionState)) return existing;
-    if (existing) existing.close();
-
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    audioPCsRef.current.set(peerId, pc);
-
-    pc.onicecandidate = ({ candidate }) => {
-      if (!candidate) return;
-      broadcastRef.current?.ch?.send({
-        type: 'broadcast', event: 'audio_ice',
-        payload: { from: String(currentUser?.id), to: peerId, candidate: candidate.toJSON() }
-      });
-    };
-
-    pc.ontrack = ({ streams, track }) => {
-      console.log(`[Audio] ontrack from ${peerId}, kind=${track.kind}, streams=${streams.length}, trackEnabled=${track.enabled}, readyState=${track.readyState}`);
-      const stream = streams[0] || new MediaStream([track]);
-      // Store in React state → rendered as <audio autoPlay> in JSX (avoids dynamic DOM autoplay issues)
-      setRemoteAudioStreams(prev => ({ ...prev, [peerId]: stream }));
-    };
-
-    pc.onconnectionstatechange = () => {
-      console.log(`[Audio] PC state for ${peerId}: ${pc.connectionState}`);
-      setAudioPCStates(prev => ({ ...prev, [peerId]: pc.connectionState }));
-      if (['failed', 'closed'].includes(pc.connectionState)) {
-        audioPCsRef.current.delete(peerId);
-        setAudioPCStates(prev => { const next = { ...prev }; delete next[peerId]; return next; });
-        setRemoteAudioStreams(prev => { const next = { ...prev }; delete next[peerId]; return next; });
-      }
-    };
-
-    pc.onicegatheringstatechange = () => {
-      console.log(`[Audio] ICE gathering for ${peerId}: ${pc.iceGatheringState}`);
-    };
-    pc.oniceconnectionstatechange = () => {
-      console.log(`[Audio] ICE connection for ${peerId}: ${pc.iceConnectionState}`);
-    };
-
-    // NOTE: onnegotiationneeded intentionally omitted — all offers are sent explicitly
-    // via sendAudioOfferRef to avoid race conditions after setLocalDescription(answer).
-
-    return pc;
-  }; // eslint-disable-line
 
   // ── Debounced hasScreenContent: turns off only after 1.5s gap to avoid flicker ──
   useEffect(() => {
@@ -179,37 +124,6 @@ export function ConferenceRoom({
     const ch = supa.channel(`webrtc:${project.id}`, {
       config: { broadcast: { self: false, ack: false } }
     });
-
-    // ── Explicit audio offer (no onnegotiationneeded) ──
-    // Defined here so it captures `ch` from this closure.
-    const sendAudioOffer = async (peerId: string) => {
-      if (!micStreamRef.current) return;
-      console.log(`[Audio] sendAudioOffer → ${peerId}`);
-      const existing = audioPCsRef.current.get(peerId);
-      let pc: RTCPeerConnection;
-      // Reuse only if connection is alive AND signaling is stable (not mid-negotiation)
-      if (existing &&
-          !['closed', 'failed'].includes(existing.connectionState) &&
-          existing.signalingState === 'stable') {
-        pc = existing;
-      } else {
-        if (existing) existing.close();
-        pc = createAudioPC(peerId);
-      }
-      // Add our mic track if not already there
-      const hasSender = pc.getSenders().some(s => s.track?.kind === 'audio');
-      if (!hasSender) {
-        micStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, micStreamRef.current!));
-      }
-      try {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        console.log(`[Audio] offer sent → ${peerId}`);
-        ch.send({ type: 'broadcast', event: 'audio_offer',
-          payload: { from: String(currentUser?.id), to: peerId, sdp: offer } });
-      } catch (e) { console.warn(`[Audio] sendAudioOffer error:`, e); }
-    };
-    sendAudioOfferRef.current = sendAudioOffer;
 
     ch.on('broadcast', { event: 'offer' }, async ({ payload }: any) => {
       if (payload?.to !== String(currentUser?.id)) return;
@@ -309,79 +223,116 @@ export function ConferenceRoom({
       if (!screenSharingRef.current) return;
       setRemoteCursor({ x: payload.x, y: payload.y });
     })
-    // ── Audio WebRTC events ──
-    .on('broadcast', { event: 'audio_hello' }, ({ payload }: any) => {
-      // A participant just joined — if our mic is on, send them an offer
-      if (payload?.from === String(currentUser?.id)) return;
-      if (!micEnabledRef.current || !micStreamRef.current) return;
-      const peerId = String(payload.from);
-      sendAudioOffer(peerId);
-    })
-    .on('broadcast', { event: 'audio_offer' }, async ({ payload }: any) => {
-      if (payload?.to !== String(currentUser?.id)) return;
-      const peerId = String(payload.from);
-      console.log(`[Audio] received offer from ${peerId}`);
-      // Close any conflicting PC
-      const old = audioPCsRef.current.get(peerId);
-      if (old && old.signalingState !== 'stable') { old.close(); audioPCsRef.current.delete(peerId); }
-      const pc = createAudioPC(peerId);
-      try {
-        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-        // Include our own audio track in the answer so they can hear us too
-        if (micEnabledRef.current && micStreamRef.current) {
-          const hasSender = pc.getSenders().some(s => s.track?.kind === 'audio');
-          if (!hasSender) {
-            micStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, micStreamRef.current!));
-          }
-        }
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        console.log(`[Audio] answer sent → ${peerId}`);
-        ch.send({ type: 'broadcast', event: 'audio_answer',
-          payload: { from: String(currentUser?.id), to: peerId, sdp: answer } });
-      } catch (e) { console.warn(`[Audio] audio_offer handler error:`, e); }
-    })
-    .on('broadcast', { event: 'audio_answer' }, async ({ payload }: any) => {
-      if (payload?.to !== String(currentUser?.id)) return;
-      const pc = audioPCsRef.current.get(String(payload.from));
-      if (pc && pc.signalingState !== 'stable') {
-        try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch { /* ignore */ }
-      }
-    })
-    .on('broadcast', { event: 'audio_ice' }, async ({ payload }: any) => {
-      if (payload?.to !== String(currentUser?.id)) return;
-      const pc = audioPCsRef.current.get(String(payload.from));
-      if (pc && payload.candidate) {
-        try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch { /* ignore */ }
-      }
-    })
-    .on('broadcast', { event: 'audio_stop' }, ({ payload }: any) => {
-      if (payload?.from === String(currentUser?.id)) return;
-      const peerId = String(payload.from);
-      audioPCsRef.current.get(peerId)?.close();
-      audioPCsRef.current.delete(peerId);
-      setRemoteAudioStreams(prev => { const next = { ...prev }; delete next[peerId]; return next; });
-    })
     .subscribe((status: string) => {
       if (status === 'SUBSCRIBED') {
         broadcastRef.current = { ch, supa };
-        // Announce our arrival — participants with mics will send audio offers
-        ch.send({ type: 'broadcast', event: 'audio_hello',
-          payload: { from: String(currentUser?.id) } });
       }
     });
 
     return () => {
-      sendAudioOfferRef.current = null;
       peerConnectionsRef.current.forEach(pc => pc.close());
       peerConnectionsRef.current.clear();
       setRemoteStream(null);
-      audioPCsRef.current.forEach(pc => pc.close());
-      audioPCsRef.current.clear();
-      setRemoteAudioStreams({});
-      setAudioPCStates({});
       supa.removeChannel(ch);
       broadcastRef.current = null;
+    };
+  }, [isInRoom, project?.id]); // eslint-disable-line
+
+  // ── Jitsi Meet — voice audio ──
+  // Loads Jitsi External API once, creates a hidden audio-only meeting per project.
+  // The mic button calls api.executeCommand('toggleAudio') — no custom WebRTC needed.
+  useEffect(() => {
+    if (!isInRoom || !project?.id) {
+      jitsiApiRef.current?.dispose();
+      jitsiApiRef.current = null;
+      setJitsiReady(false);
+      return;
+    }
+
+    const roomName = `enghub-project-${String(project.id).replace(/[^a-zA-Z0-9]/g, '')}`;
+
+    const initJitsi = () => {
+      if (!jitsiContainerRef.current || !(window as any).JitsiMeetExternalAPI) return;
+      if (jitsiApiRef.current) return; // already running
+
+      const api = new (window as any).JitsiMeetExternalAPI('meet.jit.si', {
+        roomName,
+        parentNode: jitsiContainerRef.current,
+        width: '100%',
+        height: '100%',
+        userInfo: {
+          displayName: currentUser?.full_name || currentUser?.email || 'Участник',
+          email: currentUser?.email || '',
+        },
+        configOverwrite: {
+          startWithAudioMuted: true,   // user must click mic to unmute
+          startWithVideoMuted: true,
+          disableDeepLinking: true,
+          prejoinPageEnabled: false,
+          disableInviteFunctions: true,
+          enableNoisyMicDetection: false,
+          disableAP: false,
+          enableOpusRed: true,
+        },
+        interfaceConfigOverwrite: {
+          TOOLBAR_BUTTONS: [],
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false,
+          HIDE_INVITE_MORE_HEADER: true,
+          DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+          DISABLE_VIDEO_BACKGROUND: true,
+        },
+      });
+
+      jitsiApiRef.current = api;
+
+      api.addEventListeners({
+        // Sync mic state back to our presence
+        audioMuteStatusChanged: ({ muted }: { muted: boolean }) => {
+          const enabled = !muted;
+          setMicEnabled(enabled);
+          onPresenceUpdate({ micEnabled: enabled, screenSharing, isTalking: false });
+        },
+        // Show talking indicator when current user is dominant speaker
+        dominantSpeakerChanged: ({ id }: { id: string }) => {
+          try {
+            const myId = api.getMyUserId?.();
+            const talking = !!myId && id === myId;
+            setIsTalking(talking);
+            isTalkingRef.current = talking;
+            if (talking) onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: true });
+          } catch { /* ignore */ }
+        },
+        videoConferenceJoined: () => {
+          setJitsiReady(true);
+        },
+      });
+    };
+
+    if ((window as any).JitsiMeetExternalAPI) {
+      initJitsi();
+    } else {
+      const existing = document.getElementById('jitsi-external-api');
+      if (!existing) {
+        const script = document.createElement('script');
+        script.id = 'jitsi-external-api';
+        script.src = 'https://meet.jit.si/external_api.js';
+        script.async = true;
+        script.onload = initJitsi;
+        document.head.appendChild(script);
+      } else {
+        // Script tag exists but API not ready yet — poll briefly
+        const poll = setInterval(() => {
+          if ((window as any).JitsiMeetExternalAPI) { clearInterval(poll); initJitsi(); }
+        }, 200);
+        return () => clearInterval(poll);
+      }
+    }
+
+    return () => {
+      jitsiApiRef.current?.dispose();
+      jitsiApiRef.current = null;
+      setJitsiReady(false);
     };
   }, [isInRoom, project?.id]); // eslint-disable-line
 
@@ -481,114 +432,28 @@ export function ConferenceRoom({
   const leaveRoom = async () => {
     setIsInRoom(false);
     setMicEnabled(false);
-    micEnabledRef.current = false;
     setScreenSharing(false);
-    micStreamRef.current?.getTracks().forEach(t => t.stop());
-    micStreamRef.current = null;
+    setJitsiReady(false);
+    // Jitsi disposes itself via useEffect cleanup when isInRoom becomes false
     screenStreamRef.current?.getTracks().forEach(t => t.stop());
     screenStreamRef.current = null;
-    broadcastRef.current?.ch?.send({ type: 'broadcast', event: 'audio_stop',
-      payload: { from: String(currentUser?.id) } });
-    audioPCsRef.current.forEach(pc => pc.close());
-    audioPCsRef.current.clear();
-    setRemoteAudioStreams({});
-    setAudioPCStates({});
     await onLeave();
   };
 
   const [isTalking, setIsTalking] = useState(false);
   const isTalkingRef = useRef(false);
-  const talkTimeoutRef = useRef<any>(null);
 
-  // ── Voice detection (Talking status) ──
-  useEffect(() => {
-    if (!micEnabled || !micStreamRef.current) {
-        if (isTalkingRef.current) {
-            setIsTalking(false);
-            isTalkingRef.current = false;
-            onPresenceUpdate({ micEnabled: false, screenSharing, isTalking: false });
-        }
-        return;
-    }
-
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const source = audioCtx.createMediaStreamSource(micStreamRef.current);
-    const analyzer = audioCtx.createAnalyser();
-    analyzer.fftSize = 256;
-    source.connect(analyzer);
-
-    const bufferLength = analyzer.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const checkVolume = () => {
-      if (!micEnabled) return;
-      analyzer.getByteFrequencyData(dataArray);
-      let sum = 0;
-      for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
-      const average = sum / bufferLength;
-      const talkingNow = average > 10; // Threshold for talking
-
-      if (talkingNow !== isTalkingRef.current) {
-        if (talkingNow) {
-          // If started talking
-          clearTimeout(talkTimeoutRef.current);
-          setIsTalking(true);
-          isTalkingRef.current = true;
-          onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: true });
-        } else {
-          // Debounce stopping "talking" status
-          clearTimeout(talkTimeoutRef.current);
-          talkTimeoutRef.current = setTimeout(() => {
-            setIsTalking(false);
-            isTalkingRef.current = false;
-            onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
-          }, 400); 
-        }
-      }
-      requestAnimationFrame(checkVolume);
-    };
-
-    checkVolume();
-
-    return () => {
-        audioCtx.close();
-        clearTimeout(talkTimeoutRef.current);
-    };
-  }, [micEnabled, screenSharing]); // eslint-disable-line
+  // isTalking is updated via Jitsi dominantSpeakerChanged event in the Jitsi useEffect
 
   const toggleMic = async () => {
-    try {
-      if (!micEnabled) {
-        if (!micStreamRef.current) {
-          micStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        }
-        micStreamRef.current.getAudioTracks().forEach(t => { t.enabled = true; });
-        setMicEnabled(true);
-        micEnabledRef.current = true;
-        await onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
-
-        // Establish audio connections with every other participant via explicit offer
-        if (sendAudioOfferRef.current && broadcastRef.current?.ch) {
-          const others = conferenceParticipants.filter(
-            (p: any) => String(p.id) !== String(currentUser?.id)
-          );
-          for (const participant of others) {
-            const peerId = String(participant.id);
-            sendAudioOfferRef.current(peerId);
-          }
-        }
-      } else {
-        micStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false; });
-        setMicEnabled(false);
-        micEnabledRef.current = false;
-        setIsTalking(false);
-        isTalkingRef.current = false;
-        await onPresenceUpdate({ micEnabled: false, screenSharing, isTalking: false });
-        // Note: audio PCs stay alive — if mic is re-enabled, tracks just need re-enabling
-      }
-    } catch {
-      onSendMsg("Не удалось получить доступ к микрофону. Проверьте разрешения браузера.", "text");
+    const api = jitsiApiRef.current;
+    if (!api) {
+      // Jitsi not ready yet — show a hint
+      onSendMsg("Голосовая связь ещё подключается, подождите секунду...", "text");
+      return;
     }
+    // Toggle audio in Jitsi — audioMuteStatusChanged callback will update micEnabled state
+    api.executeCommand('toggleAudio');
   };
 
   const toggleScreenShare = async () => {
@@ -787,31 +652,18 @@ export function ConferenceRoom({
         border: `1px solid ${C.border}`
       }}
     >
-      {/* ── Hidden audio elements for remote participants ──
-          Rendered in React DOM so srcObject is set reliably via ref callback.
-          autoPlay + playsInline ensures playback without user gesture after mic enabled. */}
-      {Object.entries(remoteAudioStreams).map(([peerId, stream]) => (
-        <audio
-          key={peerId}
-          autoPlay
-          playsInline
-          style={{ display: 'none' }}
-          ref={el => {
-            if (el && el.srcObject !== stream) {
-              el.srcObject = stream;
-              el.volume = 1;
-              el.muted = false;
-              el.play().then(() => {
-                console.log(`[Audio] ✓ playing from ${peerId}`);
-              }).catch(err => {
-                console.warn(`[Audio] autoplay blocked for ${peerId}:`, err);
-                const retry = () => { el.play().catch(() => {}); };
-                document.addEventListener('click', retry, { once: true });
-              });
-            }
-          }}
-        />
-      ))}
+      {/* ── Jitsi Meet container — positioned off-screen, audio-only ──
+          Must stay in DOM (not display:none) so browser doesn't throttle audio.
+          Opacity 0 + pointer-events none makes it invisible but fully functional. */}
+      <div
+        ref={jitsiContainerRef}
+        style={{
+          position: 'fixed', bottom: 0, right: 0,
+          width: 160, height: 90,
+          opacity: 0, pointerEvents: 'none',
+          zIndex: -1, overflow: 'hidden',
+        }}
+      />
 
       {/* ===== HEADER ===== */}
       <div className="conf-header" style={{
@@ -1275,17 +1127,23 @@ export function ConferenceRoom({
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 3, flexShrink: 0, fontSize: 13, alignItems: 'center' }}>
-                    <span style={{ transform: p.isTalking ? 'scale(1.2)' : 'scale(1)', transition: 'transform 0.2s' }}>
-                      {p.micEnabled ? (p.isTalking ? "🎤" : "🎙️") : "🔇"}
-                    </span>
-                    {/* Audio connection state indicator */}
-                    {String(p.id) !== String(currentUser?.id) && p.micEnabled && (() => {
-                      const state = audioPCStates[String(p.id)];
-                      if (!state) return null;
-                      const color = state === 'connected' ? '#10B981' : state === 'connecting' ? '#F59E0B' : state === 'failed' ? '#EF4444' : '#6B7280';
-                      const label = state === 'connected' ? '●' : state === 'connecting' ? '◌' : state === 'failed' ? '✕' : '○';
-                      return <span title={`Аудио: ${state}`} style={{ fontSize: 9, color, fontWeight: 700 }}>{label}</span>;
+                    {(() => {
+                      // For the current user, use local React state (instant) instead of presence (has lag)
+                      const isSelf = String(p.id) === String(currentUser?.id);
+                      const mic = isSelf ? micEnabled : p.micEnabled;
+                      const talking = isSelf ? isTalking : p.isTalking;
+                      return (
+                        <span style={{ transform: talking ? 'scale(1.2)' : 'scale(1)', transition: 'transform 0.2s' }}>
+                          {mic ? (talking ? "🎤" : "🎙️") : "🔇"}
+                        </span>
+                      );
                     })()}
+                    {/* Jitsi ready indicator for self */}
+                    {String(p.id) === String(currentUser?.id) && isInRoom && (
+                      <span title={jitsiReady ? 'Голосовая связь готова' : 'Подключение...'} style={{ fontSize: 9, color: jitsiReady ? '#10B981' : '#F59E0B' }}>
+                        {jitsiReady ? '●' : '◌'}
+                      </span>
+                    )}
                     {p.screenSharing && <span>🖥️</span>}
                   </div>
                 </div>

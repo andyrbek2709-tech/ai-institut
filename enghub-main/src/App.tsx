@@ -766,8 +766,12 @@ export default function App() {
     })
     .on('presence', { event: 'join' }, ({ newPresences }: any) => {
       const u = newPresences?.[0];
+      // Only notify if user wasn't already in the participant list (prevents heartbeat spam)
       if (u && String(u.id) !== String(currentUserData.id)) {
-        addNotification(`👤 ${u.full_name || 'Участник'} зашёл в совещание`, 'info');
+        const alreadyPresent = conferenceParticipants.some((p: any) => String(p.id) === String(u.id));
+        if (!alreadyPresent) {
+          addNotification(`👤 ${u.full_name || 'Участник'} зашёл в совещание`, 'info');
+        }
       }
       // Re-fetch state on join to ensure sync
       const state = ch.presenceState<any>();
@@ -785,8 +789,15 @@ export default function App() {
     })
     .on('presence', { event: 'leave' }, ({ leftPresences }: any) => {
       const u = leftPresences?.[0];
+      // Verify user is truly gone (not just a heartbeat blip) before notifying
       if (u && String(u.id) !== String(currentUserData.id)) {
-        addNotification(`👤 ${u.full_name || 'Участник'} вышел из совещания`, 'info');
+        setTimeout(() => {
+          const state = ch.presenceState<any>();
+          const stillPresent = Object.values(state).flat().some((s: any) => String(s.id) === String(u.id));
+          if (!stillPresent) {
+            addNotification(`👤 ${u.full_name || 'Участник'} вышел из совещания`, 'info');
+          }
+        }, 2000); // wait 2s — if user reconnects (heartbeat), no notification
       }
       // Re-fetch state on leave to ensure sync
       const state = ch.presenceState<any>();
