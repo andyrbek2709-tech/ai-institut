@@ -24,6 +24,12 @@ const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: 'stun:stun.relay.metered.ca:80' },
+  // TURN servers — needed when both peers are behind NAT (different networks)
+  { urls: 'turn:a.relay.metered.ca:80',               username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:a.relay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:a.relay.metered.ca:443',              username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turns:a.relay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
 ];
 
 export function ConferenceRoom({
@@ -69,6 +75,8 @@ export function ConferenceRoom({
   const audioPCsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const micEnabledRef = useRef(false); // ref copy to avoid stale closures in broadcast handlers
   const sendAudioOfferRef = useRef<((peerId: string) => Promise<void>) | null>(null);
+  // Audio PC states for UI indicator: peerId → connectionState string
+  const [audioPCStates, setAudioPCStates] = useState<Record<string, string>>({});
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
@@ -123,23 +131,43 @@ export function ConferenceRoom({
     };
 
     pc.ontrack = ({ streams, track }) => {
+      console.log(`[Audio] ontrack from ${peerId}, kind=${track.kind}, streams=${streams.length}`);
       const stream = streams[0] || new MediaStream([track]);
       let el = document.getElementById(`raudio-${peerId}`) as HTMLAudioElement | null;
       if (!el) {
         el = document.createElement('audio');
         el.id = `raudio-${peerId}`;
         el.autoplay = true;
+        el.muted = false;
         document.body.appendChild(el);
       }
       el.srcObject = stream;
-      el.play().catch(() => {});
+      // Use a promise chain so autoplay errors are visible in console
+      el.play().then(() => {
+        console.log(`[Audio] playing stream from ${peerId}`);
+      }).catch(err => {
+        console.warn(`[Audio] autoplay blocked for ${peerId}:`, err);
+        // Retry on next user gesture
+        const retry = () => { el?.play().catch(() => {}); document.removeEventListener('click', retry); };
+        document.addEventListener('click', retry, { once: true });
+      });
     };
 
     pc.onconnectionstatechange = () => {
+      console.log(`[Audio] PC state for ${peerId}: ${pc.connectionState}`);
+      setAudioPCStates(prev => ({ ...prev, [peerId]: pc.connectionState }));
       if (['failed', 'closed'].includes(pc.connectionState)) {
         audioPCsRef.current.delete(peerId);
         document.getElementById(`raudio-${peerId}`)?.remove();
+        setAudioPCStates(prev => { const next = { ...prev }; delete next[peerId]; return next; });
       }
+    };
+
+    pc.onicegatheringstatechange = () => {
+      console.log(`[Audio] ICE gathering for ${peerId}: ${pc.iceGatheringState}`);
+    };
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[Audio] ICE connection for ${peerId}: ${pc.iceConnectionState}`);
     };
 
     // NOTE: onnegotiationneeded intentionally omitted — all offers are sent explicitly
@@ -170,9 +198,13 @@ export function ConferenceRoom({
     // Defined here so it captures `ch` from this closure.
     const sendAudioOffer = async (peerId: string) => {
       if (!micStreamRef.current) return;
+      console.log(`[Audio] sendAudioOffer → ${peerId}`);
       const existing = audioPCsRef.current.get(peerId);
       let pc: RTCPeerConnection;
-      if (existing && !['closed', 'failed'].includes(existing.connectionState)) {
+      // Reuse only if connection is alive AND signaling is stable (not mid-negotiation)
+      if (existing &&
+          !['closed', 'failed'].includes(existing.connectionState) &&
+          existing.signalingState === 'stable') {
         pc = existing;
       } else {
         if (existing) existing.close();
@@ -186,9 +218,10 @@ export function ConferenceRoom({
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
+        console.log(`[Audio] offer sent → ${peerId}`);
         ch.send({ type: 'broadcast', event: 'audio_offer',
           payload: { from: String(currentUser?.id), to: peerId, sdp: offer } });
-      } catch { /* ignore */ }
+      } catch (e) { console.warn(`[Audio] sendAudioOffer error:`, e); }
     };
     sendAudioOfferRef.current = sendAudioOffer;
 
@@ -301,6 +334,7 @@ export function ConferenceRoom({
     .on('broadcast', { event: 'audio_offer' }, async ({ payload }: any) => {
       if (payload?.to !== String(currentUser?.id)) return;
       const peerId = String(payload.from);
+      console.log(`[Audio] received offer from ${peerId}`);
       // Close any conflicting PC
       const old = audioPCsRef.current.get(peerId);
       if (old && old.signalingState !== 'stable') { old.close(); audioPCsRef.current.delete(peerId); }
@@ -316,9 +350,10 @@ export function ConferenceRoom({
         }
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
+        console.log(`[Audio] answer sent → ${peerId}`);
         ch.send({ type: 'broadcast', event: 'audio_answer',
           payload: { from: String(currentUser?.id), to: peerId, sdp: answer } });
-      } catch { /* ignore */ }
+      } catch (e) { console.warn(`[Audio] audio_offer handler error:`, e); }
     })
     .on('broadcast', { event: 'audio_answer' }, async ({ payload }: any) => {
       if (payload?.to !== String(currentUser?.id)) return;
@@ -1231,10 +1266,18 @@ export function ConferenceRoom({
                       {p.position || (p.role === "gip" ? "ГИП" : p.role === "lead" ? "Рук. отдела" : "Инженер")}
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 3, flexShrink: 0, fontSize: 13 }}>
+                  <div style={{ display: "flex", gap: 3, flexShrink: 0, fontSize: 13, alignItems: 'center' }}>
                     <span style={{ transform: p.isTalking ? 'scale(1.2)' : 'scale(1)', transition: 'transform 0.2s' }}>
                       {p.micEnabled ? (p.isTalking ? "🎤" : "🎙️") : "🔇"}
                     </span>
+                    {/* Audio connection state indicator */}
+                    {String(p.id) !== String(currentUser?.id) && p.micEnabled && (() => {
+                      const state = audioPCStates[String(p.id)];
+                      if (!state) return null;
+                      const color = state === 'connected' ? '#10B981' : state === 'connecting' ? '#F59E0B' : state === 'failed' ? '#EF4444' : '#6B7280';
+                      const label = state === 'connected' ? '●' : state === 'connecting' ? '◌' : state === 'failed' ? '✕' : '○';
+                      return <span title={`Аудио: ${state}`} style={{ fontSize: 9, color, fontWeight: 700 }}>{label}</span>;
+                    })()}
                     {p.screenSharing && <span>🖥️</span>}
                   </div>
                 </div>
