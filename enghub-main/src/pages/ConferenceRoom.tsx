@@ -814,12 +814,18 @@ export function ConferenceRoom({
           {isInRoom && (
             <>
               {/* Микрофон */}
-              <button onClick={toggleMic} title={micEnabled ? "Выключить микрофон" : "Включить микрофон"} style={{
-                width: 38, height: 38, borderRadius: 10, border: "none", cursor: "pointer",
-                background: micEnabled ? "#10B98120" : "#EF444420",
-                color: micEnabled ? "#10B981" : "#EF4444",
-                fontSize: 17, display: "flex", alignItems: "center", justifyContent: "center"
-              }}>{micEnabled ? "🎤" : "🔇"}</button>
+              <button
+                onClick={toggleMic}
+                title={micEnabled ? "Выключить микрофон" : "Включить микрофон"}
+                className={micEnabled && isTalking ? 'avatar-talking' : ''}
+                style={{
+                  width: 38, height: 38, borderRadius: 10, border: "none", cursor: "pointer",
+                  background: micEnabled && isTalking ? "#10B98140" : micEnabled ? "#10B98120" : "#EF444420",
+                  color: micEnabled ? "#10B981" : "#EF4444",
+                  fontSize: 17, display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "background 0.2s"
+                }}
+              >{micEnabled ? (isTalking ? "🎤" : "🎙️") : "🔇"}</button>
 
               {/* Демонстрация */}
               <button onClick={toggleScreenShare} title={screenSharing ? "Остановить демонстрацию" : "Демонстрация экрана"} style={{
@@ -1195,19 +1201,24 @@ export function ConferenceRoom({
                   Зал пуст.<br />Нажмите «Войти в зал»
                 </div>
               )}
-              {conferenceParticipants.map((p: any) => (
+              {conferenceParticipants.map((p: any) => {
+                // For current user use instant local state; for others use presence
+                const isSelf = String(p.id) === String(currentUser?.id);
+                const effectiveTalking = isSelf ? isTalking : p.isTalking;
+                const effectiveMic = isSelf ? micEnabled : p.micEnabled;
+                return (
                 <div key={p.id} style={{
                   display: "flex", alignItems: "center", gap: 10,
                   padding: "8px 14px", borderRadius: 8, margin: "0 6px",
                   cursor: "default",
-                  background: p.isTalking ? `rgba(16, 185, 129, 0.08)` : "transparent",
+                  background: effectiveTalking ? `rgba(16, 185, 129, 0.08)` : "transparent",
                   transition: "all 0.3s ease"
                 }}
-                onMouseEnter={e => { if(!p.isTalking) e.currentTarget.style.background = C.surface2 }}
-                onMouseLeave={e => { if(!p.isTalking) e.currentTarget.style.background = "transparent" }}
+                onMouseEnter={e => { if(!effectiveTalking) e.currentTarget.style.background = C.surface2 }}
+                onMouseLeave={e => { if(!effectiveTalking) e.currentTarget.style.background = "transparent" }}
                 >
                   <div
-                    className={p.isTalking ? 'avatar-talking' : ''}
+                    className={effectiveTalking ? 'avatar-talking' : ''}
                     style={{
                       width: 34, height: 34, borderRadius: 9, flexShrink: 0,
                       background: `linear-gradient(135deg, ${roleColors[p.role] || C.accent}, ${roleColors[p.role] || C.accent}90)`,
@@ -1219,7 +1230,7 @@ export function ConferenceRoom({
                     <div style={{ position: "absolute", bottom: -1, right: -1, width: 10, height: 10, borderRadius: "50%", background: "#10B981", border: `2px solid ${C.bg}` }} />
                   </div>
                   <div style={{ flex: 1, overflow: "hidden" }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: p.isTalking ? "#10B981" : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: effectiveTalking ? "#10B981" : C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {p.full_name?.split(" ").slice(0, 2).join(" ")}
                     </div>
                     <div style={{ fontSize: 10, color: C.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -1228,13 +1239,9 @@ export function ConferenceRoom({
                   </div>
                   <div style={{ display: "flex", gap: 3, flexShrink: 0, fontSize: 13, alignItems: 'center' }}>
                     {(() => {
-                      // For the current user, use local React state (instant) instead of presence (has lag)
-                      const isSelf = String(p.id) === String(currentUser?.id);
-                      const mic = isSelf ? micEnabled : p.micEnabled;
-                      const talking = isSelf ? isTalking : p.isTalking;
                       return (
-                        <span style={{ transform: talking ? 'scale(1.2)' : 'scale(1)', transition: 'transform 0.2s' }}>
-                          {mic ? (talking ? "🎤" : "🎙️") : "🔇"}
+                        <span style={{ transform: effectiveTalking ? 'scale(1.2)' : 'scale(1)', transition: 'transform 0.2s' }}>
+                          {effectiveMic ? (effectiveTalking ? "🎤" : "🎙️") : "🔇"}
                         </span>
                       );
                     })()}
@@ -1245,7 +1252,8 @@ export function ConferenceRoom({
                     {p.screenSharing && <span>🖥️</span>}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -1342,29 +1350,34 @@ export function ConferenceRoom({
                     <span style={{ fontSize: 42, display: "block", marginBottom: 10 }}>👥</span>
                     Никого нет в зале
                   </div>
-                ) : conferenceParticipants.map((p: any) => (
+                ) : conferenceParticipants.map((p: any) => {
+                  const isSelf = String(p.id) === String(currentUser?.id);
+                  const et = isSelf ? isTalking : p.isTalking;
+                  const em = isSelf ? micEnabled : p.micEnabled;
+                  return (
                   <div key={p.id} className="card" style={{
                     padding: "14px 18px", marginBottom: 10, display: "flex", alignItems: "center", gap: 14,
-                    border: p.isTalking ? `1px solid #10B981` : `1px solid ${C.border}`,
-                    boxShadow: p.isTalking ? `0 0 15px rgba(16, 185, 129, 0.15)` : 'none'
+                    border: et ? `1px solid #10B981` : `1px solid ${C.border}`,
+                    boxShadow: et ? `0 0 15px rgba(16, 185, 129, 0.15)` : 'none'
                   }}>
                     <div
-                      className={p.isTalking ? 'avatar-talking' : ''}
+                      className={et ? 'avatar-talking' : ''}
                       style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${roleColors[p.role] || C.accent}, ${roleColors[p.role] || C.accent}90)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "#fff", position: "relative" }}
                     >
                       {getInitials(p.full_name)}
                       <div style={{ position: "absolute", bottom: -2, right: -2, width: 12, height: 12, borderRadius: "50%", background: "#10B981", border: `3px solid ${C.surface}` }} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: p.isTalking ? "#10B981" : C.text }}>{p.full_name}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: et ? "#10B981" : C.text }}>{p.full_name}</div>
                       <div style={{ fontSize: 12, color: C.textMuted }}>{p.position || (p.role === "gip" ? "Главный Инженер Проекта" : p.role === "lead" ? "Руководитель отдела" : "Инженер")}</div>
                     </div>
                     <div style={{ display: "flex", gap: 6, fontSize: 18 }}>
-                      <span>{p.micEnabled ? (p.isTalking ? "🎤" : "🎙️") : "🔇"}</span>
+                      <span>{em ? (et ? "🎤" : "🎙️") : "🔇"}</span>
                       {p.screenSharing && <span>🖥️</span>}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
