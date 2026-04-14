@@ -70,10 +70,8 @@ export function ConferenceRoom({
   const screenSharingRef = useRef(false);
   const requestedFromRef = useRef<string | null>(null); // set once per sharer, never reset by presence heartbeat
   const hasRemoteRef = useRef(false); // sticky: stays true until explicit stop/disconnect
-  // ── Jitsi Meet (voice audio) ──
-  const jitsiApiRef = useRef<any>(null);
-  const jitsiContainerRef = useRef<HTMLDivElement>(null);
-  const [jitsiReady, setJitsiReady] = useState(false);
+  // ── Jitsi Meet voice panel ──
+  const [showVoicePanel, setShowVoicePanel] = useState(false);
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
@@ -238,104 +236,6 @@ export function ConferenceRoom({
     };
   }, [isInRoom, project?.id]); // eslint-disable-line
 
-  // ── Jitsi Meet — voice audio ──
-  // Loads Jitsi External API once, creates a hidden audio-only meeting per project.
-  // The mic button calls api.executeCommand('toggleAudio') — no custom WebRTC needed.
-  useEffect(() => {
-    if (!isInRoom || !project?.id) {
-      jitsiApiRef.current?.dispose();
-      jitsiApiRef.current = null;
-      setJitsiReady(false);
-      return;
-    }
-
-    const roomName = `enghub-project-${String(project.id).replace(/[^a-zA-Z0-9]/g, '')}`;
-
-    const initJitsi = () => {
-      if (!jitsiContainerRef.current || !(window as any).JitsiMeetExternalAPI) return;
-      if (jitsiApiRef.current) return; // already running
-
-      const api = new (window as any).JitsiMeetExternalAPI('meet.jit.si', {
-        roomName,
-        parentNode: jitsiContainerRef.current,
-        width: '100%',
-        height: '100%',
-        userInfo: {
-          displayName: currentUser?.full_name || currentUser?.email || 'Участник',
-          email: currentUser?.email || '',
-        },
-        configOverwrite: {
-          startWithAudioMuted: true,   // user must click mic to unmute
-          startWithVideoMuted: true,
-          disableDeepLinking: true,
-          prejoinPageEnabled: false,
-          disableInviteFunctions: true,
-          enableNoisyMicDetection: false,
-          disableAP: false,
-          enableOpusRed: true,
-        },
-        interfaceConfigOverwrite: {
-          TOOLBAR_BUTTONS: [],
-          SHOW_JITSI_WATERMARK: false,
-          SHOW_WATERMARK_FOR_GUESTS: false,
-          HIDE_INVITE_MORE_HEADER: true,
-          DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-          DISABLE_VIDEO_BACKGROUND: true,
-        },
-      });
-
-      jitsiApiRef.current = api;
-
-      api.addEventListeners({
-        // Sync mic state back to our presence
-        audioMuteStatusChanged: ({ muted }: { muted: boolean }) => {
-          const enabled = !muted;
-          setMicEnabled(enabled);
-          onPresenceUpdate({ micEnabled: enabled, screenSharing, isTalking: false });
-        },
-        // Show talking indicator when current user is dominant speaker
-        dominantSpeakerChanged: ({ id }: { id: string }) => {
-          try {
-            const myId = api.getMyUserId?.();
-            const talking = !!myId && id === myId;
-            setIsTalking(talking);
-            isTalkingRef.current = talking;
-            if (talking) onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: true });
-          } catch { /* ignore */ }
-        },
-        videoConferenceJoined: () => {
-          setJitsiReady(true);
-        },
-      });
-    };
-
-    if ((window as any).JitsiMeetExternalAPI) {
-      initJitsi();
-    } else {
-      const existing = document.getElementById('jitsi-external-api');
-      if (!existing) {
-        const script = document.createElement('script');
-        script.id = 'jitsi-external-api';
-        script.src = 'https://meet.jit.si/external_api.js';
-        script.async = true;
-        script.onload = initJitsi;
-        document.head.appendChild(script);
-      } else {
-        // Script tag exists but API not ready yet — poll briefly
-        const poll = setInterval(() => {
-          if ((window as any).JitsiMeetExternalAPI) { clearInterval(poll); initJitsi(); }
-        }, 200);
-        return () => clearInterval(poll);
-      }
-    }
-
-    return () => {
-      jitsiApiRef.current?.dispose();
-      jitsiApiRef.current = null;
-      setJitsiReady(false);
-    };
-  }, [isInRoom, project?.id]); // eslint-disable-line
-
   // ── Send WebRTC offers to all participants when screen sharing starts/stops ──
   useEffect(() => {
     screenSharingRef.current = screenSharing;
@@ -433,8 +333,7 @@ export function ConferenceRoom({
     setIsInRoom(false);
     setMicEnabled(false);
     setScreenSharing(false);
-    setJitsiReady(false);
-    // Jitsi disposes itself via useEffect cleanup when isInRoom becomes false
+    setShowVoicePanel(false);
     screenStreamRef.current?.getTracks().forEach(t => t.stop());
     screenStreamRef.current = null;
     await onLeave();
@@ -443,17 +342,12 @@ export function ConferenceRoom({
   const [isTalking, setIsTalking] = useState(false);
   const isTalkingRef = useRef(false);
 
-  // isTalking is updated via Jitsi dominantSpeakerChanged event in the Jitsi useEffect
-
   const toggleMic = async () => {
-    const api = jitsiApiRef.current;
-    if (!api) {
-      // Jitsi not ready yet — show a hint
-      onSendMsg("Голосовая связь ещё подключается, подождите секунду...", "text");
-      return;
-    }
-    // Toggle audio in Jitsi — audioMuteStatusChanged callback will update micEnabled state
-    api.executeCommand('toggleAudio');
+    if (!isInRoom) return;
+    const newMic = !micEnabled;
+    setMicEnabled(newMic);
+    setShowVoicePanel(newMic);
+    await onPresenceUpdate({ micEnabled: newMic, screenSharing, isTalking: false });
   };
 
   const toggleScreenShare = async () => {
@@ -652,39 +546,22 @@ export function ConferenceRoom({
         border: `1px solid ${C.border}`
       }}
     >
-      {/* ── Jitsi Meet voice panel ──
-          Visible as a small floating panel so browsers don't throttle audio.
-          Shown only when in room; minimised to a status badge when mic is off. */}
-      {isInRoom && (
+      {/* ── Jitsi Meet voice panel (iframe) — shown when mic is enabled ── */}
+      {showVoicePanel && isInRoom && project?.id && (
         <div style={{
-          position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8,
-          background: 'rgba(15,15,20,0.92)', border: `1px solid ${jitsiReady ? '#10B98160' : '#F59E0B60'}`,
-          borderRadius: 20, padding: '6px 14px 6px 10px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
-          fontSize: 12, color: '#fff', fontWeight: 600,
-          pointerEvents: 'none', // just a status badge; mic button is in header
+          position: 'fixed', bottom: 70, right: 20, zIndex: 2000,
+          width: 420, height: 300, borderRadius: 14, overflow: 'hidden',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+          border: '1px solid rgba(255,255,255,0.1)',
         }}>
-          <span style={{
-            width: 8, height: 8, borderRadius: '50%',
-            background: jitsiReady ? '#10B981' : '#F59E0B',
-            display: 'inline-block',
-            animation: jitsiReady ? 'none' : 'pulse 1.5s infinite',
-          }} />
-          {jitsiReady
-            ? (micEnabled ? '🎤 Голосовая связь активна' : '🔇 Голосовая связь подключена')
-            : '⏳ Подключение к голосовой связи...'}
+          <iframe
+            src={`https://meet.jit.si/enghub${String(project.id).replace(/[^a-zA-Z0-9]/g, '')}#config.startWithVideoMuted=true&config.prejoinPageEnabled=false&config.disableDeepLinking=true&userInfo.displayName=${encodeURIComponent(currentUser?.full_name || 'User')}`}
+            allow="camera; microphone; fullscreen; display-capture; autoplay"
+            style={{ width: '100%', height: '100%', border: 'none' }}
+            title="Голосовая связь"
+          />
         </div>
       )}
-      {/* Hidden Jitsi iframe container — must have nonzero size and not display:none */}
-      <div
-        ref={jitsiContainerRef}
-        style={{
-          position: 'fixed', bottom: -300, right: -500,
-          width: 320, height: 240,
-          overflow: 'hidden', zIndex: 0,
-        }}
-      />
 
       {/* ===== HEADER ===== */}
       <div className="conf-header" style={{
@@ -1159,11 +1036,9 @@ export function ConferenceRoom({
                         </span>
                       );
                     })()}
-                    {/* Jitsi ready indicator for self */}
-                    {String(p.id) === String(currentUser?.id) && isInRoom && (
-                      <span title={jitsiReady ? 'Голосовая связь готова' : 'Подключение...'} style={{ fontSize: 9, color: jitsiReady ? '#10B981' : '#F59E0B' }}>
-                        {jitsiReady ? '●' : '◌'}
-                      </span>
+                    {/* Voice panel indicator for self */}
+                    {String(p.id) === String(currentUser?.id) && isInRoom && showVoicePanel && (
+                      <span title="Голосовая связь активна" style={{ fontSize: 9, color: '#10B981' }}>●</span>
                     )}
                     {p.screenSharing && <span>🖥️</span>}
                   </div>
