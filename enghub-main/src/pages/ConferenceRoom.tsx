@@ -234,14 +234,15 @@ export function ConferenceRoom({
       if (payload?.to !== String(currentUser?.id)) return;
       const myId = String(currentUser?.id);
       const fromId = String(payload.from);
+      console.log('[Audio] got offer from', fromId);
 
-      // Glare resolution: both sides sent an offer simultaneously.
-      // Lower ID keeps their offer; higher ID backs off and accepts the incoming one.
       const existing = audioPeersRef.current.get(fromId);
       if (existing) {
         if (existing.signalingState === 'have-local-offer' && myId < fromId) {
-          return; // We win — wait for them to back off
+          console.log('[Audio] glare: we win, ignoring their offer');
+          return;
         }
+        console.log('[Audio] glare: we back off, closing our PC');
         existing.close();
         audioPeersRef.current.delete(fromId);
       }
@@ -254,8 +255,12 @@ export function ConferenceRoom({
         if (candidate) ch.send({ type: 'broadcast', event: 'audio_ice',
           payload: { from: myId, to: fromId, candidate: candidate.toJSON() } });
       };
+      pc.onconnectionstatechange = () => {
+        console.log('[Audio] answerer connection state →', pc.connectionState, 'peer', fromId);
+      };
       pc.ontrack = (e) => {
         const stream = e.streams[0] ?? new MediaStream([e.track]);
+        console.log('[Audio] got remote track from', fromId, 'stream tracks:', stream.getTracks().length);
         setRemoteAudioStreams(prev => new Map(prev).set(fromId, stream));
       };
       if (audioStreamRef.current) {
@@ -263,28 +268,30 @@ export function ConferenceRoom({
       }
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-        // Flush any ICE candidates that arrived before remote description
         const buf = audioIceBufRef.current.get(fromId) || [];
         for (const c of buf) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch {} }
         audioIceBufRef.current.delete(fromId);
-
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
+        console.log('[Audio] sent answer to', fromId);
         ch.send({ type: 'broadcast', event: 'audio_answer',
           payload: { from: myId, to: fromId, sdp: answer } });
-      } catch { /* ignore */ }
+      } catch (err) { console.error('[Audio] offer handler error', err); }
     })
     .on('broadcast', { event: 'audio_answer' }, async ({ payload }: any) => {
       if (payload?.to !== String(currentUser?.id)) return;
+      console.log('[Audio] got answer from', payload.from);
       const pc = audioPeersRef.current.get(payload.from);
       if (pc && pc.signalingState === 'have-local-offer') {
         try {
           await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-          // Flush buffered ICE candidates
           const buf = audioIceBufRef.current.get(payload.from) || [];
           for (const c of buf) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch {} }
           audioIceBufRef.current.delete(payload.from);
-        } catch { /* ignore */ }
+          console.log('[Audio] answer applied, ICE buf flushed');
+        } catch (err) { console.error('[Audio] answer handler error', err); }
+      } else {
+        console.warn('[Audio] ignoring answer, state=', pc?.signalingState);
       }
     })
     .on('broadcast', { event: 'audio_ice' }, async ({ payload }: any) => {
@@ -294,7 +301,6 @@ export function ConferenceRoom({
       if (pc.remoteDescription) {
         try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch {}
       } else {
-        // Buffer until remote description is set
         const buf = audioIceBufRef.current.get(payload.from) || [];
         buf.push(payload.candidate);
         audioIceBufRef.current.set(payload.from, buf);
@@ -302,6 +308,7 @@ export function ConferenceRoom({
     })
     .on('broadcast', { event: 'audio_stop' }, ({ payload }: any) => {
       if (payload?.from === String(currentUser?.id)) return;
+      console.log('[Audio] peer stopped mic', payload.from);
       const pc = audioPeersRef.current.get(payload.from);
       if (pc) { pc.close(); audioPeersRef.current.delete(payload.from); }
       audioIceBufRef.current.delete(payload.from);
@@ -462,16 +469,17 @@ export function ConferenceRoom({
       // ── Turn ON mic ──
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        console.log('[Audio] mic acquired, tracks:', stream.getAudioTracks().length);
         audioStreamRef.current = stream;
         setMicEnabled(true);
         await onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
 
-        // Send audio offer to every other participant currently in the room
         const ch = broadcastRef.current?.ch;
-        if (!ch) return;
+        if (!ch) { console.warn('[Audio] no channel yet'); return; }
         const others = conferenceParticipantsRef.current.filter(
           (p: any) => String(p.id) !== String(currentUser?.id)
         );
+        console.log('[Audio] sending offers to', others.length, 'peers');
         for (const participant of others) {
           const peerId = String(participant.id);
           const old = audioPeersRef.current.get(peerId);
@@ -485,19 +493,25 @@ export function ConferenceRoom({
             if (candidate) ch.send({ type: 'broadcast', event: 'audio_ice',
               payload: { from: String(currentUser?.id), to: peerId, candidate: candidate.toJSON() } });
           };
+          pc.onconnectionstatechange = () => {
+            console.log('[Audio] offerer connection state →', pc.connectionState, 'peer', peerId);
+          };
           pc.ontrack = (e) => {
             const s = e.streams[0] ?? new MediaStream([e.track]);
+            console.log('[Audio] got remote track from', peerId);
             setRemoteAudioStreams(prev => new Map(prev).set(peerId, s));
           };
           stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
           try {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
+            console.log('[Audio] sent offer to', peerId);
             ch.send({ type: 'broadcast', event: 'audio_offer',
               payload: { from: String(currentUser?.id), to: peerId, sdp: offer } });
-          } catch { /* ignore */ }
+          } catch (err) { console.error('[Audio] offer error', err); }
         }
-      } catch {
+      } catch (err) {
+        console.error('[Audio] getUserMedia failed', err);
         onSendMsg("Не удалось получить доступ к микрофону. Разрешите доступ в настройках браузера.", "text");
       }
     }
