@@ -398,6 +398,47 @@ export function ConferenceRoom({
   // NOTE: remote stream is cleared by WebRTC 'stop' event / onconnectionstatechange — NOT by presence,
   // because presence heartbeats can briefly show screenSharing=false and cause a flicker frame.
 
+  // ── Voice activity detection — pulses avatar when mic is active ──
+  useEffect(() => {
+    if (!micEnabled || !audioStreamRef.current) return;
+    let ctx: AudioContext | null = null;
+    let animId = 0;
+    let lastSent = 0;
+    try {
+      ctx = new AudioContext();
+      const source = ctx.createMediaStreamSource(audioStreamRef.current);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      const data = new Uint8Array(analyser.frequencyBinCount);
+
+      const tick = () => {
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((s, v) => s + v, 0) / data.length;
+        const talking = avg > 8; // threshold: ~8/255, filters silence
+        if (talking !== isTalkingRef.current) {
+          isTalkingRef.current = talking;
+          setIsTalking(talking);
+          // Throttle presence updates to max 1/sec
+          const now = Date.now();
+          if (now - lastSent > 1000) {
+            lastSent = now;
+            onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: talking });
+          }
+        }
+        animId = requestAnimationFrame(tick);
+      };
+      animId = requestAnimationFrame(tick);
+    } catch { /* ignore — unsupported */ }
+
+    return () => {
+      cancelAnimationFrame(animId);
+      ctx?.close();
+      isTalkingRef.current = false;
+      setIsTalking(false);
+    };
+  }, [micEnabled]); // eslint-disable-line
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs.length]);
