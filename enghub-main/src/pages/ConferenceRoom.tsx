@@ -70,10 +70,16 @@ export function ConferenceRoom({
   const screenSharingRef = useRef(false);
   const requestedFromRef = useRef<string | null>(null); // set once per sharer, never reset by presence heartbeat
   const hasRemoteRef = useRef(false); // sticky: stays true until explicit stop/disconnect
-  // ── Jitsi Meet voice panel ──
-  const [showVoicePanel, setShowVoicePanel] = useState(false);
+  // ── Audio WebRTC ──
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const audioPeersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const [remoteAudioStreams, setRemoteAudioStreams] = useState<Map<string, MediaStream>>(new Map());
+  const conferenceParticipantsRef = useRef<any[]>([]);
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+
+  // ── Keep participantsRef fresh for use inside async callbacks ──
+  useEffect(() => { conferenceParticipantsRef.current = conferenceParticipants; }, [conferenceParticipants]);
 
   // ── Attach local screen stream to video element ──
   useEffect(() => {
@@ -221,6 +227,54 @@ export function ConferenceRoom({
       if (!screenSharingRef.current) return;
       setRemoteCursor({ x: payload.x, y: payload.y });
     })
+    // ── Audio WebRTC ──
+    .on('broadcast', { event: 'audio_offer' }, async ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      const existing = audioPeersRef.current.get(payload.from);
+      if (existing) { existing.close(); audioPeersRef.current.delete(payload.from); }
+
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+      audioPeersRef.current.set(payload.from, pc);
+
+      pc.onicecandidate = ({ candidate }) => {
+        if (candidate) ch.send({ type: 'broadcast', event: 'audio_ice',
+          payload: { from: String(currentUser?.id), to: payload.from, candidate: candidate.toJSON() } });
+      };
+      pc.ontrack = (e) => {
+        if (e.streams[0]) setRemoteAudioStreams(prev => new Map(prev).set(payload.from, e.streams[0]));
+      };
+      // Include our own mic track so the other side hears us too
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, audioStreamRef.current!));
+      }
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        ch.send({ type: 'broadcast', event: 'audio_answer',
+          payload: { from: String(currentUser?.id), to: payload.from, sdp: answer } });
+      } catch { /* ignore */ }
+    })
+    .on('broadcast', { event: 'audio_answer' }, async ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      const pc = audioPeersRef.current.get(payload.from);
+      if (pc && pc.signalingState !== 'stable') {
+        try { await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch { /* ignore */ }
+      }
+    })
+    .on('broadcast', { event: 'audio_ice' }, async ({ payload }: any) => {
+      if (payload?.to !== String(currentUser?.id)) return;
+      const pc = audioPeersRef.current.get(payload.from);
+      if (pc && payload.candidate) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch { /* ignore */ }
+      }
+    })
+    .on('broadcast', { event: 'audio_stop' }, ({ payload }: any) => {
+      if (payload?.from === String(currentUser?.id)) return;
+      const pc = audioPeersRef.current.get(payload.from);
+      if (pc) { pc.close(); audioPeersRef.current.delete(payload.from); }
+      setRemoteAudioStreams(prev => { const n = new Map(prev); n.delete(payload.from); return n; });
+    })
     .subscribe((status: string) => {
       if (status === 'SUBSCRIBED') {
         broadcastRef.current = { ch, supa };
@@ -230,7 +284,12 @@ export function ConferenceRoom({
     return () => {
       peerConnectionsRef.current.forEach(pc => pc.close());
       peerConnectionsRef.current.clear();
+      audioPeersRef.current.forEach(pc => pc.close());
+      audioPeersRef.current.clear();
+      audioStreamRef.current?.getTracks().forEach(t => t.stop());
+      audioStreamRef.current = null;
       setRemoteStream(null);
+      setRemoteAudioStreams(new Map());
       supa.removeChannel(ch);
       broadcastRef.current = null;
     };
@@ -330,12 +389,20 @@ export function ConferenceRoom({
   };
 
   const leaveRoom = async () => {
+    // Stop mic
+    broadcastRef.current?.ch?.send({ type: 'broadcast', event: 'audio_stop',
+      payload: { from: String(currentUser?.id) } });
+    audioStreamRef.current?.getTracks().forEach(t => t.stop());
+    audioStreamRef.current = null;
+    audioPeersRef.current.forEach(pc => pc.close());
+    audioPeersRef.current.clear();
+    setRemoteAudioStreams(new Map());
+    // Stop screen
+    screenStreamRef.current?.getTracks().forEach(t => t.stop());
+    screenStreamRef.current = null;
     setIsInRoom(false);
     setMicEnabled(false);
     setScreenSharing(false);
-    setShowVoicePanel(false);
-    screenStreamRef.current?.getTracks().forEach(t => t.stop());
-    screenStreamRef.current = null;
     await onLeave();
   };
 
@@ -344,10 +411,61 @@ export function ConferenceRoom({
 
   const toggleMic = async () => {
     if (!isInRoom) return;
-    const newMic = !micEnabled;
-    setMicEnabled(newMic);
-    setShowVoicePanel(newMic);
-    await onPresenceUpdate({ micEnabled: newMic, screenSharing, isTalking: false });
+
+    if (micEnabled) {
+      // ── Turn OFF mic ──
+      broadcastRef.current?.ch?.send({ type: 'broadcast', event: 'audio_stop',
+        payload: { from: String(currentUser?.id) } });
+      audioStreamRef.current?.getTracks().forEach(t => t.stop());
+      audioStreamRef.current = null;
+      audioPeersRef.current.forEach(pc => pc.close());
+      audioPeersRef.current.clear();
+      setRemoteAudioStreams(new Map());
+      setMicEnabled(false);
+      setIsTalking(false);
+      isTalkingRef.current = false;
+      await onPresenceUpdate({ micEnabled: false, screenSharing, isTalking: false });
+    } else {
+      // ── Turn ON mic ──
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioStreamRef.current = stream;
+        setMicEnabled(true);
+        await onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
+
+        // Send audio offer to every other participant currently in the room
+        const ch = broadcastRef.current?.ch;
+        if (!ch) return;
+        const others = conferenceParticipantsRef.current.filter(
+          (p: any) => String(p.id) !== String(currentUser?.id)
+        );
+        for (const participant of others) {
+          const peerId = String(participant.id);
+          const old = audioPeersRef.current.get(peerId);
+          if (old) { old.close(); audioPeersRef.current.delete(peerId); }
+
+          const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+          audioPeersRef.current.set(peerId, pc);
+
+          pc.onicecandidate = ({ candidate }) => {
+            if (candidate) ch.send({ type: 'broadcast', event: 'audio_ice',
+              payload: { from: String(currentUser?.id), to: peerId, candidate: candidate.toJSON() } });
+          };
+          pc.ontrack = (e) => {
+            if (e.streams[0]) setRemoteAudioStreams(prev => new Map(prev).set(peerId, e.streams[0]));
+          };
+          stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
+          try {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            ch.send({ type: 'broadcast', event: 'audio_offer',
+              payload: { from: String(currentUser?.id), to: peerId, sdp: offer } });
+          } catch { /* ignore */ }
+        }
+      } catch {
+        onSendMsg("Не удалось получить доступ к микрофону. Разрешите доступ в настройках браузера.", "text");
+      }
+    }
   };
 
   const toggleScreenShare = async () => {
@@ -546,22 +664,16 @@ export function ConferenceRoom({
         border: `1px solid ${C.border}`
       }}
     >
-      {/* ── Jitsi Meet voice panel (iframe) — shown when mic is enabled ── */}
-      {showVoicePanel && isInRoom && project?.id && (
-        <div style={{
-          position: 'fixed', bottom: 70, right: 20, zIndex: 2000,
-          width: 420, height: 300, borderRadius: 14, overflow: 'hidden',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
-          border: '1px solid rgba(255,255,255,0.1)',
-        }}>
-          <iframe
-            src={`https://meet.jit.si/enghub${String(project.id).replace(/[^a-zA-Z0-9]/g, '')}#config.startWithVideoMuted=true&config.prejoinPageEnabled=false&config.disableDeepLinking=true&userInfo.displayName=${encodeURIComponent(currentUser?.full_name || 'User')}`}
-            allow="camera; microphone; fullscreen; display-capture; autoplay"
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            title="Голосовая связь"
-          />
-        </div>
-      )}
+      {/* ── Remote audio streams — invisible elements, one per remote peer ── */}
+      {Array.from(remoteAudioStreams.entries()).map(([peerId, stream]) => (
+        <audio
+          key={peerId}
+          autoPlay
+          playsInline
+          ref={(el) => { if (el && el.srcObject !== stream) { el.srcObject = stream; el.play().catch(() => {}); } }}
+          style={{ display: 'none' }}
+        />
+      ))}
 
       {/* ===== HEADER ===== */}
       <div className="conf-header" style={{
@@ -1036,9 +1148,9 @@ export function ConferenceRoom({
                         </span>
                       );
                     })()}
-                    {/* Voice panel indicator for self */}
-                    {String(p.id) === String(currentUser?.id) && isInRoom && showVoicePanel && (
-                      <span title="Голосовая связь активна" style={{ fontSize: 9, color: '#10B981' }}>●</span>
+                    {/* Mic active indicator for self */}
+                    {String(p.id) === String(currentUser?.id) && isInRoom && micEnabled && (
+                      <span title="Микрофон включён" style={{ fontSize: 9, color: '#10B981' }}>●</span>
                     )}
                     {p.screenSharing && <span>🖥️</span>}
                   </div>
