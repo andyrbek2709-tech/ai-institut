@@ -277,6 +277,8 @@ export default function App() {
   }, [rawConferenceScreenActive]); // eslint-disable-line
   const presenceChannelRef = useRef<any>(null);
   const activeConferenceProjectRef = useRef<any>(null); // { id, name } of current conference project
+  // Track which user IDs are currently known in the conference — used to debounce join/leave notifications
+  const knownParticipantIdsRef = useRef<Set<string>>(new Set());
   const sessionId = useRef<string>(Math.random().toString(36).slice(2) + Date.now().toString(36));
   const sessionChannelRef = useRef<any>(null);
 
@@ -766,12 +768,14 @@ export default function App() {
     })
     .on('presence', { event: 'join' }, ({ newPresences }: any) => {
       const u = newPresences?.[0];
-      // Only notify if user wasn't already in the participant list (prevents heartbeat spam)
       if (u && String(u.id) !== String(currentUserData.id)) {
-        const alreadyPresent = conferenceParticipants.some((p: any) => String(p.id) === String(u.id));
-        if (!alreadyPresent) {
+        const uid = String(u.id);
+        // Only notify on first real join — ref is stable, no stale closure problem
+        if (!knownParticipantIdsRef.current.has(uid)) {
+          knownParticipantIdsRef.current.add(uid);
           addNotification(`👤 ${u.full_name || 'Участник'} зашёл в совещание`, 'info');
         }
+        // Always add to known set (presence update re-fires join — just update known)
       }
       // Re-fetch state on join to ensure sync
       const state = ch.presenceState<any>();
@@ -789,15 +793,18 @@ export default function App() {
     })
     .on('presence', { event: 'leave' }, ({ leftPresences }: any) => {
       const u = leftPresences?.[0];
-      // Verify user is truly gone (not just a heartbeat blip) before notifying
       if (u && String(u.id) !== String(currentUserData.id)) {
+        const uid = String(u.id);
+        // Wait 2s: if it's just a presence update (track() fires leave+join), user will rejoin
         setTimeout(() => {
           const state = ch.presenceState<any>();
-          const stillPresent = Object.values(state).flat().some((s: any) => String(s.id) === String(u.id));
+          const stillPresent = Object.values(state).flat().some((s: any) => String(s.id) === uid);
           if (!stillPresent) {
+            knownParticipantIdsRef.current.delete(uid); // allow notification on next real join
             addNotification(`👤 ${u.full_name || 'Участник'} вышел из совещания`, 'info');
           }
-        }, 2000); // wait 2s — if user reconnects (heartbeat), no notification
+          // else: user came back (was a track() update) — no notification, keep in knownIds
+        }, 2000);
       }
       // Re-fetch state on leave to ensure sync
       const state = ch.presenceState<any>();
@@ -838,19 +845,34 @@ export default function App() {
       presenceChannelRef.current = null;
     }
     activeConferenceProjectRef.current = null;
+    knownParticipantIdsRef.current.clear();
+    pendingPresenceDataRef.current = {};
+    clearTimeout(pendingPresenceRef.current);
     setConferenceParticipants([]);
   };
 
+  // Debounce presence updates: each ch.track() call fires leave+join on ALL other clients.
+  // Batching rapid calls (mic toggle, isTalking) into one prevents notification spam.
+  const pendingPresenceRef = useRef<any>(null);
+  const pendingPresenceDataRef = useRef<any>({});
+
   const updatePresence = async (updates: any) => {
     if (!presenceChannelRef.current || !currentUserData) return;
-    const { ch } = presenceChannelRef.current;
-    await ch.track({
-      id: currentUserData.id,
-      full_name: currentUserData.full_name,
-      role: currentUserData.role,
-      position: currentUserData.position,
-      ...updates
-    });
+    // Merge updates so rapid calls accumulate rather than overwrite
+    pendingPresenceDataRef.current = { ...pendingPresenceDataRef.current, ...updates };
+    clearTimeout(pendingPresenceRef.current);
+    pendingPresenceRef.current = setTimeout(async () => {
+      if (!presenceChannelRef.current) return;
+      const { ch } = presenceChannelRef.current;
+      await ch.track({
+        id: currentUserData.id,
+        full_name: currentUserData.full_name,
+        role: currentUserData.role,
+        position: currentUserData.position,
+        ...pendingPresenceDataRef.current
+      });
+      pendingPresenceDataRef.current = {};
+    }, 800); // 800ms debounce — batches rapid mic/talking updates into one track() call
   };
 
   const createProject = async () => {

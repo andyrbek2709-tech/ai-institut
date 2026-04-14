@@ -652,16 +652,37 @@ export function ConferenceRoom({
         border: `1px solid ${C.border}`
       }}
     >
-      {/* ── Jitsi Meet container — positioned off-screen, audio-only ──
-          Must stay in DOM (not display:none) so browser doesn't throttle audio.
-          Opacity 0 + pointer-events none makes it invisible but fully functional. */}
+      {/* ── Jitsi Meet voice panel ──
+          Visible as a small floating panel so browsers don't throttle audio.
+          Shown only when in room; minimised to a status badge when mic is off. */}
+      {isInRoom && (
+        <div style={{
+          position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8,
+          background: 'rgba(15,15,20,0.92)', border: `1px solid ${jitsiReady ? '#10B98160' : '#F59E0B60'}`,
+          borderRadius: 20, padding: '6px 14px 6px 10px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
+          fontSize: 12, color: '#fff', fontWeight: 600,
+          pointerEvents: 'none', // just a status badge; mic button is in header
+        }}>
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: jitsiReady ? '#10B981' : '#F59E0B',
+            display: 'inline-block',
+            animation: jitsiReady ? 'none' : 'pulse 1.5s infinite',
+          }} />
+          {jitsiReady
+            ? (micEnabled ? '🎤 Голосовая связь активна' : '🔇 Голосовая связь подключена')
+            : '⏳ Подключение к голосовой связи...'}
+        </div>
+      )}
+      {/* Hidden Jitsi iframe container — must have nonzero size and not display:none */}
       <div
         ref={jitsiContainerRef}
         style={{
-          position: 'fixed', bottom: 0, right: 0,
-          width: 160, height: 90,
-          opacity: 0, pointerEvents: 'none',
-          zIndex: -1, overflow: 'hidden',
+          position: 'fixed', bottom: -300, right: -500,
+          width: 320, height: 240,
+          overflow: 'hidden', zIndex: 0,
         }}
       />
 
