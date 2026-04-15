@@ -719,22 +719,37 @@ export function ConferenceRoom({
     console.log('[Audio] attachRemoteAudio peer', peerId,
       'tracks:', stream.getTracks().length,
       'ctx:', audioCtxRef.current?.state ?? 'none');
+    // Prefer direct HTMLAudioElement playback for remote WebRTC tracks.
+    // In some environments AudioContext routing stays "connected" but remains silent.
+    let el = audioElemsRef.current.get(peerId);
+    if (!el) {
+      el = new Audio();
+      el.autoplay = true;
+      el.muted = false;
+      el.volume = 1;
+      (el as any).playsInline = true;
+      audioElemsRef.current.set(peerId, el);
+    }
+    if (el.srcObject !== stream) { el.srcObject = stream; }
+    el.play().then(() => {
+      console.log('[Audio] element playback started for peer', peerId);
+      // #region agent log
+      fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'post-fix',hypothesisId:'H10',location:'ConferenceRoom.tsx:668',message:'audio element playback started',data:{peerId,muted:el?.muted,volume:el?.volume,readyState:el?.readyState},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      setAudioBlocked(false);
+    }).catch(err => {
+      console.warn('[Audio] element autoplay blocked for peer', peerId, err.name);
+      // #region agent log
+      fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'post-fix',hypothesisId:'H10',location:'ConferenceRoom.tsx:668',message:'audio element playback blocked',data:{peerId,errorName:err?.name||'unknown',muted:el?.muted,volume:el?.volume},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      setAudioBlocked(true);
+    });
 
+    // Keep analyzer diagnostics for continuity.
     const ctx = audioCtxRef.current;
     if (ctx && ctx.state !== 'closed') {
-      // Remove stale source node for this peer
-      const old = audioSourcesRef.current.get(peerId);
-      if (old) { try { old.disconnect(); } catch {} }
       try {
         const source = ctx.createMediaStreamSource(stream);
-        source.connect(ctx.destination);
-        audioSourcesRef.current.set(peerId, source);
-        console.log('[Audio] AudioContext routing OK for peer', peerId, '| ctx.state:', ctx.state);
-        // #region agent log
-        fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H4',location:'ConferenceRoom.tsx:668',message:'audio routed via AudioContext',data:{peerId,ctxState:ctx.state,audioTrackCount:stream.getAudioTracks().length,audioTrackReadyState:stream.getAudioTracks()[0]?.readyState??null,audioTrackMuted:stream.getAudioTracks()[0]?.muted??null},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
-        setAudioBlocked(false);
-        // Diagnostic: measure audio level 2s after routing
         const diagAnalyser = ctx.createAnalyser();
         diagAnalyser.fftSize = 256;
         source.connect(diagAnalyser);
@@ -747,27 +762,10 @@ export function ConferenceRoom({
           // #region agent log
           fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H5',location:'ConferenceRoom.tsx:678',message:'post-route audio level sample',data:{peerId,avgLevel:Number(avg.toFixed(2)),isFlowing:avg>1},timestamp:Date.now()})}).catch(()=>{});
           // #endregion
+          try { source.disconnect(); } catch {}
           try { diagAnalyser.disconnect(); } catch {}
         }, 2000);
-      } catch (err) {
-        console.warn('[Audio] AudioContext routing failed, falling back', err);
-      }
-    } else {
-      // Fallback: imperative <audio> element
-      let el = audioElemsRef.current.get(peerId);
-      if (!el) {
-        el = new Audio();
-        el.autoplay = true;
-        audioElemsRef.current.set(peerId, el);
-      }
-      if (el.srcObject !== stream) { el.srcObject = stream; }
-      el.play().then(() => {
-        console.log('[Audio] fallback playback started for peer', peerId);
-        setAudioBlocked(false);
-      }).catch(err => {
-        console.warn('[Audio] fallback autoplay blocked for peer', peerId, err.name);
-        setAudioBlocked(true);
-      });
+      } catch {}
     }
     setRemoteAudioStreams(prev => new Map(prev).set(peerId, stream));
   };
