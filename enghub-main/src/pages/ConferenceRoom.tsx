@@ -808,7 +808,15 @@ export function ConferenceRoom({
       try {
         // Ensure AudioContext is running (user is clicking, so this is inside a gesture)
         audioCtxRef.current?.resume().catch(console.warn);
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            channelCount: 1
+          },
+          video: false
+        });
         console.log('[Audio] mic acquired, tracks:', stream.getAudioTracks().length,
           '| AudioContext state:', audioCtxRef.current?.state);
         // #region agent log
