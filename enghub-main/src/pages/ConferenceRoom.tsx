@@ -770,9 +770,14 @@ export function ConferenceRoom({
         if (!ch) { console.warn('[Audio] no channel yet'); return; }
         // Broadcast hello so peers who already have mic can also send us offers
         ch.send({ type: 'broadcast', event: 'audio_hello', payload: { from: String(currentUser?.id) } });
-        const others = conferenceParticipantsRef.current.filter(
+        const safeParticipants = conferenceParticipantsRef.current.filter((p: any) => p && p.id != null);
+        const invalidParticipants = conferenceParticipantsRef.current.length - safeParticipants.length;
+        const others = safeParticipants.filter(
           (p: any) => String(p.id) !== String(currentUser?.id)
         );
+        // #region agent log
+        fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H2',location:'ConferenceRoom.tsx:752',message:'toggleMic peer selection sanitized',data:{rawCount:conferenceParticipantsRef.current.length,safeCount:safeParticipants.length,invalidParticipants,offerPeerCount:others.length},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         console.log('[Audio] sending offers to', others.length, 'peers');
         // #region agent log
         fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H2',location:'ConferenceRoom.tsx:755',message:'sending offers',data:{peerCount:others.length,peerIds:others.map((p:any)=>String(p.id))},timestamp:Date.now()})}).catch(()=>{});
@@ -822,7 +827,12 @@ export function ConferenceRoom({
             };
             attachRemoteAudio(peerId, s);
           };
-          stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
+          stream.getAudioTracks().forEach(t => {
+            // #region agent log
+            fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H6',location:'ConferenceRoom.tsx:825',message:'adding local track to peer connection',data:{peerId,trackEnabled:t.enabled,trackMuted:t.muted,trackReadyState:t.readyState},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
+            pc.addTrack(t, stream);
+          });
           try {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
