@@ -282,12 +282,14 @@ export function ConferenceRoom({
               const stats = await pc.getStats();
               let inbound: any = null;
               let outbound: any = null;
+              let source: any = null;
               stats.forEach((r: any) => {
                 if (r.type === 'inbound-rtp' && r.kind === 'audio') inbound = r;
                 if (r.type === 'outbound-rtp' && r.kind === 'audio') outbound = r;
+                if (r.type === 'media-source' && r.kind === 'audio') source = r;
               });
               // #region agent log
-              fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H7',location:'ConferenceRoom.tsx:276',message:'answerer rtc stats snapshot',data:{fromId,inboundPackets:inbound?.packetsReceived??null,inboundBytes:inbound?.bytesReceived??null,inboundAudioLevel:inbound?.audioLevel??null,outboundPackets:outbound?.packetsSent??null,outboundBytes:outbound?.bytesSent??null},timestamp:Date.now()})}).catch(()=>{});
+              fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H7',location:'ConferenceRoom.tsx:276',message:'answerer rtc stats snapshot',data:{fromId,inboundPackets:inbound?.packetsReceived??null,inboundBytes:inbound?.bytesReceived??null,inboundAudioLevel:inbound?.audioLevel??null,inboundTotalAudioEnergy:inbound?.totalAudioEnergy??null,outboundPackets:outbound?.packetsSent??null,outboundBytes:outbound?.bytesSent??null,outboundTotalAudioEnergy:outbound?.totalAudioEnergy??null,sourceAudioLevel:source?.audioLevel??null,sourceTotalAudioEnergy:source?.totalAudioEnergy??null},timestamp:Date.now()})}).catch(()=>{});
               // #endregion
             } catch {}
           }, 2500);
@@ -844,12 +846,14 @@ export function ConferenceRoom({
                   const stats = await pc.getStats();
                   let inbound: any = null;
                   let outbound: any = null;
+                  let source: any = null;
                   stats.forEach((r: any) => {
                     if (r.type === 'inbound-rtp' && r.kind === 'audio') inbound = r;
                     if (r.type === 'outbound-rtp' && r.kind === 'audio') outbound = r;
+                    if (r.type === 'media-source' && r.kind === 'audio') source = r;
                   });
                   // #region agent log
-                  fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H7',location:'ConferenceRoom.tsx:803',message:'offerer rtc stats snapshot',data:{peerId,inboundPackets:inbound?.packetsReceived??null,inboundBytes:inbound?.bytesReceived??null,inboundAudioLevel:inbound?.audioLevel??null,outboundPackets:outbound?.packetsSent??null,outboundBytes:outbound?.bytesSent??null},timestamp:Date.now()})}).catch(()=>{});
+                  fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H7',location:'ConferenceRoom.tsx:803',message:'offerer rtc stats snapshot',data:{peerId,inboundPackets:inbound?.packetsReceived??null,inboundBytes:inbound?.bytesReceived??null,inboundAudioLevel:inbound?.audioLevel??null,inboundTotalAudioEnergy:inbound?.totalAudioEnergy??null,outboundPackets:outbound?.packetsSent??null,outboundBytes:outbound?.bytesSent??null,outboundTotalAudioEnergy:outbound?.totalAudioEnergy??null,sourceAudioLevel:source?.audioLevel??null,sourceTotalAudioEnergy:source?.totalAudioEnergy??null},timestamp:Date.now()})}).catch(()=>{});
                   // #endregion
                 } catch {}
               }, 2500);
