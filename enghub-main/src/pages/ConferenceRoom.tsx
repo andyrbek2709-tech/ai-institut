@@ -546,6 +546,9 @@ export function ConferenceRoom({
       const pid = String(p.id);
       return pid !== myId && !audioPeersRef.current.has(pid);
     });
+    // #region agent log
+    fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H2',location:'ConferenceRoom.tsx:540',message:'fallback peer scan',data:{micEnabled,myId,participantCount:conferenceParticipants.length,newPeerCount:newPeers.length,newPeerIds:newPeers.map((p:any)=>String(p.id))},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (newPeers.length === 0) return;
 
     console.log('[Audio] new peers detected (fallback), sending offers to', newPeers.length);
