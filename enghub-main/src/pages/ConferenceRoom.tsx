@@ -78,7 +78,10 @@ export function ConferenceRoom({
   // Buffer ICE candidates that arrive before setRemoteDescription is called
   const audioIceBufRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
   const [remoteAudioStreams, setRemoteAudioStreams] = useState<Map<string, MediaStream>>(new Map());
-  // Imperative Audio elements — created in ontrack, not in React render
+  // AudioContext for bypassing Chrome autoplay policy (must be created in user gesture)
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioSourcesRef = useRef<Map<string, MediaStreamAudioSourceNode>>(new Map());
+  // Fallback: imperative Audio elements if AudioContext not yet initialised
   const audioElemsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const [audioBlocked, setAudioBlocked] = useState(false);
   const conferenceParticipantsRef = useRef<any[]>([]);
@@ -391,6 +394,8 @@ export function ConferenceRoom({
       audioStreamRef.current = null;
       audioElemsRef.current.forEach(el => { el.pause(); el.srcObject = null; });
       audioElemsRef.current.clear();
+      audioSourcesRef.current.forEach(src => { try { src.disconnect(); } catch {} });
+      audioSourcesRef.current.clear();
       setRemoteStream(null);
       setRemoteAudioStreams(new Map());
       supa.removeChannel(ch);
@@ -575,6 +580,14 @@ export function ConferenceRoom({
   };
 
   const joinRoom = () => {
+    // ── Create AudioContext inside user gesture so it starts in "running" state ──
+    // This is the ONLY reliable way to bypass Chrome's autoplay policy.
+    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+      audioCtxRef.current = new AudioContext();
+    }
+    audioCtxRef.current.resume().catch(console.warn);
+    console.log('[Audio] AudioContext created/resumed in joinRoom, state:', audioCtxRef.current.state);
+
     setIsInRoom(true);
     onJoin(false, false);
     const lastMsg = msgs[msgs.length - 1];
@@ -593,6 +606,8 @@ export function ConferenceRoom({
     audioPeersRef.current.clear();
     audioElemsRef.current.forEach(el => { el.pause(); el.srcObject = null; });
     audioElemsRef.current.clear();
+    audioSourcesRef.current.forEach(src => { try { src.disconnect(); } catch {} });
+    audioSourcesRef.current.clear();
     setRemoteAudioStreams(new Map());
     setAudioBlocked(false);
     // Stop screen
@@ -607,35 +622,59 @@ export function ConferenceRoom({
   const [isTalking, setIsTalking] = useState(false);
   const isTalkingRef = useRef(false);
 
-  // ── Attach a remote MediaStream to an imperative Audio element ──
-  // Called from ontrack — bypasses React render cycle so play() is called immediately.
+  // ── Attach a remote MediaStream to audio output ──
+  // Primary: route via AudioContext (created in user gesture → bypasses autoplay policy).
+  // Fallback: imperative Audio element if AudioContext not yet initialized.
   const attachRemoteAudio = (peerId: string, stream: MediaStream) => {
-    // Reuse existing element if stream hasn't changed
-    let el = audioElemsRef.current.get(peerId);
-    if (!el) {
-      el = new Audio();
-      el.autoplay = true;
-      audioElemsRef.current.set(peerId, el);
+    console.log('[Audio] attachRemoteAudio peer', peerId,
+      'tracks:', stream.getTracks().length,
+      'ctx:', audioCtxRef.current?.state ?? 'none');
+
+    const ctx = audioCtxRef.current;
+    if (ctx && ctx.state !== 'closed') {
+      // Remove stale source node for this peer
+      const old = audioSourcesRef.current.get(peerId);
+      if (old) { try { old.disconnect(); } catch {} }
+      try {
+        const source = ctx.createMediaStreamSource(stream);
+        source.connect(ctx.destination);
+        audioSourcesRef.current.set(peerId, source);
+        console.log('[Audio] AudioContext routing OK for peer', peerId, '| ctx.state:', ctx.state);
+        setAudioBlocked(false);
+      } catch (err) {
+        console.warn('[Audio] AudioContext routing failed, falling back', err);
+      }
+    } else {
+      // Fallback: imperative <audio> element
+      let el = audioElemsRef.current.get(peerId);
+      if (!el) {
+        el = new Audio();
+        el.autoplay = true;
+        audioElemsRef.current.set(peerId, el);
+      }
+      if (el.srcObject !== stream) { el.srcObject = stream; }
+      el.play().then(() => {
+        console.log('[Audio] fallback playback started for peer', peerId);
+        setAudioBlocked(false);
+      }).catch(err => {
+        console.warn('[Audio] fallback autoplay blocked for peer', peerId, err.name);
+        setAudioBlocked(true);
+      });
     }
-    if (el.srcObject !== stream) {
-      el.srcObject = stream;
-    }
-    el.play().then(() => {
-      console.log('[Audio] playback started for peer', peerId);
-      setAudioBlocked(false);
-    }).catch(err => {
-      console.warn('[Audio] autoplay blocked for peer', peerId, err.name);
-      setAudioBlocked(true); // show "click to enable" banner
-    });
     setRemoteAudioStreams(prev => new Map(prev).set(peerId, stream));
   };
 
   // ── Unlock audio after user gesture ──
   const unlockAudio = () => {
+    // Resume AudioContext if suspended
+    if (audioCtxRef.current?.state === 'suspended') {
+      audioCtxRef.current.resume().then(() =>
+        console.log('[Audio] AudioContext resumed by user gesture')
+      ).catch(console.warn);
+    }
+    // Also try fallback elements
     audioElemsRef.current.forEach((el, peerId) => {
-      el.play().then(() => {
-        console.log('[Audio] unlocked playback for peer', peerId);
-      }).catch(console.warn);
+      el.play().then(() => console.log('[Audio] unlocked', peerId)).catch(console.warn);
     });
     setAudioBlocked(false);
   };
@@ -659,8 +698,11 @@ export function ConferenceRoom({
     } else {
       // ── Turn ON mic ──
       try {
+        // Ensure AudioContext is running (user is clicking, so this is inside a gesture)
+        audioCtxRef.current?.resume().catch(console.warn);
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        console.log('[Audio] mic acquired, tracks:', stream.getAudioTracks().length);
+        console.log('[Audio] mic acquired, tracks:', stream.getAudioTracks().length,
+          '| AudioContext state:', audioCtxRef.current?.state);
         audioStreamRef.current = stream;
         setMicEnabled(true);
         await onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
