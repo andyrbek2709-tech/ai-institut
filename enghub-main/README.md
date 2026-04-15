@@ -161,6 +161,24 @@ npm run build
 - Формат `create_tasks`: `payload.items[]` с полями `name`, `deadline?`, `assignee_id?` (назначение запрещено)
 - Формат `create_review`: `payload.items[]` с полями `text`, `severity` (`critical|major|minor`), `drawing_id`
 
+### WebRTC аудио (голосовые звонки)
+
+- **Сигнализация:** Supabase Realtime Broadcast на канале `room-{projectId}`
+- **События:** `audio_offer`, `audio_answer`, `audio_ice`, `audio_stop`, `audio_hello`
+- **Воспроизведение:** Web Audio API `AudioContext` — создаётся в обработчике клика (`joinRoom`), что обходит политику autoplay Chrome
+- **VAD:** `AnalyserNode` читает уровни микрофона на 60fps, порог: 8/255
+- **ICE серверы:** Google STUN + Cloudflare STUN + freestun.net TURN + OpenRelay TURN
+- **Glare resolution:** при одновременных офферах побеждает меньший User ID
+- **Timing:** `audio_hello` broadcast после `SUBSCRIBED` (~500мс) решает race condition с подпиской
+- **Retry:** `track.onunmute` + `connectionState === 'connected'` повторно маршрутизируют аудио
+
+### Демонстрация экрана (WebRTC)
+
+- P2P передача `displayMedia` через RTCPeerConnection
+- Сигнализация: события `offer`, `answer`, `ice`, `stop`, `request` на том же канале
+- Fullscreen-режим: скрываются sidebar, tabstrip, meta-bar
+- Управление мышью зрителем: `mouse_request` / `mouse_grant` / `mouse_move` / `mouse_revoke`
+
 ### Telegram-интеграция
 - Edge Function: `telegram-bot` (Supabase Edge Functions)
 - Команды бота: `/start`, `/mytasks`, `/status`
@@ -179,7 +197,7 @@ npm run build
 
 | Вкладка | Описание | Доступ |
 |---|---|---|
-| Совещание | Real-time чат, видеозвонки | Все |
+| Совещание | Real-time чат, голосовые звонки (WebRTC P2P), демонстрация экрана | Все |
 | Задачи | Kanban + список с фильтрами | Все (по ролям) |
 | Чертежи | Реестр, статусы, AI-нормоконтроль | Все |
 | Ревизии | История ревизий документов | Все |
@@ -481,6 +499,183 @@ WHERE text ILIKE '%парпрарп%'
 ---
 
 ## Changelog
+
+### 2026-04-15 — WebRTC аудио (голосовые звонки)
+
+Серия исправлений в `src/pages/ConferenceRoom.tsx`, направленных на устранение полного отсутствия звука в совещаниях.
+
+---
+
+#### fix: re-route audio on track unmute + connection connected event
+
+**Файл:** `src/pages/ConferenceRoom.tsx`
+
+**Проблема:** Chrome стреляет `ontrack` до завершения ICE-переговоров — трек находится в состоянии `muted: true`. Созданный в этот момент `MediaStreamAudioSourceNode` не получает данных. После того как трек размутируется (`track.onunmute`), Chrome не возобновляет поток через уже подключённый узел автоматически.
+
+**Исправление:** Во всех 4 местах создания RTCPeerConnection:
+- Добавлен `track.onunmute` → повторный вызов `attachRemoteAudio`
+- `onconnectionstatechange: 'connected'` → повторный вызов `attachRemoteAudio`
+- Логирование `track.muted`, `track.readyState`, `track.enabled`
+- Диагностический AnalyserNode: через 2 секунды после подключения измеряет уровень сигнала и пишет в консоль `✅ AUDIO FLOWING` или `❌ SILENT`
+
+---
+
+#### fix: use AudioContext to bypass Chrome autoplay policy for WebRTC audio
+
+**Файл:** `src/pages/ConferenceRoom.tsx`
+
+**Проблема:** `new Audio().play()` вызывается внутри WebRTC `ontrack` callback — асинхронный сетевой обработчик вне контекста пользовательского жеста. Chrome блокирует воспроизведение даже если пользователь ранее нажимал кнопки.
+
+**Исправление:**
+- `joinRoom()` (клик кнопки "Войти") создаёт `AudioContext` и вызывает `.resume()` — внутри жеста, поэтому context получает state `running`
+- `toggleMic()` дополнительно вызывает `audioCtxRef.current?.resume()`
+- `attachRemoteAudio`: вместо `el.play()` использует `ctx.createMediaStreamSource(stream).connect(ctx.destination)` — не требует отдельного разрешения
+- Fallback на `new Audio()` если `AudioContext` ещё не инициализирован
+- Добавлены рефы `audioCtxRef` и `audioSourcesRef`; очистка source-узлов в `leaveRoom` и cleanup useEffect
+
+```tsx
+// БЫЛО:
+const el = new Audio();
+el.srcObject = stream;
+el.play(); // ← блокируется Chrome вне жеста
+
+// СТАЛО:
+const source = ctx.createMediaStreamSource(stream); // ctx создан в onClick
+source.connect(ctx.destination); // воспроизводится без play()
+```
+
+---
+
+#### fix: audio_hello handshake + freestun TURN + 2s delay fallback
+
+**Файл:** `src/pages/ConferenceRoom.tsx`
+
+**Проблема (состояние гонки):** Когда пользователь B заходит в комнату, его присутствие обновляется в `conferenceParticipants`. A немедленно отправляет оффер. Но подписка B на Supabase Realtime-канал активируется через 200–500 мс — оффер приходит раньше, чем B готов его принять, и **тихо теряется**.
+
+**Исправление:**
+- При `status === 'SUBSCRIBED'` через 500 мс отправляется `audio_hello { from: myId }` — к этому моменту собственные обработчики точно активны
+- Новый handler `audio_hello`: если мой микрофон включён (`audioStreamRef.current !== null`), отправляю оффер пришедшему
+- `toggleMic(ON)` тоже шлёт `audio_hello` чтобы уже присутствующие участники отправили мне офферы
+- В запасном useEffect добавлена задержка 2 с перед отправкой офферов новым пирам
+
+```
+Было:  B заходит → A видит B в presence → немедленно шлёт оффер (B не готов) → потеря
+Стало: B заходит → B подписался → B шлёт audio_hello → A отвечает оффером (B готов)
+```
+
+**ICE серверы обновлены:**
+```tsx
+// Добавлены:
+{ urls: 'stun:stun.cloudflare.com:3478' },
+{ urls: 'turn:freestun.net:3478',  username: 'free', credential: 'free' },
+{ urls: 'turns:freestun.net:5349', username: 'free', credential: 'free' },
+// Удалены ненадёжные: numb.viagenie.ca, bistri.com
+```
+
+---
+
+#### fix: auto-send audio offers to participants who join after mic is enabled
+
+**Файл:** `src/pages/ConferenceRoom.tsx`
+
+**Проблема:** `toggleMic()` отправляет офферы только участникам **в момент** включения микрофона. Если кто-то зашёл позже — оффер никогда не отправляется.
+
+**Исправление:** Новый `useEffect([conferenceParticipants, micEnabled])` фильтрует пиров без существующего PC в `audioPeersRef` и отправляет им офферы.
+
+---
+
+#### fix: bypass Chrome autoplay block for remote WebRTC audio
+
+**Файл:** `src/pages/ConferenceRoom.tsx`
+
+- `new Audio()` создаётся императивно в `ontrack` (не в React render-цикле)
+- `play().catch()` явно логирует ошибку вместо беззвучного проглатывания
+- Баннер `🔊 Нажмите чтобы включить звук` при заблокированном autoplay
+- Очистка Audio-элементов при disconnect и leaveRoom
+
+---
+
+#### debug+fix: ICE logging, restart on failure, backup TURN servers
+
+**Файл:** `src/pages/ConferenceRoom.tsx`
+
+- Логирование каждого ICE-кандидата (type: host/srflx/relay, protocol)
+- `onconnectionstatechange: 'failed'` → `pc.restartIce()`
+- Добавлены резервные TURN-серверы
+
+---
+
+#### fix: mic button pulses when speaking, avatars use instant local isTalking state
+
+**Файл:** `src/pages/ConferenceRoom.tsx`
+
+- Кнопка микрофона получает CSS-класс `avatar-talking` + яркий фон при `isTalking && micEnabled`
+- Иконка меняется: 🔇 / 🎙️ / 🎤
+- Все три вида участников (верхняя полоса, боковой список, вкладка) используют мгновенный локальный `isTalking` вместо данных из presence (задержка ~1 с)
+
+---
+
+#### feat: add voice activity detection — avatar pulses when speaking
+
+**Файл:** `src/pages/ConferenceRoom.tsx`
+
+- Web Audio API AnalyserNode считывает уровни микрофона на частоте 60fps
+- При среднем значении частотного спектра > 8/255 → `isTalking = true`
+- Аватар получает CSS-анимацию `avatar-talking` (зелёное пульсирующее свечение)
+- Обновление presence throttled до 1 раза в секунду
+
+**`src/styles.css`:**
+```css
+.avatar-talking {
+  animation: avatar-talk-pulse 0.8s ease-in-out infinite !important;
+}
+@keyframes avatar-talk-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); border-color: #10B981 !important; }
+  50%       { box-shadow: 0 0 0 4px rgba(16,185,129,0.3), 0 0 0 8px rgba(16,185,129,0.1);
+               border-color: #34D399 !important; }
+}
+```
+
+---
+
+#### fix: replace Jitsi iframe with native WebRTC audio (P2P mic)
+
+**Файл:** `src/pages/ConferenceRoom.tsx`
+
+**Причина замены Jitsi:** iframe показывал UI предварительного просмотра, блокировался корпоративными сетями, пользователи зависали на подключении.
+
+**Реализация нативного WebRTC аудио:**
+- `getUserMedia({ audio: true })` при включении микрофона
+- Сигнализация через Supabase Realtime Broadcast: события `audio_offer` / `audio_answer` / `audio_ice` / `audio_stop`
+- Двунаправленная связь: answerer добавляет свой трек в answer-PC
+- Разрешение glare (оба одновременно шлют offer): меньший ID побеждает
+- Буферизация ICE-кандидатов до `setRemoteDescription` (`audioIceBufRef`)
+
+---
+
+#### Архитектура WebRTC аудио (итоговая)
+
+```
+Пользователь A (mic ON)                    Пользователь B
+─────────────────────────────────────────────────────────
+joinRoom() → AudioContext.resume()          joinRoom() → AudioContext.resume()
+toggleMic() → getUserMedia()
+  → audio_hello broadcast
+  → offers to all participants              → SUBSCRIBED
+                                            → audio_hello (после 500мс)
+← audio_hello от B
+  → если mic ON → audio_offer to B   ─────→ audio_offer handler
+                                            → createAnswer
+                                            ← audio_answer
+audio_answer handler                        ICE candidates ↔
+  → setRemoteDescription
+  → ICE negotiation
+  → connectionState: connected
+  → attachRemoteAudio (AudioContext)        → attachRemoteAudio (AudioContext)
+  → track.onunmute → re-route              → track.onunmute → re-route
+```
+
+---
 
 ### 2026-04-13
 **fix: eliminate flicker and fix mouse control coordinate mapping**
