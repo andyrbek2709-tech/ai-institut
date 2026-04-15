@@ -23,14 +23,15 @@ const SURL_CONST = process.env.REACT_APP_SUPABASE_URL || '';
 const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  // TURN servers — required for NAT traversal on different networks
+  { urls: 'stun:stun.cloudflare.com:3478' },
+  // TURN — freestun (free, no registration)
+  { urls: 'turn:freestun.net:3478',  username: 'free', credential: 'free' },
+  { urls: 'turns:freestun.net:5349', username: 'free', credential: 'free' },
+  // TURN — OpenRelay
   { urls: 'turn:a.relay.metered.ca:80',                 username: 'openrelayproject', credential: 'openrelayproject' },
   { urls: 'turn:a.relay.metered.ca:80?transport=tcp',   username: 'openrelayproject', credential: 'openrelayproject' },
   { urls: 'turn:a.relay.metered.ca:443',                username: 'openrelayproject', credential: 'openrelayproject' },
   { urls: 'turns:a.relay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
-  // Backup TURN
-  { urls: 'turn:numb.viagenie.ca',   username: 'webrtc@live.com', credential: 'muazkh' },
-  { urls: 'turn:turn.bistri.com:80', username: 'homeo',           credential: 'homeo' },
 ];
 
 export function ConferenceRoom({
@@ -330,9 +331,53 @@ export function ConferenceRoom({
       if (el) { el.pause(); el.srcObject = null; audioElemsRef.current.delete(payload.from); }
       setRemoteAudioStreams(prev => { const n = new Map(prev); n.delete(payload.from); return n; });
     })
+    // ── audio_hello: peer just subscribed — if my mic is on, send them an offer ──
+    .on('broadcast', { event: 'audio_hello' }, async ({ payload }: any) => {
+      const fromId = String(payload?.from);
+      if (!fromId || fromId === String(currentUser?.id)) return;
+      if (!audioStreamRef.current) return; // my mic is off, nothing to send
+      if (audioPeersRef.current.has(fromId)) return; // already have a connection
+      const myCh = broadcastRef.current?.ch;
+      if (!myCh) return;
+      const myId = String(currentUser?.id);
+      const stream = audioStreamRef.current;
+      console.log('[Audio] got audio_hello from', fromId, '— sending offer');
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+      audioPeersRef.current.set(fromId, pc);
+      pc.onicecandidate = ({ candidate }) => {
+        if (candidate) {
+          console.log('[ICE] hello-offer cand:', candidate.type);
+          myCh.send({ type: 'broadcast', event: 'audio_ice',
+            payload: { from: myId, to: fromId, candidate: candidate.toJSON() } });
+        }
+      };
+      pc.onconnectionstatechange = () => {
+        console.log('[Audio] hello-offer conn →', pc.connectionState, 'peer', fromId);
+        if (pc.connectionState === 'failed') pc.restartIce();
+      };
+      pc.ontrack = (e) => {
+        const s = e.streams[0] ?? new MediaStream([e.track]);
+        console.log('[Audio] hello-offer got remote track from', fromId);
+        attachRemoteAudio(fromId, s);
+      };
+      stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        console.log('[Audio] hello-offer sent to', fromId);
+        myCh.send({ type: 'broadcast', event: 'audio_offer',
+          payload: { from: myId, to: fromId, sdp: offer } });
+      } catch (err) { console.error('[Audio] hello-offer error', err); }
+    })
     .subscribe((status: string) => {
       if (status === 'SUBSCRIBED') {
         broadcastRef.current = { ch, supa };
+        // Announce arrival — peers with mic enabled will send us audio offers
+        setTimeout(() => {
+          ch.send({ type: 'broadcast', event: 'audio_hello',
+            payload: { from: String(currentUser?.id) } });
+          console.log('[Audio] sent audio_hello');
+        }, 500); // small delay so our handlers are fully ready
       }
     });
 
@@ -470,8 +515,9 @@ export function ConferenceRoom({
     });
     if (newPeers.length === 0) return;
 
-    console.log('[Audio] new peers detected, sending offers to', newPeers.length);
+    console.log('[Audio] new peers detected (fallback), sending offers to', newPeers.length);
     const send = async () => {
+      await new Promise(r => setTimeout(r, 2000)); // wait 2s so peer's subscription is ready
       for (const p of newPeers) {
         const peerId = String(p.id);
         // avoid race: check again inside async
@@ -621,6 +667,8 @@ export function ConferenceRoom({
 
         const ch = broadcastRef.current?.ch;
         if (!ch) { console.warn('[Audio] no channel yet'); return; }
+        // Broadcast hello so peers who already have mic can also send us offers
+        ch.send({ type: 'broadcast', event: 'audio_hello', payload: { from: String(currentUser?.id) } });
         const others = conferenceParticipantsRef.current.filter(
           (p: any) => String(p.id) !== String(currentUser?.id)
         );
