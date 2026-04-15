@@ -268,8 +268,13 @@ export function ConferenceRoom({
           console.log('[ICE] answerer gathering complete');
         }
       };
+      let _answererStream: MediaStream | null = null;
       pc.onconnectionstatechange = () => {
         console.log('[Audio] answerer connection state →', pc.connectionState, 'peer', fromId);
+        if (pc.connectionState === 'connected' && _answererStream) {
+          console.log('[Audio] answerer connected — re-routing audio for', fromId);
+          attachRemoteAudio(fromId, _answererStream);
+        }
         if (pc.connectionState === 'failed') {
           console.warn('[Audio] ICE failed — attempting restart');
           pc.restartIce();
@@ -277,7 +282,14 @@ export function ConferenceRoom({
       };
       pc.ontrack = (e) => {
         const stream = e.streams[0] ?? new MediaStream([e.track]);
-        console.log('[Audio] got remote track from', fromId, 'stream tracks:', stream.getTracks().length);
+        _answererStream = stream;
+        const t = e.track;
+        console.log('[Audio] got remote track from', fromId,
+          '| muted:', t.muted, 'readyState:', t.readyState, 'enabled:', t.enabled);
+        t.onunmute = () => {
+          console.log('[Audio] ✅ track unmuted for', fromId, '— re-routing');
+          attachRemoteAudio(fromId, stream);
+        };
         attachRemoteAudio(fromId, stream);
       };
       if (audioStreamRef.current) {
@@ -354,13 +366,20 @@ export function ConferenceRoom({
             payload: { from: myId, to: fromId, candidate: candidate.toJSON() } });
         }
       };
+      let _helloStream: MediaStream | null = null;
       pc.onconnectionstatechange = () => {
         console.log('[Audio] hello-offer conn →', pc.connectionState, 'peer', fromId);
+        if (pc.connectionState === 'connected' && _helloStream) {
+          attachRemoteAudio(fromId, _helloStream);
+        }
         if (pc.connectionState === 'failed') pc.restartIce();
       };
       pc.ontrack = (e) => {
         const s = e.streams[0] ?? new MediaStream([e.track]);
-        console.log('[Audio] hello-offer got remote track from', fromId);
+        _helloStream = s;
+        const t = e.track;
+        console.log('[Audio] hello-offer got remote track from', fromId, '| muted:', t.muted);
+        t.onunmute = () => { attachRemoteAudio(fromId, s); };
         attachRemoteAudio(fromId, s);
       };
       stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
@@ -536,13 +555,20 @@ export function ConferenceRoom({
               payload: { from: myId, to: peerId, candidate: candidate.toJSON() } });
           }
         };
+        let _npStream: MediaStream | null = null;
         pc.onconnectionstatechange = () => {
           console.log('[Audio] new-peer conn state →', pc.connectionState, 'peer', peerId);
+          if (pc.connectionState === 'connected' && _npStream) {
+            attachRemoteAudio(peerId, _npStream);
+          }
           if (pc.connectionState === 'failed') pc.restartIce();
         };
         pc.ontrack = (e) => {
           const s = e.streams[0] ?? new MediaStream([e.track]);
-          console.log('[Audio] new-peer got remote track from', peerId);
+          _npStream = s;
+          const t = e.track;
+          console.log('[Audio] new-peer got remote track from', peerId, '| muted:', t.muted);
+          t.onunmute = () => { attachRemoteAudio(peerId, s); };
           attachRemoteAudio(peerId, s);
         };
         stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
@@ -641,6 +667,18 @@ export function ConferenceRoom({
         audioSourcesRef.current.set(peerId, source);
         console.log('[Audio] AudioContext routing OK for peer', peerId, '| ctx.state:', ctx.state);
         setAudioBlocked(false);
+        // Diagnostic: measure audio level 2s after routing
+        const diagAnalyser = ctx.createAnalyser();
+        diagAnalyser.fftSize = 256;
+        source.connect(diagAnalyser);
+        setTimeout(() => {
+          const d = new Uint8Array(diagAnalyser.frequencyBinCount);
+          diagAnalyser.getByteFrequencyData(d);
+          const avg = d.reduce((a, v) => a + v, 0) / d.length;
+          console.log('[Audio] 2s level for peer', peerId, '→', avg.toFixed(1),
+            avg > 1 ? '✅ AUDIO FLOWING' : '❌ SILENT (track muted or no data)');
+          try { diagAnalyser.disconnect(); } catch {}
+        }, 2000);
       } catch (err) {
         console.warn('[Audio] AudioContext routing failed, falling back', err);
       }
@@ -733,8 +771,13 @@ export function ConferenceRoom({
               console.log('[ICE] offerer gathering complete');
             }
           };
+          let _offererStream: MediaStream | null = null;
           pc.onconnectionstatechange = () => {
             console.log('[Audio] offerer connection state →', pc.connectionState, 'peer', peerId);
+            if (pc.connectionState === 'connected' && _offererStream) {
+              console.log('[Audio] offerer connected — re-routing audio for', peerId);
+              attachRemoteAudio(peerId, _offererStream);
+            }
             if (pc.connectionState === 'failed') {
               console.warn('[Audio] ICE failed — attempting restart');
               pc.restartIce();
@@ -742,7 +785,14 @@ export function ConferenceRoom({
           };
           pc.ontrack = (e) => {
             const s = e.streams[0] ?? new MediaStream([e.track]);
-            console.log('[Audio] got remote track from', peerId);
+            _offererStream = s;
+            const t = e.track;
+            console.log('[Audio] got remote track from', peerId,
+              '| muted:', t.muted, 'readyState:', t.readyState);
+            t.onunmute = () => {
+              console.log('[Audio] ✅ track unmuted for', peerId, '— re-routing');
+              attachRemoteAudio(peerId, s);
+            };
             attachRemoteAudio(peerId, s);
           };
           stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
