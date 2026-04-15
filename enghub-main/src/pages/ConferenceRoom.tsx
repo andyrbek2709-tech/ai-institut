@@ -23,13 +23,14 @@ const SURL_CONST = process.env.REACT_APP_SUPABASE_URL || '';
 const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
-  { urls: 'stun:stun.relay.metered.ca:80' },
-  // TURN servers — needed when both peers are behind NAT (different networks)
-  { urls: 'turn:a.relay.metered.ca:80',               username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:a.relay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:a.relay.metered.ca:443',              username: 'openrelayproject', credential: 'openrelayproject' },
+  // TURN servers — required for NAT traversal on different networks
+  { urls: 'turn:a.relay.metered.ca:80',                 username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:a.relay.metered.ca:80?transport=tcp',   username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:a.relay.metered.ca:443',                username: 'openrelayproject', credential: 'openrelayproject' },
   { urls: 'turns:a.relay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  // Backup TURN
+  { urls: 'turn:numb.viagenie.ca',   username: 'webrtc@live.com', credential: 'muazkh' },
+  { urls: 'turn:turn.bistri.com:80', username: 'homeo',           credential: 'homeo' },
 ];
 
 export function ConferenceRoom({
@@ -255,11 +256,20 @@ export function ConferenceRoom({
       audioPeersRef.current.set(fromId, pc);
 
       pc.onicecandidate = ({ candidate }) => {
-        if (candidate) ch.send({ type: 'broadcast', event: 'audio_ice',
-          payload: { from: myId, to: fromId, candidate: candidate.toJSON() } });
+        if (candidate) {
+          console.log('[ICE] answerer cand type:', candidate.type, candidate.protocol);
+          ch.send({ type: 'broadcast', event: 'audio_ice',
+            payload: { from: myId, to: fromId, candidate: candidate.toJSON() } });
+        } else {
+          console.log('[ICE] answerer gathering complete');
+        }
       };
       pc.onconnectionstatechange = () => {
         console.log('[Audio] answerer connection state →', pc.connectionState, 'peer', fromId);
+        if (pc.connectionState === 'failed') {
+          console.warn('[Audio] ICE failed — attempting restart');
+          pc.restartIce();
+        }
       };
       pc.ontrack = (e) => {
         const stream = e.streams[0] ?? new MediaStream([e.track]);
@@ -575,11 +585,20 @@ export function ConferenceRoom({
           audioPeersRef.current.set(peerId, pc);
 
           pc.onicecandidate = ({ candidate }) => {
-            if (candidate) ch.send({ type: 'broadcast', event: 'audio_ice',
-              payload: { from: String(currentUser?.id), to: peerId, candidate: candidate.toJSON() } });
+            if (candidate) {
+              console.log('[ICE] offerer cand type:', candidate.type, candidate.protocol);
+              ch.send({ type: 'broadcast', event: 'audio_ice',
+                payload: { from: String(currentUser?.id), to: peerId, candidate: candidate.toJSON() } });
+            } else {
+              console.log('[ICE] offerer gathering complete');
+            }
           };
           pc.onconnectionstatechange = () => {
             console.log('[Audio] offerer connection state →', pc.connectionState, 'peer', peerId);
+            if (pc.connectionState === 'failed') {
+              console.warn('[Audio] ICE failed — attempting restart');
+              pc.restartIce();
+            }
           };
           pc.ontrack = (e) => {
             const s = e.streams[0] ?? new MediaStream([e.track]);
