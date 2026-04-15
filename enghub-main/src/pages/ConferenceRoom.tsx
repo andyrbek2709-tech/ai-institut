@@ -457,6 +457,56 @@ export function ConferenceRoom({
     };
   }, [micEnabled]); // eslint-disable-line
 
+  // ── When a new participant joins while mic is ON, send them an audio offer ──
+  useEffect(() => {
+    if (!micEnabled || !audioStreamRef.current || !broadcastRef.current?.ch) return;
+    const ch = broadcastRef.current.ch;
+    const stream = audioStreamRef.current;
+    const myId = String(currentUser?.id);
+
+    const newPeers = conferenceParticipants.filter(p => {
+      const pid = String(p.id);
+      return pid !== myId && !audioPeersRef.current.has(pid);
+    });
+    if (newPeers.length === 0) return;
+
+    console.log('[Audio] new peers detected, sending offers to', newPeers.length);
+    const send = async () => {
+      for (const p of newPeers) {
+        const peerId = String(p.id);
+        // avoid race: check again inside async
+        if (audioPeersRef.current.has(peerId)) continue;
+        const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+        audioPeersRef.current.set(peerId, pc);
+        pc.onicecandidate = ({ candidate }) => {
+          if (candidate) {
+            console.log('[ICE] new-peer offerer cand:', candidate.type);
+            ch.send({ type: 'broadcast', event: 'audio_ice',
+              payload: { from: myId, to: peerId, candidate: candidate.toJSON() } });
+          }
+        };
+        pc.onconnectionstatechange = () => {
+          console.log('[Audio] new-peer conn state →', pc.connectionState, 'peer', peerId);
+          if (pc.connectionState === 'failed') pc.restartIce();
+        };
+        pc.ontrack = (e) => {
+          const s = e.streams[0] ?? new MediaStream([e.track]);
+          console.log('[Audio] new-peer got remote track from', peerId);
+          attachRemoteAudio(peerId, s);
+        };
+        stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
+        try {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          console.log('[Audio] new-peer offer sent to', peerId);
+          ch.send({ type: 'broadcast', event: 'audio_offer',
+            payload: { from: myId, to: peerId, sdp: offer } });
+        } catch (err) { console.error('[Audio] new-peer offer error', err); }
+      }
+    };
+    void send();
+  }, [conferenceParticipants, micEnabled]); // eslint-disable-line
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs.length]);
