@@ -49,6 +49,8 @@ export function ConferenceRoom({
     if (Number.isFinite(a) && Number.isFinite(b)) return a > b;
     return myId > peerId;
   };
+  const hasLocalAudioSender = (pc: RTCPeerConnection) =>
+    pc.getSenders().some((s: any) => s.track && s.track.kind === 'audio' && s.track.readyState === 'live');
   const [chatInput, setChatInput] = useState("");
   const [isInRoom, setIsInRoom] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
@@ -385,10 +387,23 @@ export function ConferenceRoom({
       const fromId = String(payload?.from);
       if (!fromId || fromId === String(currentUser?.id)) return;
       if (!audioStreamRef.current) return; // my mic is off, nothing to send
-      if (audioPeersRef.current.has(fromId)) return; // already have a connection
       const myCh = broadcastRef.current?.ch;
       if (!myCh) return;
       const myId = String(currentUser?.id);
+      const existingPc = audioPeersRef.current.get(fromId);
+      if (existingPc) {
+        const hasSender = hasLocalAudioSender(existingPc);
+        if (hasSender) return; // already healthy
+        if (shouldInitiateOffer(myId, fromId)) {
+          existingPc.close();
+          audioPeersRef.current.delete(fromId);
+          // #region agent log
+          fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'post-fix',hypothesisId:'H8',location:'ConferenceRoom.tsx:386',message:'recreate hello PC without local sender',data:{myId,peerId:fromId},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+        } else {
+          return;
+        }
+      }
       if (!shouldInitiateOffer(myId, fromId)) {
         // #region agent log
         fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'post-fix',hypothesisId:'H8',location:'ConferenceRoom.tsx:384',message:'skip hello-offer by deterministic initiator rule',data:{myId,peerId:fromId},timestamp:Date.now()})}).catch(()=>{});
@@ -824,6 +839,16 @@ export function ConferenceRoom({
 
         const ch = broadcastRef.current?.ch;
         if (!ch) { console.warn('[Audio] no channel yet'); return; }
+        // Recreate stale audio PCs that were established while mic was off.
+        for (const [peerId, pc] of audioPeersRef.current.entries()) {
+          if (!hasLocalAudioSender(pc)) {
+            pc.close();
+            audioPeersRef.current.delete(peerId);
+            // #region agent log
+            fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'post-fix',hypothesisId:'H8',location:'ConferenceRoom.tsx:812',message:'drop stale PC without local sender on mic enable',data:{myId:String(currentUser?.id),peerId},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
+          }
+        }
         // Broadcast hello so peers who already have mic can also send us offers
         ch.send({ type: 'broadcast', event: 'audio_hello', payload: { from: String(currentUser?.id) } });
         const safeParticipants = conferenceParticipantsRef.current.filter((p: any) => p && p.id != null);
