@@ -243,6 +243,9 @@ export function ConferenceRoom({
       const myId = String(currentUser?.id);
       const fromId = String(payload.from);
       console.log('[Audio] got offer from', fromId);
+      // #region agent log
+      fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H2',location:'ConferenceRoom.tsx:245',message:'received audio_offer',data:{fromId,myId,hasLocalMic:!!audioStreamRef.current,localTrackCount:audioStreamRef.current?.getAudioTracks?.().length||0},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
 
       const existing = audioPeersRef.current.get(fromId);
       if (existing) {
@@ -286,6 +289,9 @@ export function ConferenceRoom({
         const t = e.track;
         console.log('[Audio] got remote track from', fromId,
           '| muted:', t.muted, 'readyState:', t.readyState, 'enabled:', t.enabled);
+        // #region agent log
+        fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H3',location:'ConferenceRoom.tsx:287',message:'answerer ontrack fired',data:{fromId,trackMuted:t.muted,trackReadyState:t.readyState,trackEnabled:t.enabled,streamTrackCount:stream.getAudioTracks().length},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         t.onunmute = () => {
           console.log('[Audio] ✅ track unmuted for', fromId, '— re-routing');
           attachRemoteAudio(fromId, stream);
@@ -318,6 +324,9 @@ export function ConferenceRoom({
           for (const c of buf) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch {} }
           audioIceBufRef.current.delete(payload.from);
           console.log('[Audio] answer applied, ICE buf flushed');
+          // #region agent log
+          fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H2',location:'ConferenceRoom.tsx:320',message:'audio_answer applied',data:{fromId:String(payload.from),signalingState:pc.signalingState,hasRemoteDescription:!!pc.remoteDescription,iceConnectionState:(pc as any).iceConnectionState||'unknown'},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
         } catch (err) { console.error('[Audio] answer handler error', err); }
       } else {
         console.warn('[Audio] ignoring answer, state=', pc?.signalingState);
@@ -666,6 +675,9 @@ export function ConferenceRoom({
         source.connect(ctx.destination);
         audioSourcesRef.current.set(peerId, source);
         console.log('[Audio] AudioContext routing OK for peer', peerId, '| ctx.state:', ctx.state);
+        // #region agent log
+        fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H4',location:'ConferenceRoom.tsx:668',message:'audio routed via AudioContext',data:{peerId,ctxState:ctx.state,audioTrackCount:stream.getAudioTracks().length,audioTrackReadyState:stream.getAudioTracks()[0]?.readyState??null,audioTrackMuted:stream.getAudioTracks()[0]?.muted??null},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         setAudioBlocked(false);
         // Diagnostic: measure audio level 2s after routing
         const diagAnalyser = ctx.createAnalyser();
@@ -677,6 +689,9 @@ export function ConferenceRoom({
           const avg = d.reduce((a, v) => a + v, 0) / d.length;
           console.log('[Audio] 2s level for peer', peerId, '→', avg.toFixed(1),
             avg > 1 ? '✅ AUDIO FLOWING' : '❌ SILENT (track muted or no data)');
+          // #region agent log
+          fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H5',location:'ConferenceRoom.tsx:678',message:'post-route audio level sample',data:{peerId,avgLevel:Number(avg.toFixed(2)),isFlowing:avg>1},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
           try { diagAnalyser.disconnect(); } catch {}
         }, 2000);
       } catch (err) {
@@ -741,6 +756,9 @@ export function ConferenceRoom({
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         console.log('[Audio] mic acquired, tracks:', stream.getAudioTracks().length,
           '| AudioContext state:', audioCtxRef.current?.state);
+        // #region agent log
+        fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H1',location:'ConferenceRoom.tsx:743',message:'mic acquired',data:{trackCount:stream.getAudioTracks().length,trackEnabled:stream.getAudioTracks()[0]?.enabled??null,trackReadyState:stream.getAudioTracks()[0]?.readyState??null,audioContextState:audioCtxRef.current?.state||'none'},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         audioStreamRef.current = stream;
         setMicEnabled(true);
         await onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
@@ -753,6 +771,9 @@ export function ConferenceRoom({
           (p: any) => String(p.id) !== String(currentUser?.id)
         );
         console.log('[Audio] sending offers to', others.length, 'peers');
+        // #region agent log
+        fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H2',location:'ConferenceRoom.tsx:755',message:'sending offers',data:{peerCount:others.length,peerIds:others.map((p:any)=>String(p.id))},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         for (const participant of others) {
           const peerId = String(participant.id);
           const old = audioPeersRef.current.get(peerId);
@@ -789,6 +810,9 @@ export function ConferenceRoom({
             const t = e.track;
             console.log('[Audio] got remote track from', peerId,
               '| muted:', t.muted, 'readyState:', t.readyState);
+            // #region agent log
+            fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H3',location:'ConferenceRoom.tsx:790',message:'offerer ontrack fired',data:{peerId,trackMuted:t.muted,trackReadyState:t.readyState,streamTrackCount:s.getAudioTracks().length},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
             t.onunmute = () => {
               console.log('[Audio] ✅ track unmuted for', peerId, '— re-routing');
               attachRemoteAudio(peerId, s);
