@@ -76,6 +76,9 @@ export function ConferenceRoom({
   // Buffer ICE candidates that arrive before setRemoteDescription is called
   const audioIceBufRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
   const [remoteAudioStreams, setRemoteAudioStreams] = useState<Map<string, MediaStream>>(new Map());
+  // Imperative Audio elements — created in ontrack, not in React render
+  const audioElemsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const conferenceParticipantsRef = useRef<any[]>([]);
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
   const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
@@ -261,7 +264,7 @@ export function ConferenceRoom({
       pc.ontrack = (e) => {
         const stream = e.streams[0] ?? new MediaStream([e.track]);
         console.log('[Audio] got remote track from', fromId, 'stream tracks:', stream.getTracks().length);
-        setRemoteAudioStreams(prev => new Map(prev).set(fromId, stream));
+        attachRemoteAudio(fromId, stream);
       };
       if (audioStreamRef.current) {
         audioStreamRef.current.getAudioTracks().forEach(t => pc.addTrack(t, audioStreamRef.current!));
@@ -312,6 +315,9 @@ export function ConferenceRoom({
       const pc = audioPeersRef.current.get(payload.from);
       if (pc) { pc.close(); audioPeersRef.current.delete(payload.from); }
       audioIceBufRef.current.delete(payload.from);
+      // Stop and remove imperative audio element
+      const el = audioElemsRef.current.get(payload.from);
+      if (el) { el.pause(); el.srcObject = null; audioElemsRef.current.delete(payload.from); }
       setRemoteAudioStreams(prev => { const n = new Map(prev); n.delete(payload.from); return n; });
     })
     .subscribe((status: string) => {
@@ -328,6 +334,8 @@ export function ConferenceRoom({
       audioIceBufRef.current.clear();
       audioStreamRef.current?.getTracks().forEach(t => t.stop());
       audioStreamRef.current = null;
+      audioElemsRef.current.forEach(el => { el.pause(); el.srcObject = null; });
+      audioElemsRef.current.clear();
       setRemoteStream(null);
       setRemoteAudioStreams(new Map());
       supa.removeChannel(ch);
@@ -477,7 +485,10 @@ export function ConferenceRoom({
     audioStreamRef.current = null;
     audioPeersRef.current.forEach(pc => pc.close());
     audioPeersRef.current.clear();
+    audioElemsRef.current.forEach(el => { el.pause(); el.srcObject = null; });
+    audioElemsRef.current.clear();
     setRemoteAudioStreams(new Map());
+    setAudioBlocked(false);
     // Stop screen
     screenStreamRef.current?.getTracks().forEach(t => t.stop());
     screenStreamRef.current = null;
@@ -489,6 +500,39 @@ export function ConferenceRoom({
 
   const [isTalking, setIsTalking] = useState(false);
   const isTalkingRef = useRef(false);
+
+  // ── Attach a remote MediaStream to an imperative Audio element ──
+  // Called from ontrack — bypasses React render cycle so play() is called immediately.
+  const attachRemoteAudio = (peerId: string, stream: MediaStream) => {
+    // Reuse existing element if stream hasn't changed
+    let el = audioElemsRef.current.get(peerId);
+    if (!el) {
+      el = new Audio();
+      el.autoplay = true;
+      audioElemsRef.current.set(peerId, el);
+    }
+    if (el.srcObject !== stream) {
+      el.srcObject = stream;
+    }
+    el.play().then(() => {
+      console.log('[Audio] playback started for peer', peerId);
+      setAudioBlocked(false);
+    }).catch(err => {
+      console.warn('[Audio] autoplay blocked for peer', peerId, err.name);
+      setAudioBlocked(true); // show "click to enable" banner
+    });
+    setRemoteAudioStreams(prev => new Map(prev).set(peerId, stream));
+  };
+
+  // ── Unlock audio after user gesture ──
+  const unlockAudio = () => {
+    audioElemsRef.current.forEach((el, peerId) => {
+      el.play().then(() => {
+        console.log('[Audio] unlocked playback for peer', peerId);
+      }).catch(console.warn);
+    });
+    setAudioBlocked(false);
+  };
 
   const toggleMic = async () => {
     if (!isInRoom) return;
@@ -540,7 +584,7 @@ export function ConferenceRoom({
           pc.ontrack = (e) => {
             const s = e.streams[0] ?? new MediaStream([e.track]);
             console.log('[Audio] got remote track from', peerId);
-            setRemoteAudioStreams(prev => new Map(prev).set(peerId, s));
+            attachRemoteAudio(peerId, s);
           };
           stream.getAudioTracks().forEach(t => pc.addTrack(t, stream));
           try {
@@ -754,16 +798,21 @@ export function ConferenceRoom({
         border: `1px solid ${C.border}`
       }}
     >
-      {/* ── Remote audio streams — invisible elements, one per remote peer ── */}
-      {Array.from(remoteAudioStreams.entries()).map(([peerId, stream]) => (
-        <audio
-          key={peerId}
-          autoPlay
-          playsInline
-          ref={(el) => { if (el && el.srcObject !== stream) { el.srcObject = stream; el.play().catch(() => {}); } }}
-          style={{ display: 'none' }}
-        />
-      ))}
+      {/* ── Autoplay unlock banner — shown when browser blocks audio playback ── */}
+      {audioBlocked && remoteAudioStreams.size > 0 && (
+        <div
+          onClick={unlockAudio}
+          style={{
+            position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)',
+            zIndex: 9999, background: '#10B981', color: '#fff',
+            padding: '8px 20px', borderRadius: 20, cursor: 'pointer',
+            fontSize: 13, fontWeight: 600, boxShadow: '0 4px 12px rgba(16,185,129,0.4)',
+            display: 'flex', alignItems: 'center', gap: 8
+          }}
+        >
+          🔊 Нажмите чтобы включить звук
+        </div>
+      )}
 
       {/* ===== HEADER ===== */}
       <div className="conf-header" style={{
