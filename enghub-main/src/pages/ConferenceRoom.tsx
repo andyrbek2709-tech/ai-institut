@@ -763,6 +763,25 @@ export function ConferenceRoom({
         fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H1',location:'ConferenceRoom.tsx:743',message:'mic acquired',data:{trackCount:stream.getAudioTracks().length,trackEnabled:stream.getAudioTracks()[0]?.enabled??null,trackReadyState:stream.getAudioTracks()[0]?.readyState??null,audioContextState:audioCtxRef.current?.state||'none'},timestamp:Date.now()})}).catch(()=>{});
         // #endregion
         audioStreamRef.current = stream;
+        // #region agent log
+        {
+          const track = stream.getAudioTracks()[0];
+          const probeCtx = new AudioContext();
+          const probeSource = probeCtx.createMediaStreamSource(stream);
+          const probeAnalyser = probeCtx.createAnalyser();
+          probeAnalyser.fftSize = 256;
+          probeSource.connect(probeAnalyser);
+          setTimeout(() => {
+            const arr = new Uint8Array(probeAnalyser.frequencyBinCount);
+            probeAnalyser.getByteFrequencyData(arr);
+            const avg = arr.reduce((a, v) => a + v, 0) / arr.length;
+            fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H6',location:'ConferenceRoom.tsx:748',message:'local mic level probe',data:{avgLevel:Number(avg.toFixed(2)),trackEnabled:track?.enabled??null,trackMuted:track?.muted??null,trackReadyState:track?.readyState??null},timestamp:Date.now()})}).catch(()=>{});
+            try { probeSource.disconnect(); } catch {}
+            try { probeAnalyser.disconnect(); } catch {}
+            probeCtx.close().catch(()=>{});
+          }, 1200);
+        }
+        // #endregion
         setMicEnabled(true);
         await onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
 
@@ -827,6 +846,9 @@ export function ConferenceRoom({
             };
             attachRemoteAudio(peerId, s);
           };
+          // #region agent log
+          fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H6',location:'ConferenceRoom.tsx:827',message:'pre addTrack summary',data:{peerId,localTrackCount:stream.getAudioTracks().length},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
           stream.getAudioTracks().forEach(t => {
             // #region agent log
             fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H6',location:'ConferenceRoom.tsx:825',message:'adding local track to peer connection',data:{peerId,trackEnabled:t.enabled,trackMuted:t.muted,trackReadyState:t.readyState},timestamp:Date.now()})}).catch(()=>{});
