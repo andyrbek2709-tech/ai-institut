@@ -834,6 +834,30 @@ export function ConferenceRoom({
           }, 1200);
         }
         // #endregion
+        // #region agent log
+        {
+          const track = stream.getAudioTracks()[0];
+          const liveCtx = new AudioContext();
+          const liveSource = liveCtx.createMediaStreamSource(stream);
+          const liveAnalyser = liveCtx.createAnalyser();
+          liveAnalyser.fftSize = 256;
+          liveSource.connect(liveAnalyser);
+          let samples = 0;
+          const timer = setInterval(() => {
+            const arr = new Uint8Array(liveAnalyser.frequencyBinCount);
+            liveAnalyser.getByteFrequencyData(arr);
+            const avg = arr.reduce((a, v) => a + v, 0) / arr.length;
+            fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'initial',hypothesisId:'H9',location:'ConferenceRoom.tsx:761',message:'local mic live sample',data:{sampleNo:samples+1,avgLevel:Number(avg.toFixed(2)),trackEnabled:track?.enabled??null,trackMuted:track?.muted??null,trackReadyState:track?.readyState??null},timestamp:Date.now()})}).catch(()=>{});
+            samples += 1;
+            if (samples >= 5) {
+              clearInterval(timer);
+              try { liveSource.disconnect(); } catch {}
+              try { liveAnalyser.disconnect(); } catch {}
+              liveCtx.close().catch(()=>{});
+            }
+          }, 1000);
+        }
+        // #endregion
         setMicEnabled(true);
         await onPresenceUpdate({ micEnabled: true, screenSharing, isTalking: false });
 
