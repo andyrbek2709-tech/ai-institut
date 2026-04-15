@@ -40,6 +40,15 @@ export function ConferenceRoom({
   conferenceParticipants, onJoin, onLeave, onPresenceUpdate,
   screenShareActive
 }: ConferenceProps) {
+  const shouldInitiateOffer = (myIdRaw: any, peerIdRaw: any) => {
+    const myId = String(myIdRaw ?? '');
+    const peerId = String(peerIdRaw ?? '');
+    if (!myId || !peerId) return false;
+    const a = Number(myId);
+    const b = Number(peerId);
+    if (Number.isFinite(a) && Number.isFinite(b)) return a > b;
+    return myId > peerId;
+  };
   const [chatInput, setChatInput] = useState("");
   const [isInRoom, setIsInRoom] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
@@ -380,6 +389,12 @@ export function ConferenceRoom({
       const myCh = broadcastRef.current?.ch;
       if (!myCh) return;
       const myId = String(currentUser?.id);
+      if (!shouldInitiateOffer(myId, fromId)) {
+        // #region agent log
+        fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'post-fix',hypothesisId:'H8',location:'ConferenceRoom.tsx:384',message:'skip hello-offer by deterministic initiator rule',data:{myId,peerId:fromId},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        return;
+      }
       const stream = audioStreamRef.current;
       console.log('[Audio] got audio_hello from', fromId, '— sending offer');
       const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
@@ -572,6 +587,12 @@ export function ConferenceRoom({
       await new Promise(r => setTimeout(r, 2000)); // wait 2s so peer's subscription is ready
       for (const p of newPeers) {
         const peerId = String(p.id);
+        if (!shouldInitiateOffer(myId, peerId)) {
+          // #region agent log
+          fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'post-fix',hypothesisId:'H8',location:'ConferenceRoom.tsx:575',message:'skip fallback-offer by deterministic initiator rule',data:{myId,peerId},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          continue;
+        }
         // avoid race: check again inside async
         if (audioPeersRef.current.has(peerId)) continue;
         const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
@@ -819,6 +840,12 @@ export function ConferenceRoom({
         // #endregion
         for (const participant of others) {
           const peerId = String(participant.id);
+          if (!shouldInitiateOffer(String(currentUser?.id), peerId)) {
+            // #region agent log
+            fetch('http://127.0.0.1:7612/ingest/91675f6c-1f82-40e6-b043-2e3380751db4',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0c77b1'},body:JSON.stringify({sessionId:'0c77b1',runId:'post-fix',hypothesisId:'H8',location:'ConferenceRoom.tsx:821',message:'skip toggleMic-offer by deterministic initiator rule',data:{myId:String(currentUser?.id),peerId},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
+            continue;
+          }
           const old = audioPeersRef.current.get(peerId);
           if (old) { old.close(); audioPeersRef.current.delete(peerId); }
           audioIceBufRef.current.delete(peerId);
