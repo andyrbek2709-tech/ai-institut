@@ -27,6 +27,8 @@ export type SpecificationStampPayload = {
 };
 
 export type SpecificationItemPayload = {
+  /** Catalog reference, when the row was added from АГСК-3 catalog. */
+  item_id?: number | null;
   name: string;
   type: string;
   code: string;
@@ -71,6 +73,7 @@ export function buildSpecificationPayload(
     date: string;
   },
   rows: Array<{
+    item_id?: number | string | null;
     name: string;
     type_mark?: string;
     code?: string;
@@ -96,6 +99,10 @@ export function buildSpecificationPayload(
       date: stampUi.date.trim(),
     },
     items: rows.map((r) => ({
+      item_id:
+        r.item_id !== null && r.item_id !== undefined && r.item_id !== ''
+          ? Number(r.item_id) || null
+          : null,
       name: String(r.name || '').trim(),
       type: String(r.type_mark || '').trim(),
       code: String(r.code || '').trim(),
@@ -108,4 +115,4 @@ export function buildSpecificationPayload(
       line_count: rows.length,
     },
   };
-}
+}

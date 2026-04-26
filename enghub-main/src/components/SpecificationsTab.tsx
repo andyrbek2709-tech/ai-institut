@@ -450,6 +450,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
       {
         spec_id: Number(sid),
         line_no: nextLine,
+        item_id: item.id ? Number(item.id) : null,
         name: item.name,
         type: item.standard || '',
         code: item.code,
@@ -526,6 +527,9 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
   const rowsForExport = useMemo(() => {
     return specRows.map((r: any) => ({
       ...r,
+      // Carry catalog reference all the way to the server so it can mark
+      // catalog rows visually in Excel.
+      item_id: r.item_id ?? r.itemId ?? null,
       type_mark: String(r.type || ''),
       plant: inferPlantFromCatalog(
         String(r.name || ''),
@@ -577,10 +581,17 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     try {
       const resp = await fetch('/api/spec-export', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // Server verifies this Bearer token against Supabase auth and looks
+          // up the user's role/dept in app_users before generating the file.
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           ...payload,
-          project: { code: project?.code || '', name: project?.name || '' },
+          project_id: project?.id ?? null,
+          catalog_id: activeCatalogId ? Number(activeCatalogId) : null,
+          project: { id: project?.id ?? null, code: project?.code || '', name: project?.name || '' },
         }),
       });
       if (!resp.ok) {
@@ -987,3 +998,4 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     </div>
   );
 }
+ 

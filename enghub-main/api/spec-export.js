@@ -1,23 +1,29 @@
 const path = require('path');
 const ExcelJS = require('exceljs');
+const {
+  STAMP_FIELDS,
+  extractBearer,
+  verifyUserAndProfile,
+  checkProjectAccess,
+  matchItemsAgainstCatalog,
+  buildStampMap,
+} = require('./_spec_helpers');
 
 const runtime = 'nodejs';
 const TEMPLATE_PATH = path.join(__dirname, 'template.xlsx');
 const ROWS_PER_PAGE = 30;
 const START_ROW = 4;
 const TEMPLATE_ROW = 4;
-// Real table starts at column G (where "Поз." is located in row 2).
 const COL_OFFSET = 7;
-// Relative offsets from COL_OFFSET for concrete template groups.
 const FIELD_COLS = {
-  num: COL_OFFSET + 0, // G
-  name: COL_OFFSET + 1, // H
-  type: COL_OFFSET + 2, // I
-  code: COL_OFFSET + 3, // J (group J:M)
-  factory: COL_OFFSET + 7, // N (group N:Q)
-  unit: COL_OFFSET + 11, // R
-  qty: COL_OFFSET + 12, // S
-  note: COL_OFFSET + 15, // V (group V:Y)
+  num: COL_OFFSET + 0,      // G
+  name: COL_OFFSET + 1,     // H
+  type: COL_OFFSET + 2,     // I
+  code: COL_OFFSET + 3,     // J (group J:M)
+  factory: COL_OFFSET + 7,  // N (group N:Q)
+  unit: COL_OFFSET + 11,    // R
+  qty: COL_OFFSET + 12,     // S
+  note: COL_OFFSET + 15,    // V (group V:Y)
 };
 const TABLE_COLS = [
   FIELD_COLS.num,
@@ -37,22 +43,19 @@ function deepClone(value) {
 
 function readBody(body) {
   if (typeof body === 'string') {
-    try {
-      return JSON.parse(body);
-    } catch (_err) {
-      return null;
-    }
+    try { return JSON.parse(body); } catch (_e) { return null; }
   }
   return body;
 }
 
 function getValue(obj, snake, camel) {
-  return String(obj?.[snake] ?? obj?.[camel] ?? '');
+  return String((obj && (obj[snake] != null ? obj[snake] : obj[camel])) || '');
 }
 
 function getQty(item) {
-  const raw = item?.qty ?? item?.quantity ?? '';
-  return raw === '' ? '' : Number(raw) || '';
+  const raw = item && (item.qty != null ? item.qty : item.quantity);
+  if (raw === '' || raw == null) return '';
+  return Number(raw) || '';
 }
 
 function chunkItems(items) {
@@ -66,7 +69,6 @@ function chunkItems(items) {
 
 function cloneSheetFromTemplate(workbook, templateSheet, name) {
   const sheet = workbook.addWorksheet(name);
-
   sheet.properties = deepClone(templateSheet.properties || {});
   sheet.pageSetup = deepClone(templateSheet.pageSetup || {});
   sheet.headerFooter = deepClone(templateSheet.headerFooter || {});
@@ -100,7 +102,6 @@ function cloneSheetFromTemplate(workbook, templateSheet, name) {
 
   const merges = (templateSheet.model && templateSheet.model.merges) || [];
   for (const range of merges) sheet.mergeCells(range);
-
   return sheet;
 }
 
@@ -114,12 +115,11 @@ function copyRowStyleFromTemplate(sheet, targetRowNumber) {
 }
 
 function applyTextWrap(cell) {
-  cell.alignment = {
-    ...(deepClone(cell.alignment || {})),
+  cell.alignment = Object.assign({}, deepClone(cell.alignment || {}), {
     wrapText: true,
     vertical: 'middle',
     horizontal: 'left',
-  };
+  });
 }
 
 function setMergedAwareValue(sheet, row, col, value) {
@@ -141,6 +141,23 @@ function calcRowHeight(name, type) {
   return 90;
 }
 
+// Visible marker so the norm-controller distinguishes catalog rows
+// (light green factory cell, ✓ in note) from hand-written ones
+// (light amber, ✎ in note).
+function markRowOrigin(sheet, row, fromCatalog) {
+  const factoryCell = sheet.getCell(row, FIELD_COLS.factory);
+  const noteCell = sheet.getCell(row, FIELD_COLS.note);
+  if (fromCatalog) {
+    factoryCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE3F4DA' } };
+    const cur = String(noteCell.value || '');
+    if (!cur.startsWith('✓')) noteCell.value = cur ? `✓ ${cur}` : '✓ из АГСК';
+  } else {
+    factoryCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0CC' } };
+    const cur = String(noteCell.value || '');
+    if (!cur.startsWith('✎')) noteCell.value = cur ? `✎ ${cur}` : '✎ ручной ввод';
+  }
+}
+
 function writeItems(sheet, pageItems, startIndex) {
   for (let i = 0; i < ROWS_PER_PAGE; i += 1) {
     const row = START_ROW + i;
@@ -150,66 +167,60 @@ function writeItems(sheet, pageItems, startIndex) {
 
     const item = pageItems[i];
     if (!item) {
-      for (const col of TABLE_COLS) {
-        sheet.getCell(row, col).value = '';
-      }
+      for (const col of TABLE_COLS) sheet.getCell(row, col).value = '';
       sheet.getRow(row).height = 20;
       continue;
     }
 
-    const name = String(item?.name || '');
-    const type = String(item?.type || '');
+    const name = String(item.name || '');
+    const type = String(item.type || '');
 
     setMergedAwareValue(sheet, row, FIELD_COLS.num, startIndex + i + 1);
     setMergedAwareValue(sheet, row, FIELD_COLS.name, name);
     setMergedAwareValue(sheet, row, FIELD_COLS.type, type);
-    setMergedAwareValue(sheet, row, FIELD_COLS.code, String(item?.code || ''));
-    setMergedAwareValue(sheet, row, FIELD_COLS.factory, String(item?.factory || ''));
-    setMergedAwareValue(sheet, row, FIELD_COLS.unit, String(item?.unit || ''));
+    setMergedAwareValue(sheet, row, FIELD_COLS.code, String(item.code || ''));
+    setMergedAwareValue(sheet, row, FIELD_COLS.factory, String(item.factory || ''));
+    setMergedAwareValue(sheet, row, FIELD_COLS.unit, String(item.unit || ''));
     setMergedAwareValue(sheet, row, FIELD_COLS.qty, getQty(item));
-    setMergedAwareValue(sheet, row, FIELD_COLS.note, String(item?.note || ''));
+    setMergedAwareValue(sheet, row, FIELD_COLS.note, String(item.note || ''));
+    markRowOrigin(sheet, row, !!item._from_catalog);
     sheet.getRow(row).height = calcRowHeight(name, type);
   }
 }
 
-function writeStamp(sheet, stamp, pageIndex, totalPages) {
-  const objectName = getValue(stamp, 'object_name', 'objectName') || String(stamp?.project_name || '');
+function writeStamp(sheet, stamp, pageIndex, totalPages, stampMap) {
+  const objectName = getValue(stamp, 'object_name', 'objectName') || String(stamp.project_name || '');
   const systemName = getValue(stamp, 'system_name', 'systemName') || '-';
   const dateValue = getValue(stamp, 'date', 'date') || new Date().toISOString().slice(0, 10);
 
-  // Fixed title-block coordinates (bottom-right area of current template).
-  // Never calculate stamp position from table size.
-  setMergedAwareValue(sheet, 34, 17, getValue(stamp, 'project_code', 'projectCode')); // Q34 (Q34:Y35 merge)
-  setMergedAwareValue(sheet, 36, 17, objectName); // Q36 (Q36:Y38 merge)
-  setMergedAwareValue(sheet, 34, 7, systemName); // G34 (G34:I44 merge)
+  const put = (key, value) => {
+    const c = stampMap[key];
+    if (!c) return;
+    setMergedAwareValue(sheet, c.row, c.col, value);
+  };
 
-  setMergedAwareValue(sheet, 40, 21, getValue(stamp, 'stage', 'stage')); // U40 (U40:V41 merge)
-  setMergedAwareValue(sheet, 39, 12, getValue(stamp, 'developer', 'author')); // L39 (L39:N39 merge)
-  setMergedAwareValue(sheet, 40, 12, getValue(stamp, 'checker', 'checker')); // L40 (L40:N40 merge)
-  setMergedAwareValue(sheet, 43, 12, getValue(stamp, 'control', 'control')); // L43 (L43:N43 merge)
-  setMergedAwareValue(sheet, 44, 12, getValue(stamp, 'approver', 'approver')); // L44 (L44:N44 merge)
-  setMergedAwareValue(sheet, 44, 16, dateValue); // P44
-  setMergedAwareValue(sheet, 42, 17, 'Спецификация оборудования, изделий и материалов'); // Q42 (Q42:T44 merge)
-
-  setMergedAwareValue(sheet, 40, 23, pageIndex + 1); // W40 (W40:W41 merge)
-  setMergedAwareValue(sheet, 40, 24, totalPages); // X40 (X40:Y41 merge)
+  put('stamp_project_code', getValue(stamp, 'project_code', 'projectCode'));
+  put('stamp_object_name',  objectName);
+  put('stamp_system_name',  systemName);
+  put('stamp_stage',        getValue(stamp, 'stage', 'stage'));
+  put('stamp_developer',    getValue(stamp, 'developer', 'author'));
+  put('stamp_checker',      getValue(stamp, 'checker', 'checker'));
+  put('stamp_norm_control', getValue(stamp, 'control', 'control'));
+  put('stamp_approver',     getValue(stamp, 'approver', 'approver'));
+  put('stamp_date',         dateValue);
+  put('stamp_title',        'Спецификация оборудования, изделий и материалов');
+  put('stamp_sheet_no',     pageIndex + 1);
+  put('stamp_total_sheets', totalPages);
 }
 
 function configurePrint(sheet) {
   sheet.pageSetup = {
-    paperSize: 9, // A4
+    paperSize: 9,
     orientation: 'landscape',
     scale: 100,
     fitToPage: false,
-    printArea: `A1:Y45`,
-    margins: {
-      left: 0.3,
-      right: 0.3,
-      top: 0.5,
-      bottom: 0.5,
-      header: 0.3,
-      footer: 0.3,
-    },
+    printArea: 'A1:Y45',
+    margins: { left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 },
   };
 }
 
@@ -217,6 +228,15 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+
+  // 1) Auth & access guard
+  let auth;
+  try {
+    auth = await verifyUserAndProfile(extractBearer(req));
+  } catch (e) {
+    return res.status(500).json({ error: 'Auth check failed', details: (e && e.message) || 'unknown' });
+  }
+  if (!auth.ok) return res.status(auth.status || 401).json({ error: auth.error });
 
   try {
     const body = readBody(req.body);
@@ -226,27 +246,38 @@ module.exports = async function handler(req, res) {
 
     const stamp = body.stamp || {};
     const project = body.project || {};
-    const pages = chunkItems(body.items);
+    const projectId = body.project_id != null ? body.project_id : (project && project.id != null ? project.id : null);
+
+    const access = await checkProjectAccess(projectId, auth.user, auth.adminHeaders);
+    if (!access.ok) return res.status(access.status || 403).json({ error: access.error });
+
+    // 3) Catalog matching (best effort)
+    let items = Array.isArray(body.items) ? body.items : [];
+    try {
+      items = await matchItemsAgainstCatalog(items, auth.adminHeaders);
+    } catch (_e) { /* keep items as-is */ }
+    const pages = chunkItems(items);
 
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(TEMPLATE_PATH);
     const templateSheet = workbook.worksheets[0];
-    if (!templateSheet) {
-      throw new Error('Template worksheet not found');
-    }
+    if (!templateSheet) throw new Error('Template worksheet not found');
+
+    // 2) Stamp coordinates resolved from defined names (with fallback)
+    const stampMap = buildStampMap(workbook);
 
     templateSheet.name = 'Лист 1';
 
     for (let i = 0; i < pages.length; i += 1) {
       const sheet = i === 0 ? templateSheet : cloneSheetFromTemplate(workbook, templateSheet, `Лист ${i + 1}`);
       writeItems(sheet, pages[i], i * ROWS_PER_PAGE);
-      writeStamp(sheet, { ...stamp, project_name: project?.name || '' }, i, pages.length);
+      writeStamp(sheet, Object.assign({}, stamp, { project_name: project.name || '' }), i, pages.length, stampMap);
       configurePrint(sheet);
     }
 
     const out = await workbook.xlsx.writeBuffer();
     const fileDate = String(getValue(stamp, 'date', 'date') || new Date().toISOString().slice(0, 10)).slice(0, 10);
-    const code = String(getValue(stamp, 'project_code', 'projectCode') || project?.code || 'SPEC').trim() || 'SPEC';
+    const code = String(getValue(stamp, 'project_code', 'projectCode') || project.code || 'SPEC').trim() || 'SPEC';
     const safeCode = code.replace(/[^\wА-Яа-я.-]+/g, '_');
     const fileName = `${safeCode}_Спец_${fileDate}.xlsx`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -259,10 +290,11 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     return res.status(500).json({
       error: 'Excel generation failed',
-      details: err?.message || 'unknown error',
+      details: (err && err.message) || 'unknown error',
     });
   }
 };
 
 module.exports.runtime = runtime;
 module.exports.config = { runtime };
+module.exports.STAMP_FIELDS = STAMP_FIELDS;

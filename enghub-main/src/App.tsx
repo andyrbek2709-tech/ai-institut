@@ -8,7 +8,9 @@ import { AdminPanel } from './pages/AdminPanel';
 import { useNotifications, ToastContainer } from './components/Notifications';
 import { CalculationView } from './calculations/CalculationView';
 import { calcRegistry } from './calculations/registry';
-import { ConferenceRoom } from './pages/ConferenceRoom';
+// ConferenceRoom legacy импорт удалён 2026-04-27 — заменено на MeetingRoomPage.
+// Старая реализация лежит рядом как ConferenceRoom.legacy.tsx (DEPRECATED).
+import MeetingRoomPage from './components/meeting/MeetingRoomPage';
 import { CopilotPanel } from './components/CopilotPanel';
 import { DrawingsPanel } from './components/DrawingsPanel';
 import { RevisionsTab } from './components/RevisionsTab';
@@ -177,12 +179,15 @@ export default function App() {
   const [dupDecisions, setDupDecisions] = useState<Record<string, 'overwrite' | 'skip'>>({});
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [showArchive, setShowArchive] = useState(false);
+  const [archiveConfirm, setArchiveConfirm] = useState<any>(null);
+  const [archiveStep, setArchiveStep] = useState(0);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [telegramIdInput, setTelegramIdInput] = useState("");
   const [telegramSaving, setTelegramSaving] = useState(false);
   const [showTelegramInput, setShowTelegramInput] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [archivedProjects, setArchivedProjects] = useState<any[]>([]);
+  const [branding, setBranding] = useState<{ companyName: string; logoUrl: string | null }>({ companyName: 'EngHub', logoUrl: null });
   const [sideTab, setSideTab] = useState(() => { const s = localStorage.getItem('enghub_sidetab'); return (s && s !== 'conference') ? s : 'tasks'; });
   const [chatInput, setChatInput] = useState("");
   const [loading, setLoading] = useState(true);
@@ -215,9 +220,14 @@ export default function App() {
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterAssigned, setFilterAssigned] = useState("all");
 
-  const isAdmin = userEmail === "admin@enghub.com";
   const role = currentUserData?.role?.toLowerCase() || "";
-  const isGip = role.includes("gip") || role.includes("гип") || userEmail?.includes("gip_test");
+  // Admin is determined by the role in app_users, not by the e-mail string.
+  // Legacy fallback: the bootstrap account admin@enghub.com is treated as admin
+  // until a profile with role='admin' exists for it.
+  const isAdmin =
+    role === "admin" ||
+    (!currentUserData && userEmail === "admin@enghub.com");
+  const isGip = role.includes("gip") || role.includes("гип");
   const isLead = role.includes("lead") || role.includes("руководитель");
   const isEng = role.includes("engineer") || role.includes("инженер");
 
@@ -226,7 +236,7 @@ export default function App() {
 
   useEffect(() => {
     if (token && !isAdmin) {
-      Promise.all([loadAppUsers(), loadDepts(), loadProjects(), loadNormativeDocs()])
+      Promise.all([loadAppUsers(), loadDepts(), loadProjects(), loadNormativeDocs(), loadBranding()])
         .catch((e: any) => {
           setLoading(false);
           if (e instanceof AuthError) handleLogout();
@@ -351,6 +361,35 @@ export default function App() {
   const loadDepts = async () => { const data = await get("departments?order=name", token!); if (Array.isArray(data)) setDepts(data); };
   const loadProjects = async () => { const data = await get("projects?archived=eq.false&order=id", token!); if (Array.isArray(data)) { setProjects(data); if (data.length > 0) setActiveProject(data[0]); } setLoading(false); };
   const loadArchived = async () => { const data = await get("projects?archived=eq.true&order=id", token!); if (Array.isArray(data)) setArchivedProjects(data); };
+
+  const signStorageUrl = async (bucket: string, path: string, expiresInSec: number = 60 * 60) => {
+    if (!SURL || !SERVICE_KEY) return null;
+    const signRes = await fetch(`${SURL}/storage/v1/object/sign/${bucket}/${path}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expiresIn: expiresInSec }),
+    });
+    if (!signRes.ok) return null;
+    const signJson = await signRes.json().catch(() => ({}));
+    const signedPath = (signJson as any)?.signedURL || (signJson as any)?.signedUrl;
+    if (!signedPath) return null;
+    return signedPath.startsWith('http') ? signedPath : `${SURL}/storage/v1${signedPath}`;
+  };
+
+  const loadBranding = async () => {
+    try {
+      const url = await signStorageUrl('normative-docs', 'branding/company.json', 60 * 60);
+      if (!url) return;
+      const r = await fetch(url);
+      if (!r.ok) return;
+      const json: any = await r.json().catch(() => null);
+      if (!json) return;
+      setBranding({
+        companyName: String(json.companyName || 'EngHub'),
+        logoUrl: json.logoUrl ? String(json.logoUrl) : null
+      });
+    } catch {}
+  };
   const loadAllTasks = async (pid: number) => {
     const data = await listProjectTasks(pid, token!);
     if (Array.isArray(data)) {
@@ -899,6 +938,11 @@ export default function App() {
 
   const getDeptNameById = (id: number | string) => depts.find(d => String(d.id) === String(id))?.name || "";
   const archiveProject = async (id: number) => { await patch(`projects?id=eq.${id}`, { archived: true }, token!); loadProjects(); };
+
+  const promptArchiveProject = (p: any) => {
+    setArchiveConfirm(p);
+    setArchiveStep(0);
+  };
   const createTask = async () => {
     if (!newTask.name || !activeProject) return;
     if (!newTask.deadline) { addNotification('Укажите дедлайн задачи', 'warning'); return; }
@@ -967,6 +1011,17 @@ export default function App() {
       setWorkflowBlockInfo(localMessage);
       addNotification(localMessage, 'warning');
       return;
+    }
+    // Возврат задачи в "revision" обязан сопровождаться комментарием —
+    // иначе исполнитель не понимает, что переделывать.
+    if (status === 'revision') {
+      const note = (comment || '').trim();
+      if (!note) {
+        const msg = 'Чтобы вернуть задачу на доработку, опишите причину в комментарии.';
+        setWorkflowBlockInfo(msg);
+        addNotification(msg, 'warning');
+        return;
+      }
     }
     if (currentStatus) {
       try {
@@ -1077,6 +1132,37 @@ export default function App() {
   };
   const changeTransmittalStatus = async (transmittalId: string, status: string) => {
     if (!activeProject) return;
+    // Защита от выпуска неподписанного материала: если в составе трансмиттала
+    // есть чертёж, у которого открыты замечания severity='critical' — не даём
+    // перевести статус в 'issued', пока эти замечания не закрыты.
+    if (status === 'issued') {
+      try {
+        const items = await listTransmittalItems(transmittalId, token!);
+        const drawingIds = (Array.isArray(items) ? items : [])
+          .map((it: any) => it.drawing_id)
+          .filter(Boolean);
+        if (drawingIds.length) {
+          const inList = drawingIds.map((id: string) => `"${id}"`).join(',');
+          const blockers = await get(
+            `reviews?select=id,title,drawing_id,severity,status&drawing_id=in.(${inList})&severity=eq.critical&status=eq.open`,
+            token!
+          );
+          if (Array.isArray(blockers) && blockers.length > 0) {
+            const titles = blockers.map((r: any) => r.title || `id=${r.id}`).slice(0, 3).join('; ');
+            const more = blockers.length > 3 ? ` и ещё ${blockers.length - 3}` : '';
+            addNotification(
+              `Нельзя выпустить трансмиттал: открыто ${blockers.length} critical-замечание(й): ${titles}${more}.`,
+              'warning'
+            );
+            return;
+          }
+        }
+      } catch (e) {
+        // Если проверка упала — лучше не пропускать "issued" вслепую.
+        addNotification('Не удалось проверить открытые critical-замечания, выпуск отменён.', 'warning');
+        return;
+      }
+    }
     await updateTransmittalStatus(transmittalId, status, token!);
     addNotification(`Статус трансмиттала изменён: ${status}`, 'info');
     loadTransmittals(activeProject.id);
@@ -1548,11 +1634,48 @@ export default function App() {
         </Modal>
       )}
 
+      {archiveConfirm && (
+        <div className="delete-overlay">
+          <div className="delete-box">
+            <div style={{ fontSize: 40, marginBottom: 16 }}>📦</div>
+            <div style={{ fontWeight: 800, fontSize: 17, marginBottom: 8, color: C.orange }}>
+              {archiveStep === 0 ? "Отправить проект в архив?" : "Вы уверены?"}
+            </div>
+            <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 24 }}>
+              {archiveStep === 0
+                ? `Проект "${archiveConfirm.name}" будет скрыт из активных.`
+                : "После архивации проект будет доступен только в разделе «Архив»."}
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button className="btn btn-secondary" onClick={() => { setArchiveConfirm(null); setArchiveStep(0); }}>Отмена</button>
+              <button
+                className="btn"
+                style={{ background: C.orange, color: "#fff" }}
+                onClick={async () => {
+                  if (archiveStep === 0) { setArchiveStep(1); return; }
+                  await archiveProject(archiveConfirm.id);
+                  setArchiveConfirm(null);
+                  setArchiveStep(0);
+                }}
+              >
+                {archiveStep === 0 ? "Продолжить →" : "Отправить в архив"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ===== SIDEBAR ===== */}
       <div className="sidebar">
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon">⬡</div>
-          <div className="sidebar-logo-text">EngHub</div>
+          <div className="sidebar-logo-icon" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {branding.logoUrl ? (
+              <img src={branding.logoUrl} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <>⬡</>
+            )}
+          </div>
+          <div className="sidebar-logo-text">{branding.companyName || "EngHub"}</div>
         </div>
         <div className="sidebar-logo-sub">ENGINEERING PLATFORM</div>
         <div className="sidebar-nav">
@@ -2017,7 +2140,7 @@ export default function App() {
                         </div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <span style={{ fontSize: 12, color: (() => { const dl = parseDeadline(p.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {p.deadline}</span>
-                          {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); if (window.confirm(`Отправить "${p.name}" в архив?`)) archiveProject(p.id); }}>→ Архив</button>}
+                          {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); promptArchiveProject(p); }}>→ Архив</button>}
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -2324,20 +2447,12 @@ export default function App() {
               )}
 
               {sideTab === "conference" && (
-                <ConferenceRoom
-                  project={activeProject}
-                  currentUser={currentUserData}
-                  appUsers={appUsers}
-                  msgs={msgs}
+                <MeetingRoomPage
                   C={C}
+                  project={activeProject ? { id: activeProject.id, name: activeProject.name } : null}
+                  currentUser={currentUserData}
                   token={token!}
-                  onSendMsg={(text: string, type: string = "text") => sendMsg(undefined, type, text)}
-                  getUserById={getUserById}
-                  conferenceParticipants={conferenceParticipants}
-                  onJoin={joinConference}
-                  onLeave={leaveConference}
-                  onPresenceUpdate={updatePresence}
-                  screenShareActive={conferenceScreenActive}
+                  addNotification={addNotification}
                 />
               )}
             </div>
@@ -2373,7 +2488,7 @@ export default function App() {
                         </div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <span style={{ fontSize: 12, color: (() => { const dl = parseDeadline(p.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {p.deadline}</span>
-                          {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); if (window.confirm(`Отправить "${p.name}" в архив?`)) archiveProject(p.id); }}>→ Архив</button>}
+                          {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); promptArchiveProject(p); }}>→ Архив</button>}
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
