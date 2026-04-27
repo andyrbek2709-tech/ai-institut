@@ -81,7 +81,7 @@ export function AdminPanel({ token, onLogout, dark, setDark }: AdminPanelProps) 
       )}
 
       {showUserModal && (
-        <Modal title={editUser ? "Редактировать" : "Новый пользователь"} onClose={() => { setShowUserModal(false); setEditUser(null); setForm(emptyUser); }} C={C}>
+        <Modal key={`user-modal-${editUser?.id || 'new'}`} title={editUser ? "Редактировать" : "Новый пользователь"} onClose={() => { setShowUserModal(false); setEditUser(null); setForm(emptyUser); }} C={C}>
           <div className="form-stack">
             <Field label="ФИО *" C={C}><input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} placeholder="Иванов Иван Иванович" style={getInp(C)} /></Field>
             {!editUser && <Field label="EMAIL *" C={C}><input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ivanov@company.com" style={getInp(C)} /></Field>}
