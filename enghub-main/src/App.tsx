@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions } from './constants';
 import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory } from './api/supabase';
-import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp } from './components/ui';
+import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
 import { useNotifications, ToastContainer } from './components/Notifications';
@@ -1328,7 +1328,7 @@ export default function App() {
                 ))}
               </div>
             </Field>
-            <Field label="ДЕДЛАЙН" C={C}><input type="date" value={newProject.deadline} onChange={e => setNewProject({ ...newProject, deadline: e.target.value })} style={getInp(C)} /></Field>
+            <Field label="ДЕДЛАЙН" C={C}><RuDateInput value={newProject.deadline} onChange={v => setNewProject({ ...newProject, deadline: v })} C={C} /></Field>
             <Field label="СТАТУС" C={C}><select value={newProject.status} onChange={e => setNewProject({ ...newProject, status: e.target.value })} style={getInp(C)}><option value="active">В работе</option><option value="review">На проверке</option></select></Field>
             <button className="btn btn-primary" onClick={createProject} disabled={saving || !newProject.name || !newProject.code} style={{ width: "100%", opacity: (!newProject.name || !newProject.code) ? 0.5 : 1 }}>{saving ? "Создаётся..." : "Создать проект"}</button>
           </div>
@@ -1729,7 +1729,7 @@ export default function App() {
                 </div>
               );
             })}
-            {isGip && <button className="sidebar-btn" onClick={() => { setShowNewProject(false); setTimeout(() => { setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(true); }, 0); }} style={{ color: C.accent, marginTop: 4 }}>
+            {isGip && <button className="sidebar-btn" onClick={() => { setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(true); }} style={{ color: C.accent, marginTop: 4 }}>
               <span className="sidebar-btn-icon">+</span><span>Новый проект</span>
             </button>}
           </div>
@@ -1889,7 +1889,7 @@ export default function App() {
                   <div className="page-label">Рабочий стол</div>
                   <div className="page-title">Добро пожаловать, {currentUserData?.full_name?.split(" ")[1] || currentUserData?.full_name?.split(" ")[0]} 👋</div>
                 </div>
-                {isGip && <button className="btn btn-primary" onClick={() => { setShowNewProject(false); setTimeout(() => { setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(true); }, 0); }}>+ Новый проект</button>}
+                {isGip && <button className="btn btn-primary" onClick={() => { setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(true); }}>+ Новый проект</button>}
               </div>
 
               {/* Поиск */}
@@ -2466,7 +2466,7 @@ export default function App() {
                   <div className="page-label">Реестр проектов</div>
                   <div className="page-title">Все доступные проекты</div>
                 </div>
-                {isGip && <button className="btn btn-primary" onClick={() => { setShowNewProject(false); setTimeout(() => { setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(true); }, 0); }}>+ Новый проект</button>}
+                {isGip && <button className="btn btn-primary" onClick={() => { setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(true); }}>+ Новый проект</button>}
               </div>
 
               <div className="search-wrap" style={{ marginBottom: 20 }}>
