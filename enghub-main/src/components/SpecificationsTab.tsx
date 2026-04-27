@@ -998,4 +998,24 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     </div>
   );
 }
- 
+                      >
+                        <div>{globalIdx + 1}</div>
+                        <div>{row.name || ''}</div>
+                        <div style={{ wordBreak: 'break-all' }}>{row.code || ''}</div>
+                        <div>{inferUnitFromText(String(row.name || ''), String(row.type || ''), String(row.unit || ''))}</div>
+                        <div>{row.qty ?? ''}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+    </div>
+  );
+}

@@ -298,3 +298,40 @@ module.exports = async function handler(req, res) {
 module.exports.runtime = runtime;
 module.exports.config = { runtime };
 module.exports.STAMP_FIELDS = STAMP_FIELDS;
+ Error('Template worksheet not found');
+
+    // 2) Stamp coordinates resolved from defined names (with fallback)
+    const stampMap = buildStampMap(workbook);
+
+    templateSheet.name = 'Лист 1';
+
+    for (let i = 0; i < pages.length; i += 1) {
+      const sheet = i === 0 ? templateSheet : cloneSheetFromTemplate(workbook, templateSheet, `Лист ${i + 1}`);
+      writeItems(sheet, pages[i], i * ROWS_PER_PAGE);
+      writeStamp(sheet, Object.assign({}, stamp, { project_name: project.name || '' }), i, pages.length, stampMap);
+      configurePrint(sheet);
+    }
+
+    const out = await workbook.xlsx.writeBuffer();
+    const fileDate = String(getValue(stamp, 'date', 'date') || new Date().toISOString().slice(0, 10)).slice(0, 10);
+    const code = String(getValue(stamp, 'project_code', 'projectCode') || project.code || 'SPEC').trim() || 'SPEC';
+    const safeCode = code.replace(/[^\wА-Яа-я.-]+/g, '_');
+    const fileName = `${safeCode}_Спец_${fileDate}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    const encodedName = encodeURIComponent(fileName);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="specification.xlsx"; filename*=UTF-8''${encodedName}`
+    );
+    return res.status(200).send(Buffer.from(out));
+  } catch (err) {
+    return res.status(500).json({
+      error: 'Excel generation failed',
+      details: (err && err.message) || 'unknown error',
+    });
+  }
+};
+
+module.exports.runtime = runtime;
+module.exports.config = { runtime };
+module.exports.STAMP_FIELDS = STAMP_FIELDS;

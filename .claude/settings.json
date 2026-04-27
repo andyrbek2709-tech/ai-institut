@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git push*)",
+            "command": "node -e \"let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ const cmd=(JSON.parse(d).tool_input||{}).command||''; if(!/git push/.test(cmd)) return; const {execSync,appendFileSync}=require('child_process'),fs=require('fs'); const cwd='D:/ai-site'; const date=new Date().toISOString().slice(0,10); const msg=execSync('git log -1 --format=\"%s\"',{cwd}).toString().trim(); const files=execSync('git show --stat --format=\"\" HEAD',{cwd}).toString().split('\\n').filter(l=>l.includes('|')).map(l=>l.trim().split(' ')[0]).join(', '); const entry='\\n### '+date+'\\n**'+msg+'**\\n- Файлы: '+files+'\\n'; fs.appendFileSync('D:/ai-site/enghub-main/README.md', entry); });\"",
+            "async": true,
+            "statusMessage": "Updating README.md..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -115,4 +115,20 @@ export function buildSpecificationPayload(
       line_count: rows.length,
     },
   };
-}
+}
+rk || '').trim(),
+      code: String(r.code || '').trim(),
+      factory: String(r.plant || '').trim(),
+      unit: String(r.unit || '').trim(),
+      quantity: Number(r.qty) || 0,
+    })),
+    meta: {
+      rows_per_page: rowsPerPage,
+      line_count: rows.length,
+    },
+  };
+}
+;
+  };
+}
+}

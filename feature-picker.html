@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EngHub — Выбор функций для реализации</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; padding: 32px 16px; }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+  .subtitle { color: #64748b; font-size: 14px; margin-bottom: 32px; }
+  .counter { display: inline-block; background: #4a9eff20; color: #4a9eff; border: 1px solid #4a9eff40; border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 600; margin-bottom: 32px; }
+
+  .section { margin-bottom: 28px; }
+  .section-title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; color: #64748b; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .section-title span { font-size: 18px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+
+  .card { background: #1e2330; border: 1.5px solid #2a3044; border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: all 0.15s ease; display: flex; gap: 12px; align-items: flex-start; }
+  .card:hover { border-color: #4a9eff60; background: #1e2a3a; }
+  .card.selected { border-color: #4a9eff; background: #4a9eff12; }
+  .card.selected .check { background: #4a9eff; border-color: #4a9eff; }
+  .card.selected .check::after { display: block; }
+
+  .check { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid #3a4458; flex-shrink: 0; margin-top: 1px; position: relative; transition: all 0.15s; }
+  .check::after { content: '✓'; display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: 800; }
+
+  .card-body { flex: 1; min-width: 0; }
+  .card-id { font-size: 11px; font-weight: 700; color: #4a9eff; opacity: 0.7; margin-bottom: 2px; }
+  .card-title { font-size: 14px; font-weight: 600; color: #e2e8f0; margin-bottom: 4px; line-height: 1.3; }
+  .card-desc { font-size: 12px; color: #64748b; line-height: 1.5; }
+
+  .custom-section { margin-top: 28px; margin-bottom: 32px; }
+  .custom-label { font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
+  .custom-input { width: 100%; background: #1e2330; border: 1.5px solid #2a3044; border-radius: 10px; padding: 12px 16px; color: #e2e8f0; font-size: 14px; outline: none; resize: vertical; min-height: 80px; font-family: inherit; transition: border-color 0.15s; }
+  .custom-input:focus { border-color: #4a9eff; }
+  .custom-input::placeholder { color: #3a4458; }
+
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .btn { padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: #4a9eff; color: #fff; }
+  .btn-primary:hover { background: #3b8fe8; }
+  .btn-secondary { background: #1e2330; color: #94a3b8; border: 1.5px solid #2a3044; }
+  .btn-secondary:hover { color: #e2e8f0; border-color: #4a9eff60; }
+  .btn-danger { background: #ef444418; color: #ef4444; border: 1.5px solid #ef444430; }
+  .btn-danger:hover { background: #ef444428; }
+
+  .result { background: #1e2330; border: 1.5px solid #2a3044; border-radius: 12px; padding: 20px; margin-top: 20px; display: none; }
+  .result.show { display: block; }
+  .result h3 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+  .result-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #2a3044; font-size: 13px; color: #94a3b8; }
+  .result-item:last-child { border-bottom: none; }
+  .result-item strong { color: #4a9eff; }
+  .result-copy { margin-top: 12px; padding: 10px; background: #0f1117; border-radius: 8px; font-size: 11px; color: #64748b; font-family: monospace; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; }
+
+  .all-none { display: flex; gap: 8px; margin-bottom: 20px; }
+  .pill { padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #2a3044; background: #1e2330; color: #64748b; transition: all 0.15s; }
+  .pill:hover { color: #e2e8f0; border-color: #4a9eff60; }
+
+  .priority-badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+  .p-high { background: #ef444420; color: #ef4444; }
+  .p-med { background: #f5a62320; color: #f5a623; }
+  .p-low { background: #22c55e20; color: #22c55e; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🚀 EngHub — Прокачка платформы</h1>
+  <p class="subtitle">Отметь нужные функции. Можно добавить свои идеи снизу.</p>
+  <div class="counter" id="counter">Выбрано: 0 из 35</div>
+
+  <div class="all-none">
+    <div class="pill" onclick="selectAll()">✅ Выбрать все</div>
+    <div class="pill" onclick="selectNone()">✕ Снять все</div>
+    <div class="pill" onclick="selectTop()">⭐ Топ-приоритет</div>
+  </div>
+
+  <!-- ДИЗАЙН -->
+  <div class="section">
+    <div class="section-title"><span>🎨</span> Дизайн и UX</div>
+    <div class="grid">
+      <div class="card" data-id="D1" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">D1 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Onboarding-тур</div>
+          <div class="card-desc">5-шаговый интерактивный тур для новых пользователей</div>
+        </div>
+      </div>
+      <div class="card" data-id="D2" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">D2 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Пустые состояния с CTA</div>
+          <div class="card-desc">Иллюстрации + кнопки действий вместо пустых списков</div>
+        </div>
+      </div>
+      <div class="card" data-id="D3" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">D3 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">Центр уведомлений</div>
+          <div class="card-desc">Колокольчик в шапке — лента всех событий платформы</div>
+        </div>
+      </div>
+      <div class="card" data-id="D4" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">D4 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">Drag & Drop Kanban</div>
+          <div class="card-desc">Перетаскивание задач мышкой между статусами</div>
+        </div>
+      </div>
+      <div class="card" data-id="D5" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">D5 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Timeline-вид проекта</div>
+          <div class="card-desc">Горизонтальная лента с вехами и прогрессом</div>
+        </div>
+      </div>
+      <div class="card" data-id="D6" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">D6 <span class="priority-badge p-low">низкий</span></div>
+          <div class="card-title">Аватары с фото</div>
+          <div class="card-desc">Загрузка фото профиля вместо инициалов</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI -->
+  <div class="section">
+    <div class="section-title"><span>🤖</span> AI-функции</div>
+    <div class="grid">
+      <div class="card" data-id="A1" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">A1 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">AI-анализ чертежей</div>
+          <div class="card-desc">Загрузи PDF → Claude Vision проверяет штамп, марку, подписи и создаёт замечания</div>
+        </div>
+      </div>
+      <div class="card" data-id="A2" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">A2 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">Risk AI — прогноз рисков</div>
+          <div class="card-desc">Предупреждает за 2 недели: "КМ перегружен, срыв дедлайна 80%"</div>
+        </div>
+      </div>
+      <div class="card" data-id="A3" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">A3 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">AI-планировщик задач</div>
+          <div class="card-desc">"Нужна рабочка по ТХ за 3 месяца, 5 человек" → полный план задач</div>
+        </div>
+      </div>
+      <div class="card" data-id="A4" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">A4 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">Умный поиск (NL)</div>
+          <div class="card-desc">"Покажи просроченные задачи КМ" — поиск на естественном языке</div>
+        </div>
+      </div>
+      <div class="card" data-id="A5" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">A5 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">AI-транскрипция совещаний</div>
+          <div class="card-desc">Аудиозапись → Claude → готовый протокол с решениями</div>
+        </div>
+      </div>
+      <div class="card" data-id="A6" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">A6 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">AI-помощник в формах</div>
+          <div class="card-desc">При создании задачи AI подсказывает срок и исполнителя</div>
+        </div>
+      </div>
+      <div class="card" data-id="A7" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">A7 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">Еженедельный AI-дайджест</div>
+          <div class="card-desc">Каждый понедельник: email/Telegram с задачами и дедлайнами на неделю</div>
+        </div>
+      </div>
+      <div class="card" data-id="A8" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">A8 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">AI-нормоконтролёр</div>
+          <div class="card-desc">Текст ПЗ → AI проверяет по ГОСТам → замечания со ссылками на пункты</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ИНЖЕНЕР -->
+  <div class="section">
+    <div class="section-title"><span>👷</span> Для инженера</div>
+    <div class="grid">
+      <div class="card" data-id="E1" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">E1 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Треды замечаний</div>
+          <div class="card-desc">Переписка внутри замечания с историей ответов</div>
+        </div>
+      </div>
+      <div class="card" data-id="E2" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">E2 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Трекер статуса чертежа</div>
+          <div class="card-desc">Визуальный pipeline: черновик → проверка → согласовано → выпущено</div>
+        </div>
+      </div>
+      <div class="card" data-id="E3" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">E3 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">Telegram-бот</div>
+          <div class="card-desc">/mytasks, /deadlines — уведомления в Telegram</div>
+        </div>
+      </div>
+      <div class="card" data-id="E4" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">E4 <span class="priority-badge p-low">низкий</span></div>
+          <div class="card-title">Экспорт расчёта в задачу</div>
+          <div class="card-desc">Кнопка "Прикрепить к задаче" в модуле расчётов</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ГИП -->
+  <div class="section">
+    <div class="section-title"><span>🏗</span> Для ГИПа</div>
+    <div class="grid">
+      <div class="card" data-id="G1" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">G1 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">Dashboard рисков</div>
+          <div class="card-desc">Один экран: что горит, кто виноват, что делать прямо сейчас</div>
+        </div>
+      </div>
+      <div class="card" data-id="G2" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">G2 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">S-curve прогресса</div>
+          <div class="card-desc">График план/факт выпуска документации по месяцам</div>
+        </div>
+      </div>
+      <div class="card" data-id="G3" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">G3 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">Отчёт для заказчика (PDF)</div>
+          <div class="card-desc">Один клик → красивый PDF-отчёт о статусе проекта для клиента</div>
+        </div>
+      </div>
+      <div class="card" data-id="G4" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">G4 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Матрица RACI</div>
+          <div class="card-desc">Кто Responsible / Accountable / Consulted / Informed</div>
+        </div>
+      </div>
+      <div class="card" data-id="G5" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">G5 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Бюджет человеко-часов</div>
+          <div class="card-desc">Плановые vs фактические часы по отделам</div>
+        </div>
+      </div>
+      <div class="card" data-id="G6" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">G6 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">AI-прогноз завершения</div>
+          <div class="card-desc">"При текущей скорости — риск срыва дедлайна на 25 дней"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- РУК. ОТДЕЛА -->
+  <div class="section">
+    <div class="section-title"><span>👥</span> Для руководителя отдела</div>
+    <div class="grid">
+      <div class="card" data-id="R1" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">R1 <span class="priority-badge p-high">высокий</span></div>
+          <div class="card-title">Загруженность команды</div>
+          <div class="card-desc">Calendar-view: кто чем занят на неделю</div>
+        </div>
+      </div>
+      <div class="card" data-id="R2" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">R2 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">AI-распределение задач</div>
+          <div class="card-desc">"Распредели 10 задач равномерно" → AI назначает исполнителей</div>
+        </div>
+      </div>
+      <div class="card" data-id="R3" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">R3 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">KPI качества инженеров</div>
+          <div class="card-desc">Рейтинг по количеству замечаний и возвратов</div>
+        </div>
+      </div>
+      <div class="card" data-id="R4" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">R4 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Шаблоны задач</div>
+          <div class="card-desc">Типовые задачи по дисциплинам — создаются одним кликом</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ТЕХНИЧЕСКИЕ -->
+  <div class="section">
+    <div class="section-title"><span>💻</span> Технические</div>
+    <div class="grid">
+      <div class="card" data-id="T1" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">T1 <span class="priority-badge p-low">низкий</span></div>
+          <div class="card-title">PWA / Offline-режим</div>
+          <div class="card-desc">Работа без интернета, синхронизация при подключении</div>
+        </div>
+      </div>
+      <div class="card" data-id="T2" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">T2 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Webhook-интеграции</div>
+          <div class="card-desc">Отправка событий в Jira, Bitrix24, 1С при изменениях</div>
+        </div>
+      </div>
+      <div class="card" data-id="T3" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">T3 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Публичный API</div>
+          <div class="card-desc">Сторонние системы читают данные через API-ключ</div>
+        </div>
+      </div>
+      <div class="card" data-id="T4" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">T4 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Мобильное приложение</div>
+          <div class="card-desc">React Native — iOS + Android, те же функции</div>
+        </div>
+      </div>
+      <div class="card" data-id="T5" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">T5 <span class="priority-badge p-med">средний</span></div>
+          <div class="card-title">Версионирование данных</div>
+          <div class="card-desc">История изменений задач/чертежей, возможность отката</div>
+        </div>
+      </div>
+      <div class="card" data-id="T6" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">T6 <span class="priority-badge p-low">низкий</span></div>
+          <div class="card-title">Мультиязычность</div>
+          <div class="card-desc">EN / RU / KZ переключение интерфейса</div>
+        </div>
+      </div>
+      <div class="card" data-id="T7" onclick="toggle(this)">
+        <div class="check"></div>
+        <div class="card-body">
+          <div class="card-id">T7 <span class="priority-badge p-low">низкий</span></div>
+          <div class="card-title">BIM-интеграция</div>
+          <div class="card-desc">Связь с Revit/AutoCAD через IFC-файлы</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- СВОИ ИДЕИ -->
+  <div class="custom-section">
+    <div class="section-title"><span>✏️</span> Свои идеи</div>
+    <div class="custom-label">Добавь свои функции — по одной на строку</div>
+    <textarea class="custom-input" id="customIdeas" placeholder="Например:&#10;Интеграция с 1С&#10;Чат с клиентом&#10;Уведомления по SMS"></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="generatePlan()">✅ Сформировать план</button>
+    <button class="btn btn-secondary" onclick="selectAll()">Выбрать все</button>
+    <button class="btn btn-danger" onclick="selectNone()">Снять все</button>
+  </div>
+
+  <div class="result" id="result">
+    <h3 id="result-title">📋 Согласованный план</h3>
+    <div id="result-list"></div>
+    <div class="result-copy" id="result-copy"></div>
+  </div>
+</div>
+
+<script>
+  const selected = new Set();
+
+  function toggle(card) {
+    const id = card.dataset.id;
+    if (selected.has(id)) {
+      selected.delete(id);
+      card.classList.remove('selected');
+    } else {
+      selected.add(id);
+      card.classList.add('selected');
+    }
+    updateCounter();
+  }
+
+  function updateCounter() {
+    document.getElementById('counter').textContent = `Выбрано: ${selected.size} из 35`;
+  }
+
+  function selectAll() {
+    document.querySelectorAll('.card').forEach(c => {
+      selected.add(c.dataset.id);
+      c.classList.add('selected');
+    });
+    updateCounter();
+  }
+
+  function selectNone() {
+    document.querySelectorAll('.card').forEach(c => {
+      c.classList.remove('selected');
+    });
+    selected.clear();
+    updateCounter();
+  }
+
+  function selectTop() {
+    selectNone();
+    const top = ['D3','D4','A1','A2','A3','A4','A7','A8','E3','G1','G3','G6','R1'];
+    top.forEach(id => {
+      const card = document.querySelector(`[data-id="${id}"]`);
+      if (card) { card.classList.add('selected'); selected.add(id); }
+    });
+    updateCounter();
+  }
+
+  function generatePlan() {
+    const items = [];
+    document.querySelectorAll('.card.selected').forEach(c => {
+      const id = c.dataset.id;
+      const title = c.querySelector('.card-title').textContent;
+      const desc = c.querySelector('.card-desc').textContent;
+      const priority = c.querySelector('.priority-badge').textContent;
+      items.push({ id, title, desc, priority });
+    });
+
+    const custom = document.getElementById('customIdeas').value.trim();
+    const customItems = custom ? custom.split('\n').filter(l => l.trim()).map((l, i) => ({
+      id: `C${i+1}`, title: l.trim(), desc: 'Пользовательская идея', priority: 'средний'
+    })) : [];
+
+    const all = [...items, ...customItems];
+
+    const resultEl = document.getElementById('result');
+    const listEl = document.getElementById('result-list');
+    const copyEl = document.getElementById('result-copy');
+    const titleEl = document.getElementById('result-title');
+
+    if (all.length === 0) {
+      titleEl.textContent = '⚠️ Ничего не выбрано';
+      listEl.innerHTML = '<div class="result-item">Выберите хотя бы одну функцию</div>';
+      resultEl.classList.add('show');
+      return;
+    }
+
+    titleEl.textContent = `📋 Согласованный план — ${all.length} функций`;
+    listEl.innerHTML = all.map(i =>
+      `<div class="result-item"><strong>${i.id}</strong> ${i.title} — <span style="color:#64748b">${i.desc}</span></div>`
+    ).join('');
+
+    copyEl.textContent = 'SELECTED_IDS: ' + all.map(i => i.id).join(',') + '\n\nFULL_LIST:\n' +
+      all.map(i => `${i.id}|${i.title}|${i.desc}|${i.priority}`).join('\n');
+
+    if (custom) {
+      copyEl.textContent += '\n\nCUSTOM_IDEAS:\n' + custom;
+    }
+
+    resultEl.classList.add('show');
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+</script>
+</body>
+</html>

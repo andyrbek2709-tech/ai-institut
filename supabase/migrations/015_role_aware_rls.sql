@@ -381,4 +381,14 @@ create policy "ai_actions_select" on ai_actions
   );
 
 create policy "ai_actions_write" on ai_actions
-  fo
+  for all
+  using (
+    public.auth_is_admin_or_gip()
+    or user_id::text = public.auth_app_user_id()::text
+  )
+  with check (
+    public.auth_is_admin_or_gip()
+    or user_id::text = public.auth_app_user_id()::text
+  );
+
+-- End of 015_role_aware_rls.sql
