@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { listTimeEntries, createTimeEntry as apiCreateTimeEntry } from '../api/supabase';
-import { Field, getInp } from './ui';
+import { Field, getInp, RuDateInput } from './ui';
 
 interface TimelogPanelProps {
   projectId: number;
@@ -131,7 +131,7 @@ const TimelogPanel: React.FC<TimelogPanelProps> = ({
         <div style={{ background: C.surface, borderRadius: 14, padding: 20, border: `1px solid ${C.accent}40`, marginTop: 12, boxShadow: 'var(--card-shadow)' }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 12 }}>Записать время</div>
           <div className="form-stack">
-            <Field label="ДАТА *" C={C}><input type="date" value={newTimeEntry.date} onChange={e => setNewTimeEntry({...newTimeEntry, date: e.target.value})} style={getInp(C)} /></Field>
+            <Field label="ДАТА * (ДД.ММ.ГГГГ)" C={C}><RuDateInput value={newTimeEntry.date} onChange={(v) => setNewTimeEntry({...newTimeEntry, date: v})} C={C} /></Field>
             <Field label="ЗАДАЧА" C={C}>
               <select value={newTimeEntry.task_id} onChange={e => setNewTimeEntry({...newTimeEntry, task_id: e.target.value})} style={getInp(C)}>
                 <option value="">— выберите задачу (необязательно) —</option>

@@ -1729,7 +1729,7 @@ export default function App() {
                 </div>
               );
             })}
-            {isGip && <button className="sidebar-btn" onClick={() => setShowNewProject(true)} style={{ color: C.accent, marginTop: 4 }}>
+            {isGip && <button className="sidebar-btn" onClick={() => { setShowNewProject(false); setTimeout(() => { setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(true); }, 0); }} style={{ color: C.accent, marginTop: 4 }}>
               <span className="sidebar-btn-icon">+</span><span>Новый проект</span>
             </button>}
           </div>
@@ -1889,7 +1889,7 @@ export default function App() {
                   <div className="page-label">Рабочий стол</div>
                   <div className="page-title">Добро пожаловать, {currentUserData?.full_name?.split(" ")[1] || currentUserData?.full_name?.split(" ")[0]} 👋</div>
                 </div>
-                {isGip && <button className="btn btn-primary" onClick={() => setShowNewProject(true)}>+ Новый проект</button>}
+                {isGip && <button className="btn btn-primary" onClick={() => { setShowNewProject(false); setTimeout(() => { setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(true); }, 0); }}>+ Новый проект</button>}
               </div>
 
               {/* Поиск */}
@@ -2274,7 +2274,7 @@ export default function App() {
                   {/* Task List Header */}
                   <div className="task-list-header">
                     <div className="task-list-title">Список задач</div>
-                    {isGip && <button className="btn btn-primary" style={{ borderRadius: 20, padding: "10px 22px" }} onClick={() => setShowNewTask(true)}>+ Новая задача</button>}
+                    {isGip && <button className="btn btn-primary" style={{ borderRadius: 20, padding: "10px 22px" }} onClick={() => { setShowNewTask(false); setTimeout(() => { setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setTaskSuggest(null); setShowNewTask(true); }, 0); }}>+ Новая задача</button>}
                   </div>
                   <div className="task-list">
                     {tasks.length === 0 && <div className="empty-state" style={{ padding: 40 }}>Задач пока нет</div>}
@@ -2466,7 +2466,7 @@ export default function App() {
                   <div className="page-label">Реестр проектов</div>
                   <div className="page-title">Все доступные проекты</div>
                 </div>
-                {isGip && <button className="btn btn-primary" onClick={() => setShowNewProject(true)}>+ Новый проект</button>}
+                {isGip && <button className="btn btn-primary" onClick={() => { setShowNewProject(false); setTimeout(() => { setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(true); }, 0); }}>+ Новый проект</button>}
               </div>
 
               <div className="search-wrap" style={{ marginBottom: 20 }}>

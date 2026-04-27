@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { listMeetings, createMeeting as apiCreateMeeting } from '../api/supabase';
-import { Modal, Field, getInp } from './ui';
+import { Modal, Field, getInp, RuDateInput } from './ui';
 import { exportMeetingPdf } from '../utils/export';
 
 interface MeetingsPanelProps {
@@ -158,7 +158,7 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
           </div>
           <div className="form-stack">
             <Field label="ТЕМА *" C={C}><input value={newMeeting.title} onChange={e => setNewMeeting({...newMeeting, title: e.target.value})} placeholder="Совещание по проекту" style={getInp(C)} /></Field>
-            <Field label="ДАТА" C={C}><input type="date" value={newMeeting.meeting_date} onChange={e => setNewMeeting({...newMeeting, meeting_date: e.target.value})} style={getInp(C)} /></Field>
+            <Field label="ДАТА (ДД.ММ.ГГГГ)" C={C}><RuDateInput value={newMeeting.meeting_date} onChange={(v) => setNewMeeting({...newMeeting, meeting_date: v})} C={C} /></Field>
             <Field label="УЧАСТНИКИ" C={C}>
               <div ref={participantRef} style={{ position: 'relative' }}>
                 <div

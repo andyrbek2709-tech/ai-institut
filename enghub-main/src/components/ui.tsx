@@ -90,3 +90,62 @@ export function getInp(C: any, extra?: any): React.CSSProperties {
     ...extra,
   };
 }
+
+// ===== RU DATE INPUT =====
+// Russian-format date input. Displays as ДД.ММ.ГГГГ, emits ISO yyyy-mm-dd
+// to keep storage/API contracts unchanged.
+export function RuDateInput({
+  value,
+  onChange,
+  C,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  C: any;
+  placeholder?: string;
+}) {
+  const toRu = (iso: string): string => {
+    if (!iso) return "";
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(iso)) return iso;
+    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}.${m[2]}.${m[1]}` : iso;
+  };
+
+  const [text, setText] = React.useState<string>(toRu(value));
+
+  React.useEffect(() => {
+    setText(toRu(value));
+  }, [value]);
+
+  const handleChange = (raw: string) => {
+    let cleaned = raw.replace(/[^\d.]/g, "").slice(0, 10);
+    // auto-insert dots after dd and dd.mm if user typed only digits
+    if (/^\d{3,}$/.test(cleaned)) {
+      cleaned = cleaned.slice(0, 2) + "." + cleaned.slice(2);
+    }
+    if (/^\d{2}\.\d{3,}$/.test(cleaned)) {
+      cleaned = cleaned.slice(0, 5) + "." + cleaned.slice(5);
+    }
+    cleaned = cleaned.slice(0, 10);
+    setText(cleaned);
+    const m = cleaned.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (m) {
+      onChange(`${m[3]}-${m[2]}-${m[1]}`);
+    } else if (cleaned === "") {
+      onChange("");
+    }
+  };
+
+  return (
+    <input
+      type="text"
+      value={text}
+      onChange={(e) => handleChange(e.target.value)}
+      placeholder={placeholder || "ДД.ММ.ГГГГ"}
+      style={getInp(C)}
+      inputMode="numeric"
+      maxLength={10}
+    />
+  );
+}

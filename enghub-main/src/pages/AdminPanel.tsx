@@ -177,7 +177,7 @@ export function AdminPanel({ token, onLogout, dark, setDark }: AdminPanelProps) 
           </div>
           <div className="topbar-right">
             <ThemeToggle dark={dark} setDark={setDark} C={C} />
-            {tab === "users" && <button className="btn btn-primary btn-sm" onClick={() => { setForm(emptyUser); setEditUser(null); setShowUserModal(true); }}>+ Новый пользователь</button>}
+            {tab === "users" && <button className="btn btn-primary btn-sm" onClick={() => { setShowUserModal(false); setTimeout(() => { setForm(emptyUser); setEditUser(null); setShowUserModal(true); }, 0); }}>+ Новый пользователь</button>}
             {tab === "depts" && <button className="btn btn-primary btn-sm" onClick={() => setShowDeptModal(true)}>+ Новый отдел</button>}
           </div>
         </div>
