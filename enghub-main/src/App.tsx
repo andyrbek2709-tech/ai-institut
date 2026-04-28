@@ -1721,6 +1721,29 @@ export default function App() {
           <div className="sidebar-logo-text">{branding.companyName || "EngHub"}</div>
         </div>
         <div className="sidebar-logo-sub">ENGINEERING PLATFORM</div>
+
+        {/* DD-03: Active department/project icons */}
+        {activeProject && (() => {
+          const activeDept = selectedDeptId ? depts.find(d => String(d.id) === String(selectedDeptId)) : null;
+          const deptCode = activeDept ? (activeDept.name.match(/^([А-ЯA-Z]{2,3})/)?.[1] || activeDept.name.slice(0,2).toUpperCase()) : null;
+          const deptColorMap: Record<string, string> = { 'АК': '#a855f7', 'АС': '#2b5bb5', 'ВК': '#4f7fd8', 'ГП': '#2f9e62', 'ПБ': '#ef4444', 'СМ': '#d08a38', 'ТХ': '#0ea5e9', 'ЭС': '#facc15' };
+          const deptBg = deptCode ? (deptColorMap[deptCode] || '#2b5bb5') : '#2b5bb5';
+          return (
+            <div style={{ padding: '0 12px', marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                {deptCode && (
+                  <div title={activeDept?.name || ''} style={{ width: 32, height: 32, borderRadius: '50%', background: deptBg, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 11, flexShrink: 0, fontFamily: 'Manrope' }}>{deptCode}</div>
+                )}
+                <div title={activeProject.name || activeProject.code} style={{ width: 32, height: 32, borderRadius: '50%', background: C.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 11, flexShrink: 0, fontFamily: 'Manrope' }}>{(activeProject.code || activeProject.name || '?').slice(0,2).toUpperCase()}</div>
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeProject.name || activeProject.code}</div>
+                  {activeDept && <div style={{ fontSize: 10, color: C.sidebarText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeDept.name}</div>}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         <div className="sidebar-nav">
           <div className="sidebar-section-label">Навигация</div>
           {navItems.map(n => (
