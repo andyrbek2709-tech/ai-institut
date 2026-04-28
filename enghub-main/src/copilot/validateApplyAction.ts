@@ -101,7 +101,7 @@ function validateCreateTasks(payload: any): ValidationResult {
     }
 
     // AI не может назначать исполнителя
-    if (task.assignee_id) {
+    if (task.assigned_to) {  // B2 fix: column is assigned_to in tasks (not assignee_id)
       return fail('ASSIGN_FORBIDDEN', 'Назначение исполнителя запрещено для AI');
     }
   }

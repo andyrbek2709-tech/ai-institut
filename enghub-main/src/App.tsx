@@ -919,7 +919,9 @@ export default function App() {
     if (!newProject.name || !newProject.code) return;
     setSaving(true);
     try {
-      await post("projects", { ...newProject, progress: 0, archived: false }, token!);
+      // B4: gip_id ставим текущим пользователем — он становится владельцем проекта.
+      // RLS projects_insert требует, чтобы gip_id = auth_app_user_id() для роли gip.
+      await post("projects", { ...newProject, gip_id: currentUserData?.id, progress: 0, archived: false }, token!);
       setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] });
       setShowNewProject(false);
       loadProjects();
