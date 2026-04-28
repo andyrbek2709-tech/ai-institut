@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Поток болей · automation-feed</title>
+<style>
+:root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--row:#0e1428;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+.wrap{width:100%;padding:0 22px 80px}
+header.top{padding:14px 0 10px;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-bottom:1px solid var(--border);min-height:60px}
+header.top h1{margin:0 0 4px;font-size:20px;font-weight:700}
+header.top .sub{color:var(--muted);font-size:12px}
+header.top .links a{color:var(--accent);text-decoration:none;font-size:11px}
+.filter-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.filter-strip .group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.filter-strip .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-right:4px}
+.chip{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:5px 10px;border-radius:14px;cursor:pointer;font-size:12px;transition:.15s;user-select:none}
+.chip:hover{background:var(--panel2);border-color:var(--accent)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.cat{font-size:11px}
+.controls-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+select,input.search{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:8px;font-size:12px;outline:none}
+input.search{min-width:240px}
+.toggle{display:inline-flex;background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.toggle button{background:transparent;color:var(--text);border:0;padding:6px 12px;cursor:pointer;font-size:12px}
+.toggle button.active{background:var(--accent);color:#fff}
+.list{margin-top:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--row)}
+.row{display:grid;grid-template-columns:24px 60px 1fr auto auto 24px;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:.12s}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--panel)}
+.row .src{font-size:13px;text-align:center}
+.row .prio{font-size:11px;font-weight:700;text-align:center;padding:3px 6px;border-radius:6px;border:1px solid var(--border)}
+.row .prio.high{background:rgba(239,68,68,.15);color:var(--red);border-color:rgba(239,68,68,.4)}
+.row .prio.mid{background:rgba(245,158,11,.13);color:var(--yellow);border-color:rgba(245,158,11,.35)}
+.row .prio.low{background:rgba(100,116,139,.13);color:var(--gray);border-color:rgba(100,116,139,.3)}
+.row .title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .cat{font-size:10px;background:rgba(79,140,255,.1);color:var(--accent);border:1px solid rgba(79,140,255,.3);padding:2px 7px;border-radius:9px;white-space:nowrap}
+.row .date{font-size:11px;color:var(--muted);white-space:nowrap}
+.row .ext{color:var(--muted);text-decoration:none;font-size:14px}
+.row .ext:hover{color:var(--accent)}
+.row.open{background:var(--panel)}
+.expand{display:none;grid-column:1/-1;padding:6px 8px 12px 90px}
+.row.open + .expand{display:block;background:var(--panel);border-bottom:1px solid var(--border);padding:0 14px 12px 90px}
+.expand .full-title{font-size:14px;font-weight:600;margin-bottom:6px}
+.expand .summary{color:var(--text);font-size:13px;line-height:1.55;background:rgba(79,140,255,.07);border-left:3px solid var(--accent);padding:7px 10px;border-radius:4px;margin-bottom:8px}
+.expand .excerpt{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:8px}
+.expand .meta-row{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--muted)}
+.expand .meta-row b{color:var(--text);font-weight:600}
+.empty{padding:50px 22px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+.empty b{color:var(--text)}
+.cluster{border:1px solid var(--border);border-radius:8px;background:var(--row);margin-bottom:10px;overflow:hidden}
+.cluster-head{padding:11px 14px;display:grid;grid-template-columns:60px 1fr auto auto;gap:10px;align-items:center;cursor:pointer;background:var(--panel)}
+.cluster-head:hover{background:var(--panel2)}
+.cluster-head .clabel{font-size:13px;font-weight:600}
+.cluster-head .ccnt{background:var(--panel2);color:var(--muted);padding:2px 9px;border-radius:11px;font-size:11px}
+.cluster-head .cprio{font-size:11px;font-weight:700;padding:3px 7px;border-radius:6px}
+.cluster-body{display:none}
+.cluster.open .cluster-body{display:block}
+.cluster.open .cluster-head .arr{transform:rotate(90deg)}
+.cluster-head .arr{transition:.15s;display:inline-block;color:var(--muted)}
+details.cheat{margin-top:24px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:0 14px}
+details.cheat summary{cursor:pointer;padding:11px 0;color:var(--muted);font-size:12px;list-style:none}
+details.cheat summary::-webkit-details-marker{display:none}
+details.cheat summary::before{content:"▸  ";color:var(--accent)}
+details.cheat[open] summary::before{content:"▾  "}
+details.cheat .cheatbody{padding:0 0 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;font-size:12px;color:var(--muted)}
+details.cheat .cheatbody div{padding:8px 10px;background:var(--row);border-radius:6px;border:1px solid var(--border)}
+details.cheat .cheatbody b{color:var(--text);display:block;margin-bottom:2px}
+.stats{font-size:11px;color:var(--muted)}
+.stats b{color:var(--text)}
+@media(max-width:720px){
+  .row{grid-template-columns:24px 50px 1fr 24px;}
+  .row .cat,.row .date{display:none}
+  input.search{min-width:140px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div>
+    <h1>🔥 Поток болей · automation-feed</h1>
+    <div class="sub" id="hdr-sub">загрузка…</div>
+  </div>
+  <div class="links" style="text-align:right">
+    <a href="https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/automation-feed.yml" target="_blank" rel="noopener">⚙ Actions →</a><br>
+    <a href="/agenda.html">← agenda</a>
+  </div>
+</header>
+
+<div class="filter-strip" id="filters">
+  <div class="group" id="src-group"><span class="label">Source</span><span class="chip active" data-src="all">все</span></div>
+  <div class="group" id="cat-group"><span class="label">Cat</span><span class="chip cat active" data-cat="all">все</span></div>
+  <div class="group" id="lang-group"><span class="label">Lang</span><span class="chip active" data-lang="all">все</span><span class="chip" data-lang="ru">ru</span><span class="chip" data-lang="en">en</span></div>
+  <div class="group"><span class="label">Prio≥</span>
+    <select id="prio-min">
+      <option value="0">0</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+    </select>
+  </div>
+  <div class="controls-right">
+    <input class="search" id="search" placeholder="🔍 поиск…">
+    <select id="sort">
+      <option value="prio">⬇ priority</option>
+      <option value="date">⬇ date</option>
+      <option value="src">source</option>
+    </select>
+    <div class="toggle" id="view-toggle">
+      <button class="active" data-view="list">Список</button>
+      <button data-view="clusters">Кластеры</button>
+    </div>
+  </div>
+</div>
+
+<div id="main" style="margin-top:14px"></div>
+
+<details class="cheat">
+<summary>Методология категорий (8 типов автоматизаций)</summary>
+<div class="cheatbody" id="cheat"></div>
+</details>
+
+</div>
+
+<script>
+const CAT_DEFAULT = {
+  "integration":"Интеграция систем","workflow":"Workflow-автоматизация","docgen":"Генерация документов",
+  "monitoring":"Мониторинг и триггеры","parsing":"Парсинг и агрегация","mass-ops":"Массовые операции",
+  "ai":"AI-обработка","ui":"Интерфейсы (бот/веб/форма)"
+};
+const SRC_LABEL = {hn:"HN",habr:"Habr",vc:"vc",ph:"PH",ih:"IH",so:"SO"};
+const SRC_ICON  = {hn:"🟧",habr:"🟦",vc:"🟪",ph:"🟥",ih:"🟩",so:"⬜"};
+const state = {data:null, src:"all", cat:"all", lang:"all", prioMin:0, sort:"prio", view:"list", search:"", openIds:new Set(), openClusters:new Set()};
+
+function fmtRel(iso){
+  if(!iso) return "";
+  const d = new Date(iso); const diff = (Date.now()-d.getTime())/1000;
+  if(diff<60) return "только что";
+  if(diff<3600) return Math.floor(diff/60)+"m";
+  if(diff<86400) return Math.floor(diff/3600)+"h";
+  if(diff<86400*2) return "вчера";
+  if(diff<86400*7) return Math.floor(diff/86400)+"d";
+  return d.toISOString().slice(0,10);
+}
+function escapeHtml(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function prioCls(p){return p>=8?"high":(p>=6?"mid":"low");}
+
+function renderEmpty(reason){
+  document.getElementById("main").innerHTML = `<div class="empty">
+    <p><b>Поток ещё не собран.</b></p>
+    <p>Action запустится автоматически в <b>06:00 UTC</b>.<br>
+    Или жми <b>Run workflow</b> в Actions tab репо для ручного запуска.</p>
+    <p style="font-size:11px;margin-top:18px">${reason||""}</p>
+  </div>`;
+  document.getElementById("hdr-sub").textContent = "—";
+}
+
+function buildFilters(){
+  const data = state.data;
+  const srcGroup = document.getElementById("src-group");
+  const catGroup = document.getElementById("cat-group");
+  const cats = data.meta.categories || CAT_DEFAULT;
+  const srcs = data.meta.sources_used || Object.keys(SRC_LABEL);
+  srcs.forEach(s=>{
+    const c=document.createElement("span"); c.className="chip"; c.dataset.src=s;
+    c.textContent = (SRC_ICON[s]||"")+" "+(SRC_LABEL[s]||s); srcGroup.appendChild(c);
+  });
+  Object.entries(cats).forEach(([id,label])=>{
+    const c=document.createElement("span"); c.className="chip cat"; c.dataset.cat=id;
+    c.textContent=label; catGroup.appendChild(c);
+  });
+  const cheat = document.getElementById("cheat");
+  Object.entries(cats).forEach(([id,label])=>{
+    const d=document.createElement("div"); d.innerHTML=`<b>${escapeHtml(label)}</b><span style="font-size:10px;color:var(--gray)">${id}</span>`;
+    cheat.appendChild(d);
+  });
+}
+
+function applyFilters(items){
+  const q = state.search.trim().toLowerCase();
+  return items.filter(it=>{
+    if(state.src!=="all" && it.source!==state.src) return false;
+    if(state.cat!=="all" && it.category!==state.cat) return false;
+    if(state.lang!=="all" && it.lang!==state.lang) return false;
+    if(it.priority<state.prioMin) return false;
+    if(q && !((it.title||"").toLowerCase().includes(q) || (it.summary_ru||"").toLowerCase().includes(q) || (it.text_excerpt||"").toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+function sortItems(items){
+  const a=[...items];
+  if(state.sort==="prio") a.sort((x,y)=>y.priority-x.priority);
+  else if(state.sort==="date") a.sort((x,y)=>(y.timestamp||"").localeCompare(x.timestamp||""));
+  else if(state.sort==="src") a.sort((x,y)=>(x.source||"").localeCompare(y.source||""));
+  return a;
+}
+
+function renderList(){
+  const items = sortItems(applyFilters(state.data.items||[]));
+  if(!items.length){
+    document.getElementById("main").innerHTML = `<div class="empty">Под фильтр ничего не подходит. Сбрось фильтры или подожди завтрашний прогон.</div>`;
+    return;
+  }
+  const html = ['<div class="list">'];
+  items.forEach(it=>{
+    const open = state.openIds.has(it.id);
+    html.push(`<div class="row${open?' open':''}" data-id="${escapeHtml(it.id)}">
+      <span class="src" title="${escapeHtml(it.source_label||it.source)}">${SRC_ICON[it.source]||"•"}</span>
+      <span class="prio ${prioCls(it.priority)}">${it.priority.toFixed(1)}</span>
+      <span class="title" title="${escapeHtml(it.title)}">${escapeHtml(it.title)}</span>
+      <span class="cat">${escapeHtml(it.category_label||it.category)}</span>
+      <span class="date">${fmtRel(it.timestamp)}</span>
+      <a class="ext" href="${escapeHtml(it.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Открыть источник">↗</a>
+    </div>`);
+    html.push(`<div class="expand" data-for="${escapeHtml(it.id)}">
+      <div class="full-title">${escapeHtml(it.title)}</div>
+      ${it.summary_ru?`<div class="summary">💡 ${escapeHtml(it.summary_ru)}</div>`:""}
+      ${it.text_excerpt?`<div class="excerpt">${escapeHtml(it.text_excerpt)}</div>`:""}
+      <div class="meta-row">
+        <span><b>Источник:</b> ${escapeHtml(it.source_label||it.source)}</span>
+        <span><b>Кластер:</b> ${escapeHtml(it.cluster_id||"—")}</span>
+        <span><b>Lang:</b> ${escapeHtml(it.lang)}</span>
+        <span><b>${escapeHtml((it.timestamp||"").slice(0,16).replace("T"," "))}</b></span>
+        <a href="${escapeHtml(it.url)}" target="_blank" rel="noopener" style="color:var(--accent)">открыть оригинал →</a>
+      </div>
+    </div>`);
+  });
+  html.push("</div>");
+  document.getElementById("main").innerHTML = html.join("");
+  document.querySelectorAll(".row").forEach(r=>{
+    r.addEventListener("click",()=>{
+      const id=r.dataset.id;
+      if(state.openIds.has(id)) state.openIds.delete(id); else state.openIds.add(id);
+      renderList();
+    });
+  });
+}
+
+function renderClusters(){
+  const clusters = (state.data.clusters||[]).slice().sort((a,b)=>(b.items_count-a.items_count)||(b.avg_priority-a.avg_priority));
+  if(!clusters.length){
+    document.getElementById("main").innerHTML = `<div class="empty">Кластеров пока нет.</div>`;
+    return;
+  }
+  const itemsById = new Map((state.data.items||[]).map(i=>[i.id,i]));
+  const html = [];
+  clusters.forEach(c=>{
+    const open = state.openClusters.has(c.id);
+    html.push(`<div class="cluster${open?' open':''}" data-cid="${escapeHtml(c.id)}">
+      <div class="cluster-head">
+        <span class="cprio ${prioCls(c.avg_priority)}">${c.avg_priority.toFixed(1)}</span>
+        <span class="clabel">${escapeHtml(c.label||c.id)}</span>
+        <span class="ccnt">${c.items_count}</span>
+        <span class="arr">▶</span>
+      </div>
+      <div class="cluster-body"><div class="list" style="border-radius:0;border:0">`);
+    (state.data.items||[]).filter(i=>i.cluster_id===c.id).forEach(it=>{
+      const ropen=state.openIds.has(it.id);
+      html.push(`<div class="row${ropen?' open':''}" data-id="${escapeHtml(it.id)}">
+        <span class="src">${SRC_ICON[it.source]||"•"}</span>
+        <span class="prio ${prioCls(it.priority)}">${it.priority.toFixed(1)}</span>
+        <span class="title">${escapeHtml(it.title)}</span>
+        <span class="cat">${escapeHtml(it.category_label||it.category)}</span>
+        <span class="date">${fmtRel(it.timestamp)}</span>
+        <a class="ext" href="${escapeHtml(it.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a>
+      </div>`);
+      html.push(`<div class="expand">
+        <div class="full-title">${escapeHtml(it.title)}</div>
+        ${it.summary_ru?`<div class="summary">💡 ${escapeHtml(it.summary_ru)}</div>`:""}
+        ${it.text_excerpt?`<div class="excerpt">${escapeHtml(it.text_excerpt)}</div>`:""}
+      </div>`);
+    });
+    html.push("</div></div></div>");
+  });
+  document.getElementById("main").innerHTML = html.join("");
+  document.querySelectorAll(".cluster-head").forEach(h=>{
+    h.addEventListener("click",()=>{
+      const cid = h.parentElement.dataset.cid;
+      if(state.openClusters.has(cid)) state.openClusters.delete(cid); else state.openClusters.add(cid);
+      renderClusters();
+    });
+  });
+  document.querySelectorAll(".cluster .row").forEach(r=>{
+    r.addEventListener("click",e=>{
+      e.stopPropagation();
+      const id=r.dataset.id;
+      if(state.openIds.has(id)) state.openIds.delete(id); else state.openIds.add(id);
+      renderClusters();
+    });
+  });
+}
+
+function render(){
+  if(state.view==="list") renderList(); else renderClusters();
+}
+
+function bindUI(){
+  document.getElementById("filters").addEventListener("click",e=>{
+    const t=e.target;
+    if(!t.classList || !t.classList.contains("chip")) return;
+    if(t.dataset.src!==undefined){ state.src=t.dataset.src; document.querySelectorAll("[data-src]").forEach(x=>x.classList.toggle("active",x.dataset.src===state.src)); }
+    else if(t.dataset.cat!==undefined){ state.cat=t.dataset.cat; document.querySelectorAll("[data-cat]").forEach(x=>x.classList.toggle("active",x.dataset.cat===state.cat)); }
+    else if(t.dataset.lang!==undefined){ state.lang=t.dataset.lang; document.querySelectorAll("[data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===state.lang)); }
+    render();
+  });
+  document.getElementById("prio-min").addEventListener("change",e=>{state.prioMin=parseFloat(e.target.value)||0;render();});
+  document.getElementById("sort").addEventListener("change",e=>{state.sort=e.target.value;render();});
+  document.getElementById("search").addEventListener("input",e=>{state.search=e.target.value;render();});
+  document.getElementById("view-toggle").addEventListener("click",e=>{
+    if(e.target.tagName!=="BUTTON") return;
+    state.view=e.target.dataset.view;
+    document.querySelectorAll("#view-toggle button").forEach(b=>b.classList.toggle("active",b.dataset.view===state.view));
+    render();
+  });
+}
+
+async function load(){
+  bindUI();
+  try{
+    const r = await fetch("/data/automation-feed.json?ts="+Date.now(), {cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    state.data = await r.json();
+  }catch(e){
+    renderEmpty(String(e));
+    return;
+  }
+  const m=state.data.meta||{}, st=m.stats||{};
+  const gen = (m.generated_at||"").replace("T"," ").replace("Z"," UTC");
+  document.getElementById("hdr-sub").innerHTML = `обновлено: <b>${escapeHtml(gen||"—")}</b> · <b>${st.ai_confirmed_pain||0}</b> болей · <b>${st.clusters||0}</b> кластеров · из ${(m.sources_used||[]).length} источников`;
+  buildFilters();
+  render();
+}
+load();
+</script>
+</body>
+</html>
