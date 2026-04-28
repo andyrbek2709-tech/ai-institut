@@ -1220,7 +1220,9 @@ export default function App() {
   };
   const handleLogin = async (accessToken: string, email: string) => { setToken(accessToken); setUserEmail(email); setScreen('dashboard'); localStorage.setItem('enghub_token', accessToken); localStorage.setItem('enghub_email', email); if (email !== "admin@enghub.com") setLoading(true); else setLoading(false); };
   const handleLogout = () => {
-    setToken(null); setUserEmail(""); setCurrentUserData(null); setProjects([]); setTasks([]); setMsgs([]); setChatInput(""); setTaskComment("");
+    setToken(null); setUserEmail(""); setCurrentUserData(null); setProjects([]); setTasks([]); setAllTasks([]); setMsgs([]); setChatInput(""); setTaskComment("");
+    // T29 fix: дополнительно сбрасываем стейт прошлой сессии (виджет "Активных задач" протекал)
+    setDrawings([]); setRevisions([]); setReviews([]); setTransmittals([]); setTransmittalItems({}); setArchivedProjects([]);
     // FIX: reset search and filter states so next user doesn't see previous user's filters
     setSearchQuery(""); setFilterStatus("all"); setFilterPriority("all"); setFilterAssigned("all");
     setActiveProject(null); setScreen('dashboard');
