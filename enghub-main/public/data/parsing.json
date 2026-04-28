@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-04-28T21:10:51Z",
+    "generated_at": "2026-04-28T21:34:41Z",
     "sources_used": [
       "habr",
       "hn",
@@ -9,10 +9,10 @@
       "vc"
     ],
     "stats": {
-      "total_scraped": 253,
-      "passed_filter": 7,
-      "ai_confirmed_pain": 4,
-      "clusters": 3
+      "total_scraped": 27,
+      "passed_filter": 0,
+      "ai_confirmed_pain": 0,
+      "clusters": 0
     },
     "categories": {
       "integration": "Интеграция систем",
@@ -25,103 +25,6 @@
       "ui": "Интерфейсы (бот/веб/форма)"
     }
   },
-  "items": [
-    {
-      "id": "so-79499935",
-      "source": "so",
-      "source_label": "Stack Overflow",
-      "url": "https://stackoverflow.com/questions/79499935/when-a-file-is-downloaded-in-a-specific-folder-it-should-be-emailed-to-me",
-      "title": "When a file is downloaded in a specific folder , It should be emailed to me",
-      "text_excerpt": "So I am facing this problem where I have to download hundreds of files from Windchill, that are stored in a common drive folder on our server, so that everyone can access it. Then I have to copy and Paste that same file to email and send it off. Is there any way to automate this process, as in whene…",
-      "timestamp": "2025-03-11T07:24:43Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "workflow",
-      "category_label": "Workflow-автоматизация",
-      "priority": 8.0,
-      "summary_ru": "Необходимо автоматизировать отправку загруженных файлов на email.",
-      "cluster_id": "автоматизация-отправка-email-загрузка-файлов"
-    },
-    {
-      "id": "so-20167434",
-      "source": "so",
-      "source_label": "Stack Overflow",
-      "url": "https://stackoverflow.com/questions/20167434/automating-git-ssh-workflow",
-      "title": "Automating Git & SSH workflow",
-      "text_excerpt": "I'm working on a programming project with a few team members, using Git for version control. Every hour I have to deploy a live version of our repository for others to preview. This involves the following commands: ssh me@mywebsite.com cd /path/to/my/preview git checkout develop git pull As you can …",
-      "timestamp": "2013-11-23T20:25:13Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "workflow",
-      "category_label": "Workflow-автоматизация",
-      "priority": 7.0,
-      "summary_ru": "Требуется автоматизация процесса развертывания проекта с использованием Git.",
-      "cluster_id": "автоматизация-git-развертывание-проект"
-    },
-    {
-      "id": "so-47311666",
-      "source": "so",
-      "source_label": "Stack Overflow",
-      "url": "https://stackoverflow.com/questions/47311666/gsheets-automate-reminder-e-mail-to-client-1-2-days-prior-to-appointment",
-      "title": "GSheets- Automate reminder e-mail to client 1-2 days prior to appointment",
-      "text_excerpt": "I'm looking for a way (google app script, add-on, or otherwise) that will automate an appointment reminder e-mail using cell values in my google spreadsheet. Currently, my work flow is like this: I fill out my client ID and appointment date google form. Mail merge sends a confirmation e-mail to clie…",
-      "timestamp": "2017-11-15T15:46:50Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "workflow",
-      "category_label": "Workflow-автоматизация",
-      "priority": 7.0,
-      "summary_ru": "Необходимо автоматизировать отправку напоминаний о встречах по электронной почте.",
-      "cluster_id": "автоматизация-отправка-email-загрузка-файлов"
-    },
-    {
-      "id": "so-70971445",
-      "source": "so",
-      "source_label": "Stack Overflow",
-      "url": "https://stackoverflow.com/questions/70971445/searching-for-a-pipeline-workflow-software",
-      "title": "Searching for a pipeline/workflow software",
-      "text_excerpt": "I am currently looking for a free pipeline/workflow software that can help me with the following task. The following steps have to be executed one after the other: 1. connect to a Windows server and issue a command. (Powershell script on the Windows server, triggered e.g. by Powershell remoting). 2.…",
-      "timestamp": "2022-02-03T12:36:53Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "workflow",
-      "category_label": "Workflow-автоматизация",
-      "priority": 6.0,
-      "summary_ru": "Ищу программное обеспечение для автоматизации рабочего процесса с несколькими шагами.",
-      "cluster_id": "автоматизация-рабочий-процесс-сервер"
-    }
-  ],
-  "clusters": [
-    {
-      "id": "автоматизация-отправка-email-загрузка-файлов",
-      "label": "Автоматизация отправка email загрузка файлов",
-      "category": "workflow",
-      "items_count": 2,
-      "examples": [
-        "so-79499935",
-        "so-47311666"
-      ],
-      "avg_priority": 7.5
-    },
-    {
-      "id": "автоматизация-git-развертывание-проект",
-      "label": "Автоматизация git развертывание проект",
-      "category": "workflow",
-      "items_count": 1,
-      "examples": [
-        "so-20167434"
-      ],
-      "avg_priority": 7.0
-    },
-    {
-      "id": "автоматизация-рабочий-процесс-сервер",
-      "label": "Автоматизация рабочий процесс сервер",
-      "category": "workflow",
-      "items_count": 1,
-      "examples": [
-        "so-70971445"
-      ],
-      "avg_priority": 6.0
-    }
-  ]
+  "items": [],
+  "clusters": []
 }
