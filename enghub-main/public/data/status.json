@@ -1,9 +1,9 @@
 {
-  "status": "scraping",
-  "current_step": "Источник 6/6: StackOverflow x4",
-  "progress_pct": 83,
-  "items_processed": 1229,
-  "items_total": 0,
-  "updated_at": "2026-04-28T21:40:22Z",
+  "status": "scraped",
+  "current_step": "Собрано 1624 новых items",
+  "progress_pct": 100,
+  "items_processed": 1624,
+  "items_total": 1624,
+  "updated_at": "2026-04-28T21:40:33Z",
   "started_at": "2026-04-28T21:39:55Z"
 }
