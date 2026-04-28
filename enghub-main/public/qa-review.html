@@ -729,7 +729,16 @@ export const getSupabaseAnonClient = () => {
     </div>
   </div>
 
-  <button class="cta" id="copy-plan">📋 Скопировать решение в буфер обмена</button>
+  <button class="cta" id="copy-plan">📋 Показать решение текстом</button>
+</div>
+
+<div id="decision-out" style="display:none; margin-top:18px; background:var(--panel); border:2px solid var(--accent); border-radius:12px; padding:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+    <strong style="font-size:14px;">Твоё решение — выдели и скопируй (Ctrl+A → Ctrl+C):</strong>
+    <button id="try-copy" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px;">Попробовать скопировать</button>
+  </div>
+  <textarea id="decision-text" style="width:100%; min-height:300px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:12px; font:12px/1.5 'SF Mono', Menlo, Consolas, monospace;" readonly></textarea>
+  <div style="font-size:12px; color:var(--muted); margin-top:8px;">Если кнопка «скопировать» не работает (браузер блокирует) — кликни в поле, нажми Ctrl+A, потом Ctrl+C. На телефоне: long-press → Select All → Copy.</div>
 </div>
 
 <div class="summary-bar">
@@ -738,7 +747,7 @@ export const getSupabaseAnonClient = () => {
     <span id="stat-defer">0</span>отложить ·
     <span id="stat-skip">0</span>скип
   </div>
-  <button class="copy" id="copy-btn">Скопировать решение</button>
+  <button class="copy" id="copy-btn">Показать решение</button>
 </div>
 
 </div>
@@ -805,38 +814,10 @@ export const getSupabaseAnonClient = () => {
     });
   });
 
-  // Copy decision
+  // Build summary
   function buildSummary() {
     const lines = ['# QA-обзор EngHub от 27.04.2026 — решения', ''];
+    let fixCount = 0, deferCount = 0, skipCount = 0, noneCount = 0;
+    const fixList = [], deferList = [], skipList = [];
     cards.forEach(card => {
-      const id = card.querySelector('.bug-id').textContent.replace(/\s/g, '');
-      const title = card.querySelector('h3').textContent;
-      const chosen = card.querySelector('.act-btn.chosen');
-      const note = card.querySelector('.note').value.trim();
-      const decision = chosen ? chosen.textContent.trim() : '— не выбрано —';
-      lines.push(`## ${id}: ${title}`);
-      lines.push(`Решение: ${decision}`);
-      if (note) lines.push(`Заметка: ${note}`);
-      lines.push('');
-    });
-    return lines.join('\n');
-  }
-  function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-      alert('Скопировано! Вставь в чат и я подхвачу решения.');
-    }).catch(() => {
-      const ta = document.createElement('textarea');
-      ta.value = text; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); ta.remove();
-      alert('Скопировано (fallback). Вставь в чат.');
-    });
-  }
-  document.getElementById('copy-btn').addEventListener('click', () => copyToClipboard(buildSummary()));
-  document.getElementById('copy-plan').addEventListener('click', () => copyToClipboard(buildSummary()));
-
-  recount();
-})();
-</script>
-
-</body>
-</html>
+      const id =
