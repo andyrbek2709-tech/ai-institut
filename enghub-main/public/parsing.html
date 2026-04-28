@@ -3,29 +3,52 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Поток болей · automation-feed</title>
+<title>Поток болей · parsing v2</title>
 <style>
 :root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--row:#0e1428;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b}
 *{box-sizing:border-box}html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
 .wrap{width:100%;padding:0 22px 80px}
-header.top{padding:14px 0 10px;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-bottom:1px solid var(--border);min-height:60px}
+header.top{padding:14px 0 10px;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-bottom:1px solid var(--border);min-height:60px;flex-wrap:wrap}
 header.top h1{margin:0 0 4px;font-size:20px;font-weight:700}
 header.top .sub{color:var(--muted);font-size:12px}
+header.top .right{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+header.top input.gsearch{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-size:12px;outline:none;min-width:240px}
 header.top .links a{color:var(--accent);text-decoration:none;font-size:11px}
+
 .filter-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
 .filter-strip .group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .filter-strip .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-right:4px}
-.chip{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:5px 10px;border-radius:14px;cursor:pointer;font-size:12px;transition:.15s;user-select:none}
+.chip{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:5px 10px;border-radius:14px;cursor:pointer;font-size:12px;transition:.15s;user-select:none;white-space:nowrap}
 .chip:hover{background:var(--panel2);border-color:var(--accent)}
 .chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.chip.cat{font-size:11px}
 .controls-right{margin-left:auto;display:flex;gap:8px;align-items:center}
-select,input.search{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:8px;font-size:12px;outline:none}
-input.search{min-width:240px}
+select{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:8px;font-size:12px;outline:none}
 .toggle{display:inline-flex;background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .toggle button{background:transparent;color:var(--text);border:0;padding:6px 12px;cursor:pointer;font-size:12px}
 .toggle button.active{background:var(--accent);color:#fff}
+
+.status-strip{display:flex;flex-wrap:wrap;align-items:center;gap:0;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+.status-strip .seg{display:inline-flex;align-items:center;gap:6px;padding:0 14px;line-height:1.6}
+.status-strip .seg + .seg{border-left:1px solid var(--border)}
+.status-strip .seg:first-child{padding-left:2px}
+.status-strip b{color:var(--text);font-weight:600}
+.status-strip .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green)}
+.status-strip .dot.stale{background:var(--yellow)}
+.status-strip .dot.cold{background:var(--gray)}
+.status-strip .dot.live{background:var(--accent);animation:pulse 1.4s ease-in-out infinite}
+.status-strip .dot.fail{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(79,140,255,.5)}50%{opacity:.5;box-shadow:0 0 0 6px rgba(79,140,255,0)}}
+.status-strip .run-btn{background:var(--accent);color:#fff;border:0;padding:5px 11px;border-radius:7px;font-size:12px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:.15s}
+.status-strip .run-btn:hover{background:#3b75e0}
+
+.progress-bar{margin:10px 0 0;height:8px;background:var(--panel);border:1px solid var(--border);border-radius:5px;overflow:hidden;display:none}
+.progress-bar.show{display:block}
+.progress-bar .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+.progress-meta{font-size:11px;color:var(--muted);margin-top:4px;display:none}
+.progress-meta.show{display:flex;gap:14px;flex-wrap:wrap}
+.progress-meta b{color:var(--text)}
+
 .list{margin-top:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--row)}
 .row{display:grid;grid-template-columns:24px 60px 1fr auto auto 24px;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:.12s}
 .row:last-child{border-bottom:0}
@@ -41,25 +64,40 @@ input.search{min-width:240px}
 .row .ext{color:var(--muted);text-decoration:none;font-size:14px}
 .row .ext:hover{color:var(--accent)}
 .row.open{background:var(--panel)}
-.expand{display:none;grid-column:1/-1;padding:6px 8px 12px 90px}
-.row.open + .expand{display:block;background:var(--panel);border-bottom:1px solid var(--border);padding:0 14px 12px 90px}
-.expand .full-title{font-size:14px;font-weight:600;margin-bottom:6px}
+.expand{display:none;padding:0 14px 12px 90px}
+.row.open + .expand{display:block;background:var(--panel);border-bottom:1px solid var(--border)}
+.expand .full-title{font-size:14px;font-weight:600;margin-bottom:6px;padding-top:6px}
 .expand .summary{color:var(--text);font-size:13px;line-height:1.55;background:rgba(79,140,255,.07);border-left:3px solid var(--accent);padding:7px 10px;border-radius:4px;margin-bottom:8px}
 .expand .excerpt{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:8px}
 .expand .meta-row{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--muted)}
 .expand .meta-row b{color:var(--text);font-weight:600}
+
 .empty{padding:50px 22px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
 .empty b{color:var(--text)}
-.cluster{border:1px solid var(--border);border-radius:8px;background:var(--row);margin-bottom:10px;overflow:hidden}
-.cluster-head{padding:11px 14px;display:grid;grid-template-columns:60px 1fr auto auto;gap:10px;align-items:center;cursor:pointer;background:var(--panel)}
-.cluster-head:hover{background:var(--panel2)}
-.cluster-head .clabel{font-size:13px;font-weight:600}
-.cluster-head .ccnt{background:var(--panel2);color:var(--muted);padding:2px 9px;border-radius:11px;font-size:11px}
-.cluster-head .cprio{font-size:11px;font-weight:700;padding:3px 7px;border-radius:6px}
-.cluster-body{display:none}
-.cluster.open .cluster-body{display:block}
-.cluster.open .cluster-head .arr{transform:rotate(90deg)}
-.cluster-head .arr{transition:.15s;display:inline-block;color:var(--muted)}
+.empty .big{font-size:36px;margin:0 0 8px}
+
+.meta-cluster{border:1px solid var(--border);border-radius:10px;background:var(--row);margin-bottom:12px;overflow:hidden}
+.meta-head{padding:14px 16px;display:grid;grid-template-columns:32px 1fr auto auto auto 14px;gap:12px;align-items:center;cursor:pointer;background:linear-gradient(90deg,var(--panel),var(--panel2));border-bottom:1px solid var(--border)}
+.meta-head:hover{background:var(--panel2)}
+.meta-head .emoji{font-size:22px;text-align:center}
+.meta-head .mlabel{font-size:15px;font-weight:700}
+.meta-head .badge{font-size:11px;color:var(--muted);background:var(--bg);padding:2px 9px;border-radius:9px;border:1px solid var(--border)}
+.meta-head .tprio{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(79,140,255,.13);color:var(--accent);border:1px solid rgba(79,140,255,.3)}
+.meta-head .arr{transition:.18s;color:var(--muted)}
+.meta-cluster.open .meta-head .arr{transform:rotate(90deg)}
+.meta-body{display:none;padding:10px 16px 14px}
+.meta-cluster.open .meta-body{display:block}
+
+.cluster-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.cluster-card .chead{padding:9px 12px;display:grid;grid-template-columns:50px 1fr auto auto 14px;gap:10px;align-items:center;cursor:pointer}
+.cluster-card .chead:hover{background:var(--panel2)}
+.cluster-card .clabel{font-size:13px;font-weight:600}
+.cluster-card .ccnt{font-size:11px;color:var(--muted);background:var(--bg);padding:1px 8px;border-radius:9px;border:1px solid var(--border)}
+.cluster-card .cprio{font-size:11px;font-weight:700;padding:3px 6px;border-radius:5px}
+.cluster-card.open .arr{transform:rotate(90deg)}
+.cluster-card .cbody{display:none;padding:0;border-top:1px solid var(--border);background:var(--row)}
+.cluster-card.open .cbody{display:block}
+
 details.cheat{margin-top:24px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:0 14px}
 details.cheat summary{cursor:pointer;padding:11px 0;color:var(--muted);font-size:12px;list-style:none}
 details.cheat summary::-webkit-details-marker{display:none}
@@ -68,42 +106,35 @@ details.cheat[open] summary::before{content:"▾  "}
 details.cheat .cheatbody{padding:0 0 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;font-size:12px;color:var(--muted)}
 details.cheat .cheatbody div{padding:8px 10px;background:var(--row);border-radius:6px;border:1px solid var(--border)}
 details.cheat .cheatbody b{color:var(--text);display:block;margin-bottom:2px}
-.stats{font-size:11px;color:var(--muted)}
-.stats b{color:var(--text)}
 @media(max-width:720px){
   .row{grid-template-columns:24px 50px 1fr 24px;}
   .row .cat,.row .date{display:none}
-  input.search{min-width:140px}
+  .meta-head{grid-template-columns:28px 1fr auto 14px;gap:8px}
+  .meta-head .badge:nth-of-type(2),.meta-head .tprio{display:none}
+  header.top input.gsearch{min-width:160px}
 }
-
-.status-strip{display:flex;flex-wrap:wrap;align-items:center;gap:0;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
-.status-strip .seg{display:inline-flex;align-items:center;gap:6px;padding:0 14px;line-height:1.6}
-.status-strip .seg + .seg{border-left:1px solid var(--border)}
-.status-strip .seg:first-child{padding-left:2px}
-.status-strip b{color:var(--text);font-weight:600}
-.status-strip .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green)}
-.status-strip .dot.stale{background:var(--yellow)}
-.status-strip .dot.cold{background:var(--gray)}
-.status-strip .run-btn{background:var(--accent);color:#fff;border:0;padding:5px 11px;border-radius:7px;font-size:12px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:.15s}
-.status-strip .run-btn:hover{background:#3b75e0}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header class="top">
   <div>
-    <h1>🔥 Поток болей · automation-feed</h1>
+    <h1>🔥 Поток болей · parsing v2</h1>
     <div class="sub" id="hdr-sub">загрузка…</div>
   </div>
-  <div class="links" style="text-align:right">
-    <a href="https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/automation-feed.yml" target="_blank" rel="noopener">⚙ Actions →</a><br>
-    <a href="/agenda.html">← agenda</a>
+  <div class="right">
+    <input class="gsearch" id="search" placeholder="🔍 поиск по title/summary/cluster…">
+    <div class="links" style="text-align:right">
+      <a href="https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/automation-feed.yml" id="actions-link" target="_blank" rel="noopener">⚙ Actions →</a><br>
+      <a href="/agenda.html">← agenda</a>
+    </div>
   </div>
 </header>
 
 <div class="filter-strip" id="filters">
   <div class="group" id="src-group"><span class="label">Source</span><span class="chip active" data-src="all">все</span></div>
-  <div class="group" id="cat-group"><span class="label">Cat</span><span class="chip cat active" data-cat="all">все</span></div>
+  <div class="group" id="meta-group"><span class="label">Meta</span><span class="chip active" data-meta="all">все</span></div>
+  <div class="group" id="cat-group"><span class="label">Cat</span><span class="chip active" data-cat="all">все</span></div>
   <div class="group" id="lang-group"><span class="label">Lang</span><span class="chip active" data-lang="all">все</span><span class="chip" data-lang="ru">ru</span><span class="chip" data-lang="en">en</span></div>
   <div class="group"><span class="label">Prio≥</span>
     <select id="prio-min">
@@ -111,24 +142,26 @@ details.cheat .cheatbody b{color:var(--text);display:block;margin-bottom:2px}
     </select>
   </div>
   <div class="controls-right">
-    <input class="search" id="search" placeholder="🔍 поиск…">
     <select id="sort">
       <option value="prio">⬇ priority</option>
       <option value="date">⬇ date</option>
       <option value="src">source</option>
     </select>
     <div class="toggle" id="view-toggle">
-      <button class="active" data-view="list">Список</button>
+      <button class="active" data-view="hier">Иерархия</button>
+      <button data-view="list">Список</button>
       <button data-view="clusters">Кластеры</button>
     </div>
   </div>
 </div>
 
 <div class="status-strip" id="status-strip">
-  <span class="seg"><span class="dot cold" id="st-dot"></span>Последнее обновление: <b id="st-last">—</b></span>
+  <span class="seg"><span class="dot cold" id="st-dot"></span><span id="st-label">Последнее обновление:</span> <b id="st-last">—</b></span>
   <span class="seg"><a class="run-btn" href="https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/automation-feed.yml" target="_blank" rel="noopener">🔄 Запустить сборку</a></span>
-  <span class="seg">Следующий автозапуск: <b id="st-next">через …</b></span>
+  <span class="seg" id="seg-next">Следующий автозапуск: <b id="st-next">через …</b></span>
 </div>
+<div class="progress-bar" id="progress-bar"><div class="fill" id="progress-fill" style="width:0%"></div></div>
+<div class="progress-meta" id="progress-meta"></div>
 
 <div id="main" style="margin-top:14px"></div>
 
@@ -147,11 +180,23 @@ const CAT_DEFAULT = {
 };
 const SRC_LABEL = {hn:"HN",habr:"Habr",vc:"vc",ph:"PH",ih:"IH",so:"SO"};
 const SRC_ICON  = {hn:"🟧",habr:"🟦",vc:"🟪",ph:"🟥",ih:"🟩",so:"⬜"};
-const state = {data:null, src:"all", cat:"all", lang:"all", prioMin:0, sort:"prio", view:"list", search:"", openIds:new Set(), openClusters:new Set()};
+const META_FALLBACK_EMOJI = "🧩";
 
+const state = {
+  data:null, status:null,
+  src:"all", meta:"all", cat:"all", lang:"all", prioMin:0,
+  sort:"prio", view:"hier", search:"",
+  openIds:new Set(), openClusters:new Set(), openMeta:new Set(),
+};
+
+// ---------- helpers ---------- //
+function escapeHtml(s){return (s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function prioCls(p){return p>=8?"high":(p>=6?"mid":"low");}
+function plural(n,forms){const m=n%10,m2=n%100;if(m===1&&m2!==11)return forms[0];if(m>=2&&m<=4&&(m2<10||m2>=20))return forms[1];return forms[2];}
 function fmtRel(iso){
   if(!iso) return "";
-  const d = new Date(iso); const diff = (Date.now()-d.getTime())/1000;
+  const d=new Date(iso);if(isNaN(d.getTime()))return "";
+  const diff=(Date.now()-d.getTime())/1000;
   if(diff<60) return "только что";
   if(diff<3600) return Math.floor(diff/60)+"m";
   if(diff<86400) return Math.floor(diff/3600)+"h";
@@ -159,47 +204,158 @@ function fmtRel(iso){
   if(diff<86400*7) return Math.floor(diff/86400)+"d";
   return d.toISOString().slice(0,10);
 }
-function escapeHtml(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function prioCls(p){return p>=8?"high":(p>=6?"mid":"low");}
+function fmtRelLong(iso){
+  if(!iso) return "—";
+  const d=new Date(iso);if(isNaN(d.getTime()))return "—";
+  const diff=(Date.now()-d.getTime())/1000;
+  if(diff<60) return "только что";
+  if(diff<3600){const m=Math.floor(diff/60);return m+" "+plural(m,["минуту","минуты","минут"])+" назад";}
+  if(diff<86400){const h=Math.floor(diff/3600);return h+" "+plural(h,["час","часа","часов"])+" назад";}
+  if(diff<86400*2) return "вчера в "+String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0")+" UTC";
+  const days=Math.floor(diff/86400);return days+" "+plural(days,["день","дня","дней"])+" назад";
+}
+function nextRunIn(){
+  const now=new Date();const next=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),6,0,0,0));
+  if(next<=now) next.setUTCDate(next.getUTCDate()+1);
+  const diff=Math.max(0,(next-now)/1000);
+  const h=Math.floor(diff/3600),m=Math.floor((diff%3600)/60);
+  if(h===0) return "через "+m+" "+plural(m,["минуту","минуты","минут"]);
+  return "через "+h+" ч "+m+" мин";
+}
 
+// ---------- Status strip + live progress ---------- //
+function renderStatus(){
+  const st = state.status || {};
+  const data = state.data;
+  const dotEl=document.getElementById("st-dot");
+  const lastEl=document.getElementById("st-last");
+  const labelEl=document.getElementById("st-label");
+  const segNext=document.getElementById("seg-next");
+  const nextEl=document.getElementById("st-next");
+  const bar=document.getElementById("progress-bar");
+  const fill=document.getElementById("progress-fill");
+  const meta=document.getElementById("progress-meta");
+
+  const live = st.status && st.status!=="done" && st.status!=="failed" && st.status!=="scraped";
+  const failed = st.status==="failed";
+
+  if(live){
+    dotEl.className="dot live";
+    labelEl.textContent="Идёт сборка:";
+    lastEl.textContent = st.current_step || st.status || "…";
+    segNext.style.display="none";
+    bar.classList.add("show");
+    meta.classList.add("show");
+    const pct = Math.max(0, Math.min(100, Number(st.progress_pct||0)));
+    fill.style.width = pct+"%";
+    meta.innerHTML = `<span><b>${pct}%</b></span>
+      <span>обработано: <b>${st.items_processed||0}</b> / ${st.items_total||0}</span>
+      <span>статус: <b>${escapeHtml(st.status)}</b></span>
+      ${st.updated_at?`<span>обновлено ${escapeHtml(fmtRelLong(st.updated_at))}</span>`:""}`;
+    return;
+  }
+
+  bar.classList.remove("show");
+  meta.classList.remove("show");
+  segNext.style.display="";
+
+  if(failed){
+    dotEl.className="dot fail";
+    labelEl.textContent="Сборка упала:";
+    lastEl.innerHTML = `<b>${escapeHtml(st.error||"see Actions log")}</b>`;
+  } else {
+    const gen = data && data.meta && data.meta.generated_at;
+    labelEl.textContent="Последнее обновление:";
+    if(gen){
+      lastEl.textContent = fmtRelLong(gen);
+      const ageH = (Date.now()-new Date(gen).getTime())/3600000;
+      dotEl.className="dot "+(ageH>30?"cold":(ageH>26?"stale":""));
+    } else {
+      lastEl.textContent = "Ещё не обновлялось";
+      dotEl.className="dot cold";
+    }
+  }
+  nextEl.textContent = nextRunIn();
+}
+
+setInterval(renderStatus, 60000);
+
+async function pollStatus(){
+  try{
+    const r = await fetch("/data/status.json?ts="+Date.now(),{cache:"no-store"});
+    if(r.ok){
+      state.status = await r.json();
+      renderStatus();
+      // If a build just finished, reload data
+      if(state.status && state.status.status==="done" && state._lastSeen!=="done"){
+        loadData();
+      }
+      state._lastSeen = state.status.status;
+    }
+  }catch(e){/* silent */}
+}
+setInterval(pollStatus, 3000);
+
+// ---------- Empty state ---------- //
 function renderEmpty(){
   document.getElementById("main").innerHTML = `<div class="empty">
-    <p style="font-size:32px;margin:0 0 8px">🕒</p>
+    <p class="big">🕒</p>
     <p><b>Поток ещё не обновлялся</b></p>
     <p>Запусти сборку через кнопку выше или подожди до автозапуска в <b>06:00 UTC</b>.</p>
   </div>`;
   document.getElementById("hdr-sub").textContent = "данных пока нет";
 }
 
+// ---------- Filters ---------- //
 function buildFilters(){
   const data = state.data;
+  const cats = (data && data.meta && data.meta.categories) || CAT_DEFAULT;
+  const srcs = (data && data.meta && data.meta.sources_used) || Object.keys(SRC_LABEL);
+  const metas = (data && data.meta_clusters) || [];
+
   const srcGroup = document.getElementById("src-group");
   const catGroup = document.getElementById("cat-group");
-  const cats = data.meta.categories || CAT_DEFAULT;
-  const srcs = data.meta.sources_used || Object.keys(SRC_LABEL);
+  const metaGroup = document.getElementById("meta-group");
+  // reset everything but the "all" chip
+  [srcGroup,catGroup,metaGroup].forEach(g=>{
+    [...g.querySelectorAll(".chip:not([data-src='all']):not([data-cat='all']):not([data-meta='all'])")].forEach(c=>c.remove());
+  });
+
   srcs.forEach(s=>{
-    const c=document.createElement("span"); c.className="chip"; c.dataset.src=s;
-    c.textContent = (SRC_ICON[s]||"")+" "+(SRC_LABEL[s]||s); srcGroup.appendChild(c);
+    const c=document.createElement("span");c.className="chip";c.dataset.src=s;
+    c.textContent=(SRC_ICON[s]||"")+" "+(SRC_LABEL[s]||s);srcGroup.appendChild(c);
+  });
+  metas.slice(0,12).forEach(m=>{
+    const c=document.createElement("span");c.className="chip";c.dataset.meta=m.id;
+    c.textContent=(m.emoji||META_FALLBACK_EMOJI)+" "+(m.label||m.id)+" ("+m.items_count+")";
+    metaGroup.appendChild(c);
   });
   Object.entries(cats).forEach(([id,label])=>{
-    const c=document.createElement("span"); c.className="chip cat"; c.dataset.cat=id;
-    c.textContent=label; catGroup.appendChild(c);
+    const c=document.createElement("span");c.className="chip";c.dataset.cat=id;
+    c.textContent=label;catGroup.appendChild(c);
   });
-  const cheat = document.getElementById("cheat");
+  const cheat=document.getElementById("cheat");cheat.innerHTML="";
   Object.entries(cats).forEach(([id,label])=>{
-    const d=document.createElement("div"); d.innerHTML=`<b>${escapeHtml(label)}</b><span style="font-size:10px;color:var(--gray)">${id}</span>`;
+    const d=document.createElement("div");
+    d.innerHTML=`<b>${escapeHtml(label)}</b><span style="font-size:10px;color:var(--gray)">${escapeHtml(id)}</span>`;
     cheat.appendChild(d);
   });
 }
 
 function applyFilters(items){
   const q = state.search.trim().toLowerCase();
+  const clusterById = new Map(((state.data && state.data.clusters)||[]).map(c=>[c.id,c]));
   return items.filter(it=>{
     if(state.src!=="all" && it.source!==state.src) return false;
     if(state.cat!=="all" && it.category!==state.cat) return false;
+    if(state.meta!=="all" && it.meta_cluster_id!==state.meta) return false;
     if(state.lang!=="all" && it.lang!==state.lang) return false;
     if(it.priority<state.prioMin) return false;
-    if(q && !((it.title||"").toLowerCase().includes(q) || (it.summary_ru||"").toLowerCase().includes(q) || (it.text_excerpt||"").toLowerCase().includes(q))) return false;
+    if(q){
+      const cl = clusterById.get(it.cluster_id);
+      const hay = ((it.title||"")+" "+(it.summary_ru||"")+" "+(it.text_excerpt||"")+" "+(cl?cl.label:"")).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
     return true;
   });
 }
@@ -211,112 +367,190 @@ function sortItems(items){
   return a;
 }
 
-function renderList(){
-  const items = sortItems(applyFilters(state.data.items||[]));
-  if(!items.length){
-    document.getElementById("main").innerHTML = `<div class="empty">Под фильтр ничего не подходит. Сбрось фильтры или подожди завтрашний прогон.</div>`;
-    return;
-  }
-  const html = ['<div class="list">'];
-  items.forEach(it=>{
-    const open = state.openIds.has(it.id);
-    html.push(`<div class="row${open?' open':''}" data-id="${escapeHtml(it.id)}">
-      <span class="src" title="${escapeHtml(it.source_label||it.source)}">${SRC_ICON[it.source]||"•"}</span>
-      <span class="prio ${prioCls(it.priority)}">${it.priority.toFixed(1)}</span>
-      <span class="title" title="${escapeHtml(it.title)}">${escapeHtml(it.title)}</span>
-      <span class="cat">${escapeHtml(it.category_label||it.category)}</span>
-      <span class="date">${fmtRel(it.timestamp)}</span>
-      <a class="ext" href="${escapeHtml(it.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Открыть источник">↗</a>
-    </div>`);
-    html.push(`<div class="expand" data-for="${escapeHtml(it.id)}">
-      <div class="full-title">${escapeHtml(it.title)}</div>
-      ${it.summary_ru?`<div class="summary">💡 ${escapeHtml(it.summary_ru)}</div>`:""}
-      ${it.text_excerpt?`<div class="excerpt">${escapeHtml(it.text_excerpt)}</div>`:""}
-      <div class="meta-row">
-        <span><b>Источник:</b> ${escapeHtml(it.source_label||it.source)}</span>
-        <span><b>Кластер:</b> ${escapeHtml(it.cluster_id||"—")}</span>
-        <span><b>Lang:</b> ${escapeHtml(it.lang)}</span>
-        <span><b>${escapeHtml((it.timestamp||"").slice(0,16).replace("T"," "))}</b></span>
-        <a href="${escapeHtml(it.url)}" target="_blank" rel="noopener" style="color:var(--accent)">открыть оригинал →</a>
-      </div>
-    </div>`);
-  });
-  html.push("</div>");
-  document.getElementById("main").innerHTML = html.join("");
-  document.querySelectorAll(".row").forEach(r=>{
-    r.addEventListener("click",()=>{
-      const id=r.dataset.id;
-      if(state.openIds.has(id)) state.openIds.delete(id); else state.openIds.add(id);
-      renderList();
-    });
-  });
+// ---------- Row HTML ---------- //
+function rowHtml(it){
+  const open = state.openIds.has(it.id);
+  return `<div class="row${open?' open':''}" data-id="${escapeHtml(it.id)}">
+    <span class="src" title="${escapeHtml(it.source_label||it.source)}">${SRC_ICON[it.source]||"•"}</span>
+    <span class="prio ${prioCls(it.priority)}">${it.priority.toFixed(1)}</span>
+    <span class="title" title="${escapeHtml(it.title)}">${escapeHtml(it.title)}</span>
+    <span class="cat">${escapeHtml(it.category_label||it.category)}</span>
+    <span class="date">${fmtRel(it.timestamp)}</span>
+    <a class="ext" href="${escapeHtml(it.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Открыть источник">↗</a>
+  </div>
+  <div class="expand">
+    <div class="full-title">${escapeHtml(it.title)}</div>
+    ${it.summary_ru?`<div class="summary">💡 ${escapeHtml(it.summary_ru)}</div>`:""}
+    ${it.text_excerpt?`<div class="excerpt">${escapeHtml(it.text_excerpt)}</div>`:""}
+    <div class="meta-row">
+      <span><b>Источник:</b> ${escapeHtml(it.source_label||it.source)}</span>
+      <span><b>Кластер:</b> ${escapeHtml(it.cluster_id||"—")}</span>
+      <span><b>Lang:</b> ${escapeHtml(it.lang)}</span>
+      <span><b>${escapeHtml((it.timestamp||"").slice(0,16).replace("T"," "))}</b></span>
+      <a href="${escapeHtml(it.url)}" target="_blank" rel="noopener" style="color:var(--accent)">открыть оригинал →</a>
+    </div>
+  </div>`;
 }
 
-function renderClusters(){
-  const clusters = (state.data.clusters||[]).slice().sort((a,b)=>(b.items_count-a.items_count)||(b.avg_priority-a.avg_priority));
-  if(!clusters.length){
-    document.getElementById("main").innerHTML = `<div class="empty">Кластеров пока нет.</div>`;
-    return;
-  }
-  const itemsById = new Map((state.data.items||[]).map(i=>[i.id,i]));
-  const html = [];
-  clusters.forEach(c=>{
-    const open = state.openClusters.has(c.id);
-    html.push(`<div class="cluster${open?' open':''}" data-cid="${escapeHtml(c.id)}">
-      <div class="cluster-head">
-        <span class="cprio ${prioCls(c.avg_priority)}">${c.avg_priority.toFixed(1)}</span>
-        <span class="clabel">${escapeHtml(c.label||c.id)}</span>
-        <span class="ccnt">${c.items_count}</span>
-        <span class="arr">▶</span>
-      </div>
-      <div class="cluster-body"><div class="list" style="border-radius:0;border:0">`);
-    (state.data.items||[]).filter(i=>i.cluster_id===c.id).forEach(it=>{
-      const ropen=state.openIds.has(it.id);
-      html.push(`<div class="row${ropen?' open':''}" data-id="${escapeHtml(it.id)}">
-        <span class="src">${SRC_ICON[it.source]||"•"}</span>
-        <span class="prio ${prioCls(it.priority)}">${it.priority.toFixed(1)}</span>
-        <span class="title">${escapeHtml(it.title)}</span>
-        <span class="cat">${escapeHtml(it.category_label||it.category)}</span>
-        <span class="date">${fmtRel(it.timestamp)}</span>
-        <a class="ext" href="${escapeHtml(it.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a>
-      </div>`);
-      html.push(`<div class="expand">
-        <div class="full-title">${escapeHtml(it.title)}</div>
-        ${it.summary_ru?`<div class="summary">💡 ${escapeHtml(it.summary_ru)}</div>`:""}
-        ${it.text_excerpt?`<div class="excerpt">${escapeHtml(it.text_excerpt)}</div>`:""}
-      </div>`);
-    });
-    html.push("</div></div></div>");
-  });
-  document.getElementById("main").innerHTML = html.join("");
-  document.querySelectorAll(".cluster-head").forEach(h=>{
-    h.addEventListener("click",()=>{
-      const cid = h.parentElement.dataset.cid;
-      if(state.openClusters.has(cid)) state.openClusters.delete(cid); else state.openClusters.add(cid);
-      renderClusters();
-    });
-  });
-  document.querySelectorAll(".cluster .row").forEach(r=>{
+function bindRowClicks(scopeRoot){
+  scopeRoot.querySelectorAll(".row").forEach(r=>{
     r.addEventListener("click",e=>{
       e.stopPropagation();
       const id=r.dataset.id;
       if(state.openIds.has(id)) state.openIds.delete(id); else state.openIds.add(id);
-      renderClusters();
+      render();
     });
   });
 }
 
-function render(){
-  if(state.view==="list") renderList(); else renderClusters();
+// ---------- View: List ---------- //
+function renderList(){
+  const items = sortItems(applyFilters(state.data.items||[]));
+  if(!items.length){
+    document.getElementById("main").innerHTML = `<div class="empty"><p class="big">🤷</p><p>Под фильтр ничего не подходит.</p></div>`;
+    return;
+  }
+  document.getElementById("main").innerHTML = `<div class="list">${items.map(rowHtml).join("")}</div>`;
+  bindRowClicks(document.getElementById("main"));
 }
 
+// ---------- View: Clusters (flat) ---------- //
+function renderClusters(){
+  const clusters = ((state.data.clusters)||[]).slice().sort((a,b)=>(b.items_count-a.items_count)||(b.avg_priority-a.avg_priority));
+  const items = applyFilters(state.data.items||[]);
+  const visibleClusterIds = new Set(items.map(i=>i.cluster_id));
+  const filtered = clusters.filter(c=>visibleClusterIds.has(c.id));
+  if(!filtered.length){
+    document.getElementById("main").innerHTML = `<div class="empty"><p class="big">🤷</p><p>Кластеров под фильтр нет.</p></div>`;
+    return;
+  }
+  const itemsByCluster = new Map();
+  items.forEach(it=>{
+    if(!itemsByCluster.has(it.cluster_id)) itemsByCluster.set(it.cluster_id,[]);
+    itemsByCluster.get(it.cluster_id).push(it);
+  });
+  const html = filtered.map(c=>{
+    const open = state.openClusters.has(c.id);
+    const inner = (itemsByCluster.get(c.id)||[]).slice().sort((a,b)=>b.priority-a.priority).map(rowHtml).join("");
+    return `<div class="cluster-card${open?' open':''}" data-cid="${escapeHtml(c.id)}">
+      <div class="chead">
+        <span class="cprio ${prioCls(c.avg_priority)}">${c.avg_priority.toFixed(1)}</span>
+        <span class="clabel">${escapeHtml(c.label||c.id)}</span>
+        <span class="ccnt">${c.items_count}</span>
+        <span class="cat">${escapeHtml(CAT_DEFAULT[c.category]||c.category)}</span>
+        <span class="arr">▶</span>
+      </div>
+      <div class="cbody"><div class="list" style="border:0;border-radius:0">${inner}</div></div>
+    </div>`;
+  }).join("");
+  document.getElementById("main").innerHTML = html;
+  document.querySelectorAll(".cluster-card .chead").forEach(h=>{
+    h.addEventListener("click",()=>{
+      const cid=h.parentElement.dataset.cid;
+      if(state.openClusters.has(cid)) state.openClusters.delete(cid); else state.openClusters.add(cid);
+      render();
+    });
+  });
+  bindRowClicks(document.getElementById("main"));
+}
+
+// ---------- View: Hierarchy ---------- //
+function renderHierarchy(){
+  const data = state.data;
+  const items = applyFilters(data.items||[]);
+  const itemsByCluster = new Map();
+  items.forEach(it=>{
+    if(!itemsByCluster.has(it.cluster_id)) itemsByCluster.set(it.cluster_id,[]);
+    itemsByCluster.get(it.cluster_id).push(it);
+  });
+  const visibleCidSet = new Set(itemsByCluster.keys());
+
+  const allClusters = (data.clusters||[]).filter(c=>visibleCidSet.has(c.id));
+  const clustersByMeta = new Map();
+  allClusters.forEach(c=>{
+    const k = c.meta_cluster_id || "other";
+    if(!clustersByMeta.has(k)) clustersByMeta.set(k,[]);
+    clustersByMeta.get(k).push(c);
+  });
+
+  const metaSorted = (data.meta_clusters||[])
+    .filter(m=>clustersByMeta.has(m.id))
+    .slice()
+    .sort((a,b)=>b.total_priority-a.total_priority || b.items_count-a.items_count);
+
+  if(!metaSorted.length){
+    document.getElementById("main").innerHTML = `<div class="empty">
+      <p class="big">🤷</p><p>Нет данных под текущие фильтры.</p>
+      <p style="font-size:11px">Попробуй сбросить фильтры или дождаться следующего прогона.</p>
+    </div>`;
+    return;
+  }
+
+  const html = metaSorted.map(m=>{
+    const open = state.openMeta.has(m.id);
+    const innerClusters = clustersByMeta.get(m.id).slice().sort((a,b)=>b.avg_priority-a.avg_priority || b.items_count-a.items_count);
+    const innerHtml = innerClusters.map(c=>{
+      const copen = state.openClusters.has(c.id);
+      const rows = (itemsByCluster.get(c.id)||[]).sort((a,b)=>b.priority-a.priority).map(rowHtml).join("");
+      return `<div class="cluster-card${copen?' open':''}" data-cid="${escapeHtml(c.id)}">
+        <div class="chead">
+          <span class="cprio ${prioCls(c.avg_priority)}">${c.avg_priority.toFixed(1)}</span>
+          <span class="clabel">${escapeHtml(c.label||c.id)}</span>
+          <span class="ccnt">${c.items_count}</span>
+          <span class="cat">${escapeHtml(CAT_DEFAULT[c.category]||c.category)}</span>
+          <span class="arr">▶</span>
+        </div>
+        <div class="cbody"><div class="list" style="border:0;border-radius:0">${rows}</div></div>
+      </div>`;
+    }).join("");
+    return `<div class="meta-cluster${open?' open':''}" data-mid="${escapeHtml(m.id)}">
+      <div class="meta-head">
+        <span class="emoji">${escapeHtml(m.emoji||META_FALLBACK_EMOJI)}</span>
+        <span class="mlabel">${escapeHtml(m.label||m.id)}</span>
+        <span class="badge">${m.clusters_count} кл.</span>
+        <span class="badge">${m.items_count} болей</span>
+        <span class="tprio">Σ ${Number(m.total_priority||0).toFixed(0)}</span>
+        <span class="arr">▶</span>
+      </div>
+      <div class="meta-body">${innerHtml}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("main").innerHTML = html;
+
+  document.querySelectorAll(".meta-cluster .meta-head").forEach(h=>{
+    h.addEventListener("click",()=>{
+      const mid=h.parentElement.dataset.mid;
+      if(state.openMeta.has(mid)) state.openMeta.delete(mid); else state.openMeta.add(mid);
+      render();
+    });
+  });
+  document.querySelectorAll(".cluster-card .chead").forEach(h=>{
+    h.addEventListener("click",e=>{
+      e.stopPropagation();
+      const cid=h.parentElement.dataset.cid;
+      if(state.openClusters.has(cid)) state.openClusters.delete(cid); else state.openClusters.add(cid);
+      render();
+    });
+  });
+  bindRowClicks(document.getElementById("main"));
+}
+
+function render(){
+  if(!state.data){ renderEmpty(); return; }
+  if(state.view==="list") renderList();
+  else if(state.view==="clusters") renderClusters();
+  else renderHierarchy();
+}
+
+// ---------- UI binding ---------- //
 function bindUI(){
   document.getElementById("filters").addEventListener("click",e=>{
     const t=e.target;
     if(!t.classList || !t.classList.contains("chip")) return;
-    if(t.dataset.src!==undefined){ state.src=t.dataset.src; document.querySelectorAll("[data-src]").forEach(x=>x.classList.toggle("active",x.dataset.src===state.src)); }
-    else if(t.dataset.cat!==undefined){ state.cat=t.dataset.cat; document.querySelectorAll("[data-cat]").forEach(x=>x.classList.toggle("active",x.dataset.cat===state.cat)); }
-    else if(t.dataset.lang!==undefined){ state.lang=t.dataset.lang; document.querySelectorAll("[data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===state.lang)); }
+    if(t.dataset.src!==undefined){state.src=t.dataset.src;document.querySelectorAll("[data-src]").forEach(x=>x.classList.toggle("active",x.dataset.src===state.src));}
+    else if(t.dataset.cat!==undefined){state.cat=t.dataset.cat;document.querySelectorAll("[data-cat]").forEach(x=>x.classList.toggle("active",x.dataset.cat===state.cat));}
+    else if(t.dataset.meta!==undefined){state.meta=t.dataset.meta;document.querySelectorAll("[data-meta]").forEach(x=>x.classList.toggle("active",x.dataset.meta===state.meta));}
+    else if(t.dataset.lang!==undefined){state.lang=t.dataset.lang;document.querySelectorAll("[data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===state.lang));}
     render();
   });
   document.getElementById("prio-min").addEventListener("change",e=>{state.prioMin=parseFloat(e.target.value)||0;render();});
@@ -330,57 +564,34 @@ function bindUI(){
   });
 }
 
-function fmtRelLong(iso){
-  if(!iso) return "";
-  const d = new Date(iso); if(isNaN(d.getTime())) return "";
-  const diff = (Date.now()-d.getTime())/1000;
-  if(diff<60) return "только что";
-  if(diff<3600){ const m=Math.floor(diff/60); return m+" "+plural(m,["минуту","минуты","минут"])+" назад"; }
-  if(diff<86400){ const h=Math.floor(diff/3600); return h+" "+plural(h,["час","часа","часов"])+" назад"; }
-  if(diff<86400*2){ return "вчера в "+String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0")+" UTC"; }
-  const days=Math.floor(diff/86400); return days+" "+plural(days,["день","дня","дней"])+" назад";
-}
-function plural(n,forms){ const m=n%10, m2=n%100; if(m===1&&m2!==11) return forms[0]; if(m>=2&&m<=4&&(m2<10||m2>=20)) return forms[1]; return forms[2]; }
-function nextRunIn(){
-  const now=new Date(); const next=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),6,0,0,0));
-  if(next<=now) next.setUTCDate(next.getUTCDate()+1);
-  const diff=Math.max(0,(next-now)/1000);
-  const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60);
-  if(h===0) return "через "+m+" "+plural(m,["минуту","минуты","минут"]);
-  return "через "+h+" ч "+m+" мин";
-}
-function updateStatusStrip(){
-  const gen = state.data && state.data.meta && state.data.meta.generated_at;
-  const lastEl=document.getElementById("st-last"), nextEl=document.getElementById("st-next"), dotEl=document.getElementById("st-dot");
-  if(gen){
-    lastEl.textContent = fmtRelLong(gen);
-    const ageH = (Date.now()-new Date(gen).getTime())/3600000;
-    dotEl.className = "dot "+(ageH>30?"cold":(ageH>26?"stale":""));
-  } else {
-    lastEl.textContent = "Ещё не обновлялось";
-    dotEl.className = "dot cold";
-  }
-  nextEl.textContent = nextRunIn();
-}
-setInterval(updateStatusStrip, 60000);
-
-async function load(){
-  bindUI();
-  updateStatusStrip();
+async function loadData(){
   try{
-    const r = await fetch("/data/parsing.json?ts="+Date.now(), {cache:"no-store"});
+    const r = await fetch("/data/parsing.json?ts="+Date.now(),{cache:"no-store"});
     if(!r.ok) throw new Error("HTTP "+r.status);
     state.data = await r.json();
   }catch(e){
+    state.data = null;
     renderEmpty();
     return;
   }
-  const m=state.data.meta||{}, st=m.stats||{};
-  const gen = (m.generated_at||"").replace("T"," ").replace("Z"," UTC");
-  document.getElementById("hdr-sub").innerHTML = `обновлено: <b>${escapeHtml(gen||"—")}</b> · <b>${st.ai_confirmed_pain||0}</b> болей · <b>${st.clusters||0}</b> кластеров · из ${(m.sources_used||[]).length} источников`;
+  const m=state.data.meta||{},st=m.stats||{};
+  const gen=(m.generated_at||"").replace("T"," ").replace("Z"," UTC");
+  const cost=m.cost_usd ? ` · cost $${m.cost_usd.toFixed(3)}`:"";
+  document.getElementById("hdr-sub").innerHTML =
+    `обновлено: <b>${escapeHtml(gen||"—")}</b> · `
+    +`<b>${st.confirmed_pain||0}</b> болей · `
+    +`<b>${st.clusters||0}</b> кластеров · `
+    +`<b>${st.meta_clusters||0}</b> мета · `
+    +`из ${(m.sources_used||[]).length} источников · scraped ${st.total_scraped||0}${cost}`;
   buildFilters();
-  updateStatusStrip();
   render();
+}
+
+async function load(){
+  bindUI();
+  renderStatus();
+  await pollStatus();
+  await loadData();
 }
 load();
 </script>

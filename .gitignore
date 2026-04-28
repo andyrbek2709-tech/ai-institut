@@ -4,3 +4,4 @@ node_modules/
 .env.*.local
 build/
 .vercel
+scripts/__pycache__/
