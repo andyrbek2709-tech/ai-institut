@@ -748,6 +748,14 @@ function buildTransmittalAction(actionType, project_id, user_id, payload = {}) {
   return { ok: false, blocked: true, reason_code: 'unsupported_action', message: 'Неподдерживаемое transmittal действие', next_step: 'Используйте create_transmittal или update_transmittal_status.' };
 }
 
+// B5 startup diagnostic (one log line at cold start so we can see env presence)
+console.log('[ORCH-BOOT]', JSON.stringify({
+  OPENAI_API_KEY: OPENAI_API_KEY ? 'present' : 'MISSING',
+  ANTHROPIC_API_KEY: ANTHROPIC_API_KEY ? 'present' : 'MISSING',
+  SURL: SURL ? 'present' : 'MISSING',
+  SERVICE_KEY: SERVICE_KEY ? 'present' : 'MISSING',
+}));
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -1093,10 +1101,19 @@ module.exports = async function handler(req, res) {
       message: responseMessage,
     });
   } catch (err) {
-    console.error('Orchestrator Error:', err);
-    const errMsg = err && err.message ? String(err.message) : String(err);
-    // Скрываем внутренние детали ошибки от клиента — логируем на сервер, отдаём общее сообщение.
-    console.error('Orchestrator Error message:', errMsg);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    // B5: расширенная диагностика 500. Клиент получает только обобщённое сообщение,
+    // в логах Vercel видим точную причину.
+    const errName = (err && err.name) || 'UnknownError';
+    const errMsg = (err && err.message) ? String(err.message) : String(err);
+    const errCode = (err && err.code) ? String(err.code) : '';
+    const stackLines = (err && err.stack) ? String(err.stack).split('\n').slice(0, 4).join(' | ') : '';
+    const envDiag = {
+      OPENAI_API_KEY: OPENAI_API_KEY ? 'present' : 'MISSING',
+      ANTHROPIC_API_KEY: ANTHROPIC_API_KEY ? 'present' : 'MISSING',
+      SURL: SURL ? 'present' : 'MISSING',
+      SERVICE_KEY: SERVICE_KEY ? 'present' : 'MISSING',
+    };
+    console.error('[ORCH-500]', JSON.stringify({ errName, errMsg, errCode, stackLines, envDiag }));
+    return res.status(500).json({ error: 'Internal Server Error', code: errName });
   }
 };
