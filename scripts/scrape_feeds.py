@@ -3,10 +3,12 @@
 
 v2 changes:
   - HN Algolia: hitsPerPage=500 + extra last-24h search
-  - Habr: 5 RSS feeds, limit=200 each
-  - vc.ru: 4 RSS feeds
+  - HN comments: async fetch /items/{id}, top-10 per story (top-level + 1st reply)
+  - Habr: 5 RSS feeds, limit=200 each (TODO: comments scraping)
+  - vc.ru: 4 RSS feeds (TODO: comments scraping)
   - ProductHunt + IndieHackers: full RSS body kept
   - Stack Overflow: 4 tag queries × 100 = 400 questions
+  - SO answers: batched /questions/{ids}/answers, top-3 by score per question
 
 Writes data/raw_items.json. Dedup via data/seen.json (sha256 of source|url).
 Pushes live status updates to enghub-main/public/data/status.json.
@@ -18,6 +20,7 @@ import html
 import json
 import re
 import sys
+import asyncio
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -246,6 +249,140 @@ def fetch_so() -> list:
     return out
 
 
+
+# -------- HN comments (async via Algolia /items/{id}) -------- #
+HN_COMMENT_CAP_PER_STORY = 10
+HN_COMMENT_STORY_CAP = 150          # cap how many stories we walk
+HN_COMMENT_CONCURRENCY = 10
+
+
+def _make_hn_comment(c, story_id):
+    cid = c.get("id")
+    text = _strip_html(c.get("text") or "")
+    if not text or not cid:
+        return None
+    title = (text[:100] + "…") if len(text) > 100 else text
+    return {
+        "id": f"hn-comment-{cid}",
+        "source": "hn-comment",
+        "source_label": "HN comment",
+        "url": f"https://news.ycombinator.com/item?id={cid}",
+        "parent_url": f"https://news.ycombinator.com/item?id={story_id}",
+        "title": title,
+        "text": text[:5000],
+        "timestamp": _safe_iso(c.get("created_at")),
+        "lang": "en",
+    }
+
+
+async def _fetch_hn_story_comments(session, sem, story_id):
+    import aiohttp  # local import — only needed for async path
+    url = f"https://hn.algolia.com/api/v1/items/{story_id}"
+    async with sem:
+        try:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as r:
+                if r.status != 200:
+                    return []
+                data = await r.json()
+        except Exception:
+            return []
+    out = []
+    children = data.get("children") or []
+    for c in children:
+        if c.get("type") != "comment":
+            continue
+        node = _make_hn_comment(c, story_id)
+        if node:
+            out.append(node)
+        if len(out) >= HN_COMMENT_CAP_PER_STORY:
+            break
+        # one first-level reply
+        for sc in (c.get("children") or [])[:1]:
+            if sc.get("type") != "comment":
+                continue
+            sub = _make_hn_comment(sc, story_id)
+            if sub:
+                out.append(sub)
+            break
+        if len(out) >= HN_COMMENT_CAP_PER_STORY:
+            break
+    return out
+
+
+async def _fetch_hn_comments_async(story_ids):
+    import aiohttp
+    sem = asyncio.Semaphore(HN_COMMENT_CONCURRENCY)
+    async with aiohttp.ClientSession(headers=HEADERS) as session:
+        tasks = [_fetch_hn_story_comments(session, sem, sid) for sid in story_ids]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+    flat = []
+    for r in results:
+        if isinstance(r, list):
+            flat.extend(r)
+    return flat
+
+
+def fetch_hn_comments(story_ids: list) -> list:
+    if not story_ids:
+        return []
+    capped = story_ids[:HN_COMMENT_STORY_CAP]
+    try:
+        import aiohttp  # noqa: F401  - probe availability
+    except ImportError:
+        print("  [hn-comment] aiohttp missing — skip", file=sys.stderr)
+        return []
+    return asyncio.run(_fetch_hn_comments_async(capped))
+
+
+# -------- SO answers (batched, top-3 by score per question) -------- #
+SO_ANSWER_CHUNK = 100
+
+
+def fetch_so_answers(question_ids: list) -> list:
+    if not question_ids:
+        return []
+    out = []
+    for i in range(0, len(question_ids), SO_ANSWER_CHUNK):
+        chunk = question_ids[i:i + SO_ANSWER_CHUNK]
+        ids = ";".join(str(q) for q in chunk)
+        url = (f"https://api.stackexchange.com/2.3/questions/{ids}/answers"
+               "?site=stackoverflow&filter=withbody&order=desc&sort=votes&pagesize=100")
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+            r.raise_for_status()
+            data = r.json()
+        except Exception as e:
+            print(f"  [so-answer] {e}", file=sys.stderr)
+            continue
+        by_q: dict[int, list] = {}
+        for a in data.get("items", []):
+            qid = a.get("question_id")
+            by_q.setdefault(qid, []).append(a)
+        for qid, answers in by_q.items():
+            top = sorted(answers, key=lambda x: -(x.get("score") or 0))[:3]
+            for a in top:
+                aid = a.get("answer_id")
+                if not aid:
+                    continue
+                body = _strip_html(a.get("body") or "")
+                if not body:
+                    continue
+                title = (body[:100] + "…") if len(body) > 100 else body
+                out.append({
+                    "id": f"so-answer-{aid}",
+                    "source": "so-answer",
+                    "source_label": "SO answer",
+                    "url": f"https://stackoverflow.com/a/{aid}",
+                    "parent_url": f"https://stackoverflow.com/q/{qid}",
+                    "title": title,
+                    "text": body[:5000],
+                    "timestamp": _safe_iso(a.get("creation_date")),
+                    "lang": "en",
+                })
+        time.sleep(2.0)  # respect SO rate limit
+    return out
+
+
 FETCHERS = [
     ("hn",   "Hacker News",      fetch_hn),
     ("habr", "Habr (5 feeds)",   fetch_habr),
@@ -269,40 +406,87 @@ def save_seen(seen):
     SEEN_PATH.write_text(json.dumps(sorted(seen), ensure_ascii=False), encoding="utf-8")
 
 
+def _absorb(items, seen, all_new, stats_key, stats):
+    fetched = len(items)
+    new_count = 0
+    for it in items:
+        h = _hash(it["source"], it["url"])
+        if h in seen:
+            continue
+        seen.add(h)
+        it["_hash"] = h
+        all_new.append(it)
+        new_count += 1
+    stats[stats_key] = {"fetched": fetched, "new": new_count}
+    print(f"  {stats_key:11s}  fetched={fetched:5d}  new={new_count:5d}")
+
+
 def main():
-    started = status_begin("Парсинг источников", total=len(FETCHERS))
+    total_steps = len(FETCHERS) + 2  # +HN comments +SO answers
+    started = status_begin("Парсинг источников", total=total_steps)
 
     seen = load_seen()
     all_new = []
     stats = {}
+    hn_story_ids: list = []
+    so_question_ids: list = []
 
     for idx, (name, label, fn) in enumerate(FETCHERS):
         status_update(
             status="scraping",
-            current_step=f"Источник {idx+1}/{len(FETCHERS)}: {label}",
-            progress_pct=int(idx / len(FETCHERS) * 100),
+            current_step=f"Источник {idx+1}/{total_steps}: {label}",
+            progress_pct=int(idx / total_steps * 100),
             items_processed=len(all_new),
             items_total=0,
             started_at=started,
             commit=True,
         )
-        fetched = 0
-        new_count = 0
         try:
             items = fn()
-            fetched = len(items)
-            for it in items:
-                h = _hash(it["source"], it["url"])
-                if h in seen:
-                    continue
-                seen.add(h)
-                it["_hash"] = h
-                all_new.append(it)
-                new_count += 1
+            if name == "hn":
+                hn_story_ids = [it["id"].replace("hn-", "", 1) for it in items if it.get("id", "").startswith("hn-")]
+            elif name == "so":
+                so_question_ids = [it["id"].replace("so-", "", 1) for it in items if it.get("id", "").startswith("so-")]
+            _absorb(items, seen, all_new, name, stats)
         except Exception as e:
             print(f"[!] {name}: failed: {e}", file=sys.stderr)
-        stats[name] = {"fetched": fetched, "new": new_count}
-        print(f"  {name:5s}  fetched={fetched:5d}  new={new_count:5d}")
+            stats[name] = {"fetched": 0, "new": 0}
+
+    # ---- Follow-up: HN comments ---- #
+    step_idx = len(FETCHERS)
+    status_update(
+        status="scraping",
+        current_step=f"Источник {step_idx+1}/{total_steps}: HN comments ({min(len(hn_story_ids), HN_COMMENT_STORY_CAP)} stories)",
+        progress_pct=int(step_idx / total_steps * 100),
+        items_processed=len(all_new),
+        items_total=0,
+        started_at=started,
+        commit=True,
+    )
+    try:
+        hn_comments = fetch_hn_comments(hn_story_ids)
+        _absorb(hn_comments, seen, all_new, "hn-comment", stats)
+    except Exception as e:
+        print(f"[!] hn-comment: failed: {e}", file=sys.stderr)
+        stats["hn-comment"] = {"fetched": 0, "new": 0}
+
+    # ---- Follow-up: SO answers ---- #
+    step_idx += 1
+    status_update(
+        status="scraping",
+        current_step=f"Источник {step_idx+1}/{total_steps}: SO answers ({len(so_question_ids)} qs)",
+        progress_pct=int(step_idx / total_steps * 100),
+        items_processed=len(all_new),
+        items_total=0,
+        started_at=started,
+        commit=True,
+    )
+    try:
+        so_answers = fetch_so_answers(so_question_ids)
+        _absorb(so_answers, seen, all_new, "so-answer", stats)
+    except Exception as e:
+        print(f"[!] so-answer: failed: {e}", file=sys.stderr)
+        stats["so-answer"] = {"fetched": 0, "new": 0}
 
     payload = {
         "scraped_at": _now_iso(),
