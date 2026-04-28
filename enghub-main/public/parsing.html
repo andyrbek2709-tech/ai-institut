@@ -178,8 +178,8 @@ const CAT_DEFAULT = {
   "monitoring":"Мониторинг и триггеры","parsing":"Парсинг и агрегация","mass-ops":"Массовые операции",
   "ai":"AI-обработка","ui":"Интерфейсы (бот/веб/форма)"
 };
-const SRC_LABEL = {hn:"HN",habr:"Habr",vc:"vc",ph:"PH",ih:"IH",so:"SO"};
-const SRC_ICON  = {hn:"🟧",habr:"🟦",vc:"🟪",ph:"🟥",ih:"🟩",so:"⬜"};
+const SRC_LABEL = {hn:"HN",habr:"Habr",vc:"vc",ph:"PH",ih:"IH",so:"SO","hn-comment":"HN💬","so-answer":"SO💡"};
+const SRC_ICON  = {hn:"🟧",habr:"🟦",vc:"🟪",ph:"🟥",ih:"🟩",so:"⬜","hn-comment":"💬","so-answer":"💡"};
 const META_FALLBACK_EMOJI = "🧩";
 
 const state = {
@@ -595,5 +595,6 @@ async function load(){
 }
 load();
 </script>
+<script src="/_nav.js"></script>
 </body>
 </html>
