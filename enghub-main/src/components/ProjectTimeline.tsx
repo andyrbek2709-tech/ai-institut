@@ -94,7 +94,7 @@ export function ProjectTimeline({ tasks, project, C }: ProjectTimelineProps) {
               width: 120, minWidth: 120, fontSize: 11, fontWeight: 600,
               color: C.textMuted, paddingRight: 10, textAlign: 'right',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
+            }} title={lane.dept}>
               {lane.dept}
             </div>
 
@@ -138,7 +138,7 @@ export function ProjectTimeline({ tasks, project, C }: ProjectTimelineProps) {
                     }}
                   >
                     {width > 8 && (
-                      <span style={{ fontSize: 9, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600 }}>
+                      <span title={t.name} style={{ fontSize: 9, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600 }}>
                         {t.name}
                       </span>
                     )}

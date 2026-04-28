@@ -82,7 +82,7 @@ export function RevisionsTab({
               <span style={{ color: C.text }}>{d?.code || '—'}</span>
               <span style={{ color: C.textMuted }}>{r.from_revision} → {r.to_revision}</span>
               <span style={{ color: C.textMuted }}>{issuer?.full_name || 'Система'}</span>
-              <span style={{ marginLeft: 'auto', fontSize: 12, color: C.textMuted }}>{new Date(r.created_at).toLocaleString()}</span>
+              <span style={{ marginLeft: 'auto', fontSize: 12, color: C.textMuted }}>{new Date(r.created_at).toLocaleString('ru-RU')}</span>
             </div>
           );
         })}

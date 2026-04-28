@@ -167,7 +167,7 @@ const Tile: React.FC<TileProps> = ({ C, trackRef, isSpeaker, raised, isHost }) =
           display: 'inline-block', width: 8, height: 8, borderRadius: 4,
           background: p.isMicrophoneEnabled ? '#22c55e' : '#64748b',
         }} />
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={name}>{name}</span>
         {isHost && (
           <span style={{
             background: '#f59e0b', color: '#000', fontSize: 10, padding: '1px 5px',

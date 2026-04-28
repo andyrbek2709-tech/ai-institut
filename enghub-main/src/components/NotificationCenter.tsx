@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from '../api/supabaseClient';
 import { listNotifications, markNotificationRead, markAllNotificationsRead } from '../api/supabase';
 
 const SURL = process.env.REACT_APP_SUPABASE_URL || '';
@@ -43,7 +43,7 @@ export function NotificationCenter({ userId, token, C, onNavigate }: Notificatio
 
   // Realtime subscription
   useEffect(() => {
-    const supabase = createClient(SURL, ANON_KEY);
+    const supabase = getSupabaseClient();
     const channel = supabase
       .channel(`notifications-${userId}`)
       .on('postgres_changes', {

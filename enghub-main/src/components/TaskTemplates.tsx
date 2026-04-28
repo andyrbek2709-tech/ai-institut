@@ -117,7 +117,7 @@ export function TaskTemplates({ token, C, onApply, onClose }: TaskTemplatesProps
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 2 }}>{t.name}</div>
                 {t.description && (
-                  <div style={{ fontSize: 11, color: C.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: 11, color: C.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={t.description}>
                     {t.description}
                   </div>
                 )}

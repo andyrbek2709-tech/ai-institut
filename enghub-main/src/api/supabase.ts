@@ -31,13 +31,14 @@ const guardError = async (r: Response): Promise<Response> => {
 };
 
 export const get = (path: string, token?: string) =>
-  fetch(`${SURL}/rest/v1/${path}`, { headers: H(token) }).then(guardError).then(r => r.json());
+  fetch(`${SURL}/rest/v1/${path}`, { headers: H(token), signal: AbortSignal.timeout(30000) }).then(guardError).then(r => r.json());
 
 export const post = (path: string, data: any, token?: string) =>
   fetch(`${SURL}/rest/v1/${path}`, {
     method: 'POST',
     headers: { ...H(token), 'Prefer': 'return=representation' },
     body: JSON.stringify(data),
+    signal: AbortSignal.timeout(30000),
   }).then(guardError).then(r => r.json());
 
 export const patch = (path: string, data: any, token?: string) =>
@@ -45,10 +46,11 @@ export const patch = (path: string, data: any, token?: string) =>
     method: 'PATCH',
     headers: { ...H(token), 'Prefer': 'return=representation' },
     body: JSON.stringify(data),
+    signal: AbortSignal.timeout(30000),
   }).then(guardError).then(r => r.json());
 
 export const del = (path: string, token?: string) =>
-  fetch(`${SURL}/rest/v1/${path}`, { method: 'DELETE', headers: H(token) }).then(guardError);
+  fetch(`${SURL}/rest/v1/${path}`, { method: 'DELETE', headers: H(token), signal: AbortSignal.timeout(30000) }).then(guardError);
 
 export const signIn = (email: string, password: string) =>
   fetch(`${SURL}/auth/v1/token?grant_type=password`, {

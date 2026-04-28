@@ -115,4 +115,4 @@ export function buildSpecificationPayload(
       line_count: rows.length,
     },
   };
-}
+}

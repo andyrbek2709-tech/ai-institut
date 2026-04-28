@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions } from './constants';
 import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory } from './api/supabase';
+import { getSupabaseAdminClient } from './api/supabaseClient';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
@@ -302,7 +303,7 @@ export default function App() {
       }
       return;
     }
-    const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
+    const supa = getSupabaseAdminClient();
     const ch = supa.channel(`session:${currentUserData.id}`, {
       config: { broadcast: { self: false, ack: false } }
     });
@@ -326,7 +327,7 @@ export default function App() {
   // ── Уведомления о входящих вызовах (bypass RLS через broadcast) ──
   useEffect(() => {
     if (!currentUserData?.id || !token) return;
-    const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
+    const supa = getSupabaseAdminClient();
     const ch = supa.channel(`callnotify:${currentUserData.id}`, {
       config: { broadcast: { self: false, ack: false } }
     });
@@ -616,7 +617,7 @@ export default function App() {
   // ── Supabase Realtime: подписка на изменения задач ──
   useEffect(() => {
     if (!token || !currentUserData?.id) return;
-    const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
+    const supa = getSupabaseAdminClient();
     const channel = supa.channel('tasks:live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload: any) => {
         const t = payload.new;
@@ -701,7 +702,7 @@ export default function App() {
   // ── Supabase Realtime: подписка на новые сообщения чата ──
   useEffect(() => {
     if (!token || !currentUserData?.id) return;
-    const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
+    const supa = getSupabaseAdminClient();
     const channel = supa.channel('messages:live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
         const m = payload.new;
@@ -785,12 +786,12 @@ export default function App() {
       if (!ok) return;
       await leaveConference();
     }
-    const supa = createClient(process.env.REACT_APP_SUPABASE_URL || '', SERVICE_KEY);
+    const supa = getSupabaseAdminClient();
     const ch = supa.channel(`presence:${activeProject.id}`, {
       config: { presence: { key: String(currentUserData.id) } }
     });
     ch.on('presence', { event: 'sync' }, () => {
-      const state = ch.presenceState<any>();
+      const state = ch.presenceState();
       // Group by user key and merge status (mic, screen) across sessions
       const mergedUsers = Object.entries(state).map(([key, sessions]: [string, any[]]) => {
         const primary = sessions[0];
@@ -817,7 +818,7 @@ export default function App() {
         // Always add to known set (presence update re-fires join — just update known)
       }
       // Re-fetch state on join to ensure sync
-      const state = ch.presenceState<any>();
+      const state = ch.presenceState();
       const mergedUsers = Object.entries(state).map(([key, sessions]: [string, any[]]) => {
         const primary = sessions[0];
         return {
@@ -836,7 +837,7 @@ export default function App() {
         const uid = String(u.id);
         // Wait 2s: if it's just a presence update (track() fires leave+join), user will rejoin
         setTimeout(() => {
-          const state = ch.presenceState<any>();
+          const state = ch.presenceState();
           const stillPresent = Object.values(state).flat().some((s: any) => String(s.id) === uid);
           if (!stillPresent) {
             knownParticipantIdsRef.current.delete(uid); // allow notification on next real join
@@ -846,7 +847,7 @@ export default function App() {
         }, 2000);
       }
       // Re-fetch state on leave to ensure sync
-      const state = ch.presenceState<any>();
+      const state = ch.presenceState();
       const mergedUsers = Object.entries(state).map(([key, sessions]: [string, any[]]) => {
         const primary = sessions[0];
         return {
@@ -949,7 +950,12 @@ export default function App() {
     setSaving(true);
     try {
       const leadUser = getUserById(newTask.assigned_to);
-      await createProjectTask({ name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id, description: newTask.description || null }, token!);
+      const result = await createProjectTask({ name: newTask.name, dept: getDeptName(newTask.dept_id), priority: newTask.priority, deadline: newTask.deadline, assigned_to: newTask.assigned_to || null, status: "todo", project_id: activeProject.id, description: newTask.description || null }, token!);
+      // Optimistic update: если вернулась новая задача, добавь её в список сразу
+      if (result && typeof result === 'object') {
+        setAllTasks((prev) => [...prev, result]);
+        loadAllTasks(activeProject.id); // Потом перезагрузи для синхронизации
+      }
       addNotification(`Задача "${newTask.name}" создана${leadUser ? ` → ${leadUser.full_name}` : ''}`, 'success');
       if (newTask.assigned_to && String(newTask.assigned_to) !== String(currentUserData?.id)) {
         createNotification({
@@ -1379,7 +1385,7 @@ export default function App() {
               </select>
             </Field>
             <Field label="ПРИОРИТЕТ" C={C}><select value={newTask.priority} onChange={e => setNewTask({ ...newTask, priority: e.target.value })} style={getInp(C)}><option value="high">🔴 Высокий</option><option value="medium">🟡 Средний</option><option value="low">⚪ Низкий</option></select></Field>
-            <Field label="ДЕДЛАЙН" C={C}><input type="date" value={newTask.deadline} onChange={e => setNewTask({ ...newTask, deadline: e.target.value })} style={getInp(C)} /></Field>
+            <Field label="ДЕДЛАЙН" C={C}><RuDateInput value={newTask.deadline} onChange={v => setNewTask({ ...newTask, deadline: v })} C={C} /></Field>
             {taskSuggestLoading && (
               <div style={{ fontSize: 12, color: C.accent, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', border: `2px solid ${C.accent}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
@@ -1417,7 +1423,7 @@ export default function App() {
               </select>
             </Field>
             <Field label="ПРИОРИТЕТ" C={C}><select value={newAssignment.priority} onChange={e => setNewAssignment({ ...newAssignment, priority: e.target.value })} style={getInp(C)}><option value="high">🔴 Высокий</option><option value="medium">🟡 Средний</option><option value="low">⚪ Низкий</option></select></Field>
-            <Field label="ТРЕБУЕМЫЙ ДЕДЛАЙН" C={C}><input type="date" value={newAssignment.deadline} onChange={e => setNewAssignment({ ...newAssignment, deadline: e.target.value })} style={getInp(C)} /></Field>
+            <Field label="ТРЕБУЕМЫЙ ДЕДЛАЙН" C={C}><RuDateInput value={newAssignment.deadline} onChange={v => setNewAssignment({ ...newAssignment, deadline: v })} C={C} /></Field>
             <button className="btn btn-primary" onClick={createAssignment} disabled={saving || !newAssignment.name || !newAssignment.target_dept} style={{ width: "100%", opacity: (!newAssignment.name || !newAssignment.target_dept) ? 0.5 : 1 }}>{saving ? "Отправка..." : "Отправить задание"}</button>
           </div>
         </Modal>
@@ -1746,7 +1752,7 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px" }}>
             <AvatarComp user={currentUserData} size={34} C={C} />
             <div style={{ flex: 1, overflow: "hidden" }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUserData?.full_name?.split(" ").slice(0, 2).join(" ")}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={currentUserData?.full_name}>{currentUserData?.full_name?.split(" ").slice(0, 2).join(" ")}</div>
               <div style={{ fontSize: 10, color: C.sidebarText }}>{currentUserData?.position || roleLabels[currentUserData?.role] || ""}</div>
             </div>
             <button onClick={handleLogout} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 14, padding: 4 }} title="Выйти">⏻</button>
@@ -2001,7 +2007,7 @@ export default function App() {
                           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: `1px solid ${C.border}`, cursor: 'pointer' }}>
                           <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12, color: C.text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                            <div style={{ fontSize: 12, color: C.text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.name}>{p.name}</div>
                             <div style={{ fontSize: 10, color: C.textMuted }}>{p.code}</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -2274,7 +2280,7 @@ export default function App() {
                   {/* Task List Header */}
                   <div className="task-list-header">
                     <div className="task-list-title">Список задач</div>
-                    {isGip && <button className="btn btn-primary" style={{ borderRadius: 20, padding: "10px 22px" }} onClick={() => { setShowNewTask(false); setTimeout(() => { setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setTaskSuggest(null); setShowNewTask(true); }, 0); }}>+ Новая задача</button>}
+                    {isGip && <button className="btn btn-primary" style={{ borderRadius: 20, padding: "10px 22px" }} onClick={() => { setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setTaskSuggest(null); setShowNewTask(true); }}>+ Новая задача</button>}
                   </div>
                   <div className="task-list">
                     {tasks.length === 0 && <div className="empty-state" style={{ padding: 40 }}>Задач пока нет</div>}
@@ -2675,7 +2681,7 @@ export default function App() {
                     </div>
                     {dupConflicts.map(({ file }) => (
                       <div key={file.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: `1px solid ${C.border}` }}>
-                        <div style={{ flex: 1, fontSize: 13, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</div>
+                        <div style={{ flex: 1, fontSize: 13, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={file.name}>{file.name}</div>
                         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                           <button onClick={() => setDupDecisions(d => ({ ...d, [file.name]: 'skip' }))}
                             style={{ padding: '4px 12px', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 12, cursor: 'pointer', background: dupDecisions[file.name] === 'skip' ? C.accent : C.surface2, color: dupDecisions[file.name] === 'skip' ? '#fff' : C.text }}>

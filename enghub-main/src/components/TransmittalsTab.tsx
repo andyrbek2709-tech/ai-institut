@@ -52,7 +52,7 @@ export function TransmittalsTab({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{t.number}</div>
-                <div style={{ fontSize: 12, color: C.textMuted }}>{new Date(t.created_at).toLocaleString()}</div>
+                <div style={{ fontSize: 12, color: C.textMuted }}>{new Date(t.created_at).toLocaleString('ru-RU')}</div>
               </div>
               <button onClick={() => onExportPdf(t)} title="Экспорт в PDF" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.textMuted, padding: '0 4px' }}>🖨</button>
             </div>

@@ -116,7 +116,7 @@ const TimelogPanel: React.FC<TimelogPanelProps> = ({
                   <tr key={e.id} style={{ borderBottom: `1px solid ${C.border}20` }}>
                     <td style={{ padding: '9px 10px', color: C.textMuted }}>{e.date}</td>
                     <td style={{ padding: '9px 10px', color: C.text }}>{u?.full_name || '—'}</td>
-                    <td style={{ padding: '9px 10px', color: C.text, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task?.name || '—'}</td>
+                    <td style={{ padding: '9px 10px', color: C.text, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={task?.name}>{task?.name || '—'}</td>
                     <td style={{ padding: '9px 10px', color: C.accent, fontWeight: 700 }}>{e.hours} ч</td>
                     <td style={{ padding: '9px 10px', color: C.textMuted }}>{e.note || '—'}</td>
                   </tr>

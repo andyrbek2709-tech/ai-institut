@@ -998,4 +998,3 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     </div>
   );
 }
- 

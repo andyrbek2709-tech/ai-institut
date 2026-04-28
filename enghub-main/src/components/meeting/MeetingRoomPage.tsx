@@ -12,6 +12,7 @@ const LiveKitRoom = RawLiveKitRoom as unknown as React.FC<any>;
 const RoomAudioRenderer = RawRoomAudioRenderer as unknown as React.FC<any>;
 import '@livekit/components-styles';
 import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from '../../api/supabaseClient';
 import { Mic, MicOff, Video, VideoOff, Loader2 } from 'lucide-react';
 import { MeetingUI, type MeetingChatMessage } from './MeetingUI';
 

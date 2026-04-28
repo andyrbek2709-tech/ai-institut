@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from 'react';
 import { drawingStatusMap } from '../constants';
-import { getInp } from './ui';
+import { getInp, RuDateInput } from './ui';
 
 const STATUS_ORDER = ['draft', 'in_work', 'review', 'approved', 'issued'];
 
@@ -227,7 +227,7 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRo
             <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Наименование" style={getInp(C)} />
             <input value={form.discipline} onChange={(e) => setForm({ ...form, discipline: e.target.value })} placeholder="Дисциплина" style={getInp(C)} />
             <input value={form.stage} onChange={(e) => setForm({ ...form, stage: e.target.value })} placeholder="Стадия" style={getInp(C)} />
-            <input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} style={getInp(C)} />
+            <RuDateInput value={form.due_date} onChange={(v) => setForm({ ...form, due_date: v })} C={C} />
             <button className="btn btn-primary" onClick={handleCreate} disabled={saving || !form.code || !form.title}>
               {saving ? '...' : '+ Чертеж'}
             </button>

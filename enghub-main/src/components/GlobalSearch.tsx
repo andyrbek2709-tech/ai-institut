@@ -240,7 +240,7 @@ export function GlobalSearch({ token, C, onSelect, projects = [] }: GlobalSearch
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
                     <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{line1}</div>
-                    <div style={{ fontSize: 11, color: C.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontSize: 11, color: C.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={line2}>
                       {line2}
                     </div>
                   </div>

@@ -1094,6 +1094,9 @@ module.exports = async function handler(req, res) {
     });
   } catch (err) {
     console.error('Orchestrator Error:', err);
-    return res.status(500).json({ error: 'Internal Server Error', details: err.message });
+    const errMsg = err && err.message ? String(err.message) : String(err);
+    // Скрываем внутренние детали ошибки от клиента — логируем на сервер, отдаём общее сообщение.
+    console.error('Orchestrator Error message:', errMsg);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
