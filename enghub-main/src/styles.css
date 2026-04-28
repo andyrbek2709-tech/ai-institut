@@ -1362,3 +1362,18 @@ select.input option { background: var(--surface); color: var(--text); }
   border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
 }
 
+/* #11 design diff: tab scroll gradient indicator */
+.tab-strip-wrap {
+  position: relative;
+}
+.tab-strip-fade {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  pointer-events: none;
+  background: linear-gradient(to left, var(--surface), transparent);
+  border-radius: 0 8px 8px 0;
+}
+

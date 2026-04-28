@@ -3,12 +3,19 @@ import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions, transmitta
 import { NavIcon } from './components/icons';
 import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory } from './api/supabase';
 import { getSupabaseAdminClient } from './api/supabaseClient';
-import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput } from './components/ui';
+import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput, useCountUp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
 import { useNotifications, ToastContainer } from './components/Notifications';
 import { CalculationView } from './calculations/CalculationView';
 import { calcRegistry } from './calculations/registry';
+
+// #05 design diff: animated KPI numbers via useCountUp
+const StatNumber: React.FC<{ value: number; color: string }> = ({ value, color }) => {
+  const v = useCountUp(value);
+  return <div className="stat-card-value" style={{ color }}>{v}</div>;
+};
+
 // ConferenceRoom legacy импорт удалён 2026-04-27 — заменено на MeetingRoomPage.
 // Старая реализация лежит рядом как ConferenceRoom.legacy.tsx (DEPRECATED).
 import MeetingRoomPage from './components/meeting/MeetingRoomPage';
@@ -186,6 +193,9 @@ export default function App() {
   const [telegramIdInput, setTelegramIdInput] = useState("");
   const [telegramSaving, setTelegramSaving] = useState(false);
   const [showTelegramInput, setShowTelegramInput] = useState(false);
+  // #08 design diff: анимация заполнения прогресс-баров отделов на дашборде
+  const [deptBarsAnimated, setDeptBarsAnimated] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setDeptBarsAnimated(true), 120); return () => clearTimeout(t); }, []);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [archivedProjects, setArchivedProjects] = useState<any[]>([]);
   const [branding, setBranding] = useState<{ companyName: string; logoUrl: string | null }>({ companyName: 'EngHub', logoUrl: null });
@@ -1939,7 +1949,7 @@ export default function App() {
                         onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 4px 16px ${s.color}30`)}
                         onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}>
                         <div className="stat-card-header"><span className="stat-card-dot" style={{ background: s.color }} /><span className="stat-card-label">{s.label}</span></div>
-                        <div className="stat-card-value" style={{ color: s.color }}>{s.value}</div>
+                        <StatNumber value={s.value} color={s.color} />
                       </div>
                     ))}
                   </div>
@@ -1989,8 +1999,8 @@ export default function App() {
                             <span style={{ color: C.textMuted }}>{d.total} задач · {d.done} готово</span>
                           </div>
                           <div style={{ height: 7, background: C.surface2, borderRadius: 4, overflow: 'hidden', display: 'flex' }}>
-                            <div style={{ height: '100%', width: `${(d.done / maxVal) * 100}%`, background: C.green, transition: 'width 0.4s' }} />
-                            <div style={{ height: '100%', width: `${((d.total - d.done) / maxVal) * 100}%`, background: C.accent + '60', transition: 'width 0.4s' }} />
+                            <div style={{ height: '100%', width: deptBarsAnimated ? `${(d.done / maxVal) * 100}%` : '0%', background: C.green, transition: 'width 0.9s cubic-bezier(.2,.8,.2,1)' }} />
+                            <div style={{ height: '100%', width: deptBarsAnimated ? `${((d.total - d.done) / maxVal) * 100}%` : '0%', background: C.accent + '60', transition: 'width 0.9s cubic-bezier(.2,.8,.2,1)' }} />
                           </div>
                         </div>
                       )) : <div style={{ fontSize: 13, color: C.textMuted }}>Нет данных</div>;
@@ -2005,7 +2015,7 @@ export default function App() {
                       const dl = parseDeadline(p.deadline);
                       const daysLeft = dl ? Math.ceil((dl.getTime() - now.getTime()) / 86400000) : null;
                       const isDoneOrArchived = p.status === 'done' || p.archived;
-                      const color = daysLeft === null ? C.textMuted : (daysLeft < 0 && !isDoneOrArchived) ? C.red : daysLeft < 14 ? C.orange : C.green;
+                      const color = daysLeft === null ? C.textMuted : (daysLeft < 0 && !isDoneOrArchived) ? C.red : daysLeft < 30 ? C.red : daysLeft < 90 ? C.orange : C.green;
                       const label = daysLeft === null ? '—' : daysLeft < 0 ? `Просрочен ${-daysLeft} д.` : daysLeft === 0 ? 'Сегодня!' : `${daysLeft} дн.`;
                       const progress = getAutoProgress(p.id);
                       return (
@@ -2247,12 +2257,15 @@ export default function App() {
 
               {/* Tabs */}
               <div style={{ display: conferenceScreenActive ? 'none' : 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
-                <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch', flex: 1, marginBottom: 0 } as React.CSSProperties}>
-                  {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
-                    <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
-                    </button>
-                  ))}
+                <div className="tab-strip-wrap" style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+                  <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch', flex: 1, marginBottom: 0 } as React.CSSProperties}>
+                    {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
+                      <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="tab-strip-fade" aria-hidden="true" />
                 </div>
                 {TAB_HELP[sideTab] && (
                   <button
@@ -2289,7 +2302,14 @@ export default function App() {
                     {isGip && <button className="btn btn-primary" style={{ borderRadius: 20, padding: "10px 22px" }} onClick={() => { setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setTaskSuggest(null); setShowNewTask(true); }}>+ Новая задача</button>}
                   </div>
                   <div className="task-list">
-                    {tasks.length === 0 && <div className="empty-state" style={{ padding: 40 }}>Задач пока нет</div>}
+                    {tasks.length === 0 && (
+                      <div className="empty-state-cta" style={{ textAlign: 'center', padding: '56px 20px', background: C.surface, border: `1.5px dashed ${C.border}`, borderRadius: 12 }}>
+                        <div style={{ width: 52, height: 52, borderRadius: 13, background: `${C.accent}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: 24 }}>📋</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 5 }}>Задач пока нет</div>
+                        <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 18 }}>Создайте первую задачу для этого проекта</div>
+                        {(isGip || isLead) && <button className="btn btn-primary" onClick={() => { setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setShowNewTask(true); }}>+ Создать задачу</button>}
+                      </div>
+                    )}
                     {tasks.filter(t => {
                       if (!selectedDeptId || String(selectedDeptId) === "null") return true;
                       const selectedDeptName = getDeptName(Number(selectedDeptId));
