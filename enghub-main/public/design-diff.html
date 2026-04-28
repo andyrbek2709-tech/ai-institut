@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EngHub Design Diff — что есть vs что предложено</title>
+<style>
+:root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 18px 80px}
+header{padding:6px 0 18px;border-bottom:1px solid var(--border);margin-bottom:18px}
+header h1{margin:0 0 6px;font-size:22px;letter-spacing:-0.01em}
+header .sub{color:var(--muted);font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 18px}
+@media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px}
+.kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.kpi .value{font-size:22px;font-weight:700;margin-top:4px}
+.kpi.green .value{color:var(--green)}.kpi.yellow .value{color:var(--yellow)}.kpi.gray .value{color:var(--gray)}.kpi.accent .value{color:var(--accent)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.toolbar button{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:7px 13px;border-radius:8px;cursor:pointer;font-size:12px;transition:.15s}
+.toolbar button:hover{background:var(--panel2);border-color:var(--accent)}
+.toolbar button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.card.applied{border-left:4px solid var(--green)}
+.card.partial{border-left:4px solid var(--yellow)}
+.card.proposed{border-left:4px solid var(--accent)}
+.card.skipped{border-left:4px solid var(--gray)}
+.head{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;user-select:none}
+.head:hover{background:var(--panel2)}
+.num{flex:0 0 38px;font-size:18px;font-weight:700;color:var(--muted)}
+.title{flex:1}
+.title h3{margin:0 0 3px;font-size:14px;font-weight:600}
+.title .desc{color:var(--muted);font-size:12px}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:11px;font-size:10px;border:1px solid transparent;font-weight:600}
+.badge.applied{background:rgba(34,197,94,.13);color:var(--green);border-color:rgba(34,197,94,.3)}
+.badge.partial{background:rgba(245,158,11,.13);color:var(--yellow);border-color:rgba(245,158,11,.3)}
+.badge.proposed{background:rgba(79,140,255,.13);color:var(--accent);border-color:rgba(79,140,255,.3)}
+.badge.skipped{background:rgba(100,116,139,.18);color:var(--gray);border-color:rgba(100,116,139,.3)}
+.badge.cat{background:var(--panel2);color:var(--muted)}
+.toggle{flex:0 0 24px;color:var(--muted);font-size:18px;transition:.15s;text-align:right}
+.card.open .toggle{transform:rotate(90deg)}
+.body{display:none;padding:0 16px 16px;border-top:1px solid var(--border)}
+.card.open .body{display:block}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+@media(max-width:720px){.compare{grid-template-columns:1fr}}
+.col{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px}
+.col h4{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.col.now h4{color:var(--gray)}
+.col.proposed h4{color:var(--accent)}
+.col p{margin:4px 0;font-size:13px;line-height:1.6}
+.col code{background:var(--panel2);padding:1px 6px;border-radius:4px;font-size:12px;color:#c9d1e0}
+.col ul{margin:6px 0;padding-left:18px;font-size:13px;line-height:1.7}
+.notes-row{padding-top:10px;border-top:1px dashed var(--border);margin-top:8px}
+.notes-row label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);align-items:center}
+.actions .lbl{color:var(--muted);font-size:11px}
+.act-btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:11px;transition:.15s}
+.act-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.act-btn.chosen.accept{background:var(--green);border-color:var(--green);color:#fff}
+.act-btn.chosen.reject{background:var(--gray);border-color:var(--gray);color:#fff}
+.act-btn.chosen.discuss{background:var(--yellow);border-color:var(--yellow);color:#1a1a1a}
+.note{width:100%;margin-top:6px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px;font:12px/1.5 inherit;resize:vertical;min-height:42px}
+.summary-bar{position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--border);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;margin:24px -18px -80px;gap:12px;flex-wrap:wrap}
+.summary-bar .stats{font-size:12px;color:var(--muted)}
+.summary-bar .stats span{color:var(--text);font-weight:600;margin:0 4px}
+.summary-bar .copy{background:var(--accent);color:#fff;border:none;padding:7px 13px;border-radius:6px;cursor:pointer;font-size:12px}
+#decision-out{display:none;margin-top:18px;background:var(--panel);border:2px solid var(--accent);border-radius:12px;padding:14px}
+#decision-text{width:100%;min-height:280px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;font:12px/1.5 'SF Mono',Menlo,Consolas,monospace}
+.tip{background:rgba(79,140,255,.08);border:1px solid rgba(79,140,255,.25);border-radius:8px;padding:10px 12px;margin:12px 0;font-size:12px;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+<h1>EngHub · Дизайн diff — что есть vs что предложено</h1>
+<div class="sub">Пакет редизайна от <code>claude.ai/design</code> (28.04.2026). Применено сегодня: первая волна (SVG-иконки, логотип Eh, анимации, useCountUp, дефолтный таб). Остальное — для твоего решения.</div>
+</header>
+
+<div class="kpis">
+<div class="kpi green"><div class="label">Применено</div><div class="value" id="kpi-applied">—</div></div>
+<div class="kpi yellow"><div class="label">Частично</div><div class="value" id="kpi-partial">—</div></div>
+<div class="kpi accent"><div class="label">Предложено</div><div class="value" id="kpi-proposed">—</div></div>
+<div class="kpi gray"><div class="label">Не подходит</div><div class="value" id="kpi-skipped">—</div></div>
+</div>
+
+<div class="toolbar">
+<button class="active" data-filter="all">Все</button>
+<button data-filter="applied">✅ Применено</button>
+<button data-filter="partial">🟡 Частично</button>
+<button data-filter="proposed">🔵 Предложено</button>
+<button data-filter="skipped">⚪ Не подходит</button>
+<button data-filter="open-all">↓ Раскрыть все</button>
+<button data-filter="close-all">↑ Свернуть все</button>
+</div>
+
+<div class="tip">
+💡 <b>Как пользоваться:</b> кликаешь по карточке — раскрывается сравнение «сейчас vs предложено». Если предложение нравится — нажми <b>✅ Принять</b>. Если нет — <b>✗ Отклонить</b>. Если хочется обсудить — <b>💬 Обсудить</b>. В конце нажмёшь <b>«Показать решение»</b> внизу — получишь готовый текст со всеми твоими ответами, который вставишь сюда в чат, и я начну реализовывать. Решения сохраняются в localStorage браузера автоматически.
+</div>
+
+<div class="cards" id="cards">
+<!-- Cards rendered by JS -->
+</div>
+
+<div id="decision-out">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+<strong style="font-size:13px">Твоё решение по редизайну (выдели и скопируй):</strong>
+<button id="try-copy" style="background:var(--accent);color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px">Скопировать</button>
+</div>
+<textarea id="decision-text" readonly></textarea>
+<div style="font-size:11px;color:var(--muted);margin-top:6px">Если кнопка не работает — клик в поле, Ctrl+A, Ctrl+C.</div>
+</div>
+
+<div class="summary-bar">
+<div class="stats"><span id="stat-acc">0</span>принять · <span id="stat-rej">0</span>отклонить · <span id="stat-disc">0</span>обсудить</div>
+<button class="copy" id="copy-btn">Показать решение</button>
+</div>
+
+</div>
+<script>
+// ─── DATA: 17 предложений из design_handoff_enghub_redesign ─────────────────
+const ITEMS = [
+  {
+    n: "01", status: "applied", cat: "Иконки",
+    title: "SVG-иконки вместо Unicode",
+    desc: "Lucide-style набор для sidebar и topbar",
+    now: ["В sidebar и topbar — Unicode-символы (⬡ ◈ ≡ ⎍ 📋 📄 🔔 ☀ 🌙)", "Простой текст в HTML"],
+    proposed: ["16 SVG-компонентов: Grid, Folder, CheckSquare, Calculator, File, Book, Bell, Search, Plus, ArrowLeft, TrendingUp, Sun, Moon, LogOut, Activity, Archive", "Lucide-style stroke 1.75, lineCap round", "В <code>src/components/icons.tsx</code> + lookup <code>NavIcon</code>"],
+    note: "✅ Применено сегодня в commit `78bdac3`. Sidebar теперь рендерит SVG, Unicode остался как фоллбек.",
+  },
+  {
+    n: "02", status: "applied", cat: "Брендинг",
+    title: "Логотип «Eh» вместо «⬡»",
+    desc: "Текстовый бейдж в Manrope 900",
+    now: ["В sidebar логотип = Unicode «⬡» (шестигранник)"],
+    proposed: ["Текстовый бейдж «Eh» в синем квадрате (`accent`, radius 9, 34×34)", "Шрифт Manrope, weight 900, letter-spacing -0.02em", "Цвет белый"],
+    note: "✅ Применено в commit `78bdac3`."
+  },
+  {
+    n: "03", status: "partial", cat: "Sidebar",
+    title: "Структура sidebar — section labels, hover, нижняя панель",
+    desc: "Заголовки разделов, transform на hover, кнопки Settings + Logout",
+    now: ["Section labels уже есть («Навигация», «Проекты»)", "Hover работает (background change)", "Внизу только Logout, нет Settings"],
+    proposed: ["Section labels: 10px font, weight 600, letter-spacing 0.1em — <em>уже близко к этому</em>", "Hover: <code>transform: translateX(2px)</code> — <b>добавлено сегодня</b>", "Нижняя панель: 2 кнопки — «⚙ Настройки» и Logout"],
+    note: "🟡 Hover-анимация применена. Кнопка «Settings» НЕ добавлена — экрана Settings в системе нет, не имеет смысла создавать пустую кнопку."
+  },
+  {
+    n: "04", status: "proposed", cat: "Topbar",
+    title: "SVG-иконки + пульсирующая точка на колокольчике",
+    desc: "Заменить эмодзи 🔔/☀/🌙 на SVG, добавить pulse-dot для уведомлений",
+    now: ["Topbar использует Unicode-эмодзи для bell/sun/moon", "Точки уведомлений нет"],
+    proposed: ["Bell, Sun, Moon, Search — все SVG из icons.tsx", "Пульсирующая красная точка 7×7 поверх bell когда есть уведомления", "<code>animation: pulseDot 2s ease-in-out infinite</code>"],
+    note: "🔵 Анимация <code>pulseDot</code> добавлена в CSS. Нужна интеграция в JSX topbar — ~30 минут работы."
+  },
+  {
+    n: "05", status: "proposed", cat: "Дашборд",
+    title: "Анимированные KPI-карточки с useCountUp",
+    desc: "Числа в карточках появляются с easing-анимацией от 0 до значения",
+    now: ["Числа в KPI отображаются мгновенно при рендере"],
+    proposed: ["Хук <code>useCountUp(target, duration)</code> с cubic easing", "Применить в <code>StatCard</code>: <code>const displayed = useCountUp(value)</code>", "Длительность 750мс"],
+    note: "🔵 Хук <code>useCountUp</code> добавлен в <code>ui.tsx</code>. Нужно подключить к 4 KPI-карточкам в дашборде ГИПа — ~20 минут."
+  },
+  {
+    n: "06", status: "proposed", cat: "Дашборд",
+    title: "Layout KPI-карточек: иконка в кружке + большое число",
+    desc: "Каждая карточка — крупное число + иконка справа в кружке",
+    now: ["Простая карточка: метка + значение, без иконок"],
+    proposed: ["Сверху: метка (12px) + иконка 30×30 в кружке `${color}1a`", "Число: 38px, fontWeight 800, fontFamily Manrope", "Снизу опционально: тренд <code>↗ +1 за месяц</code> цветом green"],
+    note: "🔵 Только визуальная переделка StatCard. ~30 минут. Тренд-стрелка требует отдельных данных (<em>что считать «трендом»?</em> — нужно решить.)"
+  },
+  {
+    n: "07", status: "skipped", cat: "Дашборд",
+    title: "Лента активности «Что нового» (ActivityFeed)",
+    desc: "Правая колонка с лентой событий проекта",
+    now: ["Дашборд показывает только KPI-карточки и список проектов", "Нет ленты «что изменилось с моего входа»"],
+    proposed: ["Компонент <code>ActivityFeed</code> в правой колонке (sticky, 295px)", "Источник данных: <b>новая таблица</b> <code>activity_log</code> или VIEW из существующих событий (создание задач, смена статуса, чертежи, замечания)", "Layout: [аватар 28px][действие][детали][project badge][время]", "Цвета по типу: task=blue, status=purple, drawing=orange, review=green, transmittal=gray"],
+    note: "⚪ <b>Требует новой таблицы в БД + RLS-политик + миграции.</b> Большая работа (~6-8 часов). Без этого вся экосистема активности не работает. Стоит ли тратить ресурс — на твоё решение."
+  },
+  {
+    n: "08", status: "proposed", cat: "Дашборд",
+    title: "Прогресс-бары загрузки отделов с анимацией заполнения",
+    desc: "При монтировании дашборда полоски заполняются с 0 до значения",
+    now: ["Полоски отображаются сразу с финальным значением"],
+    proposed: ["<code>setTimeout(() => setAnimate(true), 120)</code> при монтировании", "<code>width: animate ? '${percent}%' : '0%'</code>", "<code>transition: width 0.9s cubic-bezier(.2,.8,.2,1)</code>"],
+    note: "🔵 Чисто косметика. ~15 минут. Низкий приоритет."
+  },
+  {
+    n: "09", status: "proposed", cat: "Дашборд",
+    title: "Цветовая индикация дедлайнов проектов",
+    desc: "Цвет дней до дедлайна меняется по близости",
+    now: ["Дедлайн отображается одним цветом"],
+    proposed: ["daysLeft < 30 → красный (<code>C.red</code>)", "daysLeft < 90 → оранжевый (<code>C.orange</code>)", "иначе → зелёный (<code>C.green</code>)"],
+    note: "🔵 Полезно. ~10 минут. Без вопросов — простой утилитарный фикс."
+  },
+  {
+    n: "10", status: "applied", cat: "Карточка проекта",
+    title: "Совещание — первый таб",
+    desc: "Дефолтный таб при открытии карточки проекта",
+    now: ["Дефолтный таб был <code>'tasks'</code> с anti-conference фильтром"],
+    proposed: ["Таб <code>'conference'</code> первым в массиве", "Дефолт: <code>useState('conference')</code>"],
+    note: "✅ Применено в commit `78bdac3`. Теперь при открытии проекта открывается «Совещание»."
+  },
+  {
+    n: "11", status: "proposed", cat: "Карточка проекта",
+    title: "Индикатор скролла табов (градиент справа)",
+    desc: "Подсказывает что есть ещё табы за краем",
+    now: ["Табы скроллятся горизонтально без визуального индикатора", "На мобиле не понятно что есть ещё табы"],
+    proposed: ["Detector <code>scrollLeft + clientWidth < scrollWidth</code>", "Overlay 56px справа: <code>linear-gradient(to left, ${C.surface2}, transparent)</code>", "Появляется/исчезает по скроллу"],
+    note: "🔵 Полезно для мобилки. ~30 минут. Хороший quick win."
+  },
+  {
+    n: "12", status: "proposed", cat: "Карточка проекта",
+    title: "Шапка проекта — метрики (прогресс / задачи / дедлайн)",
+    desc: "В шапке карточки проекта рядом с названием",
+    now: ["В шапке только название проекта и progress bar внизу"],
+    proposed: ["3 метрики через разделители: <code>{progress}%</code> · <code>{done}/{tasks}</code> · <code>{deadline}</code>", "Каждая: число 17px bold (Manrope), подпись 10px textMuted", "Между ними вертикальная линия 1px"],
+    note: "🔵 Информативно. ~25 минут. Нужно посчитать <code>done</code> из tasks."
+  },
+  {
+    n: "13", status: "proposed", cat: "Empty States",
+    title: "Empty state для задач — иконка + CTA-кнопка",
+    desc: "Вместо «Нет задач» — иллюстрация и кнопка действия",
+    now: ["Текст «Задачи нет», без CTA"],
+    proposed: ["Карточка с dashed border", "Иконка CheckSquare 22px в кружке <code>${C.accent}15</code>, 52×52, radius 13", "Заголовок «Задач пока нет» (15px bold)", "Подсказка «Создайте первую задачу для этого проекта»", "Кнопка <code>+ Создать задачу</code>"],
+    note: "🔵 Нужно для всех empty states (задачи, чертежи, ревизии, замечания, трансмитталы). ~1 час на все."
+  },
+  {
+    n: "14", status: "proposed", cat: "Совещание",
+    title: "Новый UI вкладки «Совещание»",
+    desc: "Две колонки: список совещаний + блок текущей комнаты",
+    now: ["Простое лобби с превью камеры/микрофона"],
+    proposed: ["Левая колонка: список совещаний (история + активные)", "Активная встреча: <code>border: 1px solid green</code> + пульсирующий dot", "Правая колонка 300px: <code>«Текущая комната»</code> с иконкой видео 52px + название + участники + gradient-кнопка"],
+    note: "🔵 Большая работа (~3 часа). Сейчас лобби работает, новый UI — улучшение."
+  },
+  {
+    n: "15", status: "skipped", cat: "Дашборды по ролям",
+    title: "Отдельный LeadDashboard для руководителей отделов",
+    desc: "Самостоятельный компонент при role='lead'",
+    now: ["Логика дашборда инлайн в App.tsx, фильтруется по роли через if'ы"],
+    proposed: ["Новый файл <code>src/components/LeadDashboard.tsx</code>", "KPI: инженеров в отделе / задач в работе / на проверке у меня / просрочено", "Нагрузка по инженерам с прогресс-барами", "Очередь «На проверке у меня» с кнопками ✓ ✗", "Лента активности отдела"],
+    note: "⚪ Это рефакторинг inline-логики в отдельный компонент + новые секции (нагрузка, очередь). ~6-8 часов работы. <b>Большой риск регрессий.</b> Нужно осознанное «да»."
+  },
+  {
+    n: "16", status: "skipped", cat: "Дашборды по ролям",
+    title: "Отдельный EngineerDashboard для инженеров",
+    desc: "Самостоятельный компонент при role='engineer'",
+    now: ["Та же inline-логика что и для lead"],
+    proposed: ["Новый файл <code>src/components/EngineerDashboard.tsx</code>", "KPI: мои задачи / в работе / завершено / просрочено", "Список задач с цветным border по приоритету (red/orange/green)", "Список моих проектов", "Лента активности (только мои события)"],
+    note: "⚪ Аналогично T15 — рефакторинг + новые секции. ~4-6 часов. Решение совместно с T15."
+  },
+  {
+    n: "17", status: "proposed", cat: "Расчёты / Спецификации / Нормативка",
+    title: "Grid-layout для расчётов + AI-поиск в нормативке",
+    desc: "3 экрана: Расчёты-grid, Spec-таблица, Нормативка с AI",
+    now: ["Расчёты — простой список", "Спецификации — таблица без особого стиля", "Нормативка — каталог документов"],
+    proposed: ["<b>Расчёты:</b> grid 3 колонки. Каждая карточка: бейдж отдела (цвет по дисциплине) + название + стандарт + кнопка «Открыть». BorderTop 3px цветом отдела.", "<b>Spec:</b> таблица с шапкой surface2, строки 44px высоты, hover background change.", "<b>Нормативка:</b> блок AI-поиска с переключателем RAG (граница меняется при включении), grid 2 колонки документов с иконкой Book."],
+    note: "🔵 Большая работа (~4 часа на все 3 экрана). Можно делать поэтапно."
+  },
+  {
+    n: "18", status: "applied", cat: "Анимации",
+    title: "Анимация перехода между экранами + hover-эффекты карточек",
+    desc: "screenEnter, hover transforms, pulseDot",
+    now: ["Без анимаций перехода между screen-states", "Hover менял только background"],
+    proposed: ["<code>@keyframes screenEnter</code>: opacity + translateY(8px→0) за 0.28s", "Класс <code>.screen-enter</code> на смену", "Hover карточек: translateY(-2px) + shadow + border tint", "<code>@keyframes pulseDot</code> для индикаторов"],
+    note: "✅ Применено в commit `78bdac3`. screenEnter, pulseDot, hover transforms — все в styles.css. Нужно добавить класс <code>screen-enter</code> на контейнер контента."
+  },
+];
+
+// ─── RENDER ─────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'enghub_design_diff_decisions_v1';
+const decisions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+function statusBadge(s) {
+  if (s === 'applied') return '<span class="badge applied">✅ Применено</span>';
+  if (s === 'partial') return '<span class="badge partial">🟡 Частично</span>';
+  if (s === 'proposed') return '<span class="badge proposed">🔵 Предложено</span>';
+  return '<span class="badge skipped">⚪ Не подходит</span>';
+}
+
+function render() {
+  const root = document.getElementById('cards');
+  root.innerHTML = ITEMS.map(it => {
+    const dec = decisions[it.n] || {};
+    return `
+<div class="card ${it.status}" data-status="${it.status}" data-num="${it.n}">
+  <div class="head">
+    <div class="num">#${it.n}</div>
+    <div class="title">
+      <h3>${it.title}</h3>
+      <div class="desc">${it.desc}</div>
+      <div class="badges">
+        ${statusBadge(it.status)}
+        <span class="badge cat">${it.cat}</span>
+        ${dec.act ? `<span class="badge ${dec.act === 'accept' ? 'applied' : dec.act === 'reject' ? 'skipped' : 'partial'}">${dec.act === 'accept' ? '✅ Принять' : dec.act === 'reject' ? '✗ Отклонить' : '💬 Обсудить'}</span>` : ''}
+      </div>
+    </div>
+    <div class="toggle">›</div>
+  </div>
+  <div class="body">
+    <div class="compare">
+      <div class="col now">
+        <h4>Сейчас</h4>
+        <ul>${it.now.map(x => `<li>${x}</li>`).join('')}</ul>
+      </div>
+      <div class="col proposed">
+        <h4>Предложено</h4>
+        <ul>${it.proposed.map(x => `<li>${x}</li>`).join('')}</ul>
+      </div>
+    </div>
+    <div class="notes-row"><label>Заметка от меня:</label> ${it.note}</div>
+    <div class="actions">
+      <span class="lbl">Твоё решение:</span>
+      <button class="act-btn accept ${dec.act === 'accept' ? 'chosen' : ''}" data-act="accept">✅ Принять</button>
+      <button class="act-btn reject ${dec.act === 'reject' ? 'chosen' : ''}" data-act="reject">✗ Отклонить</button>
+      <button class="act-btn discuss ${dec.act === 'discuss' ? 'chosen' : ''}" data-act="discuss">💬 Обсудить</button>
+      <textarea class="note" data-num="${it.n}" placeholder="Заметка / уточнение">${dec.note || ''}</textarea>
+    </div>
+  </div>
+</div>`;
+  }).join('');
+  attachHandlers();
+  updateKPIs();
+  updateStats();
+}
+
+function attachHandlers() {
+  document.querySelectorAll('.card').forEach(card => {
+    card.querySelector('.head').addEventListener('click', () => {
+      card.classList.toggle('open');
+    });
+    card.querySelectorAll('.act-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const num = card.getAttribute('data-num');
+        const act = btn.getAttribute('data-act');
+        decisions[num] = decisions[num] || {};
+        if (decisions[num].act === act) {
+          delete decisions[num].act;
+        } else {
+          decisions[num].act = act;
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(decisions));
+        render();
+      });
+    });
+    const noteEl = card.querySelector('.note');
+    if (noteEl) {
+      noteEl.addEventListener('click', e => e.stopPropagation());
+      noteEl.addEventListener('input', e => {
+        const num = card.getAttribute('data-num');
+        decisions[num] = decisions[num] || {};
+        decisions[num].note = e.target.value;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(decisions));
+        updateStats();
+      });
+    }
+  });
+}
+
+function updateKPIs() {
+  const counts = { applied: 0, partial: 0, proposed: 0, skipped: 0 };
+  ITEMS.forEach(it => counts[it.status]++);
+  document.getElementById('kpi-applied').textContent = counts.applied;
+  document.getElementById('kpi-partial').textContent = counts.partial;
+  document.getElementById('kpi-proposed').textContent = counts.proposed;
+  document.getElementById('kpi-skipped').textContent = counts.skipped;
+}
+
+function updateStats() {
+  let acc = 0, rej = 0, disc = 0;
+  Object.values(decisions).forEach(d => {
+    if (d.act === 'accept') acc++;
+    else if (d.act === 'reject') rej++;
+    else if (d.act === 'discuss') disc++;
+  });
+  document.getElementById('stat-acc').textContent = acc;
+  document.getElementById('stat-rej').textContent = rej;
+  document.getElementById('stat-disc').textContent = disc;
+}
+
+// Filters
+document.querySelectorAll('.toolbar button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.getAttribute('data-filter');
+    if (f === 'open-all') { document.querySelectorAll('.card').forEach(c => c.classList.add('open')); return; }
+    if (f === 'close-all') { document.querySelectorAll('.card').forEach(c => c.classList.remove('open')); return; }
+    document.querySelectorAll('.card').forEach(c => {
+      if (f === 'all') c.style.display = '';
+      else c.style.display = c.getAttribute('data-status') === f ? '' : 'none';
+    });
+  });
+});
+
+// Show decision
+function buildSummary() {
+  const lines = ['# EngHub Design Diff — мои решения', `_${new Date().toLocaleString('ru-RU')}_`, ''];
+  const accept = [], reject = [], discuss = [], untouched = [];
+  ITEMS.forEach(it => {
+    const d = decisions[it.n] || {};
+    const entry = `#${it.n} (${it.cat}) ${it.title}` + (d.note ? ` — заметка: ${d.note}` : '');
+    if (d.act === 'accept') accept.push(entry);
+    else if (d.act === 'reject') reject.push(entry);
+    else if (d.act === 'discuss') discuss.push(entry);
+    else untouched.push(entry);
+  });
+  lines.push(`Итого: ✅ ${accept.length} принять · ✗ ${reject.length} отклонить · 💬 ${discuss.length} обсудить · ❓ ${untouched.length} без решения`);
+  lines.push('');
+  if (accept.length) { lines.push('## ✅ Принять (делать):'); accept.forEach(e => lines.push(`- ${e}`)); lines.push(''); }
+  if (reject.length) { lines.push('## ✗ Отклонить (не делать):'); reject.forEach(e => lines.push(`- ${e}`)); lines.push(''); }
+  if (discuss.length) { lines.push('## 💬 Обсудить:'); discuss.forEach(e => lines.push(`- ${e}`)); lines.push(''); }
+  if (untouched.length) { lines.push('## ❓ Без решения:'); untouched.forEach(e => lines.push(`- ${e}`)); lines.push(''); }
+  return lines.join('\n');
+}
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const text = buildSummary();
+  const out = document.getElementById('decision-out');
+  const ta = document.getElementById('decision-text');
+  ta.value = text;
+  out.style.display = 'block';
+  out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => { ta.focus(); ta.select(); }, 100);
+});
+
+document.getElementById('try-copy').addEventListener('click', () => {
+  const ta = document.getElementById('decision-text');
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  const btn = document.getElementById('try-copy');
+  if (ok) { btn.textContent = '✓ Скопировано'; setTimeout(() => btn.textContent = 'Скопировать', 2000); }
+  else if (navigator.clipboard) {
+    navigator.clipboard.writeText(ta.value).then(() => {
+      btn.textContent = '✓ Скопировано'; setTimeout(() => btn.textContent = 'Скопировать', 2000);
+    }).catch(() => alert('Браузер не дал скопировать. Выдели вручную (Ctrl+A, Ctrl+C).'));
+  } else alert('Браузер не дал скопировать. Выдели вручную (Ctrl+A, Ctrl+C).');
+});
+
+render();
+</script>
+</body>
+</html>
