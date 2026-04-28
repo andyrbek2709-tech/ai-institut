@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions, transmittalStatusMap } from './constants';
-import { NavIcon } from './components/icons';
+import { NavIcon, IconFolder, IconCheckSquare, IconActivity, IconArchive } from './components/icons';
 import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory } from './api/supabase';
 import { getSupabaseAdminClient } from './api/supabaseClient';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput, useCountUp } from './components/ui';
@@ -13,7 +13,8 @@ import { calcRegistry } from './calculations/registry';
 // #05 design diff: animated KPI numbers via useCountUp
 const StatNumber: React.FC<{ value: number; color: string }> = ({ value, color }) => {
   const v = useCountUp(value);
-  return <div className="stat-card-value" style={{ color }}>{v}</div>;
+  // Wrapped in big-number container by parent; this just renders the animated value
+  return <span style={{ color }}>{v}</span>;
 };
 
 // ConferenceRoom legacy импорт удалён 2026-04-27 — заменено на MeetingRoomPage.
@@ -1948,8 +1949,15 @@ export default function App() {
                       <div key={s.label} className="stat-card" onClick={s.onClick} style={{ cursor: 'pointer' }}
                         onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 4px 16px ${s.color}30`)}
                         onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}>
-                        <div className="stat-card-header"><span className="stat-card-dot" style={{ background: s.color }} /><span className="stat-card-label">{s.label}</span></div>
-                        <StatNumber value={s.value} color={s.color} />
+                        <div className="stat-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                          <span className="stat-card-label" style={{ fontSize: 11, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{s.label}</span>
+                          <div style={{ width: 30, height: 30, borderRadius: 8, background: s.color + '1a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color }}>
+                            {(() => { const iconMap: Record<string, any> = { 'Проектов': IconFolder, 'Активных задач': IconCheckSquare, 'На проверке ГИПа': IconActivity, 'Просроченных проектов': IconArchive, 'Задач в отделе': IconCheckSquare, 'В работе': IconActivity, 'На проверке': IconActivity, 'Завершено': IconCheckSquare, 'Мои задачи': IconCheckSquare }; const Icon = iconMap[s.label]; return Icon ? React.createElement(Icon, { s: 17 }) : null; })()}
+                          </div>
+                        </div>
+                        <div style={{ fontFamily: 'Manrope, Inter, sans-serif', fontSize: 38, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em' }}>
+                          <StatNumber value={s.value} color={s.color} />
+                        </div>
                       </div>
                     ))}
                   </div>
