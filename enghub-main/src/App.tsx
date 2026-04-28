@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions } from './constants';
+import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions, transmittalStatusMap } from './constants';
 import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory } from './api/supabase';
 import { getSupabaseAdminClient } from './api/supabaseClient';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput } from './components/ui';
@@ -1172,7 +1171,7 @@ export default function App() {
       }
     }
     await updateTransmittalStatus(transmittalId, status, token!);
-    addNotification(`Статус трансмиттала изменён: ${status}`, 'info');
+    addNotification(`Статус трансмиттала изменён: ${transmittalStatusMap[status] || status}`, 'info');
     loadTransmittals(activeProject.id);
   };
   const addTransmittalItem = async (transmittalId: string, drawingId?: string, revisionId?: string) => {
@@ -1552,7 +1551,7 @@ export default function App() {
                       <div key={m.id} style={{ alignSelf: mu?.id === currentUserData?.id ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
                         <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 2, justifyContent: mu?.id === currentUserData?.id ? 'flex-end' : 'flex-start' }}>
                           <span style={{ fontSize: 10, fontWeight: 600, color: C.textDim }}>{mu?.full_name?.split(' ')[0]}</span>
-                          <span style={{ fontSize: 9, color: C.textMuted }}>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span style={{ fontSize: 9, color: C.textMuted }}>{new Date(m.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <div style={{ background: mu?.id === currentUserData?.id ? C.accent : C.surface2, color: mu?.id === currentUserData?.id ? '#fff' : C.text, padding: '8px 12px', borderRadius: 10, fontSize: 13 }}>{m.text}</div>
                       </div>

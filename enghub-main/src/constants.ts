@@ -110,3 +110,10 @@ export const copilotRolePrompts: Record<string, string> = {
   lead: "Фокусируйся на загрузке инженеров, качестве проверок и возвратах на доработку.",
   engineer: "Фокусируйся на конкретных шагах выполнения, входных данных и критериях готовности.",
 };
+
+// Статусы трансмитталов (B10 fix: локализация в тостах)
+export const transmittalStatusMap: Record<string, string> = {
+  draft: 'Черновик',
+  issued: 'Выпущен',
+  cancelled: 'Отменён',
+};

@@ -156,7 +156,7 @@ export function AdminPanel({ token, onLogout, dark, setDark }: AdminPanelProps) 
         <div className="sidebar-nav">
           <div className="sidebar-section-label">Администрирование</div>
           {navTabs.map(t => (
-            <button key={t.id} className={`sidebar-btn ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
+            <button key={t.id} type="button" className={`sidebar-btn ${tab === t.id ? "active" : ""}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTab(t.id); }}>
               <span className="sidebar-btn-icon">{t.icon}</span><span>{t.label}</span>
             </button>
           ))}

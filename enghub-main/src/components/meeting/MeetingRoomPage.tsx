@@ -232,6 +232,7 @@ const MeetingRoomPage: React.FC<MeetingRoomPageProps> = ({ C, project, currentUs
     if (!SURL || !ANON) return;
     const supa = createClient(SURL, ANON, {
       global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false, storageKey: `enghub-realtime-${meeting?.meetingId || 'noop'}` },
     });
     const ch = supa
       .channel(`vmcm:${meeting.meetingId}`)
