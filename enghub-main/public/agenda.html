@@ -10,317 +10,201 @@
 body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
 .wrap{max-width:1320px;margin:0 auto;padding:18px 18px 80px}
 header{padding:6px 0 14px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
-header h1{margin:0 0 4px;font-size:22px;letter-spacing:-0.01em}
+header h1{margin:0 0 4px;font-size:22px}
 header .sub{color:var(--muted);font-size:12px}
-header .updated{color:var(--muted);font-size:11px;text-align:right}
+header .updated{color:var(--muted);font-size:11px;text-align:right;line-height:1.5}
+.legend{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:12px;color:var(--muted);display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:720px){.legend{grid-template-columns:1fr}}
+.legend .lcol{display:flex;gap:8px;align-items:flex-start}
+.legend b{color:var(--text)}
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px}
 @media(max-width:720px){.kpis{grid-template-columns:1fr}}
 .kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:.15s}
 .kpi:hover{border-color:var(--accent)}
-.kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase}
 .kpi .value{font-size:24px;font-weight:700}
 .kpi.in_progress .value{color:var(--accent)}
 .kpi.decided .value{color:var(--yellow)}
 .kpi.done .value{color:var(--green)}
 .controls{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;align-items:center}
 .search{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px}
-.search:focus{outline:none;border-color:var(--accent)}
 .controls button{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:.15s}
 .controls button:hover{background:var(--panel2);border-color:var(--accent)}
 .controls button.active{background:var(--accent);border-color:var(--accent);color:#fff}
 .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-@media(max-width:980px){.cols{grid-template-columns:1fr}}
+@media(max-width:1100px){.cols{grid-template-columns:1fr}}
 .col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:300px}
-.col h2{margin:0 0 12px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.col h2{margin:0 0 12px;font-size:14px;font-weight:700;display:flex;gap:8px;align-items:center}
 .col h2 .count{background:var(--panel2);color:var(--muted);padding:2px 9px;border-radius:11px;font-size:11px;font-weight:600}
 .col.in_progress{border-left:4px solid var(--accent)}
 .col.decided{border-left:4px solid var(--yellow)}
 .col.done{border-left:4px solid var(--green)}
-.item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.day-group{margin-bottom:10px}
+.day-header{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:600;padding:7px 4px 5px;cursor:pointer;display:flex;justify-content:space-between;border-bottom:1px solid var(--border);margin-bottom:8px}
+.day-header:hover{color:var(--text)}
+.day-header .arr{transition:.15s;display:inline-block}
+.day-group.collapsed .arr{transform:rotate(-90deg)}
+.day-group.collapsed .day-items{display:none}
+.day-header .cnt{background:var(--panel2);padding:1px 7px;border-radius:9px;font-size:10px}
+.item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:9px;cursor:pointer;transition:.15s}
 .item:hover{border-color:var(--accent);transform:translateY(-1px)}
-.item .id{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-right:6px}
-.item .title{font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.4}
-.item .desc{font-size:12px;color:var(--muted);line-height:1.55;display:none}
-.item.open .desc{display:block;margin-top:6px}
+.item .id{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-right:6px}
+.item .title{font-size:13px;font-weight:600;line-height:1.4}
+.item .desc{font-size:12px;color:var(--muted);line-height:1.55;display:none;margin-top:6px}
+.item.open .desc{display:block}
 .item .meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;align-items:center}
-.tag{display:inline-flex;align-items:center;padding:1px 7px;border-radius:9px;font-size:9px;font-weight:600;border:1px solid transparent}
+.tag{padding:1px 7px;border-radius:9px;font-size:9px;font-weight:600;border:1px solid transparent}
 .tag.proj{background:rgba(79,140,255,.13);color:var(--accent);border-color:rgba(79,140,255,.3)}
-.tag.kind-feature{background:rgba(139,92,246,.13);color:var(--accent2);border-color:rgba(139,92,246,.3)}
-.tag.kind-bug{background:rgba(239,68,68,.13);color:var(--red);border-color:rgba(239,68,68,.3)}
-.tag.kind-question{background:rgba(245,158,11,.13);color:var(--yellow);border-color:rgba(245,158,11,.3)}
-.tag.kind-doc{background:rgba(34,197,94,.13);color:var(--green);border-color:rgba(34,197,94,.3)}
-.tag.kind-design{background:rgba(168,85,247,.13);color:#a855f7;border-color:rgba(168,85,247,.3)}
-.tag.kind-infra{background:rgba(100,116,139,.18);color:var(--gray);border-color:rgba(100,116,139,.3)}
+.tag.kind-feature{background:rgba(139,92,246,.13);color:var(--accent2)}
+.tag.kind-bug{background:rgba(239,68,68,.13);color:var(--red)}
+.tag.kind-question{background:rgba(245,158,11,.13);color:var(--yellow)}
+.tag.kind-doc{background:rgba(34,197,94,.13);color:var(--green)}
+.tag.kind-design{background:rgba(168,85,247,.13);color:#a855f7}
+.tag.kind-infra{background:rgba(100,116,139,.18);color:var(--gray)}
 .item .date{font-size:10px;color:var(--muted);margin-left:auto}
 .item .links{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}
-.item .links a{font-size:11px;color:var(--accent);text-decoration:none;background:rgba(79,140,255,.08);padding:2px 8px;border-radius:5px;border:1px solid rgba(79,140,255,.18)}
-.item .links a:hover{background:rgba(79,140,255,.2)}
+.item .links a{font-size:11px;color:var(--accent);text-decoration:none;background:rgba(79,140,255,.08);padding:2px 8px;border-radius:5px}
 .empty{color:var(--muted);font-size:12px;text-align:center;padding:24px 12px;font-style:italic}
 .notice{background:rgba(79,140,255,.08);border:1px solid rgba(79,140,255,.25);border-radius:8px;padding:10px 12px;margin:0 0 14px;font-size:12px;line-height:1.55;color:var(--muted)}
 .notice b{color:var(--text)}
-.notice a{color:var(--accent)}
 </style>
 </head>
 <body>
 <div class="wrap">
-
 <header>
-  <div>
-    <h1>📋 EngHub Workspace · Доска повестки</h1>
-    <div class="sub">Что обсуждаем, что решили, что сделали. Источник — наши чаты + git.</div>
-  </div>
-  <div class="updated">Файл: <code>D:\ai-site\enghub-main\public\agenda.html</code><br>Vercel: <a href="https://enghub-three.vercel.app/agenda.html" style="color:var(--accent)">enghub-three.vercel.app/agenda.html</a><br>Обновлён: <span id="updated">2026-04-28</span></div>
+<div><h1>📋 EngHub Workspace · Доска повестки</h1><div class="sub">Что обсуждаем, что решили, что сделали.</div></div>
+<div class="updated">Локально: <code>D:\\ai-site\\enghub-main\\public\\agenda.html</code><br>Vercel: <a href="https://enghub-three.vercel.app/agenda.html" style="color:var(--accent)">enghub-three.vercel.app/agenda.html</a><br>Обновлён: 2026-04-28</div>
 </header>
 
-<div class="notice">
-💡 <b>Как читать:</b> 3 колонки по статусу. Клик по элементу — раскрывается описание + ссылки на коммиты/файлы. Поиск и фильтры по тегам сверху. <b>Обновляется так:</b> когда мы что-то обсуждаем в чате — я редактирую этот файл напрямую через <code>Write</code> tool. Локально (если файл открыт у тебя в браузере) — обновишь страницу, видишь сразу. На Vercel — через 1-2 минуты после моего git push.
+<div class="legend">
+<div class="lcol"><span>🔥</span><div><b>В работе</b> — активное обсуждение, нет решения</div></div>
+<div class="lcol"><span>✅</span><div><b>Решено</b> — решили делать, на проде не подтверждено</div></div>
+<div class="lcol"><span>📋</span><div><b>Сделано</b> — на проде, работает, сгруппировано по дням</div></div>
 </div>
 
 <div class="kpis">
-  <div class="kpi in_progress" data-filter="in_progress"><div><div class="label">🔥 В работе сейчас</div><div class="value" id="kpi-ip">0</div></div></div>
-  <div class="kpi decided" data-filter="decided"><div><div class="label">✅ Решено</div><div class="value" id="kpi-dec">0</div></div></div>
-  <div class="kpi done" data-filter="done"><div><div class="label">📋 Сделано</div><div class="value" id="kpi-done">0</div></div></div>
+<div class="kpi in_progress" data-filter="in_progress"><div><div class="label">🔥 В работе</div><div class="value" id="kpi-ip">0</div></div></div>
+<div class="kpi decided" data-filter="decided"><div><div class="label">✅ Решено</div><div class="value" id="kpi-dec">0</div></div></div>
+<div class="kpi done" data-filter="done"><div><div class="label">📋 Сделано</div><div class="value" id="kpi-done">0</div></div></div>
 </div>
 
 <div class="controls">
-  <input class="search" id="search" placeholder="🔍 Поиск по названию или описанию…">
-  <button class="active" data-tag="all">Все теги</button>
-  <button data-tag="EngHub">EngHub</button>
-  <button data-tag="Nurmak">Nurmak</button>
-  <button data-tag="Workspace">Workspace</button>
-  <button data-tag="Design">Design</button>
-  <button data-tag="Infra">Infra</button>
+<input class="search" id="search" placeholder="🔍 Поиск по названию или описанию…">
+<button class="active" data-tag="all">Все теги</button>
+<button data-tag="EngHub">EngHub</button>
+<button data-tag="Nurmak">Nurmak</button>
+<button data-tag="Workspace">Workspace</button>
+<button data-tag="Design">Design</button>
+<button data-tag="Infra">Infra</button>
 </div>
 
 <div class="cols">
-  <div class="col in_progress">
-    <h2>🔥 В работе сейчас <span class="count" id="cnt-ip">0</span></h2>
-    <div id="list-ip"></div>
-  </div>
-  <div class="col decided">
-    <h2>✅ Решено <span class="count" id="cnt-dec">0</span></h2>
-    <div id="list-dec"></div>
-  </div>
-  <div class="col done">
-    <h2>📋 Сделано <span class="count" id="cnt-done">0</span></h2>
-    <div id="list-done"></div>
-  </div>
+<div class="col in_progress"><h2>🔥 В работе сейчас <span class="count" id="cnt-ip">0</span></h2><div id="list-ip"></div></div>
+<div class="col decided"><h2>✅ Решено <span class="count" id="cnt-dec">0</span></h2><div id="list-dec"></div></div>
+<div class="col done"><h2>📋 Сделано <span class="count" id="cnt-done">0</span></h2><div id="list-done"></div></div>
 </div>
-
 </div>
 
 <script>
-// ─── DATA — обновляется через Write tool ───────────────────────────────────
-// Когда обсуждаем что-то новое — добавляем в правильную секцию.
-// При смене статуса — переносим item между списками.
-//
-// Структура item:
-// { id, title, desc, date, tags: [], kind: 'feature|bug|question|doc|design|infra',
-//   links: [{label, url}], related: [...other ids] }
-
 const AGENDA = {
   in_progress: [
-    {
-      id: "T33", title: "Доска повестки дня (этот файл)",
-      desc: "Обсуждаем формат: интерактивный HTML с фильтрами и поиском, источник — git + наши чаты. Решено: один файл, два окна доступа (локально + Vercel mirror). Я обновляю через Write tool, скорость локально — секунды, Vercel — 1-2 минуты.",
-      date: "2026-04-28", kind: "feature", tags: ["Workspace"],
-      links: [{label: "Текущий файл", url: "https://enghub-three.vercel.app/agenda.html"}]
-    },
-    {
-      id: "T30", title: "Раздел «Документы проекта» — загрузка ТЗ",
-      desc: "Контекст из чата: «проект начинается с техзадания, AI-помощник без ТЗ работает в воздухе». Нужна вкладка «📁 Документы» в карточке проекта, Supabase Storage, таблица project_documents с типами tz/input/drawing/other, RAG-индексация привязанная к project_id. Эстимейт ~6-8 часов. Большая фича — обсуждаем, нужно ли делать сейчас.",
-      date: "2026-04-28", kind: "feature", tags: ["EngHub"],
-      links: [{label: "TASKS.md T30", url: "https://github.com/andyrbek2709-tech/ai-institut/blob/main/enghub-main/TASKS.md"}]
-    },
-    {
-      id: "T32", title: "Решения по дизайну приняты — 13 ✅ / 5 💬",
-      desc: "Владелец прошёл доску design-diff.html и решил: 13 пунктов принять (#01-02-04-05-07-08-09-11-12-13-15-16-18), 5 обсудить (#03-06-10-14-17), 0 отклонить. Из принятых: волна A (7 quick wins) — сделана сегодня. Осталось: #04 pulseDot на bell, #07 ActivityFeed (нужен design-doc), #15+#16 Lead/Engineer dashboards (рефакторинг).",
-      date: "2026-04-28", kind: "design", tags: ["EngHub", "Design"],
-      links: [{label: "Доска design-diff", url: "https://enghub-three.vercel.app/design-diff.html"}]
-    },
-    {
-      id: "WS-01", title: "Карта здоровья инфраструктуры — что улучшить",
-      desc: "Базовая карта на /health-map.html сделана. Что бы хорошо добавить: реальные API-проверки (Vercel API, Railway API, Supabase API) с токенами; auto-refresh каждые 5 минут без клика; история uptime по дням.",
-      date: "2026-04-28", kind: "infra", tags: ["Workspace", "Infra"],
-      links: [{label: "health-map.html", url: "https://enghub-three.vercel.app/health-map.html"}]
-    },
-    {
-      id: "WS-02", title: "Master Excel-трекер — обновлять автоматически",
-      desc: "Файл собран статически. Идея: GitHub Action, который раз в день пересобирает .xlsx и пушит в репо. Или вообще генерация по запросу.",
-      date: "2026-04-28", kind: "infra", tags: ["Workspace"],
-      links: [{label: "Скрипт сборки", url: "https://github.com/andyrbek2709-tech/ai-institut/blob/main/enghub-main/docs/CHANGELOG_2026-04-28.md"}]
-    },
-    {
-      id: "EH-AI-1", title: "Реальный root cause /api/orchestrator 500",
-      desc: "В catch добавлен logging [ORCH-500]. Сейчас Copilot отвечает 200, но при определённых запросах падает. Нужно поймать новый 500 в Vercel logs и починить корень. Не блокер, но висит.",
-      date: "2026-04-28", kind: "bug", tags: ["EngHub"],
-      links: [{label: "api/orchestrator.js", url: "https://github.com/andyrbek2709-tech/ai-institut/blob/main/enghub-main/api/orchestrator.js"}]
-    }
+    {"id": "T30", "title": "Раздел «Документы проекта» — загрузка ТЗ", "desc": "Контекст: «проект начинается с техзадания, AI-помощник без ТЗ работает в воздухе». Нужна вкладка «📁 Документы», Supabase Storage, таблица project_documents с типами tz/input/drawing/other, RAG-индексация. Эстимейт ~6-8 часов. Жду решения: делать сейчас или после Lead/Engineer-дашбордов?", "date": "2026-04-28", "kind": "feature", "tags": ["EngHub"], "links": []},
+    {"id": "DD-03", "title": "Sidebar — что ещё хочется?", "desc": "Hover-анимация уже применена, section labels были, кнопку Settings решили НЕ делать. Что ещё хотел бы изменить в sidebar?", "date": "2026-04-28", "kind": "question", "tags": ["EngHub", "Design"], "links": [{"label": "design-diff #03", "url": "https://enghub-three.vercel.app/design-diff.html"}]},
+    {"id": "DD-06", "title": "KPI-карточки: тренд-стрелка «↗ +1 за месяц» — откуда брать?", "desc": "Сейчас у нас нет истории KPI в БД. Варианты: (а) без тренда (только иконка + число), (б) фейковый «+0», (в) сначала собрать историю в БД (большая работа). Какой выбираешь?", "date": "2026-04-28", "kind": "question", "tags": ["EngHub", "Design"], "links": []},
+    {"id": "DD-10", "title": "Совещание первым табом — мы это уже применили, что ещё?", "desc": "В commit 78bdac3 дефолтный таб уже установлен 'conference'. Что ещё хотел обсудить по этому пункту?", "date": "2026-04-28", "kind": "question", "tags": ["EngHub", "Design"], "links": []},
+    {"id": "DD-14", "title": "Новый UI вкладки «Совещание» — приоритет?", "desc": "Дизайнер предложил две колонки (список совещаний + блок текущей комнаты). ~3 часа работы. Делать сейчас или позже когда совещаниями активно начнут пользоваться?", "date": "2026-04-28", "kind": "question", "tags": ["EngHub", "Design"], "links": []},
+    {"id": "DD-17", "title": "Grid Расчёты + Спецификации + Нормативка — все 3 или поэтапно?", "desc": "3 экрана для перерисовки. ~4 часа на все 3. Какой первым? Или все сразу пакетом?", "date": "2026-04-28", "kind": "question", "tags": ["EngHub", "Design"], "links": []},
+    {"id": "WS-01", "title": "Карта здоровья — что улучшить?", "desc": "Базовая карта /health-map.html сделана. Идеи: реальные API-проверки Vercel/Railway/Supabase с токенами; auto-refresh каждые 5 мин; история uptime по дням. Какие приоритеты?", "date": "2026-04-28", "kind": "infra", "tags": ["Workspace", "Infra"], "links": [{"label": "health-map.html", "url": "https://enghub-three.vercel.app/health-map.html"}]},
+    {"id": "WS-02", "title": "Master Excel-трекер — обновлять автоматически?", "desc": "Файл собран статически. Идея: GitHub Action раз в день / по запросу. Делать?", "date": "2026-04-28", "kind": "infra", "tags": ["Workspace"], "links": []},
+    {"id": "EH-AI-1", "title": "Корневая причина /api/orchestrator 500", "desc": "В catch добавлен logging [ORCH-500]. Сейчас Copilot отвечает 200, но при определённых запросах падает. Нужно поймать новый 500 в Vercel logs и починить корень. Не блокер.", "date": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": []},
   ],
-
   decided: [
-    {
-      id: "DEC-01", title: "Изоляция ГИПов — каждый видит только свои проекты",
-      desc: "Решение от 28.04: «Гип не видит другого гипа. Один гип создал проект, туда добавил необходимые марки и с ними взаимодействует». Реализовано: добавлена колонка projects.gip_id, RLS-политики на 9 таблиц, фронт createProject передаёт gip_id автоматически.",
-      date: "2026-04-28", kind: "feature", tags: ["EngHub"],
-      links: [{label: "Migration b4_*", url: "https://github.com/andyrbek2709-tech/ai-institut/commit/ab0e72a"}]
-    },
-    {
-      id: "DEC-02", title: "Cowork mount не использовать для коммитов",
-      desc: "HARD RULE в memory. Прошлые сессии обрезали файлы при коммите через Cowork mount. Теперь все правки — через clone в /tmp с PAT.",
-      date: "2026-04-28", kind: "infra", tags: ["Workspace"],
-      links: []
-    },
-    {
-      id: "DEC-03", title: "Использовать только andyrbek2709@gmail.com для git коммитов",
-      desc: "HARD RULE в memory. Email andreyfuture27@gmail.com — НЕ использовать никогда (это тот, что в env, но не для коммитов).",
-      date: "2026-04-28", kind: "infra", tags: ["Workspace"],
-      links: []
-    },
-    {
-      id: "DEC-04", title: "Не отказываться от тестовых аккаунтов gip1/gip2",
-      desc: "Решено сохранить тестовые ГИПы (gip1@/gip2@/gip@enghub-test.ru), сбросить им пароли (TestGip1!/TestGip2!/TestGip!) — для повторных QA-прогонов.",
-      date: "2026-04-28", kind: "infra", tags: ["EngHub"],
-      links: []
-    },
-    {
-      id: "DEC-05", title: "Не делать пустую кнопку Settings в sidebar",
-      desc: "Дизайнер предложил кнопку «⚙ Настройки» в нижней панели sidebar. Решено: экрана Settings в системе нет, не делаем пустую кнопку. Пропускаем.",
-      date: "2026-04-28", kind: "design", tags: ["EngHub", "Design"],
-      links: [{label: "design-diff #03", url: "https://enghub-three.vercel.app/design-diff.html"}]
-    },
-    {
-      id: "DEC-06", title: "Не менять коды отделов на КМ/ОВ/АР",
-      desc: "Дизайнер использовал коды КМ, ОВ, АР, ЭС, ГП. У нас в БД: АК, АС, ВК, ГП, ПБ, СМ, ТХ, ЭС. Решено: оставляем наши коды, цвета берём из дизайна по аналогии.",
-      date: "2026-04-28", kind: "design", tags: ["EngHub", "Design"],
-      links: []
-    }
+    {"id": "T31b", "title": "Волна A редизайна — 7 quick wins (ждёт прод-подтверждения)", "desc": "Запушено в commits db5382f + 4602695. Применены: #05 useCountUp на KPI, #08 анимация прогресс-баров, #09 цвет дедлайнов 30/90, #11 градиент-индикатор скролла табов, #12 метрики в шапке проекта, #13 empty state с CTA. Ждёт что Vercel-деплой собрался без ошибок и UI работает.", "date": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": [{"label": "Прод", "url": "https://enghub-three.vercel.app"}]},
+    {"id": "DD-04", "title": "Pulse-dot на колокольчике (#04)", "desc": "CSS-анимация .pulse-dot уже добавлена. Нужно интегрировать в NotificationCenter компонент: красная точка 7×7 поверх bell когда есть unread. ~30 минут.", "date": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
+    {"id": "DD-07", "title": "ActivityFeed — лента активности (#07)", "desc": "РЕШИЛИ ДЕЛАТЬ. Перед стартом — design-doc по архитектуре: новая таблица activity_log vs VIEW, RLS, триггеры на tasks/drawings/reviews/transmittals, Realtime, компонент. Эстимейт ~6-8 часов после согласования.", "date": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
+    {"id": "DD-15", "title": "LeadDashboard как отдельный компонент (#15)", "desc": "РЕШИЛИ ДЕЛАТЬ. Рефакторинг inline-логики в src/components/LeadDashboard.tsx + новые секции (нагрузка инженеров, очередь «На проверке у меня»). ~6-8 часов. Лучше после ActivityFeed.", "date": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
+    {"id": "DD-16", "title": "EngineerDashboard как отдельный компонент (#16)", "desc": "РЕШИЛИ ДЕЛАТЬ. Аналогично #15. ~4-6 часов. После ActivityFeed.", "date": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
+    {"id": "DEC-02", "title": "Cowork mount не использовать для коммитов", "desc": "HARD RULE в memory. Прошлые сессии обрезали файлы при коммите через Cowork mount. Все правки — через clone в /tmp с PAT.", "date": "2026-04-28", "kind": "infra", "tags": ["Workspace"], "links": []},
+    {"id": "DEC-03", "title": "Только andyrbek2709@gmail.com для git коммитов", "desc": "HARD RULE в memory. Email andreyfuture27@gmail.com — НЕ использовать никогда.", "date": "2026-04-28", "kind": "infra", "tags": ["Workspace"], "links": []},
+    {"id": "DEC-05", "title": "Не делать пустую кнопку Settings в sidebar", "desc": "Решено: экрана Settings нет, не делаем пустую кнопку.", "date": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
+    {"id": "DEC-06", "title": "Не менять коды отделов на КМ/ОВ/АР", "desc": "Дизайнер использовал коды КМ, ОВ, АР, ЭС, ГП. У нас в БД: АК, АС, ВК, ГП, ПБ, СМ, ТХ, ЭС. Решено: оставляем наши.", "date": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
   ],
-
   done: [
-    {
-      id: "T31b", title: "✅ Волна A редизайна — 7 quick wins",
-      desc: "Из design-diff приняты и сделаны: #05 useCountUp на KPI с easing, #08 анимация прогресс-баров отделов на mount, #09 цвет дедлайнов 30/90, #11 градиент-индикатор скролла табов, #12 метрики в шапке проекта (прогресс/задачи/дедлайн), #13 empty state с иконкой и CTA для задач/проектов/архива. Также частично #04 (анимация pulseDot уже в CSS, нужна интеграция в bell).",
-      date: "2026-04-28", kind: "design", tags: ["EngHub", "Design"],
-      links: [{label: "Commits db5382f + следующий", url: "https://github.com/andyrbek2709-tech/ai-institut/commits/main"}]
-    },
-    {
-      id: "B1", title: "✅ Триггер task_history — задачи теперь создаются",
-      desc: "Корневая причина: 2 сломанных триггера ссылались на колонку 'field', которой нет (есть field_name). DROP двух триггеров — 30 секунд миграция.",
-      date: "2026-04-28", kind: "bug", tags: ["EngHub"],
-      links: [{label: "Migration b1", url: "https://github.com/andyrbek2709-tech/ai-institut"}, {label: "QA panel", url: "https://enghub-three.vercel.app/qa-review.html"}]
-    },
-    {
-      id: "B3", title: "✅ Видеовстречи LiveKit — починены",
-      desc: "Корневая причина: бесконечная рекурсия в RLS на video_meeting_*. Создан SECURITY DEFINER хелпер is_meeting_participant() — цикл разорван. QA подтвердил работу.",
-      date: "2026-04-28", kind: "bug", tags: ["EngHub"],
-      links: [{label: "Migration b3_*", url: "https://github.com/andyrbek2709-tech/ai-institut"}]
-    },
-    {
-      id: "B4", title: "✅ RLS изоляция ГИПов",
-      desc: "projects.gip_id NOT NULL, 4 хелпер-функции, переписаны политики на 9 таблиц, фронт createProject обновлён. QA: gip2 видит 0 проектов gip1.",
-      date: "2026-04-28", kind: "feature", tags: ["EngHub"],
-      links: [{label: "Migrations b4_*", url: "https://github.com/andyrbek2709-tech/ai-institut/commit/ab0e72a"}]
-    },
-    {
-      id: "B6", title: "✅ AI Copilot не светит системный промпт",
-      desc: "В api/orchestrator.js системный промпт rolePrompt («Ты помощник ГИПа: приоритет срокам…») склеивался в user-facing message в 4 местах. Удалили.",
-      date: "2026-04-28", kind: "bug", tags: ["EngHub"],
-      links: [{label: "Commit 6093828", url: "https://github.com/andyrbek2709-tech/ai-institut/commit/6093828"}]
-    },
-    {
-      id: "B11", title: "✅ Multiple GoTrueClient warnings — исчезли",
-      desc: "supabaseClient.ts singletons получили storageKey + persistSession=false для admin. MeetingRoomPage realtime тоже с auth-конфигом. Консоль чистая.",
-      date: "2026-04-28", kind: "bug", tags: ["EngHub"],
-      links: [{label: "Commit 6093828", url: "https://github.com/andyrbek2709-tech/ai-institut/commit/6093828"}]
-    },
-    {
-      id: "T29", title: "✅ Виджет «Активных задач» — больше не протекает",
-      desc: "handleLogout сбрасывал tasks но не allTasks. При смене gip1→gip2 виджет показывал данные прошлой сессии. Теперь сбрасываются все стейты.",
-      date: "2026-04-28", kind: "bug", tags: ["EngHub"],
-      links: [{label: "Commit 6d8b036", url: "https://github.com/andyrbek2709-tech/ai-institut/commit/6d8b036"}]
-    },
-    {
-      id: "T31a", title: "✅ Первая волна редизайна — SVG-иконки + анимации",
-      desc: "16 SVG-компонентов в icons.tsx, лого Eh, screenEnter/pulseDot/hover transforms в styles.css, useCountUp хук, дефолтный таб 'conference'. ActivityFeed/LeadDashboard/EngineerDashboard — отложены.",
-      date: "2026-04-28", kind: "design", tags: ["EngHub", "Design"],
-      links: [{label: "Commit 78bdac3", url: "https://github.com/andyrbek2709-tech/ai-institut/commit/78bdac3"}]
-    },
-    {
-      id: "ART-01", title: "✅ Дашборд статуса 7 проектов",
-      desc: "Живой агрегат STATE.md из всех 7 репо через GitHub API. Auto-refresh каждые 5 минут.",
-      date: "2026-04-27", kind: "infra", tags: ["Workspace"],
-      links: [{label: "Open", url: "https://enghub-three.vercel.app/status.html"}]
-    },
-    {
-      id: "ART-02", title: "✅ Интерактивная панель QA-обзора",
-      desc: "13 багов из QA-отчёта 27.04. По каждому: реальный статус, корневая причина, доказательства, кнопки решения. Использована для согласования действий.",
-      date: "2026-04-28", kind: "doc", tags: ["EngHub"],
-      links: [{label: "Open", url: "https://enghub-three.vercel.app/qa-review.html"}]
-    },
-    {
-      id: "ART-03", title: "✅ Полный брифинг для агента",
-      desc: "enghub_full_brief_2026-04-28.md — единый файл с актуальным состоянием EngHub после всех фиксов. Передаётся другому агенту вместо устаревших final-readme.md.",
-      date: "2026-04-28", kind: "doc", tags: ["EngHub"],
-      links: [{label: "В репо", url: "https://github.com/andyrbek2709-tech/ai-institut/blob/main/enghub-main/docs/full-brief-2026-04-28.md"}]
-    },
-    {
-      id: "ART-04", title: "✅ Master Excel-трекер 7 проектов",
-      desc: "9 листов: сводка + 7 проектов + how-to. По каждому проекту: репо, прод-URL, последний коммит, проблемы из STATE.md, env-переменные, ссылки.",
-      date: "2026-04-28", kind: "doc", tags: ["Workspace"],
-      links: [{label: "Скрипт сборки", url: "https://github.com/andyrbek2709-tech/ai-institut/blob/main/enghub-main/docs/CHANGELOG_2026-04-28.md"}]
-    },
-    {
-      id: "ART-05", title: "✅ Карта здоровья инфраструктуры",
-      desc: "Матрица 7 проектов × 5 систем. Live ping prod-URL по кнопке.",
-      date: "2026-04-28", kind: "infra", tags: ["Workspace"],
-      links: [{label: "Open", url: "https://enghub-three.vercel.app/health-map.html"}]
-    },
-    {
-      id: "ART-06", title: "✅ Доска design-diff",
-      desc: "18 предложений редизайна с сравнением «сейчас vs предложено», кнопками принять/отклонить/обсудить, экспортом решений.",
-      date: "2026-04-28", kind: "design", tags: ["EngHub", "Design"],
-      links: [{label: "Open", url: "https://enghub-three.vercel.app/design-diff.html"}]
-    },
-    {
-      id: "ART-07", title: "✅ Тестовые аккаунты с паролями",
-      desc: "gip1@enghub-test.ru/TestGip1!, gip2@enghub-test.ru/TestGip2!, gip@enghub-test.ru/TestGip!. Привязан supabase_uid в app_users (раньше был NULL).",
-      date: "2026-04-28", kind: "infra", tags: ["EngHub"],
-      links: []
-    },
-    {
-      id: "ART-08", title: "✅ STATE.md протокол памяти во всех 7 репо",
-      desc: "Каждая Claude-сессия читает STATE.md в начале и обновляет после изменений. Сквозная память между чатами через git.",
-      date: "2026-04-27", kind: "infra", tags: ["Workspace"],
-      links: []
-    }
-  ]
+    {"id": "B1", "title": "Триггер task_history — задачи теперь создаются", "desc": "Корневая причина: 2 сломанных триггера ссылались на колонку 'field', которой нет (field_name). DROP двух триггеров. QA подтвердил.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": [{"label": "QA panel", "url": "https://enghub-three.vercel.app/qa-review.html"}]},
+    {"id": "B3", "title": "Видеовстречи LiveKit — починены", "desc": "Бесконечная рекурсия в RLS на video_meeting_*. Создан SECURITY DEFINER хелпер is_meeting_participant(). QA подтвердил.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": []},
+    {"id": "B4", "title": "RLS изоляция ГИПов — каждый видит только свои", "desc": "projects.gip_id NOT NULL, 4 хелпер-функции, RLS на 9 таблиц, фронт createProject обновлён. QA: gip2 видит 0 проектов gip1.", "deployedDate": "2026-04-28", "kind": "feature", "tags": ["EngHub"], "links": []},
+    {"id": "B6", "title": "AI Copilot не светит системный промпт", "desc": "rolePrompt («Ты помощник ГИПа: приоритет срокам…») склеивался в user-facing message. Удалили префикс. QA: ответы чистые.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": []},
+    {"id": "B11", "title": "Multiple GoTrueClient warnings — исчезли", "desc": "supabaseClient.ts singletons получили storageKey + persistSession=false для admin. QA: консоль чистая.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": []},
+    {"id": "T29", "title": "Виджет «Активных задач» — больше не протекает", "desc": "handleLogout сбрасывал tasks но не allTasks. Теперь все стейты сбрасываются при logout.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": []},
+    {"id": "T31a", "title": "Редизайн — SVG-иконки + CSS-анимации", "desc": "16 SVG-компонентов в icons.tsx, лого «Eh», screenEnter/pulseDot/hover transforms, useCountUp хук. Дефолтный таб 'conference'.", "deployedDate": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
+    {"id": "ART-01", "title": "Дашборд статуса 7 проектов", "desc": "Живой агрегат STATE.md из всех 7 репо через GitHub API. Auto-refresh каждые 5 минут.", "deployedDate": "2026-04-27", "kind": "infra", "tags": ["Workspace"], "links": [{"label": "Open", "url": "https://enghub-three.vercel.app/status.html"}]},
+    {"id": "ART-02", "title": "Интерактивная панель QA-обзора", "desc": "13 багов из QA-отчёта 27.04 с реальной проверкой кода и Supabase, доказательствами, кнопками решения.", "deployedDate": "2026-04-28", "kind": "doc", "tags": ["EngHub"], "links": [{"label": "Open", "url": "https://enghub-three.vercel.app/qa-review.html"}]},
+    {"id": "ART-03", "title": "Полный брифинг для агента", "desc": "enghub_full_brief_2026-04-28.md — единый файл с актуальным состоянием EngHub после всех фиксов.", "deployedDate": "2026-04-28", "kind": "doc", "tags": ["EngHub"], "links": []},
+    {"id": "ART-04", "title": "Master Excel-трекер 7 проектов", "desc": "9 листов: сводка + 7 проектов + how-to. По каждому: репо, прод-URL, последний коммит, проблемы, env-переменные.", "deployedDate": "2026-04-28", "kind": "doc", "tags": ["Workspace"], "links": []},
+    {"id": "ART-05", "title": "Карта здоровья инфраструктуры", "desc": "Матрица 7 проектов × 5 систем. Live ping prod-URL по кнопке.", "deployedDate": "2026-04-28", "kind": "infra", "tags": ["Workspace"], "links": [{"label": "Open", "url": "https://enghub-three.vercel.app/health-map.html"}]},
+    {"id": "ART-06", "title": "Доска design-diff", "desc": "18 предложений редизайна с сравнением «сейчас vs предложено», кнопками принять/отклонить/обсудить.", "deployedDate": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": [{"label": "Open", "url": "https://enghub-three.vercel.app/design-diff.html"}]},
+    {"id": "ART-07", "title": "Тестовые аккаунты с паролями", "desc": "gip1@enghub-test.ru/TestGip1!, gip2@enghub-test.ru/TestGip2!, gip@enghub-test.ru/TestGip!. Привязан supabase_uid.", "deployedDate": "2026-04-28", "kind": "infra", "tags": ["EngHub"], "links": []},
+    {"id": "ART-08", "title": "STATE.md протокол памяти во всех 7 репо", "desc": "Каждая Claude-сессия читает STATE.md в начале и обновляет после изменений. Сквозная память между чатами через git.", "deployedDate": "2026-04-27", "kind": "infra", "tags": ["Workspace"], "links": []},
+  ],
 };
 
-// ─── RENDER ────────────────────────────────────────────────────────────────
+// ─── RENDER ─────────────────────────────────────────────────────────────────
 function kindLabel(k) {
   const m = { feature: 'feature', bug: 'bug', question: 'вопрос', doc: 'doc', design: 'design', infra: 'infra' };
   return m[k] || k;
 }
 
-function renderCard(item) {
+function renderCard(item, useDeployedDate) {
   const tags = (item.tags || []).map(t => `<span class="tag proj">${t}</span>`).join('');
   const kind = item.kind ? `<span class="tag kind-${item.kind}">${kindLabel(item.kind)}</span>` : '';
   const links = (item.links || []).map(l => `<a href="${l.url}" target="_blank" onclick="event.stopPropagation()">${l.label} →</a>`).join('');
+  const date = useDeployedDate ? item.deployedDate : item.date;
   return `<div class="item" data-tags="${(item.tags || []).join(' ')}" data-text="${(item.title + ' ' + item.desc).toLowerCase().replace(/"/g, '&quot;')}">
     <div class="title"><span class="id">#${item.id}</span>${item.title}</div>
     <div class="desc">${item.desc || ''}${links ? `<div class="links">${links}</div>` : ''}</div>
-    <div class="meta">${kind}${tags}<span class="date">${item.date}</span></div>
+    <div class="meta">${kind}${tags}<span class="date">${date}</span></div>
   </div>`;
+}
+
+function fmtDateLabel(date) {
+  const d = new Date(date + 'T00:00:00');
+  const now = new Date(); now.setHours(0,0,0,0);
+  const diffDays = Math.round((now - d) / 86400000);
+  if (diffDays === 0) return 'Сегодня';
+  if (diffDays === 1) return 'Вчера';
+  if (diffDays < 7) return `${diffDays} дн. назад`;
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function renderDoneGrouped() {
+  const sorted = [...AGENDA.done].sort((a, b) => (b.deployedDate || '').localeCompare(a.deployedDate || ''));
+  const groups = {};
+  for (const it of sorted) {
+    const k = it.deployedDate || '0000-00-00';
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(it);
+  }
+  const dateKeys = Object.keys(groups).sort().reverse();
+  let html = '';
+  dateKeys.forEach((dk, idx) => {
+    const items = groups[dk];
+    const lbl = fmtDateLabel(dk);
+    const collapsed = idx > 0 ? 'collapsed' : '';
+    html += `<div class="day-group ${collapsed}" data-date="${dk}">
+      <div class="day-header"><span><span class="arr">▼</span> ${lbl} · ${dk}</span><span class="cnt">${items.length}</span></div>
+      <div class="day-items">${items.map(it => renderCard(it, true)).join('')}</div>
+    </div>`;
+  });
+  return html;
 }
 
 function render() {
   const ipEl = document.getElementById('list-ip');
   const decEl = document.getElementById('list-dec');
   const doneEl = document.getElementById('list-done');
-  ipEl.innerHTML = AGENDA.in_progress.map(renderCard).join('') || '<div class="empty">пусто — все вопросы решены 🎉</div>';
-  decEl.innerHTML = AGENDA.decided.map(renderCard).join('') || '<div class="empty">пусто</div>';
-  doneEl.innerHTML = AGENDA.done.map(renderCard).join('') || '<div class="empty">пусто</div>';
+  ipEl.innerHTML = AGENDA.in_progress.map(it => renderCard(it, false)).join('') || '<div class="empty">пусто 🎉</div>';
+  decEl.innerHTML = AGENDA.decided.map(it => renderCard(it, false)).join('') || '<div class="empty">пусто</div>';
+  doneEl.innerHTML = renderDoneGrouped() || '<div class="empty">пусто</div>';
 
   document.getElementById('kpi-ip').textContent = AGENDA.in_progress.length;
   document.getElementById('kpi-dec').textContent = AGENDA.decided.length;
@@ -329,20 +213,23 @@ function render() {
   document.getElementById('cnt-dec').textContent = AGENDA.decided.length;
   document.getElementById('cnt-done').textContent = AGENDA.done.length;
 
-  document.querySelectorAll('.item').forEach(it => {
-    it.addEventListener('click', () => it.classList.toggle('open'));
-  });
+  document.querySelectorAll('.item').forEach(it => it.addEventListener('click', () => it.classList.toggle('open')));
+  document.querySelectorAll('.day-header').forEach(h => h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed')));
 }
 
 function applyFilters() {
   const search = document.getElementById('search').value.toLowerCase().trim();
-  const activeTag = document.querySelector('.controls button.active').getAttribute('data-tag');
+  const activeTag = document.querySelector('.controls button[data-tag].active').getAttribute('data-tag');
   document.querySelectorAll('.item').forEach(it => {
     const text = it.getAttribute('data-text') || '';
     const tags = (it.getAttribute('data-tags') || '').split(' ');
     const matchSearch = !search || text.includes(search);
     const matchTag = activeTag === 'all' || tags.includes(activeTag);
     it.style.display = (matchSearch && matchTag) ? '' : 'none';
+  });
+  document.querySelectorAll('.day-group').forEach(g => {
+    const visible = g.querySelectorAll('.item:not([style*="display: none"])').length;
+    g.style.display = visible > 0 ? '' : 'none';
   });
 }
 
