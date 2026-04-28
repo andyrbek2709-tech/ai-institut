@@ -159,12 +159,24 @@ function buildSystemPrompt(agentSpecificPrompt = '') {
 }
 
 async function createEmbedding(input) {
-  const embRes = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'text-embedding-3-small', input }),
-  });
-  if (!embRes.ok) throw new Error('OpenAI embeddings failed');
+  const url = 'https://api.openai.com/v1/embeddings';
+  let embRes;
+  try {
+    embRes = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'text-embedding-3-small', input }),
+    });
+  } catch (netErr) {
+    netErr.upstream = { url, status: 0, body: 'network/' + (netErr.code || netErr.name || 'error') };
+    throw netErr;
+  }
+  if (!embRes.ok) {
+    const body = await embRes.text().catch(() => '');
+    const e = new Error('OpenAI embeddings failed: ' + embRes.status);
+    e.upstream = { url, status: embRes.status, body: body.slice(0, 400) };
+    throw e;
+  }
   const embData = await embRes.json();
   return embData.data[0].embedding;
 }
@@ -206,17 +218,29 @@ function blockedResponse({ agent = 'router', message, reason_code = 'blocked', n
 // ── AI Agent Handlers ────────────────────────────────────────────────────────
 
 async function callClaude(agentSpecificPrompt, userContent, maxTokens = 600) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: maxTokens,
-      system: buildSystemPrompt(agentSpecificPrompt),
-      messages: [{ role: 'user', content: userContent }],
-    }),
-  });
-  if (!res.ok) throw new Error('Claude API failed: ' + res.status);
+  const url = 'https://api.anthropic.com/v1/messages';
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: maxTokens,
+        system: buildSystemPrompt(agentSpecificPrompt),
+        messages: [{ role: 'user', content: userContent }],
+      }),
+    });
+  } catch (netErr) {
+    netErr.upstream = { url, status: 0, body: 'network/' + (netErr.code || netErr.name || 'error') };
+    throw netErr;
+  }
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    const e = new Error('Claude API failed: ' + res.status);
+    e.upstream = { url, status: res.status, body: body.slice(0, 400) };
+    throw e;
+  }
   const data = await res.json();
   return data.content?.[0]?.text || '';
 }
@@ -1101,19 +1125,40 @@ module.exports = async function handler(req, res) {
       message: responseMessage,
     });
   } catch (err) {
-    // B5: расширенная диагностика 500. Клиент получает только обобщённое сообщение,
-    // в логах Vercel видим точную причину.
+    // EH-AI-1: structured 500 diagnostics. Client gets a generic message
+    // + requestId; Vercel logs (`[ORCH-500]`) carry full forensic detail.
+    let bodyPreview = '';
+    let bodyKeys = [];
+    try {
+      bodyKeys = Object.keys(req.body || {});
+      bodyPreview = JSON.stringify(req.body || {}).slice(0, 500);
+    } catch (_) { /* unparseable body — ignore */ }
+    const requestId = (req.headers && req.headers['x-vercel-id'])
+      || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2, 10));
     const errName = (err && err.name) || 'UnknownError';
-    const errMsg = (err && err.message) ? String(err.message) : String(err);
-    const errCode = (err && err.code) ? String(err.code) : '';
-    const stackLines = (err && err.stack) ? String(err.stack).split('\n').slice(0, 4).join(' | ') : '';
-    const envDiag = {
-      OPENAI_API_KEY: OPENAI_API_KEY ? 'present' : 'MISSING',
-      ANTHROPIC_API_KEY: ANTHROPIC_API_KEY ? 'present' : 'MISSING',
-      SURL: SURL ? 'present' : 'MISSING',
-      SERVICE_KEY: SERVICE_KEY ? 'present' : 'MISSING',
+    const stackLines = (err && err.stack) ? String(err.stack).split('\n').slice(0, 5).join(' | ') : '';
+    const payload = {
+      timestamp: new Date().toISOString(),
+      requestId,
+      method: req.method,
+      bodyKeys,
+      bodyPreview,
+      user: (req.body && (req.body.userId || req.body.userEmail || req.body.user_id)) || 'unknown',
+      error: {
+        name: errName,
+        message: (err && err.message) ? String(err.message) : String(err),
+        code: (err && err.code) ? String(err.code) : '',
+        stack: stackLines,
+      },
+      upstream: (err && err.upstream) || null,
+      envDiag: {
+        OPENAI_API_KEY: OPENAI_API_KEY ? 'present' : 'MISSING',
+        ANTHROPIC_API_KEY: ANTHROPIC_API_KEY ? 'present' : 'MISSING',
+        SURL: SURL ? 'present' : 'MISSING',
+        SERVICE_KEY: SERVICE_KEY ? 'present' : 'MISSING',
+      },
     };
-    console.error('[ORCH-500]', JSON.stringify({ errName, errMsg, errCode, stackLines, envDiag }));
-    return res.status(500).json({ error: 'Internal Server Error', code: errName });
+    console.error('[ORCH-500]', JSON.stringify(payload));
+    return res.status(500).json({ error: 'Internal Server Error', code: errName, requestId });
   }
 };
