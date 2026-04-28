@@ -5,7 +5,7 @@
 2. Filter by trigger phrases (>=2 hits in title+text, RU+EN combined)
 3. Call OpenAI gpt-4o-mini in batches of ~25 items, JSON mode
 4. Cluster items by fuzzy-matched cluster_seed_ru
-5. Write enghub-main/public/data/automation-feed.json
+5. Write enghub-main/public/data/parsing.json
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 RAW_PATH = ROOT / "data" / "raw_items.json"
 OUT_DIR = ROOT / "enghub-main" / "public" / "data"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
-OUT_PATH = OUT_DIR / "automation-feed.json"
+OUT_PATH = OUT_DIR / "parsing.json"
 
 OPENAI_KEY = os.environ.get("OPENAI_API_KEY", "")
 MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")

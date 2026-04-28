@@ -45,7 +45,7 @@ jobs:
         run: |
           git config user.email "andyrbek2709@gmail.com"
           git config user.name  "Andrey"
-          git add data/seen.json data/raw_items.json enghub-main/public/data/automation-feed.json 2>/dev/null || true
+          git add data/seen.json data/raw_items.json enghub-main/public/data/parsing.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes."
           else
