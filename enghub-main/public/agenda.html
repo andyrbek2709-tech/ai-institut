@@ -133,8 +133,8 @@ const AGENDA = {
       links: [{label: "TASKS.md T30", url: "https://github.com/andyrbek2709-tech/ai-institut/blob/main/enghub-main/TASKS.md"}]
     },
     {
-      id: "T32", title: "Решения по второй волне редизайна",
-      desc: "На странице design-diff.html — 18 предложений дизайнера, 3 уже применены, 1 частично, 10 ждут твоего решения, 3 — большая работа (ActivityFeed, LeadDashboard, EngineerDashboard). Жду твоих ✅/✗ через кнопки.",
+      id: "T32", title: "Решения по дизайну приняты — 13 ✅ / 5 💬",
+      desc: "Владелец прошёл доску design-diff.html и решил: 13 пунктов принять (#01-02-04-05-07-08-09-11-12-13-15-16-18), 5 обсудить (#03-06-10-14-17), 0 отклонить. Из принятых: волна A (7 quick wins) — сделана сегодня. Осталось: #04 pulseDot на bell, #07 ActivityFeed (нужен design-doc), #15+#16 Lead/Engineer dashboards (рефакторинг).",
       date: "2026-04-28", kind: "design", tags: ["EngHub", "Design"],
       links: [{label: "Доска design-diff", url: "https://enghub-three.vercel.app/design-diff.html"}]
     },
@@ -198,6 +198,12 @@ const AGENDA = {
   ],
 
   done: [
+    {
+      id: "T31b", title: "✅ Волна A редизайна — 7 quick wins",
+      desc: "Из design-diff приняты и сделаны: #05 useCountUp на KPI с easing, #08 анимация прогресс-баров отделов на mount, #09 цвет дедлайнов 30/90, #11 градиент-индикатор скролла табов, #12 метрики в шапке проекта (прогресс/задачи/дедлайн), #13 empty state с иконкой и CTA для задач/проектов/архива. Также частично #04 (анимация pulseDot уже в CSS, нужна интеграция в bell).",
+      date: "2026-04-28", kind: "design", tags: ["EngHub", "Design"],
+      links: [{label: "Commits db5382f + следующий", url: "https://github.com/andyrbek2709-tech/ai-institut/commits/main"}]
+    },
     {
       id: "B1", title: "✅ Триггер task_history — задачи теперь создаются",
       desc: "Корневая причина: 2 сломанных триггера ссылались на колонку 'field', которой нет (есть field_name). DROP двух триггеров — 30 секунд миграция.",

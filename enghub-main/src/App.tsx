@@ -1644,7 +1644,7 @@ export default function App() {
       {showArchive && (
         <Modal title="📦 Архив проектов" onClose={() => setShowArchive(false)} C={C}>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {archivedProjects.length === 0 ? <div className="empty-state" style={{ padding: 30 }}>Архив пуст</div> : archivedProjects.map(p => (
+            {archivedProjects.length === 0 ? <div className="empty-state-cta" style={{ textAlign: 'center', padding: '40px 20px', background: C.surface, border: `1.5px dashed ${C.border}`, borderRadius: 12 }}><div style={{ fontSize: 32, marginBottom: 8 }}>📦</div><div style={{ fontSize: 14, color: C.text }}>Архив пуст</div></div> : archivedProjects.map(p => (
               <div key={p.id} style={{ background: C.surface2, borderRadius: 10, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div><div style={{ fontWeight: 600, color: C.text }}>{p.name}</div><div style={{ fontSize: 11, color: C.textMuted }}>{p.code} · до {p.deadline}</div></div>
                 <span style={{ fontSize: 11, color: C.textMuted }}>В архиве</span>
@@ -2250,7 +2250,33 @@ export default function App() {
               {/* Project Name + Progress (not shown in meeting mode to maximize chat area) */}
               {sideTab !== "conference" && (
                 <>
-                  <div className="page-title" style={{ marginBottom: 16, fontSize: 28 }}>{activeProject.name}</div>
+                  <div className="page-title" style={{ marginBottom: 12, fontSize: 28 }}>{activeProject.name}</div>
+                  {/* #12 design diff: 3 метрики в шапке проекта */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 18, flexWrap: 'wrap' }}>
+                    {(() => {
+                      const projTasks = allTasks.filter(t => t.project_id === activeProject.id);
+                      const doneCount = projTasks.filter(t => t.status === 'done').length;
+                      const dl = parseDeadline(activeProject.deadline);
+                      const now = new Date();
+                      const daysLeft = dl ? Math.ceil((dl.getTime() - now.getTime()) / 86400000) : null;
+                      const dlColor = daysLeft === null ? C.textMuted : (daysLeft < 0 ? C.red : daysLeft < 30 ? C.red : daysLeft < 90 ? C.orange : C.green);
+                      const dlLabel = daysLeft === null ? '—' : daysLeft < 0 ? `Просрочен ${-daysLeft} д.` : `${daysLeft} дн.`;
+                      const metrics = [
+                        { value: `${activeProjectProgress}%`, label: 'прогресс', color: C.accent },
+                        { value: `${doneCount}/${projTasks.length}`, label: 'задач', color: C.text },
+                        { value: dlLabel, label: 'до дедлайна', color: dlColor },
+                      ];
+                      return metrics.map((m, i) => (
+                        <React.Fragment key={m.label}>
+                          {i > 0 && <div style={{ width: 1, height: 28, background: C.border, margin: '0 18px' }} />}
+                          <div style={{ textAlign: 'center', minWidth: 70 }}>
+                            <div style={{ fontSize: 17, fontWeight: 800, color: m.color, fontFamily: 'Manrope, Inter, sans-serif', lineHeight: 1.2 }}>{m.value}</div>
+                            <div style={{ fontSize: 10, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 2 }}>{m.label}</div>
+                          </div>
+                        </React.Fragment>
+                      ));
+                    })()}
+                  </div>
                   <div className="progress-track" style={{ height: 6, marginBottom: 24 }}><div className="progress-bar" style={{ width: `${activeProjectProgress}%`, height: "100%" }} /></div>
                 </>
               )}
@@ -2530,7 +2556,14 @@ export default function App() {
                     </div>
                   );
                 })}
-                {projects.length === 0 && <div className="empty-state" style={{ padding: 40 }}>Доступных проектов нет</div>}
+                {projects.length === 0 && (
+                  <div className="empty-state-cta" style={{ textAlign: 'center', padding: '56px 20px', background: C.surface, border: `1.5px dashed ${C.border}`, borderRadius: 12 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 13, background: `${C.accent}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: 24 }}>📁</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 5 }}>Проектов пока нет</div>
+                    <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 18 }}>{isGip ? 'Создайте первый проект чтобы начать работу' : 'У вас пока нет доступа ни к одному проекту — попросите ГИПа добавить вас'}</div>
+                    {isGip && <button className="btn btn-primary" onClick={() => { setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] }); setShowNewProject(true); }}>+ Создать проект</button>}
+                  </div>
+                )}
               </div>
             </div>
           )}
