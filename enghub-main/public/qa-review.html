@@ -3,799 +3,607 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>EngHub · QA-обзор от 27.04.2026 — статус исправлений</title>
+<title>EngHub QA review 27.04.2026</title>
 <style>
-:root {
-  --bg: #0b1020;
-  --panel: #121933;
-  --panel-2: #182040;
-  --border: #232a4a;
-  --text: #e9ecf3;
-  --muted: #8d96b3;
-  --accent: #4f8cff;
-  --accent-2: #8b5cf6;
-  --green: #22c55e;
-  --yellow: #f59e0b;
-  --red: #ef4444;
-  --gray: #64748b;
-  --crit-bg: rgba(239,68,68,.08);
-  --warn-bg: rgba(245,158,11,.08);
-  --ok-bg: rgba(34,197,94,.08);
-}
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  min-height: 100vh;
-}
-.wrap { max-width: 1180px; margin: 0 auto; padding: 24px 18px 80px; }
-header { padding: 8px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
-header h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.01em; }
-header .sub { color: var(--muted); font-size: 13px; }
-.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0 28px; }
-@media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
-.kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
-.kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
-.kpi .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
-.kpi.crit .value { color: var(--red); }
-.kpi.partial .value { color: var(--yellow); }
-.kpi.ok .value { color: var(--green); }
-.kpi.unk .value { color: var(--gray); }
-
-.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
-.toolbar button {
-  background: var(--panel); color: var(--text); border: 1px solid var(--border);
-  padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
-  transition: all .15s;
-}
-.toolbar button:hover { background: var(--panel-2); border-color: var(--accent); }
-.toolbar button.active { background: var(--accent); border-color: var(--accent); color: white; }
-
-.cards { display: flex; flex-direction: column; gap: 14px; }
-.card {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-  overflow: hidden; transition: border-color .15s;
-}
-.card.crit { border-left: 4px solid var(--red); }
-.card.warn { border-left: 4px solid var(--yellow); }
-.card.cosm { border-left: 4px solid var(--gray); }
-.card .head {
-  display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px;
-  cursor: pointer; user-select: none;
-}
-.card .head:hover { background: var(--panel-2); }
-.bug-id {
-  flex: 0 0 60px; font-weight: 700; font-size: 16px;
-  display: flex; flex-direction: column; gap: 2px;
-}
-.bug-id .secondary { font-size: 11px; color: var(--muted); font-weight: 400; }
-.bug-title { flex: 1; }
-.bug-title h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
-.bug-title .desc { color: var(--muted); font-size: 13px; }
-.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 9px; border-radius: 12px; font-size: 11px;
-  border: 1px solid transparent; font-weight: 500;
-}
-.badge.fixed { background: rgba(34,197,94,.12); color: var(--green); border-color: rgba(34,197,94,.3); }
-.badge.partial { background: rgba(245,158,11,.12); color: var(--yellow); border-color: rgba(245,158,11,.3); }
-.badge.broken { background: rgba(239,68,68,.12); color: var(--red); border-color: rgba(239,68,68,.3); }
-.badge.deploy { background: rgba(79,140,255,.12); color: var(--accent); border-color: rgba(79,140,255,.3); }
-.badge.cat { background: var(--panel-2); color: var(--muted); }
-.toggle {
-  flex: 0 0 24px; color: var(--muted); font-size: 18px;
-  display: flex; align-items: center; justify-content: center;
-  transition: transform .15s;
-}
-.card.open .toggle { transform: rotate(90deg); }
-.body { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border); }
-.card.open .body { display: block; }
-.body h4 { margin: 14px 0 6px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-.body p { margin: 6px 0; line-height: 1.6; }
-.evidence {
-  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 12px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 12px;
-  white-space: pre-wrap; overflow-x: auto; color: #c9d1e0; margin: 6px 0;
-}
-.evidence .tag { color: var(--accent); font-weight: 600; }
-.evidence .ok { color: var(--green); }
-.evidence .err { color: var(--red); }
-.evidence .warn { color: var(--yellow); }
-.actions {
-  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 12px;
-  border-top: 1px dashed var(--border);
-}
-.actions .label { color: var(--muted); font-size: 12px; align-self: center; }
-.act-btn {
-  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
-  padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
-}
-.act-btn:hover { background: var(--accent); border-color: var(--accent); }
-.act-btn.chosen { background: var(--green); border-color: var(--green); color: white; }
-.act-btn.skip.chosen { background: var(--gray); border-color: var(--gray); }
-.act-btn.defer.chosen { background: var(--yellow); border-color: var(--yellow); color: #1a1a1a; }
-.note {
-  width: 100%; margin-top: 8px; background: var(--bg); color: var(--text);
-  border: 1px solid var(--border); border-radius: 6px; padding: 8px;
-  font: 12px/1.5 inherit; resize: vertical; min-height: 50px;
-}
-
-.section {
-  margin: 36px 0 18px; padding-top: 24px; border-top: 1px solid var(--border);
-}
-.section h2 { margin: 0 0 6px; font-size: 18px; }
-.section .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
-
-.method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 720px) { .method-grid { grid-template-columns: 1fr; } }
-.method-card {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px;
-}
-.method-card.code { border-left: 3px solid var(--accent); }
-.method-card.logic { border-left: 3px solid var(--accent-2); }
-.method-card.proc { border-left: 3px solid var(--yellow); }
-.method-card h4 { margin: 0 0 6px; font-size: 14px; }
-.method-card .stat { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
-.method-card ul { margin: 0; padding-left: 18px; line-height: 1.6; font-size: 13px; }
-
-.plan {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-  padding: 18px;
-}
-.plan-wave { padding: 10px 0; border-bottom: 1px solid var(--border); }
-.plan-wave:last-child { border-bottom: none; }
-.plan-wave h3 { margin: 0 0 6px; font-size: 14px; }
-.plan-wave .meta { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
-.plan-wave ol { margin: 0; padding-left: 22px; font-size: 13px; line-height: 1.7; }
-.cta {
-  display: block; width: 100%; padding: 14px; margin-top: 24px; border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: white; font-weight: 600; text-align: center; font-size: 15px;
-  border: none; cursor: pointer;
-}
-.summary-bar {
-  position: sticky; bottom: 0; background: var(--panel);
-  border-top: 1px solid var(--border); padding: 12px 16px;
-  display: flex; justify-content: space-between; align-items: center;
-  margin: 28px -18px -80px; gap: 12px;
-}
-.summary-bar .stats { font-size: 13px; color: var(--muted); }
-.summary-bar .stats span { color: var(--text); font-weight: 600; margin: 0 4px; }
-.summary-bar .copy {
-  background: var(--accent); color: white; border: none; padding: 8px 14px;
-  border-radius: 6px; cursor: pointer; font-size: 13px;
-}
+:root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 18px 80px}
+header{padding:8px 0 24px;border-bottom:1px solid var(--border);margin-bottom:24px}
+header h1{margin:0 0 6px;font-size:22px}
+header .sub{color:var(--muted);font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0 28px}
+@media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}
+.kpi .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.kpi .value{font-size:24px;font-weight:700;margin-top:4px}
+.kpi.crit .value{color:var(--red)}
+.kpi.partial .value{color:var(--yellow)}
+.kpi.ok .value{color:var(--green)}
+.kpi.unk .value{color:var(--gray)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.toolbar button{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px}
+.toolbar button:hover{background:var(--panel2);border-color:var(--accent)}
+.toolbar button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.cards{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.card.crit{border-left:4px solid var(--red)}
+.card.warn{border-left:4px solid var(--yellow)}
+.card.cosm{border-left:4px solid var(--gray)}
+.card .head{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;cursor:pointer;user-select:none}
+.card .head:hover{background:var(--panel2)}
+.bug-id{flex:0 0 60px;font-weight:700;font-size:16px;display:flex;flex-direction:column;gap:2px}
+.bug-id .secondary{font-size:11px;color:var(--muted);font-weight:400}
+.bug-title{flex:1}
+.bug-title h3{margin:0 0 4px;font-size:15px;font-weight:600}
+.bug-title .desc{color:var(--muted);font-size:13px}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11px;border:1px solid transparent;font-weight:500}
+.badge.fixed{background:rgba(34,197,94,.12);color:var(--green);border-color:rgba(34,197,94,.3)}
+.badge.partial{background:rgba(245,158,11,.12);color:var(--yellow);border-color:rgba(245,158,11,.3)}
+.badge.broken{background:rgba(239,68,68,.12);color:var(--red);border-color:rgba(239,68,68,.3)}
+.badge.deploy{background:rgba(79,140,255,.12);color:var(--accent);border-color:rgba(79,140,255,.3)}
+.badge.cat{background:var(--panel2);color:var(--muted)}
+.toggle{flex:0 0 24px;color:var(--muted);font-size:18px;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.card.open .toggle{transform:rotate(90deg)}
+.body{display:none;padding:0 16px 16px;border-top:1px solid var(--border)}
+.card.open .body{display:block}
+.body h4{margin:14px 0 6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.body p{margin:6px 0;line-height:1.6}
+.evidence{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px;white-space:pre-wrap;overflow-x:auto;color:#c9d1e0;margin:6px 0}
+.evidence .tag{color:var(--accent);font-weight:600}
+.evidence .ok{color:var(--green)}
+.evidence .err{color:var(--red)}
+.evidence .warn{color:var(--yellow)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)}
+.actions .label{color:var(--muted);font-size:12px;align-self:center}
+.act-btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px}
+.act-btn:hover{background:var(--accent);border-color:var(--accent)}
+.act-btn.chosen{background:var(--green);border-color:var(--green);color:#fff}
+.act-btn.skip.chosen{background:var(--gray);border-color:var(--gray)}
+.act-btn.defer.chosen{background:var(--yellow);border-color:var(--yellow);color:#1a1a1a}
+.note{width:100%;margin-top:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font:12px/1.5 inherit;resize:vertical;min-height:50px}
+.section{margin:36px 0 18px;padding-top:24px;border-top:1px solid var(--border)}
+.section h2{margin:0 0 6px;font-size:18px}
+.section .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:720px){.method-grid{grid-template-columns:1fr}}
+.method-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
+.method-card.code{border-left:3px solid var(--accent)}
+.method-card.logic{border-left:3px solid var(--accent2)}
+.method-card.proc{border-left:3px solid var(--yellow)}
+.method-card h4{margin:0 0 6px;font-size:14px}
+.method-card .stat{color:var(--muted);font-size:12px;margin-bottom:8px}
+.method-card ul{margin:0;padding-left:18px;line-height:1.6;font-size:13px}
+.plan{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px}
+.plan-wave{padding:10px 0;border-bottom:1px solid var(--border)}
+.plan-wave:last-child{border-bottom:none}
+.plan-wave h3{margin:0 0 6px;font-size:14px}
+.plan-wave .meta{color:var(--muted);font-size:12px;margin-bottom:8px}
+.plan-wave ol{margin:0;padding-left:22px;font-size:13px;line-height:1.7}
+.cta{display:block;width:100%;padding:14px;margin-top:24px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:600;text-align:center;font-size:15px;border:none;cursor:pointer}
+.summary-bar{position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin:28px -18px -80px;gap:12px}
+.summary-bar .stats{font-size:13px;color:var(--muted)}
+.summary-bar .stats span{color:var(--text);font-weight:600;margin:0 4px}
+.summary-bar .copy{background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px}
+#decision-out{display:none;margin-top:18px;background:var(--panel);border:2px solid var(--accent);border-radius:12px;padding:16px}
+#decision-text{width:100%;min-height:300px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:12px;font:12px/1.5 "SF Mono",Menlo,Consolas,monospace}
 </style>
 </head>
 <body>
 <div class="wrap">
-
 <header>
-  <h1>EngHub · QA-обзор от 27.04.2026 — статус исправлений</h1>
-  <div class="sub">
-    Источник: отчёт тестировщика (Claude QA) от 27.04.2026 по <code>enghub-three.vercel.app</code>.
-    Анализ собран сейчас на основе реальной проверки кода (репо <code>andyrbek2709-tech/ai-institut</code> на коммите <code>e27266d</code>) и Supabase (project <code>jbdljdwlfimvmqybzynv</code>). Никаких догадок — только факты.
-  </div>
+  <h1>EngHub - QA review 27.04.2026 - status</h1>
+  <div class="sub">Real check vs code (commit on github) and Supabase MCP. No guesses.</div>
 </header>
 
 <div class="kpis">
-  <div class="kpi crit">
-    <div class="label">Не пофикшено</div>
-    <div class="value" id="kpi-broken">—</div>
-  </div>
-  <div class="kpi partial">
-    <div class="label">Частично / нужен деплой</div>
-    <div class="value" id="kpi-partial">—</div>
-  </div>
-  <div class="kpi ok">
-    <div class="label">Сделано</div>
-    <div class="value" id="kpi-fixed">—</div>
-  </div>
-  <div class="kpi unk">
-    <div class="label">Нужна перепроверка</div>
-    <div class="value" id="kpi-unknown">—</div>
-  </div>
+  <div class="kpi crit"><div class="label">Не сделано</div><div class="value" id="kpi-broken">-</div></div>
+  <div class="kpi partial"><div class="label">Частично / нужен деплой</div><div class="value" id="kpi-partial">-</div></div>
+  <div class="kpi ok"><div class="label">Сделано</div><div class="value" id="kpi-fixed">-</div></div>
+  <div class="kpi unk"><div class="label">Перепроверить</div><div class="value" id="kpi-unknown">-</div></div>
 </div>
 
 <div class="toolbar">
   <button class="active" data-filter="all">Все 13</button>
-  <button data-filter="crit">🔴 Критичные (5)</button>
-  <button data-filter="warn">🟡 Важные (6)</button>
-  <button data-filter="cosm">🟢 Косметика (2)</button>
+  <button data-filter="crit">Критичные (5)</button>
+  <button data-filter="warn">Важные (6)</button>
+  <button data-filter="cosm">Косметика (2)</button>
   <button data-filter="broken">Не сделано</button>
   <button data-filter="fixed">Сделано</button>
-  <button data-filter="open-all">Раскрыть всё</button>
+  <button data-filter="open-all">Раскрыть все</button>
 </div>
 
 <div class="cards" id="cards">
 
-<!-- B1 -->
 <div class="card crit" data-status="broken" data-sev="crit">
-  <div class="head">
-    <div class="bug-id">B1<span class="secondary">↔ T1</span></div>
-    <div class="bug-title">
-      <h3>Триггер <code>task_history</code> сломан — задачи не создаются</h3>
-      <div class="desc">«column "field" of relation "task_history" does not exist» при любом INSERT в tasks.</div>
-      <div class="badges">
-        <span class="badge broken">Не сделано</span>
-        <span class="badge cat">Логика БД</span>
-        <span class="badge cat">Корень найден</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <h4>Корневая причина (подтверждено SQL)</h4>
-    <p>На таблице <code>public.tasks</code> висят <strong>три</strong> триггера. Один корректный (использует <code>field_name</code>), два сломанных (используют <code>field</code> + <code>comment</code>, которых в таблице нет):</p>
-    <div class="evidence"><span class="tag">Колонки task_history:</span>
+<div class="head">
+<div class="bug-id">B1<span class="secondary">T1</span></div>
+<div class="bug-title">
+<h3>Триггер task_history сломан - задачи не создаются</h3>
+<div class="desc">column "field" of relation "task_history" does not exist - на любом INSERT в tasks.</div>
+<div class="badges"><span class="badge broken">Не сделано</span><span class="badge cat">Логика БД</span><span class="badge cat">Корень найден</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<h4>Корневая причина (подтверждено SQL)</h4>
+<p>На таблице public.tasks висят ТРИ триггера. Один корректный (использует field_name), два сломанных (используют field + comment, которых в таблице нет):</p>
+<div class="evidence"><span class="tag">Колонки task_history:</span>
 id, task_id, changed_by, <span class="ok">field_name</span>, old_value, new_value, changed_at
-<span class="err">→ нет ни «field», ни «comment»</span>
+<span class="err">- нет ни "field", ни "comment"</span>
 
-<span class="tag">Триггер task_changes_trigger</span> (UPDATE) — <span class="ok">OK</span>:
-INSERT INTO task_history(task_id, <span class="ok">field_name</span>, old_value, new_value)…
+<span class="tag">Триггер task_changes_trigger</span> (UPDATE) - <span class="ok">OK</span>:
+INSERT INTO task_history(task_id, <span class="ok">field_name</span>, old_value, new_value)...
 
-<span class="tag">Триггер trg_tasks_history</span> (UPDATE) — <span class="err">СЛОМАН</span>:
-INSERT INTO task_history(task_id, <span class="err">field</span>, old_value, new_value, changed_by, <span class="err">comment</span>)…
+<span class="tag">Триггер trg_tasks_history</span> (UPDATE) - <span class="err">СЛОМАН</span>:
+INSERT INTO task_history(task_id, <span class="err">field</span>, old_value, new_value, changed_by, <span class="err">comment</span>)...
 
-<span class="tag">Триггер trg_tasks_history_create</span> (INSERT) — <span class="err">СЛОМАН</span>:
+<span class="tag">Триггер trg_tasks_history_create</span> (INSERT) - <span class="err">СЛОМАН</span>:
 INSERT INTO task_history(task_id, <span class="err">field</span>, old_value, new_value, changed_by)
 VALUES (new.id, 'created', null, new.status, who);
-<span class="err">→ срабатывает на КАЖДЫЙ INSERT → блокирует создание любой задачи</span></div>
-    <h4>Решение (1 SQL-команда)</h4>
-    <div class="evidence">DROP TRIGGER IF EXISTS trg_tasks_history ON public.tasks;
+<span class="err">- срабатывает на КАЖДЫЙ INSERT - блокирует создание любой задачи</span></div>
+<h4>Решение (1 SQL-команда)</h4>
+<div class="evidence">DROP TRIGGER IF EXISTS trg_tasks_history ON public.tasks;
 DROP TRIGGER IF EXISTS trg_tasks_history_create ON public.tasks;
--- task_changes_trigger остаётся, он корректный и логирует UPDATE.
--- Потерь функциональности нет: рабочий триггер уже пишет в task_history.</div>
-    <p><strong>Время фикса:</strong> 30 секунд через Supabase MCP. Можно сделать прямо сейчас.</p>
-    <div class="actions">
-      <span class="label">Решение:</span>
-      <button class="act-btn" data-act="fix">✅ Чинить сейчас</button>
-      <button class="act-btn defer" data-act="defer">⏸ Отложить</button>
-      <button class="act-btn skip" data-act="skip">— Не трогать</button>
-      <textarea class="note" placeholder="Заметка / уточнение"></textarea>
-    </div>
-  </div>
+-- task_changes_trigger остаётся, он логирует UPDATE корректно.</div>
+<p><strong>Время фикса:</strong> 30 секунд через Supabase MCP. Можно прямо сейчас.</p>
+<div class="actions">
+<span class="label">Решение:</span>
+<button class="act-btn" data-act="fix">Чинить сейчас</button>
+<button class="act-btn defer" data-act="defer">Отложить</button>
+<button class="act-btn skip" data-act="skip">Не трогать</button>
+<textarea class="note" placeholder="Заметка"></textarea>
+</div>
+</div>
 </div>
 
-<!-- B2 -->
 <div class="card crit" data-status="fixed" data-sev="crit">
-  <div class="head">
-    <div class="bug-id">B2<span class="secondary">↔ T2</span></div>
-    <div class="bug-title">
-      <h3>Рассинхрон полей <code>title/assignee_id</code> ↔ <code>name/assigned_to</code></h3>
-      <div class="desc">Тестировщик: «фронт шлёт title+assignee_id, БД ждёт name+assigned_to». Проверено по коду — фантомный баг.</div>
-      <div class="badges">
-        <span class="badge fixed">В коде уже OK</span>
-        <span class="badge deploy">Был старый билд на проде</span>
-        <span class="badge cat">Деплой-проблема</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <h4>Что нашёл grep по коду</h4>
-    <div class="evidence"><span class="tag">Создание задачи (App.tsx:953):</span>
+<div class="head">
+<div class="bug-id">B2<span class="secondary">T2</span></div>
+<div class="bug-title">
+<h3>Поля title/assignee_id vs name/assigned_to</h3>
+<div class="desc">Тестировщик: фронт шлёт title+assignee_id. Проверено - фронт уже шлёт name+assigned_to. Фантомный баг.</div>
+<div class="badges"><span class="badge fixed">В коде OK</span><span class="badge deploy">Был старый билд на проде</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<h4>Что нашёл grep</h4>
+<div class="evidence"><span class="tag">App.tsx:953:</span>
 createProjectTask({
   <span class="ok">name:</span> newTask.name,
-  dept: getDeptName(newTask.dept_id),
-  priority: newTask.priority,
-  deadline: newTask.deadline,
   <span class="ok">assigned_to:</span> newTask.assigned_to || null,
-  status: "todo",
-  project_id: activeProject.id,
-  description: newTask.description || null
+  ...
 }, token)
 
-<span class="tag">grep title:|assignee_id в src/:</span>
-<span class="ok">→ ничего относящегося к созданию задач</span>
-<span class="warn">→ единственная находка: src/copilot/validateApplyAction.ts:104</span>
-   if (task.<span class="warn">assignee_id</span>) { return fail('ASSIGN_FORBIDDEN'…) }
-   <span class="warn">// Это AI-валидатор — отдельный баг (см. ниже), не блокирующий B1/B2</span></div>
-    <h4>Дополнительный баг по дороге</h4>
-    <p>В <code>validateApplyAction.ts</code> AI-валидатор проверяет <code>task.assignee_id</code> вместо <code>task.assigned_to</code>. Это значит: проверка «AI не может назначать исполнителя» — никогда не срабатывает, потому что свойства с таким именем нет. <strong>Тихая дыра в безопасности AI-агента.</strong> Не блокирующая, но требует фикса отдельным коммитом.</p>
-    <h4>Что осталось</h4>
-    <p>Сам B2 в коде закрыт. После фикса B1 (триггер) и редеплоя — баг исчезнет. Параллельно поправить validateApplyAction.ts.</p>
-    <div class="actions">
-      <span class="label">Решение:</span>
-      <button class="act-btn" data-act="fix">✅ Поправить AI-валидатор</button>
-      <button class="act-btn defer" data-act="defer">⏸ Отложить</button>
-      <button class="act-btn skip" data-act="skip">— Закрыть как фантом</button>
-      <textarea class="note" placeholder="Заметка / уточнение"></textarea>
-    </div>
-  </div>
+<span class="tag">grep title:|assignee_id:</span>
+<span class="ok">- ничего относящегося к созданию задач</span>
+<span class="warn">- НО: src/copilot/validateApplyAction.ts:104</span>
+   if (task.<span class="warn">assignee_id</span>) { return fail('ASSIGN_FORBIDDEN') }
+   <span class="warn">// AI security check проверяет НЕсуществующее свойство - тихая дыра</span></div>
+<p>Сам B2 в коде закрыт. Дополнительно: поправить validateApplyAction.ts (10 минут).</p>
+<div class="actions">
+<span class="label">Решение:</span>
+<button class="act-btn" data-act="fix">Поправить AI-валидатор</button>
+<button class="act-btn defer" data-act="defer">Отложить</button>
+<button class="act-btn skip" data-act="skip">Закрыть как фантом</button>
+<textarea class="note" placeholder="Заметка"></textarea>
+</div>
+</div>
 </div>
 
-<!-- B3 -->
 <div class="card crit" data-status="broken" data-sev="crit">
-  <div class="head">
-    <div class="bug-id">B3<span class="secondary">↔ T4</span></div>
-    <div class="bug-title">
-      <h3>LiveKit «Совещание» — сразу ошибка, нет даже сетевых запросов</h3>
-      <div class="desc">«Не удалось создать или найти встречу». Симптом маскирует RLS-блокировку, не env vars.</div>
-      <div class="badges">
-        <span class="badge broken">Не сделано</span>
-        <span class="badge cat">Логика БД (RLS)</span>
-        <span class="badge cat">Корень найден</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <h4>Корневая причина (подтверждено SQL + чтением кода)</h4>
-    <p>На таблицах <code>video_meetings</code>, <code>video_meeting_participants</code>, <code>video_meeting_chat_messages</code> RLS <strong>включён</strong>, но <strong>политик нет вообще</strong> → любой не-service-role клиент полностью заблокирован.</p>
-    <div class="evidence"><span class="tag">SELECT pg_class:</span>
+<div class="head">
+<div class="bug-id">B3<span class="secondary">T4</span></div>
+<div class="bug-title">
+<h3>LiveKit Совещание - ошибка сразу, нет даже сетевых запросов</h3>
+<div class="desc">"Не удалось создать или найти встречу". Симптом маскирует RLS-блок, не env vars.</div>
+<div class="badges"><span class="badge broken">Не сделано</span><span class="badge cat">Логика БД (RLS)</span><span class="badge cat">Корень найден</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<h4>Корневая причина</h4>
+<div class="evidence"><span class="tag">SELECT pg_class:</span>
 video_meetings              rls=<span class="ok">true</span>
 video_meeting_participants  rls=<span class="ok">true</span>
 video_meeting_chat_messages rls=<span class="ok">true</span>
 
 <span class="tag">SELECT pg_policy:</span>
-<span class="err">→ ноль политик ни на одной из таблиц</span>
+<span class="err">- ноль политик ни на одной таблице - анон-клиент полностью заблокирован</span>
 
 <span class="tag">Что делает фронт (MeetingRoomPage.tsx:52):</span>
 ensureMeeting():
-  1) <span class="warn">SELECT</span> video_meetings WHERE project_id=… AND ended_at IS NULL
-     <span class="err">→ блокируется RLS, возвращает []</span>
-  2) <span class="warn">INSERT</span> video_meetings (project_id, title, created_by, started_at)
-     <span class="err">→ блокируется RLS, ins.ok=false</span>
+  1) <span class="warn">SELECT</span> video_meetings WHERE project_id=... AND ended_at IS NULL
+     <span class="err">- блокируется RLS - возвращает []</span>
+  2) <span class="warn">INSERT</span> video_meetings (...)
+     <span class="err">- блокируется RLS - ins.ok=false</span>
   3) return null
-  → throw "Не удалось создать или найти встречу"</div>
-    <h4>Что НЕ виновато</h4>
-    <p>Env vars (<code>LIVEKIT_URL</code>, <code>LIVEKIT_API_KEY</code>, <code>LIVEKIT_API_SECRET</code>) — настроены, ты их вчера выставлял. Тестер прав: «сетевых запросов к LiveKit не отправляется» — потому что фронт падает <strong>до</strong> вызова <code>/api/meeting-token</code>.</p>
-    <h4>Решение</h4>
-    <p>Добавить RLS-политики для трёх таблиц <code>video_meeting_*</code>. Логика: участник видит свою встречу, организатор + admin/gip создают встречи в своих проектах. ~15 минут SQL.</p>
-    <div class="actions">
-      <span class="label">Решение:</span>
-      <button class="act-btn" data-act="fix">✅ Написать RLS политики</button>
-      <button class="act-btn defer" data-act="defer">⏸ Отложить</button>
-      <button class="act-btn skip" data-act="skip">— Видеовстречи не нужны</button>
-      <textarea class="note" placeholder="Заметка / уточнение"></textarea>
-    </div>
-  </div>
+  - throw "Не удалось создать или найти встречу"</div>
+<h4>Что НЕ виновато</h4>
+<p>Env vars (LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET) - настроены. Тестер прав: "сетевых запросов к LiveKit нет" - потому что фронт падает ДО вызова /api/meeting-token.</p>
+<h4>Решение</h4>
+<p>Добавить RLS-политики для трёх video_meeting_* таблиц. Логика: участник видит свою встречу, организатор + admin/gip создают встречи в своих проектах. ~15 минут SQL.</p>
+<div class="actions">
+<span class="label">Решение:</span>
+<button class="act-btn" data-act="fix">Написать RLS политики</button>
+<button class="act-btn defer" data-act="defer">Отложить</button>
+<button class="act-btn skip" data-act="skip">Видеовстречи не нужны</button>
+<textarea class="note" placeholder="Заметка"></textarea>
+</div>
+</div>
 </div>
 
-<!-- B4 -->
 <div class="card crit" data-status="partial" data-sev="crit">
-  <div class="head">
-    <div class="bug-id">B4<span class="secondary">↔ T3</span></div>
-    <div class="bug-title">
-      <h3>RLS на <code>tasks</code> не защищает от cross-project утечки</h3>
-      <div class="desc">Политики ЕСТЬ, но логика «admin/gip видит ВСЁ» — даёт каждому ГИПу доступ к чужим проектам.</div>
-      <div class="badges">
-        <span class="badge partial">RLS есть, но логика лажа</span>
-        <span class="badge cat">Логика безопасности</span>
-        <span class="badge cat">Нужно решение владельца</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <h4>Что реально на сервере</h4>
-    <div class="evidence"><span class="tag">RLS включён, политик 5:</span>
-tasks_select          (READ)   USING <span class="warn">auth_is_admin_or_gip()</span> OR …
-tasks_write_gip       (ALL)    USING auth_is_admin_or_gip()
-tasks_write_lead      (INSERT) CHECK lead+своего dept
-tasks_update_lead     (UPDATE) USING lead+своего dept
-tasks_update_engineer (UPDATE) USING engineer+assigned_to=я
+<div class="head">
+<div class="bug-id">B4<span class="secondary">T3</span></div>
+<div class="bug-title">
+<h3>RLS на tasks не защищает от cross-project утечки</h3>
+<div class="desc">Политики ЕСТЬ, но "admin/gip видит ВСЁ" - каждый ГИП видит чужие проекты.</div>
+<div class="badges"><span class="badge partial">RLS есть, логика лажа</span><span class="badge cat">Логика безопасности</span><span class="badge cat">Нужно решение владельца</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<h4>Что реально на сервере</h4>
+<div class="evidence"><span class="tag">RLS включён, политик 5:</span>
+tasks_select  USING <span class="warn">auth_is_admin_or_gip()</span> OR ...
+tasks_write_gip       USING auth_is_admin_or_gip()
+tasks_write_lead      CHECK lead+своего dept
+tasks_update_lead     USING lead+своего dept
+tasks_update_engineer USING engineer+assigned_to=я
 
 <span class="tag">auth_is_admin_or_gip():</span>
-return role IN ('admin','gip')   <span class="err">// без фильтрации по проектам</span>
-<span class="warn">// Любой ГИП видит задачи ВСЕХ проектов, не только своих.</span>
-<span class="warn">// Тестировщик это и поймал.</span></div>
-    <h4>Это баг или фича?</h4>
-    <p>Зависит от того, сколько в системе ГИПов и как они работают между собой. Варианты:</p>
-    <p><strong>А)</strong> Если ГИП один и видит всё — текущая логика корректна, тестировщик ошибся в трактовке.</p>
-    <p><strong>Б)</strong> Если ГИПов несколько и у каждого свой портфель проектов — текущая политика дырявая, нужно добавить фильтр <code>project_id IN (SELECT id FROM projects WHERE gip_id = auth_app_user_id())</code>.</p>
-    <p><strong>В)</strong> Если ГИП-руководитель должен видеть всех, а ГИП-проектировщик — только свои — нужно ввести подроль (gip_lead vs gip_pm).</p>
-    <h4>Что нужно от тебя</h4>
-    <p>Ответ на один вопрос: <strong>«сколько ГИПов в системе и должны ли они видеть проекты друг друга?»</strong> Без ответа писать политики наугад — как раз методологическая ошибка прошлой сессии (см. блок ниже).</p>
-    <div class="actions">
-      <span class="label">Решение:</span>
-      <button class="act-btn" data-act="fix">✅ Один ГИП — оставить как есть</button>
-      <button class="act-btn" data-act="fix">✅ Добавить scope по проектам</button>
-      <button class="act-btn defer" data-act="defer">⏸ Обсудить отдельно</button>
-      <textarea class="note" placeholder="Сколько ГИПов / какая логика доступа?"></textarea>
-    </div>
-  </div>
+return role IN ('admin','gip')   <span class="err">// без фильтра по проектам</span>
+<span class="warn">// ЛЮБОЙ ГИП видит ВСЕ задачи всех проектов</span></div>
+<h4>Это баг или фича?</h4>
+<p><strong>А)</strong> Один ГИП в системе - текущая логика OK, тестер ошибся.</p>
+<p><strong>Б)</strong> Несколько ГИПов с своими портфелями - дыра, нужен scope project_id IN (SELECT id FROM projects WHERE gip_id = auth_app_user_id()).</p>
+<p><strong>В)</strong> ГИП-руководитель видит всех, ГИП-проектировщик - только свои - нужны подроли.</p>
+<h4>Что нужно от тебя</h4>
+<p><strong>Один вопрос: сколько ГИПов в системе и должны ли они видеть проекты друг друга?</strong></p>
+<div class="actions">
+<span class="label">Решение:</span>
+<button class="act-btn" data-act="fix">Один ГИП - оставить как есть</button>
+<button class="act-btn" data-act="fix">Добавить scope по проектам</button>
+<button class="act-btn defer" data-act="defer">Обсудить отдельно</button>
+<textarea class="note" placeholder="Сколько ГИПов?"></textarea>
+</div>
+</div>
 </div>
 
-<!-- B5 -->
 <div class="card crit" data-status="partial" data-sev="crit">
-  <div class="head">
-    <div class="bug-id">B5<span class="secondary">↔ T7</span></div>
-    <div class="bug-title">
-      <h3><code>/api/orchestrator</code> возвращает 500 — AI Copilot работает деградированно</h3>
-      <div class="desc">Catch-блок поправлен (T7), но сам 500 не диагностирован.</div>
-      <div class="badges">
-        <span class="badge partial">Symptom hidden, cause unknown</span>
-        <span class="badge cat">Серверная функция</span>
-        <span class="badge cat">Нужны логи Vercel</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <h4>Что сделано</h4>
-    <p>В <code>api/orchestrator.js:1095–1100</code> catch-блок теперь возвращает обобщённое <code>'Internal Server Error'</code> вместо утечки внутренних деталей валидации. Это закрывает половину B6 (AI Copilot ответ «Передайте payload.from_status»).</p>
-    <h4>Что НЕ сделано</h4>
-    <p>Сама причина 500 — неизвестна. В файле нет инструментирования через Sentry/console-trace, который бы показал где именно падает. Нужно:</p>
-    <p>1) Открыть Vercel → Functions → Logs за последние 24ч → найти стектрейс одного 500.<br>
-    2) Если стектрейса нет — добавить <code>console.error</code> с деталями в catch + редеплоить + воспроизвести.</p>
-    <p>Подозрение: либо отсутствует <code>OPENAI_API_KEY</code> / <code>ANTHROPIC_API_KEY</code> в env, либо запросы к OpenAI таймаутятся, либо JSON-парсинг ответа модели падает на каком-то edge-case.</p>
-    <div class="actions">
-      <span class="label">Решение:</span>
-      <button class="act-btn" data-act="fix">✅ Полезть в Vercel logs</button>
-      <button class="act-btn defer" data-act="defer">⏸ После блокеров</button>
-      <textarea class="note" placeholder="Заметка / уточнение"></textarea>
-    </div>
-  </div>
+<div class="head">
+<div class="bug-id">B5<span class="secondary">T7</span></div>
+<div class="bug-title">
+<h3>/api/orchestrator возвращает 500 - AI Copilot работает деградированно</h3>
+<div class="desc">Catch-блок поправлен (T7), сам 500 не диагностирован.</div>
+<div class="badges"><span class="badge partial">Симптом скрыт, причина неизвестна</span><span class="badge cat">Серверная функция</span><span class="badge cat">Нужны логи Vercel</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<p>Catch-блок в api/orchestrator.js:1095 теперь возвращает обобщённое 'Internal Server Error' вместо утечки внутренних деталей валидации. Это закрывает половину B6 (AI Copilot ответ "Передайте payload.from_status").</p>
+<p>Сама причина 500 - неизвестна. Нужно: открыть Vercel - Functions - Logs за последние 24ч - найти стектрейс - починить root cause.</p>
+<p>Подозрение: либо отсутствует OPENAI_API_KEY/ANTHROPIC_API_KEY в env, либо запросы таймаутят, либо JSON-парсинг падает на edge case.</p>
+<div class="actions">
+<span class="label">Решение:</span>
+<button class="act-btn" data-act="fix">Полезть в Vercel logs</button>
+<button class="act-btn defer" data-act="defer">После блокеров</button>
+<textarea class="note" placeholder="Заметка"></textarea>
+</div>
+</div>
 </div>
 
-<!-- B6 -->
 <div class="card warn" data-status="partial" data-sev="warn">
-  <div class="head">
-    <div class="bug-id">B6<span class="secondary">↔ T7</span></div>
-    <div class="bug-title">
-      <h3>AI Copilot отвечает техническим мусором</h3>
-      <div class="desc">«Передайте payload.from_status», «Запрос обработан.» без содержания, Drawing Agent висит.</div>
-      <div class="badges">
-        <span class="badge partial">Часть в B5</span>
-        <span class="badge cat">UX + код</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <p>Связан с B5. После фикса 500 и нормализации catch-блока этот UX-симптом частично уйдёт. Drawing Agent зависает — отдельная проблема, нужно проверить таймауты в <code>api/orchestrator.js</code> ветка <code>analyze_drawing</code>.</p>
-    <div class="actions">
-      <button class="act-btn defer" data-act="defer">⏸ После B5</button>
-    </div>
-  </div>
+<div class="head">
+<div class="bug-id">B6<span class="secondary">T7</span></div>
+<div class="bug-title">
+<h3>AI Copilot отвечает техническим мусором</h3>
+<div class="desc">"Передайте payload.from_status", "Запрос обработан." без содержания, Drawing Agent висит.</div>
+<div class="badges"><span class="badge partial">Часть в B5</span><span class="badge cat">UX + код</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<p>Связан с B5. После фикса 500 и нормализации catch этот UX-симптом частично уйдёт. Drawing Agent висит - отдельная проблема, проверить таймауты в orchestrator.js ветка analyze_drawing.</p>
+<div class="actions">
+<button class="act-btn defer" data-act="defer">После B5</button>
+</div>
+</div>
 </div>
 
-<!-- B7 -->
 <div class="card warn" data-status="partial" data-sev="warn">
-  <div class="head">
-    <div class="bug-id">B7<span class="secondary">↔ T5/T6</span></div>
-    <div class="bug-title">
-      <h3>Формат даты mm/dd/yyyy в формах задач и чертежей</h3>
-      <div class="desc">RuDateInput подключён только для проектов; для задач/чертежей оставался нативный input — на проде.</div>
-      <div class="badges">
-        <span class="badge fixed">В коде подключён</span>
-        <span class="badge deploy">Нужен деплой</span>
-        <span class="badge cat">UX</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <p>Согласно TASKS.md и комитам (b6769c5 «fix: dialog reopening, RuDateInput…»), компонент <code>RuDateInput</code> уже подключён к 6 формам, включая задачи и чертежи. После последнего успешного деплоя (e27266d) симптом должен исчезнуть. <strong>Нужно перепрогнать QA-сценарий на свежем билде.</strong></p>
-    <div class="actions">
-      <button class="act-btn" data-act="fix">✅ Перепроверить на проде</button>
-    </div>
-  </div>
+<div class="head">
+<div class="bug-id">B7<span class="secondary">T5/T6</span></div>
+<div class="bug-title">
+<h3>Формат даты mm/dd/yyyy в формах задач и чертежей</h3>
+<div class="desc">RuDateInput подключён только для проектов; для задач/чертежей был нативный input.</div>
+<div class="badges"><span class="badge fixed">В коде подключён</span><span class="badge deploy">Нужен деплой</span><span class="badge cat">UX</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<p>Согласно TASKS.md и коммитам, RuDateInput уже подключён к 6 формам, включая задачи и чертежи. После последнего деплоя (e27266d) симптом должен исчезнуть. Перепрогнать QA-сценарий на свежем билде.</p>
+<div class="actions">
+<button class="act-btn" data-act="fix">Перепроверить на проде</button>
+</div>
+</div>
 </div>
 
-<!-- B8 -->
 <div class="card warn" data-status="unknown" data-sev="warn">
-  <div class="head">
-    <div class="bug-id">B8<span class="secondary">↔ T9</span></div>
-    <div class="bug-title">
-      <h3>Кнопка «Отделы» в admin-сайдбаре не переходит</h3>
-      <div class="desc">Клик не вызывает переключение таба <code>depts</code>.</div>
-      <div class="badges">
-        <span class="badge cat">UI-баг</span>
-        <span class="badge broken">Не проверено</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <p>В <code>src/pages/AdminPanel.tsx</code> есть таб <code>depts</code>, переключение через <code>setTab(t.id)</code>. Скорее всего опечатка в id или router-pattern. Нужно открыть файл, найти строку и поправить — 5–10 минут.</p>
-    <div class="actions">
-      <button class="act-btn" data-act="fix">✅ Найти и поправить</button>
-      <button class="act-btn defer" data-act="defer">⏸ После блокеров</button>
-    </div>
-  </div>
+<div class="head">
+<div class="bug-id">B8<span class="secondary">T9</span></div>
+<div class="bug-title">
+<h3>Кнопка Отделы в admin-сайдбаре не переходит</h3>
+<div class="desc">Клик не вызывает переключение таба depts.</div>
+<div class="badges"><span class="badge cat">UI-баг</span><span class="badge broken">Не проверено</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<p>В src/pages/AdminPanel.tsx есть таб depts, переключение через setTab(t.id). Скорее всего опечатка в id или router. 5-10 минут.</p>
+<div class="actions">
+<button class="act-btn" data-act="fix">Найти и поправить</button>
+<button class="act-btn defer" data-act="defer">После блокеров</button>
+</div>
+</div>
 </div>
 
-<!-- B9 -->
 <div class="card warn" data-status="partial" data-sev="warn">
-  <div class="head">
-    <div class="bug-id">B9<span class="secondary">↔ T6</span></div>
-    <div class="bug-title">
-      <h3>Даты в логах ревизий и трансмитталов в US-формате</h3>
-      <div class="desc">«4/27/2026, 11:45:44 PM» вместо «27.04.2026, 23:45».</div>
-      <div class="badges">
-        <span class="badge fixed">Частично пофикшено</span>
-        <span class="badge cat">UX</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <p>Сонет в коммите 9fa7a39 заменил <code>toLocaleString()</code> на <code>toLocaleString('ru-RU', …)</code> в части файлов. Нужно перепроверить полное покрытие через grep:</p>
-    <div class="evidence">grep -rn "toLocaleString\|toLocaleDateString" src/components/ | grep -v "ru-RU"
-<span class="warn">→ если что-то найдётся, добивать там</span></div>
-    <div class="actions">
-      <button class="act-btn" data-act="fix">✅ Дочистить grep'ом</button>
-    </div>
-  </div>
+<div class="head">
+<div class="bug-id">B9<span class="secondary">T6</span></div>
+<div class="bug-title">
+<h3>Даты в логах ревизий и трансмитталов в US-формате</h3>
+<div class="desc">"4/27/2026, 11:45:44 PM" вместо "27.04.2026, 23:45".</div>
+<div class="badges"><span class="badge fixed">Частично пофикшено</span><span class="badge cat">UX</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<p>Сонет в коммите 9fa7a39 заменил toLocaleString() на toLocaleString('ru-RU', ...) в части файлов. Перепроверить полное покрытие grep'ом и дочистить.</p>
+<div class="actions">
+<button class="act-btn" data-act="fix">Дочистить grep'ом</button>
+</div>
+</div>
 </div>
 
-<!-- B10 -->
 <div class="card warn" data-status="broken" data-sev="warn">
-  <div class="head">
-    <div class="bug-id">B10<span class="secondary">↔ T10</span></div>
-    <div class="bug-title">
-      <h3>Статус трансмиттала в тосте — «issued» без перевода</h3>
-      <div class="desc">«Статус трансмиттала изменён: issued» вместо «…изменён: Выпущен».</div>
-      <div class="badges">
-        <span class="badge broken">Не сделано</span>
-        <span class="badge cat">i18n</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <p>Использовать существующий <code>drawingStatusMap</code> из <code>src/constants.ts</code> или завести <code>transmittalStatusMap</code>. ~10 минут.</p>
-    <div class="actions">
-      <button class="act-btn" data-act="fix">✅ Добавить map статусов</button>
-    </div>
-  </div>
+<div class="head">
+<div class="bug-id">B10<span class="secondary">T10</span></div>
+<div class="bug-title">
+<h3>Статус трансмиттала в тосте - "issued" без перевода</h3>
+<div class="desc">"Статус трансмиттала изменён: issued" вместо "Выпущен".</div>
+<div class="badges"><span class="badge broken">Не сделано</span><span class="badge cat">i18n</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<p>Использовать существующий drawingStatusMap из src/constants.ts или завести transmittalStatusMap. ~10 минут.</p>
+<div class="actions">
+<button class="act-btn" data-act="fix">Добавить map статусов</button>
+</div>
+</div>
 </div>
 
-<!-- B11 -->
 <div class="card warn" data-status="fixed" data-sev="warn">
-  <div class="head">
-    <div class="bug-id">B11<span class="secondary">↔ T8</span></div>
-    <div class="bug-title">
-      <h3>Multiple GoTrueClient instances</h3>
-      <div class="desc">4+ предупреждения в консоли о множественных Supabase клиентах.</div>
-      <div class="badges">
-        <span class="badge fixed">Сделано</span>
-        <span class="badge cat">Архитектура</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <h4>Что сделано (commit 9fa7a39)</h4>
-    <p>Создан <code>src/api/supabaseClient.ts</code> с синглтонами <code>getSupabaseAnonClient()</code> и <code>getSupabaseAdminClient()</code>. Файл проверен:</p>
-    <div class="evidence">let anonClient = null;
-let adminClient = null;
-export const getSupabaseAnonClient = () => {
-  if (!anonClient) anonClient = createClient(SURL, ANON_KEY);
-  return anonClient;
-};</div>
-    <p>Осталось пройти grep'ом по всем местам использования <code>createClient</code> и заменить на синглтон, если что-то ещё осталось.</p>
-    <div class="actions">
-      <button class="act-btn" data-act="fix">✅ Финальный grep + редеплой</button>
-    </div>
-  </div>
+<div class="head">
+<div class="bug-id">B11<span class="secondary">T8</span></div>
+<div class="bug-title">
+<h3>Multiple GoTrueClient instances</h3>
+<div class="desc">4+ предупреждения в консоли о множественных Supabase клиентах.</div>
+<div class="badges"><span class="badge fixed">Сделано</span><span class="badge cat">Архитектура</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<p>Создан src/api/supabaseClient.ts с синглтонами getSupabaseAnonClient() и getSupabaseAdminClient() (commit 9fa7a39). Осталось grep'ом проверить, что нет других мест с createClient.</p>
+<div class="actions">
+<button class="act-btn" data-act="fix">Финальный grep + редеплой</button>
+</div>
+</div>
 </div>
 
-<!-- B12 -->
 <div class="card cosm" data-status="fixed" data-sev="cosm">
-  <div class="head">
-    <div class="bug-id">B12<span class="secondary">↔ T11</span></div>
-    <div class="bug-title">
-      <h3>Длинное название проекта в сайдбаре обрезается без tooltip</h3>
-      <div class="desc">«Жилой комплекс Во…» — нельзя увидеть полное имя.</div>
-      <div class="badges">
-        <span class="badge fixed">Сделано</span>
-        <span class="badge cat">UX</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <p>Подтверждено grep'ом по коду: <code>App.tsx:2010</code> теперь содержит <code>title={p.name}</code> на обрезанном элементе.</p>
-    <div class="actions">
-      <button class="act-btn skip" data-act="skip">— Закрыть</button>
-    </div>
-  </div>
+<div class="head">
+<div class="bug-id">B12<span class="secondary">T11</span></div>
+<div class="bug-title">
+<h3>Длинное название проекта обрезается без tooltip</h3>
+<div class="desc">"Жилой комплекс Во..." - нельзя увидеть полное имя.</div>
+<div class="badges"><span class="badge fixed">Сделано</span><span class="badge cat">UX</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<p>Подтверждено grep'ом: App.tsx:2010 содержит title={p.name} на обрезанном элементе.</p>
+<div class="actions">
+<button class="act-btn skip" data-act="skip">Закрыть</button>
+</div>
+</div>
 </div>
 
-<!-- B13 -->
 <div class="card cosm" data-status="broken" data-sev="cosm">
-  <div class="head">
-    <div class="bug-id">B13<span class="secondary">↔ T13</span></div>
-    <div class="bug-title">
-      <h3>Два норматива не обработаны RAG-системой</h3>
-      <div class="desc">API 521-2014 и ВНТП 01.87.04-84 — статус «Не удалось обработать».</div>
-      <div class="badges">
-        <span class="badge cat">Косметика</span>
-        <span class="badge broken">Не проверено</span>
-      </div>
-    </div>
-    <div class="toggle">›</div>
-  </div>
-  <div class="body">
-    <p>Перезапустить обработку через интерфейс или удалить + перезалить файлы. Если повторяется — посмотреть лог RAG-пайплайна (нужно понять где он живёт).</p>
-    <div class="actions">
-      <button class="act-btn defer" data-act="defer">⏸ После блокеров</button>
-      <button class="act-btn skip" data-act="skip">— Не критично</button>
-    </div>
-  </div>
+<div class="head">
+<div class="bug-id">B13<span class="secondary">T13</span></div>
+<div class="bug-title">
+<h3>Два норматива не обработаны RAG</h3>
+<div class="desc">API 521-2014 и ВНТП 01.87.04-84 - статус "Не удалось обработать".</div>
+<div class="badges"><span class="badge cat">Косметика</span><span class="badge broken">Не проверено</span></div>
+</div>
+<div class="toggle">&rsaquo;</div>
+</div>
+<div class="body">
+<p>Перезапустить обработку или удалить + перезалить файлы. Если повторяется - смотреть лог RAG-пайплайна.</p>
+<div class="actions">
+<button class="act-btn defer" data-act="defer">После блокеров</button>
+<button class="act-btn skip" data-act="skip">Не критично</button>
+</div>
+</div>
 </div>
 
-</div>
-
-<!-- ────────────────────────────────────────────────────────────────────── -->
-<!-- ANALYSIS SECTION -->
-<!-- ────────────────────────────────────────────────────────────────────── -->
-
-<div class="section">
-  <h2>Категоризация: код vs логика vs методология</h2>
-  <div class="sub">Пользователь спросил: «может, ошибки не просто в коде, но в логике и методологии?» Разделение по типам:</div>
-
-  <div class="method-grid">
-    <div class="method-card code">
-      <h4>🧩 Код (5)</h4>
-      <div class="stat">Опечатки, забытые i18n, мелкие UI-баги</div>
-      <ul>
-        <li>B7, B9 — даты в US-формате</li>
-        <li>B8 — кнопка «Отделы»</li>
-        <li>B10 — локализация статусов трансмиттала</li>
-        <li>B12 — tooltip ✅</li>
-      </ul>
-      <p style="font-size:12px; color:var(--muted); margin-top:10px;">Закрываются механически — grep + sed + редеплой. 1–2 часа суммарно.</p>
-    </div>
-
-    <div class="method-card logic">
-      <h4>🧠 Логика (4)</h4>
-      <div class="stat">Дизайн БД, политики, архитектура агента</div>
-      <ul>
-        <li><strong>B1</strong> — два конкурирующих триггера на одной таблице (старый + новый, никто не убрал)</li>
-        <li><strong>B3</strong> — RLS включён без политик. Это «по инерции»: безопасно по умолчанию, но не работает</li>
-        <li><strong>B4</strong> — политика «admin/gip видит всё» без scope по проектам — нет согласованной модели доступа</li>
-        <li><strong>B5/B6</strong> — orchestrator кидает наружу промпты валидации — нет границы между serverside и user-facing</li>
-      </ul>
-      <p style="font-size:12px; color:var(--muted); margin-top:10px;">Это не код, это решения. Чинить — значит сначала <strong>обсудить логику</strong>, потом писать SQL/TS.</p>
-    </div>
-
-    <div class="method-card proc">
-      <h4>⚙️ Методология (3)</h4>
-      <div class="stat">Как работали, что ломали по дороге</div>
-      <ul>
-        <li><strong>Truncation cycle</strong> — агент обрезал файлы при коммите через Cowork mount, потом сам же восстанавливал, потом снова ломал. ~10 файлов через это прошли</li>
-        <li><strong>No verification step</strong> — пушили без <code>tsc --noEmit</code>, без QA-прогона. ESLint падал → деплой ERROR → второй деплой → ещё ERROR</li>
-        <li><strong>Wrong author identity</strong> — два коммита подписаны <code>andreyfuture27@gmail.com</code> вопреки правилу. Только после выговора пользователя стал использовать правильный</li>
-      </ul>
-      <p style="font-size:12px; color:var(--muted); margin-top:10px;">Это про процесс, а не про код. Без фикса методологии любой следующий «фикс» будет такой же.</p>
-    </div>
-
-    <div class="method-card proc" style="border-left-color: var(--accent-2);">
-      <h4>🎯 Скрытое: «псевдо-фиксы»</h4>
-      <div class="stat">Что мешало увидеть реальные проблемы</div>
-      <ul>
-        <li>T6/T8/T11 — лёгкие, видимые, дают ощущение прогресса. Их и закрыли</li>
-        <li>T1/T3/T4 — тяжёлые, требуют доступа к Supabase, нет fast-feedback. Их откладывали</li>
-        <li>В TASKS.md они стоят первыми по приоритету, но фактически делались последними</li>
-      </ul>
-      <p style="font-size:12px; color:var(--muted); margin-top:10px;">Классический паттерн: agentic AI бежит туда, где быстрее окупаемость. Без явной команды «не трогай мелочи пока крит не закрыт» — будет повторяться.</p>
-    </div>
-  </div>
 </div>
 
 <div class="section">
-  <h2>Предлагаемый план действий</h2>
-  <div class="sub">По убыванию ROI и риска. Каждая волна — отдельный коммит, после каждой — дай ответ ОК/не ОК прежде чем браться за следующую.</div>
+<h2>Категоризация: код vs логика vs методология</h2>
+<div class="sub">"Может, ошибки не просто в коде, но в логике и методологии?" - да. Разделение:</div>
+<div class="method-grid">
 
-  <div class="plan">
-    <div class="plan-wave">
-      <h3>🔴 Волна 1 — разблокировать ядро (≈30 минут)</h3>
-      <div class="meta">Без этого продукт не работает. После — задачи начнут создаваться, видеовстречи появятся.</div>
-      <ol>
-        <li><strong>B1</strong>: <code>DROP TRIGGER trg_tasks_history, trg_tasks_history_create</code> через Supabase MCP. Команда готова, проверена.</li>
-        <li><strong>B3</strong>: Добавить RLS-политики для <code>video_meeting_*</code> (3 таблицы). Логика — участник видит свою встречу, организатор+admin/gip создают.</li>
-        <li><strong>B4 + B5</strong>: <strong>не трогать</strong> до твоего ответа. B4 нужно решение по доступу ГИПов, B5 — нужны Vercel-логи.</li>
-      </ol>
-    </div>
-    <div class="plan-wave">
-      <h3>🟡 Волна 2 — после твоих ответов (≈2 часа)</h3>
-      <div class="meta">Сначала ты отвечаешь на 2 вопроса, потом я делаю.</div>
-      <ol>
-        <li><strong>B4</strong>: жду от тебя ответа «один ГИП или несколько / какая модель доступа». После — пишу политики.</li>
-        <li><strong>B5</strong>: открываю Vercel logs, нахожу стектрейс 500, чиню root cause.</li>
-        <li><strong>Пере-QA</strong>: после B1+B3+B5 прогнать сценарий заново и снять остаток.</li>
-      </ol>
-    </div>
-    <div class="plan-wave">
-      <h3>🟢 Волна 3 — UX-чистка (≈1 час)</h3>
-      <div class="meta">Можно делать после Волны 1 параллельно или вечером. Не блокирует.</div>
-      <ol>
-        <li>B7/B9 — додеплоить и перепроверить даты</li>
-        <li>B10 — локализация статусов трансмиттала</li>
-        <li>B8 — кнопка «Отделы»</li>
-        <li>B11 — финальный grep на createClient</li>
-        <li>B13 — перезапуск обработки 2 нормативов</li>
-        <li>Дополнительно: <code>validateApplyAction.ts</code> — assignee_id → assigned_to (тихая дыра)</li>
-      </ol>
-    </div>
-    <div class="plan-wave">
-      <h3>⚙️ Параллельно: фикс методологии</h3>
-      <div class="meta">Иначе следующий QA-обзор найдёт те же 13 + ещё 13.</div>
-      <ol>
-        <li><strong>Cowork mount → не использовать для коммитов.</strong> Все правки — через clone в /tmp с PAT. Это уже в memory как HARD RULE</li>
-        <li><strong>Перед каждым git push:</strong> <code>tsc --noEmit</code> в /tmp clone. Если ошибка — не пушить</li>
-        <li><strong>Не перебивать пользователя «ну я попробую» — </strong> проверять автора коммита перед пушем</li>
-        <li><strong>Принцип «доделывай до конца перед деплоем»</strong> из CLAUDE.md Nurmak — применить и здесь</li>
-      </ol>
-    </div>
-  </div>
-
-  <button class="cta" id="copy-plan">📋 Показать решение текстом</button>
+<div class="method-card code">
+<h4>Код (5)</h4>
+<div class="stat">Опечатки, забытые i18n, мелкие UI-баги</div>
+<ul>
+<li>B7, B9 - даты US-формат</li>
+<li>B8 - кнопка Отделы</li>
+<li>B10 - локализация статусов</li>
+<li>B12 - tooltip (готово)</li>
+</ul>
+<p style="font-size:12px;color:var(--muted);margin-top:10px;">Закрываются механически - grep + sed + редеплой. 1-2 часа.</p>
 </div>
 
-<div id="decision-out" style="display:none; margin-top:18px; background:var(--panel); border:2px solid var(--accent); border-radius:12px; padding:16px;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-    <strong style="font-size:14px;">Твоё решение — выдели и скопируй (Ctrl+A → Ctrl+C):</strong>
-    <button id="try-copy" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px;">Попробовать скопировать</button>
-  </div>
-  <textarea id="decision-text" style="width:100%; min-height:300px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:12px; font:12px/1.5 'SF Mono', Menlo, Consolas, monospace;" readonly></textarea>
-  <div style="font-size:12px; color:var(--muted); margin-top:8px;">Если кнопка «скопировать» не работает (браузер блокирует) — кликни в поле, нажми Ctrl+A, потом Ctrl+C. На телефоне: long-press → Select All → Copy.</div>
+<div class="method-card logic">
+<h4>Логика (4)</h4>
+<div class="stat">Дизайн БД, политики, архитектура агента</div>
+<ul>
+<li><strong>B1</strong> - два конкурирующих триггера на одной таблице</li>
+<li><strong>B3</strong> - RLS включён без политик: безопасно по умолчанию, но не работает</li>
+<li><strong>B4</strong> - "admin/gip видит всё" без scope: нет согласованной модели доступа</li>
+<li><strong>B5/B6</strong> - orchestrator кидает наружу промпты валидации</li>
+</ul>
+<p style="font-size:12px;color:var(--muted);margin-top:10px;">Это не код, это решения. Сначала обсудить логику, потом писать SQL/TS.</p>
+</div>
+
+<div class="method-card proc">
+<h4>Методология (3)</h4>
+<div class="stat">Как работали, что ломали по дороге</div>
+<ul>
+<li><strong>Truncation cycle</strong> - агент обрезал файлы при коммите через Cowork mount, потом сам же восстанавливал, потом снова ломал</li>
+<li><strong>No verification</strong> - пушили без tsc --noEmit и без QA-прогона. ESLint падал - деплой ERROR - повторно</li>
+<li><strong>Wrong author</strong> - два коммита подписаны andreyfuture27 вопреки правилу</li>
+</ul>
+<p style="font-size:12px;color:var(--muted);margin-top:10px;">Без фикса методологии любой следующий "фикс" будет такой же.</p>
+</div>
+
+<div class="method-card proc" style="border-left-color:var(--accent2)">
+<h4>Скрытое: псевдо-фиксы</h4>
+<div class="stat">Что мешало увидеть реальные проблемы</div>
+<ul>
+<li>T6/T8/T11 - лёгкие, видимые, дают ощущение прогресса. Их и закрыли</li>
+<li>T1/T3/T4 - тяжёлые, требуют доступа к Supabase, нет fast-feedback. Откладывали</li>
+<li>В TASKS.md они стоят первыми по приоритету, фактически делались последними</li>
+</ul>
+<p style="font-size:12px;color:var(--muted);margin-top:10px;">Классический паттерн agentic AI: бежит туда, где быстрее окупаемость. Без явной команды - повторится.</p>
+</div>
+
+</div>
+</div>
+
+<div class="section">
+<h2>План действий</h2>
+<div class="sub">По убыванию ROI и риска. Каждая волна - отдельный коммит, после каждой - дай ответ ОК/не ОК.</div>
+
+<div class="plan">
+<div class="plan-wave">
+<h3>Волна 1 - разблокировать ядро (~30 мин)</h3>
+<div class="meta">Без этого продукт не работает.</div>
+<ol>
+<li><strong>B1</strong>: DROP TRIGGER trg_tasks_history, trg_tasks_history_create через Supabase MCP.</li>
+<li><strong>B3</strong>: Добавить RLS-политики для video_meeting_* (3 таблицы).</li>
+<li><strong>B4 + B5</strong>: НЕ трогать до твоего ответа. B4 - решение по доступу ГИПов, B5 - Vercel-логи.</li>
+</ol>
+</div>
+<div class="plan-wave">
+<h3>Волна 2 - после твоих ответов (~2 часа)</h3>
+<div class="meta">Сначала ты отвечаешь на 2 вопроса, потом я делаю.</div>
+<ol>
+<li><strong>B4</strong>: жду ответ "один ГИП или несколько". После - пишу политики.</li>
+<li><strong>B5</strong>: открываю Vercel logs, нахожу стектрейс 500.</li>
+<li><strong>Пере-QA</strong>: после B1+B3+B5 прогнать сценарий заново.</li>
+</ol>
+</div>
+<div class="plan-wave">
+<h3>Волна 3 - UX-чистка (~1 час)</h3>
+<div class="meta">Параллельно или вечером. Не блокирует.</div>
+<ol>
+<li>B7/B9 - дочистить даты</li>
+<li>B10 - локализация статусов трансмиттала</li>
+<li>B8 - кнопка Отделы</li>
+<li>B11 - финальный grep на createClient</li>
+<li>B13 - перезапуск 2 нормативов</li>
+<li>validateApplyAction.ts - assignee_id - assigned_to (тихая дыра)</li>
+</ol>
+</div>
+<div class="plan-wave">
+<h3>Параллельно: фикс методологии</h3>
+<div class="meta">Иначе следующий QA-обзор найдёт те же 13 + ещё 13.</div>
+<ol>
+<li>Cowork mount - не использовать для коммитов. Все правки через clone в /tmp с PAT</li>
+<li>Перед каждым git push - tsc --noEmit. Ошибка - не пушить</li>
+<li>Проверять автора коммита перед пушем</li>
+<li>Принцип "доделывай до конца перед деплоем" из CLAUDE.md Nurmak</li>
+</ol>
+</div>
+</div>
+
+<button class="cta" id="copy-plan">Показать решение текстом</button>
+</div>
+
+<div id="decision-out">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+<strong style="font-size:14px">Твоё решение - выдели и скопируй (Ctrl+A, Ctrl+C):</strong>
+<button id="try-copy" style="background:var(--accent);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Попробовать скопировать</button>
+</div>
+<textarea id="decision-text" readonly></textarea>
+<div style="font-size:12px;color:var(--muted);margin-top:8px">Если кнопка не работает - кликни в поле, Ctrl+A, Ctrl+C. На телефоне: long-press, Select all, Copy.</div>
 </div>
 
 <div class="summary-bar">
-  <div class="stats">
-    <span id="stat-fix">0</span>чинить ·
-    <span id="stat-defer">0</span>отложить ·
-    <span id="stat-skip">0</span>скип
-  </div>
-  <button class="copy" id="copy-btn">Показать решение</button>
+<div class="stats">
+<span id="stat-fix">0</span>чинить -
+<span id="stat-defer">0</span>отложить -
+<span id="stat-skip">0</span>скип
+</div>
+<button class="copy" id="copy-btn">Показать решение</button>
 </div>
 
 </div>
-
 <script>
-(function() {
-  const cards = Array.from(document.querySelectorAll('.card'));
-
-  // Init KPIs
-  const counts = { broken: 0, partial: 0, fixed: 0, unknown: 0 };
-  cards.forEach(c => { counts[c.dataset.status] = (counts[c.dataset.status] || 0) + 1; });
+(function(){
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var counts = {broken:0, partial:0, fixed:0, unknown:0};
+  cards.forEach(function(c){ counts[c.getAttribute('data-status')] = (counts[c.getAttribute('data-status')]||0) + 1; });
   document.getElementById('kpi-broken').textContent = counts.broken;
   document.getElementById('kpi-partial').textContent = counts.partial;
   document.getElementById('kpi-fixed').textContent = counts.fixed;
   document.getElementById('kpi-unknown').textContent = counts.unknown;
 
-  // Toggle cards
-  cards.forEach(card => {
-    card.querySelector('.head').addEventListener('click', () => {
-      card.classList.toggle('open');
-    });
+  cards.forEach(function(card){
+    var head = card.querySelector('.head');
+    head.addEventListener('click', function(){ card.classList.toggle('open'); });
   });
 
-  // Filters
-  document.querySelectorAll('.toolbar button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
+  var filterButtons = document.querySelectorAll('.toolbar button');
+  filterButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      filterButtons.forEach(function(b){ b.classList.remove('active'); });
       btn.classList.add('active');
-      const f = btn.dataset.filter;
-      if (f === 'open-all') {
-        cards.forEach(c => c.classList.add('open'));
-        return;
-      }
-      cards.forEach(c => {
+      var f = btn.getAttribute('data-filter');
+      if (f === 'open-all') { cards.forEach(function(c){ c.classList.add('open'); }); return; }
+      cards.forEach(function(c){
         if (f === 'all') c.style.display = '';
-        else if (f === 'crit' || f === 'warn' || f === 'cosm') c.style.display = c.dataset.sev === f ? '' : 'none';
-        else if (f === 'broken' || f === 'fixed') c.style.display = c.dataset.status === f ? '' : 'none';
+        else if (f === 'crit' || f === 'warn' || f === 'cosm') c.style.display = (c.getAttribute('data-sev') === f ? '' : 'none');
+        else if (f === 'broken' || f === 'fixed') c.style.display = (c.getAttribute('data-status') === f ? '' : 'none');
       });
     });
   });
 
-  // Action buttons
-  function recount() {
-    let f = 0, d = 0, s = 0;
-    cards.forEach(c => {
-      const chosen = c.querySelector('.act-btn.chosen');
+  function recount(){
+    var f=0, d=0, s=0;
+    cards.forEach(function(c){
+      var chosen = c.querySelector('.act-btn.chosen');
       if (!chosen) return;
-      const a = chosen.dataset.act;
+      var a = chosen.getAttribute('data-act');
       if (a === 'fix') f++;
       else if (a === 'defer') d++;
       else if (a === 'skip') s++;
@@ -804,20 +612,80 @@ export const getSupabaseAnonClient = () => {
     document.getElementById('stat-defer').textContent = d;
     document.getElementById('stat-skip').textContent = s;
   }
-  cards.forEach(card => {
-    card.querySelectorAll('.act-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        card.querySelectorAll('.act-btn').forEach(b => b.classList.remove('chosen'));
+  cards.forEach(function(card){
+    var btns = card.querySelectorAll('.act-btn');
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        btns.forEach(function(b){ b.classList.remove('chosen'); });
         btn.classList.add('chosen');
         recount();
       });
     });
+    var note = card.querySelector('.note');
+    if (note) note.addEventListener('click', function(e){ e.stopPropagation(); });
   });
 
-  // Build summary
-  function buildSummary() {
-    const lines = ['# QA-обзор EngHub от 27.04.2026 — решения', ''];
-    let fixCount = 0, deferCount = 0, skipCount = 0, noneCount = 0;
-    const fixList = [], deferList = [], skipList = [];
-    cards.forEach(card => {
-      const id =
+  function buildSummary(){
+    var lines = ['# QA review EngHub 27.04.2026 - решения', ''];
+    var fix=[], defer=[], skip=[], none=0;
+    cards.forEach(function(card){
+      var id = card.querySelector('.bug-id').textContent.replace(/\s+/g,' ').trim();
+      var title = card.querySelector('h3').textContent.trim();
+      var chosen = card.querySelector('.act-btn.chosen');
+      var note = card.querySelector('.note') ? card.querySelector('.note').value.trim() : '';
+      if (!chosen) { none++; return; }
+      var a = chosen.getAttribute('data-act');
+      var entry = {id:id, title:title, decision:chosen.textContent.trim(), note:note};
+      if (a === 'fix') fix.push(entry);
+      else if (a === 'defer') defer.push(entry);
+      else if (a === 'skip') skip.push(entry);
+    });
+    lines.push('Итого: ' + fix.length + ' чинить · ' + defer.length + ' отложить · ' + skip.length + ' скип' + (none ? ' · ' + none + ' без решения' : ''));
+    lines.push('');
+    if (fix.length){ lines.push('## Чинить:'); fix.forEach(function(e){ lines.push('- ' + e.id + ': ' + e.title + ' -> ' + e.decision + (e.note ? ' [' + e.note + ']' : '')); }); lines.push(''); }
+    if (defer.length){ lines.push('## Отложить:'); defer.forEach(function(e){ lines.push('- ' + e.id + ': ' + e.title + (e.note ? ' [' + e.note + ']' : '')); }); lines.push(''); }
+    if (skip.length){ lines.push('## Скип:'); skip.forEach(function(e){ lines.push('- ' + e.id + ': ' + e.title + (e.note ? ' [' + e.note + ']' : '')); }); lines.push(''); }
+    return lines.join('\n');
+  }
+
+  function showDecision(){
+    var text = buildSummary();
+    var out = document.getElementById('decision-out');
+    var ta = document.getElementById('decision-text');
+    ta.value = text;
+    out.style.display = 'block';
+    out.scrollIntoView({behavior:'smooth', block:'start'});
+    setTimeout(function(){ ta.focus(); ta.select(); }, 100);
+  }
+
+  function tryCopy(){
+    var ta = document.getElementById('decision-text');
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch(e) { ok = false; }
+    var btn = document.getElementById('try-copy');
+    if (ok){
+      btn.textContent = 'Скопировано';
+      setTimeout(function(){ btn.textContent = 'Попробовать скопировать'; }, 2000);
+    } else if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).then(function(){
+        btn.textContent = 'Скопировано';
+        setTimeout(function(){ btn.textContent = 'Попробовать скопировать'; }, 2000);
+      }).catch(function(){
+        alert('Браузер не даёт копировать. Выдели вручную (Ctrl+A, Ctrl+C).');
+      });
+    } else {
+      alert('Браузер не даёт копировать. Выдели вручную (Ctrl+A, Ctrl+C).');
+    }
+  }
+
+  document.getElementById('copy-btn').addEventListener('click', showDecision);
+  document.getElementById('copy-plan').addEventListener('click', showDecision);
+  document.getElementById('try-copy').addEventListener('click', tryCopy);
+  recount();
+})();
+</script>
+</body>
+</html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
