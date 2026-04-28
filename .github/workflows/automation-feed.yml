@@ -1,0 +1,54 @@
+name: automation-feed
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # daily 06:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: automation-feed
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests feedparser openai
+
+      - name: Scrape feeds
+        run: python scripts/scrape_feeds.py
+
+      - name: AI process pains
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python scripts/process_pains.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.email "andyrbek2709@gmail.com"
+          git config user.name  "Andrey"
+          git add data/seen.json data/raw_items.json enghub-main/public/data/automation-feed.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "chore(automation-feed): daily refresh $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          fi
