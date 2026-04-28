@@ -75,6 +75,17 @@ details.cheat .cheatbody b{color:var(--text);display:block;margin-bottom:2px}
   .row .cat,.row .date{display:none}
   input.search{min-width:140px}
 }
+
+.status-strip{display:flex;flex-wrap:wrap;align-items:center;gap:0;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+.status-strip .seg{display:inline-flex;align-items:center;gap:6px;padding:0 14px;line-height:1.6}
+.status-strip .seg + .seg{border-left:1px solid var(--border)}
+.status-strip .seg:first-child{padding-left:2px}
+.status-strip b{color:var(--text);font-weight:600}
+.status-strip .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green)}
+.status-strip .dot.stale{background:var(--yellow)}
+.status-strip .dot.cold{background:var(--gray)}
+.status-strip .run-btn{background:var(--accent);color:#fff;border:0;padding:5px 11px;border-radius:7px;font-size:12px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:.15s}
+.status-strip .run-btn:hover{background:#3b75e0}
 </style>
 </head>
 <body>
@@ -113,6 +124,12 @@ details.cheat .cheatbody b{color:var(--text);display:block;margin-bottom:2px}
   </div>
 </div>
 
+<div class="status-strip" id="status-strip">
+  <span class="seg"><span class="dot cold" id="st-dot"></span>Последнее обновление: <b id="st-last">—</b></span>
+  <span class="seg"><a class="run-btn" href="https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/automation-feed.yml" target="_blank" rel="noopener">🔄 Запустить сборку</a></span>
+  <span class="seg">Следующий автозапуск: <b id="st-next">через …</b></span>
+</div>
+
 <div id="main" style="margin-top:14px"></div>
 
 <details class="cheat">
@@ -145,14 +162,13 @@ function fmtRel(iso){
 function escapeHtml(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function prioCls(p){return p>=8?"high":(p>=6?"mid":"low");}
 
-function renderEmpty(reason){
+function renderEmpty(){
   document.getElementById("main").innerHTML = `<div class="empty">
-    <p><b>Поток ещё не собран.</b></p>
-    <p>Action запустится автоматически в <b>06:00 UTC</b>.<br>
-    Или жми <b>Run workflow</b> в Actions tab репо для ручного запуска.</p>
-    <p style="font-size:11px;margin-top:18px">${reason||""}</p>
+    <p style="font-size:32px;margin:0 0 8px">🕒</p>
+    <p><b>Поток ещё не обновлялся</b></p>
+    <p>Запусти сборку через кнопку выше или подожди до автозапуска в <b>06:00 UTC</b>.</p>
   </div>`;
-  document.getElementById("hdr-sub").textContent = "—";
+  document.getElementById("hdr-sub").textContent = "данных пока нет";
 }
 
 function buildFilters(){
@@ -314,20 +330,56 @@ function bindUI(){
   });
 }
 
+function fmtRelLong(iso){
+  if(!iso) return "";
+  const d = new Date(iso); if(isNaN(d.getTime())) return "";
+  const diff = (Date.now()-d.getTime())/1000;
+  if(diff<60) return "только что";
+  if(diff<3600){ const m=Math.floor(diff/60); return m+" "+plural(m,["минуту","минуты","минут"])+" назад"; }
+  if(diff<86400){ const h=Math.floor(diff/3600); return h+" "+plural(h,["час","часа","часов"])+" назад"; }
+  if(diff<86400*2){ return "вчера в "+String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0")+" UTC"; }
+  const days=Math.floor(diff/86400); return days+" "+plural(days,["день","дня","дней"])+" назад";
+}
+function plural(n,forms){ const m=n%10, m2=n%100; if(m===1&&m2!==11) return forms[0]; if(m>=2&&m<=4&&(m2<10||m2>=20)) return forms[1]; return forms[2]; }
+function nextRunIn(){
+  const now=new Date(); const next=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),6,0,0,0));
+  if(next<=now) next.setUTCDate(next.getUTCDate()+1);
+  const diff=Math.max(0,(next-now)/1000);
+  const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60);
+  if(h===0) return "через "+m+" "+plural(m,["минуту","минуты","минут"]);
+  return "через "+h+" ч "+m+" мин";
+}
+function updateStatusStrip(){
+  const gen = state.data && state.data.meta && state.data.meta.generated_at;
+  const lastEl=document.getElementById("st-last"), nextEl=document.getElementById("st-next"), dotEl=document.getElementById("st-dot");
+  if(gen){
+    lastEl.textContent = fmtRelLong(gen);
+    const ageH = (Date.now()-new Date(gen).getTime())/3600000;
+    dotEl.className = "dot "+(ageH>30?"cold":(ageH>26?"stale":""));
+  } else {
+    lastEl.textContent = "Ещё не обновлялось";
+    dotEl.className = "dot cold";
+  }
+  nextEl.textContent = nextRunIn();
+}
+setInterval(updateStatusStrip, 60000);
+
 async function load(){
   bindUI();
+  updateStatusStrip();
   try{
     const r = await fetch("/data/parsing.json?ts="+Date.now(), {cache:"no-store"});
     if(!r.ok) throw new Error("HTTP "+r.status);
     state.data = await r.json();
   }catch(e){
-    renderEmpty(String(e));
+    renderEmpty();
     return;
   }
   const m=state.data.meta||{}, st=m.stats||{};
   const gen = (m.generated_at||"").replace("T"," ").replace("Z"," UTC");
   document.getElementById("hdr-sub").innerHTML = `обновлено: <b>${escapeHtml(gen||"—")}</b> · <b>${st.ai_confirmed_pain||0}</b> болей · <b>${st.clusters||0}</b> кластеров · из ${(m.sources_used||[]).length} источников`;
   buildFilters();
+  updateStatusStrip();
   render();
 }
 load();
