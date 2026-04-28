@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions, transmittalStatusMap } from './constants';
+import { NavIcon } from './components/icons';
 import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory } from './api/supabase';
 import { getSupabaseAdminClient } from './api/supabaseClient';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput } from './components/ui';
@@ -188,7 +189,7 @@ export default function App() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [archivedProjects, setArchivedProjects] = useState<any[]>([]);
   const [branding, setBranding] = useState<{ companyName: string; logoUrl: string | null }>({ companyName: 'EngHub', logoUrl: null });
-  const [sideTab, setSideTab] = useState(() => { const s = localStorage.getItem('enghub_sidetab'); return (s && s !== 'conference') ? s : 'tasks'; });
+  const [sideTab, setSideTab] = useState(() => { const s = localStorage.getItem('enghub_sidetab'); return s || 'conference'; });
   const [chatInput, setChatInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1681,7 +1682,7 @@ export default function App() {
             {branding.logoUrl ? (
               <img src={branding.logoUrl} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <>⬡</>
+              <span style={{ fontFamily: 'Manrope', fontWeight: 900, fontSize: 14, color: '#fff', letterSpacing: '-0.02em' }}>Eh</span>
             )}
           </div>
           <div className="sidebar-logo-text">{branding.companyName || "EngHub"}</div>
@@ -1691,7 +1692,9 @@ export default function App() {
           <div className="sidebar-section-label">Навигация</div>
           {navItems.map(n => (
             <button key={n.id} className={`sidebar-btn ${screen === n.id ? "active" : ""}`} onClick={() => setScreen(n.id)}>
-              <span className="sidebar-btn-icon">{n.icon}</span>
+              <span className="sidebar-btn-icon">
+                {NavIcon[n.id] ? React.createElement(NavIcon[n.id], { s: 16, c: 'currentColor' }) : n.icon}
+              </span>
               <span>{n.label}</span>
             </button>
           ))}

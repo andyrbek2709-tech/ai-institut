@@ -149,3 +149,22 @@ export function RuDateInput({
     />
   );
 }
+
+// useCountUp — анимация числовых значений в KPI-карточках (T31 redesign)
+export function useCountUp(target: number, duration: number = 750): number {
+  const [value, setValue] = React.useState(0);
+  React.useEffect(() => {
+    let start: number | null = null;
+    let raf = 0;
+    const step = (timestamp: number) => {
+      if (start === null) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      setValue(Math.round((1 - Math.pow(1 - progress, 3)) * target));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
+}
+
