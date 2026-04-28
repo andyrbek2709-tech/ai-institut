@@ -468,6 +468,28 @@ export default function App() {
     if (Array.isArray(data)) setNormativeDocs(data);
   };
 
+  // NORM-01 fix: открыть нормативный документ через подписанный Storage URL
+  const openNormativeDoc = async (doc: any) => {
+    if (!doc?.file_path) { addNotification("Путь к файлу не найден", "warning"); return; }
+    const isPdf = doc.file_type?.includes("pdf") || doc.name?.toLowerCase().endsWith(".pdf");
+    const signRes = await fetch(`${SURL}/storage/v1/object/sign/normative-docs/${doc.file_path}`, {
+      method: "POST",
+      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ expiresIn: 3600 }),
+    });
+    const signData = await signRes.json();
+    const signedUrl = signData?.signedURL ? `${SURL}/storage/v1${signData.signedURL}` : signData?.signedUrl;
+    if (!signedUrl) { addNotification("Не удалось получить ссылку на файл", "warning"); return; }
+    if (isPdf) {
+      window.open(signedUrl, "_blank");
+    } else {
+      const a = document.createElement("a");
+      a.href = signedUrl;
+      a.download = doc.name;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+  };
+
   // Запасной текстовый поиск через ilike (когда нет эмбеддингов)
   const searchNormativeIlike = async (query: string): Promise<any[]> => {
     const enc = encodeURIComponent(`*${query.trim()}*`);
@@ -2898,11 +2920,18 @@ export default function App() {
 
                     const pct = r.similarity != null ? Math.round(r.similarity * 100) : null;
                     const pctColor = pct != null && pct >= 80 ? C.green : pct != null && pct >= 60 ? C.accent : C.textMuted;
+                    // NORM-01: найти документ по doc_id чтобы можно было открыть
+                    const matchedDoc = normativeDocs.find((d: any) => d.id === r.doc_id || d.name === r.doc_name);
                     return (
-                      <div key={r.id} style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.surface : C.surface2 }}>
+                      <div key={r.id}
+                        onClick={() => matchedDoc && openNormativeDoc(matchedDoc)}
+                        style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? C.surface : C.surface2, cursor: matchedDoc ? 'pointer' : 'default', transition: 'background 0.15s' }}
+                        onMouseEnter={e => { if (matchedDoc) e.currentTarget.style.background = C.accent + '15'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = i % 2 === 0 ? C.surface : C.surface2; }}
+                        title={matchedDoc ? 'Кликни чтобы открыть документ' : ''}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                           <span style={{ fontSize: 15 }}>{r.doc_name?.toLowerCase().endsWith('.pdf') ? '📕' : '📘'}</span>
-                          <span style={{ fontWeight: 600, fontSize: 13, color: C.text, flex: 1 }}>{r.doc_name}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13, color: matchedDoc ? C.accent : C.text, flex: 1, textDecoration: matchedDoc ? 'underline' : 'none' }}>{r.doc_name}{matchedDoc && ' →'}</span>
                           {pct != null && (
                             <span style={{ fontSize: 11, fontWeight: 700, color: pctColor, background: pctColor + '18', padding: '2px 10px', borderRadius: 10 }}>
                               {pct}% релев.
