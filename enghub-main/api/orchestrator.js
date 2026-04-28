@@ -789,7 +789,7 @@ module.exports = async function handler(req, res) {
         return res.status(200).json(blockedResponse({
           agent: 'router',
           reason_code: 'action_not_allowed',
-          message: `${rolePrompt} Операция "${action}" недоступна для роли ${currentRole}.`,
+          message: `Операция "${action}" недоступна для роли ${currentRole}.`,
           next_step: `Доступные операции для роли ${currentRole}: ${allowedActions.join(', ')}.`,
         }));
       }
@@ -958,7 +958,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json(blockedResponse({
         agent: 'router',
         reason_code: 'intent_not_allowed',
-        message: `${rolePrompt} Намерение "${intent}" недоступно для роли ${currentRole}.`,
+        message: `Намерение "${intent}" недоступно для роли ${currentRole}.`,
         next_step: `Разрешенные намерения: ${allowedIntents.join(', ')}.`,
       }));
     }
@@ -1025,7 +1025,7 @@ module.exports = async function handler(req, res) {
     const depts = pData?.[0]?.depts || [];
 
     let insertData = null;
-    let responseMessage = `${rolePrompt} Запрос принят.`;
+    let responseMessage = "Запрос принят.";
 
     if (intent === 'create_tasks') {
       const tasks = depts.length > 0
@@ -1082,7 +1082,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({
         success: true,
         agent: 'router',
-        message: `${rolePrompt} Уточните операцию: задачи, чертежи, ревизии, замечания или трансмитталы.`,
+        message: "Уточните операцию: задачи, чертежи, ревизии, замечания или трансмитталы.",
       });
     }
 
