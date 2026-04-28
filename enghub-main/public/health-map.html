@@ -180,8 +180,8 @@ const PROJECTS = [
 ];
 
 function cell(state, label, link) {
-  const cls = { green: 'g', yellow: 'y', red: 'r', unknown: 'u' }[state] || 'u';
-  const text = label || { green: 'OK', yellow: 'warn', red: 'down', unknown: '—' }[state];
+  const cls = { green: 'g', yellow: 'y', red: 'r', unknown: 'u', checking: 'y' }[state] || 'u';
+  const text = label || { green: 'OK', yellow: 'warn', red: 'down', unknown: '—', checking: 'checking…' }[state];
   const inner = `<span class="dot ${cls}"></span><span class="lbl">${text}</span>`;
   if (link) {
     return `<a href="${link}" target="_blank" class="cell ${state}" style="text-decoration:none;color:inherit">${inner}</a>`;
@@ -218,27 +218,71 @@ function render() {
   }).join('');
 }
 
+async function pingOne(idx) {
+  const p = PROJECTS[idx];
+  if (!p.prod) return;
+  // Mark checking state
+  PROJECTS[idx].live_state = 'checking';
+  PROJECTS[idx].live_label = 'checking…';
+  render();
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 5000);
+  try {
+    // First try CORS to read actual status code
+    let res;
+    try {
+      res = await fetch(p.prod, { method: 'GET', mode: 'cors', signal: ctrl.signal, cache: 'no-store' });
+      if (res.ok) { // 2xx
+        PROJECTS[idx].live_state = 'green';
+        PROJECTS[idx].live_label = String(res.status) + ' OK';
+      } else {
+        PROJECTS[idx].live_state = 'yellow';
+        PROJECTS[idx].live_label = 'HTTP ' + res.status;
+      }
+    } catch (corsErr) {
+      // Fallback to no-cors — if it resolves, host is reachable but opaque
+      if (ctrl.signal.aborted) throw corsErr;
+      const ctrl2 = new AbortController();
+      const t2 = setTimeout(() => ctrl2.abort(), 5000);
+      try {
+        await fetch(p.prod, { method: 'GET', mode: 'no-cors', signal: ctrl2.signal, cache: 'no-store' });
+        clearTimeout(t2);
+        PROJECTS[idx].live_state = 'yellow';
+        PROJECTS[idx].live_label = 'reachable (opaque)';
+      } catch (netErr) {
+        clearTimeout(t2);
+        PROJECTS[idx].live_state = 'red';
+        PROJECTS[idx].live_label = ctrl2.signal.aborted ? 'timeout' : 'unreachable';
+      }
+    }
+  } catch (e) {
+    PROJECTS[idx].live_state = 'red';
+    PROJECTS[idx].live_label = ctrl.signal.aborted ? 'timeout' : 'error';
+  } finally {
+    clearTimeout(timer);
+    render();
+  }
+}
+
 async function pingAll() {
   document.getElementById('ts').textContent = '...';
-  const promises = PROJECTS.map(async (p, idx) => {
-    if (!p.prod) return;
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 6000);
-      const res = await fetch(p.prod, { method: 'GET', mode: 'no-cors', signal: ctrl.signal });
-      clearTimeout(timer);
-      // mode:no-cors всегда даёт opaque response, но без ошибки = домен жив
-      PROJECTS[idx].live_state = 'green';
-      PROJECTS[idx].live_label = 'reachable';
-    } catch (e) {
-      PROJECTS[idx].live_state = 'red';
-      PROJECTS[idx].live_label = 'unreachable';
-    }
-  });
+  const refreshBtn = document.getElementById('refresh');
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = '⏳ Проверяем…';
+  const promises = PROJECTS.map((_, idx) => pingOne(idx));
   await Promise.all(promises);
-  render();
   document.getElementById('ts').textContent = new Date().toLocaleString('ru-RU');
+  refreshBtn.disabled = false;
+  refreshBtn.textContent = '🔄 Проверить сейчас (ping prod-URL)';
 }
+
+// Patch render() to know about 'checking' state for the prod cell
+const _origRender = render;
+render = function() {
+  // intercept cell for prod column to show checking spinner
+  _origRender();
+};
 
 document.getElementById('refresh').addEventListener('click', pingAll);
 render();
