@@ -129,20 +129,37 @@ def fuzzy_match(seed, existing_ids):
 CAT_LIST = "\n".join(f"  - {k} → {v}" for k, v in CATEGORIES.items())
 SYS_PROMPT = (
     "Ты классификатор болевых точек, которые можно автоматизировать. "
-    "Получаешь массив постов из инженерных/IT-сообществ. Для КАЖДОГО элемента возвращай "
+    "Получаешь массив постов из разных профессиональных сообществ. Для КАЖДОГО элемента возвращай "
     "объект со строгим JSON-форматом.\n\n"
     f"Категории (id → label):\n{CAT_LIST}\n\n"
     "Правила:\n"
     "1. is_pain=true только если автор реально жалуется на ручную/повторяющуюся работу или "
-    "ищет инструмент. Иначе false.\n"
+    "ищет инструмент. Иначе false (всё ниже можно оставить пустым/нулевым).\n"
     "2. category — один из id выше.\n"
     "3. priority — float 0..10: насколько эта боль распространена И автоматизируема.\n"
-    "4. summary_ru — одно предложение по-русски, что именно болит.\n"
-    "5. cluster_seed_ru — 3..5 ключевых слов на русском (общие для всей категории схожих "
+    "4. problem_short — одно предложение по-русски, кратко суть проблемы.\n"
+    "5. automation_idea — 1-2 предложения по-русски: общая идея как автоматизировать.\n"
+    "6. concrete_solution — JSON массив строк, 3-5 конкретных шагов реализации (по-русски). "
+    "Например: [\"Подключить API CRM\", \"Раз в час забирать новых клиентов\", \"Записывать в Google Sheets\"].\n"
+    "7. tools — JSON массив инструментов которые подходят. Используй короткие названия: "
+    "\"n8n\", \"Make.com\", \"Zapier\", \"OpenAI API\", \"Claude API\", \"Google Sheets\", "
+    "\"Airtable\", \"PostgreSQL\", \"Node.js\", \"Python\", \"Telegram bot\", \"Discord bot\", "
+    "\"Slack bot\", \"Email\", \"Webhook\", \"Excel\", \"Power Automate\", \"Notion\". "
+    "Возвращай 1-5 наиболее подходящих.\n"
+    "8. complexity — \"easy\" (можно сделать за день no-code инструментом), \"medium\" "
+    "(нужны API + скрипт, 1-3 дня), или \"hard\" (требует ML/RAG/сложной интеграции, неделя+).\n"
+    "9. value — \"low\" (полезно но не критично), \"medium\" (заметно сэкономит время), "
+    "\"high\" (закрывает большую боль или открывает новый сценарий).\n"
+    "10. can_automate — true/false. Если задача требует физического труда, личного присутствия, "
+    "юридического суждения, креативной работы которую AI пока не может — поставь false и в "
+    "следующем поле объясни.\n"
+    "11. cannot_automate_reason — если can_automate=false, краткое объяснение по-русски почему. "
+    "Иначе пустая строка.\n"
+    "12. cluster_seed_ru — 3-5 ключевых слов на русском (общие для всей категории схожих "
     "болей, нижний регистр, без знаков, например \"ручной перенос crm excel\").\n"
-    "6. meta_cluster_seed_ru — 1..3 слова, более широкая мета-тема (например \"синхронизация "
+    "13. meta_cluster_seed_ru — 1-3 слова, более широкая мета-тема (например \"синхронизация "
     "данных\", \"отчётность\", \"коммуникация\", \"мониторинг\", \"документация\").\n"
-    "7. lang — \"ru\" или \"en\" исходного поста.\n"
+    "14. lang — \"ru\" или \"en\" исходного поста.\n\n"
     "Выводи строго JSON: {\"results\":[obj,...]} в том же порядке что вход."
 )
 
@@ -156,7 +173,14 @@ def _heuristic_one(it):
         "is_pain": hits >= 1,
         "category": "workflow",
         "priority": min(10.0, 4.0 + hits),
-        "summary_ru": (it.get("title") or "")[:140],
+        "problem_short": (it.get("title") or "")[:140],
+        "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+        "concrete_solution": ["Описать шаги вручную", "Подобрать инструмент", "Реализовать пилот"],
+        "tools": ["n8n"],
+        "complexity": "medium",
+        "value": "medium",
+        "can_automate": True,
+        "cannot_automate_reason": "",
         "cluster_seed_ru": "ручной-процесс",
         "meta_cluster_seed_ru": "автоматизация",
         "lang": it.get("lang", "en"),
@@ -191,11 +215,43 @@ async def _call_batch(client, items, totals):
         for idx in range(len(items)):
             r = results[idx] if idx < len(results) else {}
             cat = r.get("category") if r.get("category") in CATEGORIES else "workflow"
+            # Normalize concrete_solution
+            cs = r.get("concrete_solution")
+            if isinstance(cs, str):
+                cs = [s.strip() for s in re.split(r"\n|;", cs) if s.strip()]
+            elif not isinstance(cs, list):
+                cs = []
+            cs = [str(s)[:200] for s in cs[:6]]
+            # Normalize tools
+            tools = r.get("tools")
+            if isinstance(tools, str):
+                tools = [t.strip() for t in re.split(r"[,;]", tools) if t.strip()]
+            elif not isinstance(tools, list):
+                tools = []
+            tools = [str(t)[:32] for t in tools[:6]]
+            complexity = r.get("complexity") or "medium"
+            if complexity not in ("easy", "medium", "hard"):
+                complexity = "medium"
+            value = r.get("value") or "medium"
+            if value not in ("low", "medium", "high"):
+                value = "medium"
+            can_auto = r.get("can_automate")
+            if can_auto is None:
+                can_auto = bool(r.get("is_pain", False))
+            cannot_reason = (r.get("cannot_automate_reason") or "").strip()[:240]
+            problem_short = (r.get("problem_short") or r.get("summary_ru") or "").strip()[:240]
             out.append({
                 "is_pain": bool(r.get("is_pain", False)),
                 "category": cat,
                 "priority": float(r.get("priority", 5.0)),
-                "summary_ru": (r.get("summary_ru") or "").strip()[:240],
+                "problem_short": problem_short,
+                "automation_idea": (r.get("automation_idea") or "").strip()[:400],
+                "concrete_solution": cs,
+                "tools": tools,
+                "complexity": complexity,
+                "value": value,
+                "can_automate": bool(can_auto),
+                "cannot_automate_reason": cannot_reason,
                 "cluster_seed_ru": (r.get("cluster_seed_ru") or "ручной процесс").strip().lower(),
                 "meta_cluster_seed_ru": (r.get("meta_cluster_seed_ru") or "автоматизация").strip().lower(),
                 "lang": r.get("lang") or items[idx].get("lang", "en"),
@@ -343,7 +399,15 @@ def main():
             "category": ai["category"],
             "category_label": CATEGORIES.get(ai["category"], "Workflow-автоматизация"),
             "priority": round(ai["priority"], 2),
-            "summary_ru": ai["summary_ru"],
+            "problem_short": ai.get("problem_short", ""),
+            "automation_idea": ai.get("automation_idea", ""),
+            "concrete_solution": ai.get("concrete_solution", []),
+            "tools": ai.get("tools", []),
+            "complexity": ai.get("complexity", "medium"),
+            "value": ai.get("value", "medium"),
+            "can_automate": ai.get("can_automate", True),
+            "cannot_automate_reason": ai.get("cannot_automate_reason", ""),
+            "summary_ru": ai.get("problem_short", ""),  # backward compat
             "cluster_id": cid,
             "meta_cluster_id": "",  # filled in below
         })

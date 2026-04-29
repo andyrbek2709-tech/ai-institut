@@ -72,6 +72,33 @@ select{background:var(--panel);color:var(--text);border:1px solid var(--border);
 .expand .meta-row{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--muted)}
 .expand .meta-row b{color:var(--text);font-weight:600}
 
+.expand .badges{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.expand .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:11px;border:1px solid transparent}
+.expand .badge.cx-easy{background:rgba(34,197,94,.13);color:#22c55e;border-color:rgba(34,197,94,.3)}
+.expand .badge.cx-medium{background:rgba(245,158,11,.13);color:#f59e0b;border-color:rgba(245,158,11,.3)}
+.expand .badge.cx-hard{background:rgba(239,68,68,.13);color:#ef4444;border-color:rgba(239,68,68,.3)}
+.expand .badge.val-low{background:rgba(148,163,184,.13);color:#94a3b8;border-color:rgba(148,163,184,.3)}
+.expand .badge.val-medium{background:rgba(79,140,255,.13);color:#4f8cff;border-color:rgba(79,140,255,.3)}
+.expand .badge.val-high{background:rgba(168,85,247,.13);color:#a855f7;border-color:rgba(168,85,247,.3)}
+.expand .badge.cannot{background:rgba(239,68,68,.18);color:#ef4444;border-color:rgba(239,68,68,.4)}
+
+.expand .cannot-auto{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:8px 11px;color:#fca5a5;font-size:12.5px;line-height:1.5;margin:0 0 8px}
+.expand .cannot-auto b{color:#ef4444}
+
+.expand details.solution{background:linear-gradient(180deg,rgba(34,197,94,.05),var(--row));border:1px solid rgba(34,197,94,.25);border-radius:8px;margin:0 0 8px;padding:0;overflow:hidden}
+.expand details.solution summary{padding:9px 12px;cursor:pointer;font-weight:600;color:#22c55e;font-size:13px;list-style:none;user-select:none}
+.expand details.solution summary::-webkit-details-marker{display:none}
+.expand details.solution[open] summary{border-bottom:1px solid rgba(34,197,94,.2)}
+.expand details.solution .sol-body{padding:10px 14px 12px;font-size:12.5px;line-height:1.55;color:var(--text)}
+.expand details.solution .sol-idea{margin-bottom:8px}
+.expand details.solution .sol-steps{margin-bottom:8px;color:var(--muted)}
+.expand details.solution .sol-steps b{color:var(--text)}
+.expand details.solution .sol-steps ol{margin:5px 0 0;padding-left:22px}
+.expand details.solution .sol-steps li{margin-bottom:3px;color:var(--text)}
+.expand details.solution .sol-tools{color:var(--muted)}
+.expand details.solution .sol-tools b{color:var(--text)}
+.expand .tool-chip{display:inline-block;background:rgba(79,140,255,.13);color:#4f8cff;border:1px solid rgba(79,140,255,.3);padding:2px 8px;border-radius:9px;font-size:11px;font-weight:500;margin:3px 4px 0 0}
+
 .empty{padding:50px 22px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
 .empty b{color:var(--text)}
 .empty .big{font-size:36px;margin:0 0 8px}
@@ -422,7 +449,10 @@ function rowHtml(it){
   </div>
   <div class="expand">
     <div class="full-title">${escapeHtml(it.title)}</div>
-    ${it.summary_ru?`<div class="summary">💡 ${escapeHtml(it.summary_ru)}</div>`:""}
+    ${(it.problem_short||it.summary_ru)?`<div class="summary">💡 ${escapeHtml(it.problem_short||it.summary_ru)}</div>`:""}
+    ${badgesHtml(it)}
+    ${it.can_automate===false && it.cannot_automate_reason?`<div class="cannot-auto">🚫 <b>Нельзя автоматизировать:</b> ${escapeHtml(it.cannot_automate_reason)}</div>`:""}
+    ${solutionHtml(it)}
     ${it.text_excerpt?`<div class="excerpt">${escapeHtml(it.text_excerpt)}</div>`:""}
     <div class="meta-row">
       <span><b>Источник:</b> ${escapeHtml(it.source_label||it.source)}</span>
@@ -432,6 +462,35 @@ function rowHtml(it){
       <a href="${escapeHtml(it.url)}" target="_blank" rel="noopener" style="color:var(--accent)">открыть оригинал →</a>
     </div>
   </div>`;
+}
+
+function badgesHtml(it){
+  const parts = [];
+  const cx = it.complexity || "medium";
+  const cxLabel = {easy:"🟢 Легко", medium:"🟡 Средне", hard:"🔴 Сложно"}[cx]||cx;
+  parts.push(`<span class="badge cx-${cx}">${cxLabel}</span>`);
+  const v = it.value || "medium";
+  const vLabel = {low:"💤 Низкая ценность", medium:"⭐ Средняя ценность", high:"🔥 Высокая ценность"}[v]||v;
+  parts.push(`<span class="badge val-${v}">${vLabel}</span>`);
+  if(it.can_automate === false){
+    parts.push(`<span class="badge cannot">🚫 Нельзя автоматизировать</span>`);
+  }
+  return `<div class="badges">${parts.join("")}</div>`;
+}
+
+function solutionHtml(it){
+  const idea = (it.automation_idea||"").trim();
+  const steps = Array.isArray(it.concrete_solution)?it.concrete_solution:[];
+  const tools = Array.isArray(it.tools)?it.tools:[];
+  if(!idea && !steps.length && !tools.length) return "";
+  return `<details class="solution"${state.openSolutions && state.openSolutions.has(it.id)?' open':''}>
+    <summary>💡 Идея решения</summary>
+    <div class="sol-body">
+      ${idea?`<div class="sol-idea">${escapeHtml(idea)}</div>`:""}
+      ${steps.length?`<div class="sol-steps"><b>Конкретные шаги:</b><ol>${steps.map(s=>`<li>${escapeHtml(s)}</li>`).join("")}</ol></div>`:""}
+      ${tools.length?`<div class="sol-tools"><b>Инструменты:</b> ${tools.map(t=>`<span class="tool-chip">${escapeHtml(t)}</span>`).join("")}</div>`:""}
+    </div>
+  </details>`;
 }
 
 function bindRowClicks(scopeRoot){
