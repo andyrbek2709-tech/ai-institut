@@ -60,6 +60,42 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-04-29 — QA-прогон фич последнего деплоя (DD-07/15/16, CONV Stage 4b)
+- **Деплой:** `dpl_35c1fFju1gC5wSNRzn621RM2ypfT` (commit `15174d5`, email `andyrbek2709@gmail.com`) → READY ✅.
+- **Что проверено и работает:** /parsing.html без логина, EngineerDashboard (DD-16), LeadDashboard (DD-15), ActivityFeed вкладка (DD-07) — рендерит 4 события с эмодзи/именами/переходами, валидация комментария при возврате (≥5 симв), прикрепление файлов к задаче.
+- **Найдены баги:**
+  - 🚨 **CRITICAL:** в JS-bundle `main.5d8fd3a7.js` обнаружено 3 service_role JWT + sb_secret. Полный bypass RLS. План фикса: вынести admin-ops в /api/*, удалить REACT_APP_SUPABASE_SERVICE_KEY из Vercel, ротировать ключ. Не фикшено в этой сессии.
+  - 🟡 z-index конфликт: модал «Запрос данных у смежного отдела» был скрыт за карточкой задачи (оба .modal-overlay имели z-index 1000). **Починено локально:** добавлен `Modal.topmost` (z-index 1100) в `src/components/ui.tsx`, использован в App.tsx для `showDepRequest`. **Ожидает push** (bash sandbox недоступен — «no space left on device»).
+  - 🟡 KPI инженера временно показывают 0 — race `loadAllTasks` vs `currentUserData`. Саморешается через 1 сек.
+  - 🟡 Lead/Engineer Dashboard работают только с активным проектом (allTasks из loadAllTasks(activeProject.id)).
+  - ⚠ Тестовые юзеры из плана (admin@enghub.com, gip@nipicer.kz, lead@nipicer.kz) **не существуют** в БД. Реально работают: troshin.m@nipicer.kz (engineer), pravdukhin.a@nipicer.kz (lead) — пароль Test1234!.
+- **Файлы:** `src/components/ui.tsx`, `src/App.tsx`, `enghub-main/QA_REPORT_2026-04-29.md` (новый), `STATE.md`.
+- **Pending:** один коммит `fix(ui): topmost Modal для Stage 4b — поверх Task Detail (z-index 1100)` ожидает работы bash для push.
+
+### 2026-04-29 — ⏸ ЧЕКПОИНТ QA-сессии (остановлена пользователем, не закоммичено)
+- **Где остановились:** только что подтвердили готовность прод-деплоя после фикса git email.
+- **Vercel deployment ✅ READY:**
+  - id: `dpl_35c1fFju1gC5wSNRzn621RM2ypfT`
+  - URL: https://enghub-three.vercel.app
+  - commit: `15174d5` — "docs(agenda): итоговая запись Парсинг v2 в Сделано"
+  - author email: `andyrbek2709@gmail.com` ✅ (правильный)
+  - state: READY, target: production
+- **Что успели проверить:** только статус Vercel (через `list_deployments`). До браузерных тестов не дошли.
+- **Что НЕ начато (план для возобновления):**
+  1. Открыть `/parsing.html` без логина — должно работать (статика).
+  2. Логин `troshin.m@nipicer.kz / Test1234!` → проверить EngineerDashboard (DD-16): «Мои задачи» с цветной полоской дедлайна (🔴<3д/🟡<14д/🟢>14д), «Мои проекты».
+  3. Логин `lead@nipicer.kz / Test1234!` → проверить LeadDashboard (DD-15): «Нагрузка инженеров отдела», «На проверке у меня», «У ГИПа».
+  4. Логин `gip@nipicer.kz / Test1234!` → полный workflow задачи: создание → назначение → review → approve → done.
+  5. Вкладка «📰 Активность» (DD-07, ActivityFeed.tsx) в карточке проекта.
+  6. CONV Stage 4b: кнопка «🔗 Запросить данные у смежного отдела» (только для inprogress) и «▶ Возобновить работу (данные получены)» (для awaiting_input).
+  7. Обязательный комментарий минимум 5 символов при возврате на доработку + прикрепление файла.
+- **Тестовые юзеры:** admin@enghub.com/admin123, gip@nipicer.kz, lead@nipicer.kz, troshin.m@nipicer.kz — все с паролем `Test1234!` (admin — `admin123`).
+- **Supabase project id:** `jbdljdwlfimvmqybzynv`.
+- **Vercel team/project:** team_o0boJNeRGftH6Cbi9byd0dbF / prj_ZDihCpWH1AmIEPRebnOI7ST6d6nv.
+- **Правило git email:** ВСЕГДА `andyrbek2709@gmail.com` (не `andreyfuture27@gmail.com`).
+- **Целевой отчёт по завершении:** `D:\ai-institut\enghub-main\QA_REPORT_2026-04-29.md` (ru, markdown).
+- **Статус:** не коммичено, не запушено — пользователь выключает ПК.
+
 ### 2026-04-28 03:15 — chore: внесён внешний QA-обзор в TASKS.md (T14-T28)
 - **Что:** добавлены 15 новых задач от тестера-практика по категориям: разработка (3), дизайн/UX (4), инженерный процесс (5), повседневное использование (4). Топ-3 (моб. версия, лента активности, получатель в трансмиттале) выделены в приоритет 1.5.
 - **Файлы:** `enghub-main/TASKS.md`, `STATE.md`.

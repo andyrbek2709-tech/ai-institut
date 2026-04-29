@@ -11,15 +11,20 @@ export function ThemeToggle({ dark, setDark, C }: { dark: boolean; setDark: (v: 
 }
 
 // ===== MODAL =====
-export function Modal({ title, onClose, C, children }: { title: string; onClose: () => void; C: any; children: React.ReactNode }) {
+export function Modal({ title, onClose, C, children, topmost }: { title: string; onClose: () => void; C: any; children: React.ReactNode; topmost?: boolean }) {
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, []);
 
+  // QA-fix: если модал должен быть поверх другого модала (например, Stage 4b
+  // открывается из Task Detail), даём ему более высокий z-index, иначе он
+  // визуально скрывается под предыдущим модалом, у которого тот же z-index 1000.
+  const overlayStyle = topmost ? { zIndex: 1100 } : undefined;
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" style={overlayStyle} onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">{title}</div>

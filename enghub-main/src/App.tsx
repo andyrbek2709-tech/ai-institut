@@ -1546,7 +1546,7 @@ export default function App() {
         </Modal>
       )}
       {showDepRequest && selectedTask && (
-        <Modal title="Запрос данных у смежного отдела" onClose={() => setShowDepRequest(false)} C={C}>
+        <Modal title="Запрос данных у смежного отдела" onClose={() => setShowDepRequest(false)} C={C} topmost>
           <div className="form-stack">
             <div style={{ background: "rgba(6,182,212,.08)", border: "1px solid rgba(6,182,212,.3)", borderRadius: 8, padding: 10, fontSize: 12.5, color: C.textDim, marginBottom: 4 }}>
               ℹ Текущая задача <b>«{selectedTask.name}»</b> переведётся в статус <b>«Ждёт данных»</b>. После получения данных вернётся к тебе кнопкой «Возобновить работу».
