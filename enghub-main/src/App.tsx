@@ -238,6 +238,10 @@ export default function App() {
   const [newAssignment, setNewAssignment] = useState({ name: "", target_dept: "", priority: "high", deadline: "" });
   const [newReview, setNewReview] = useState({ title: "", severity: "major", drawing_id: "" });
 
+  // CONV Stage 4b: запрос данных у смежного отдела
+  const [showDepRequest, setShowDepRequest] = useState(false);
+  const [depRequest, setDepRequest] = useState({ target_dept_id: "", what_needed: "", deadline_hint: "" });
+
   // Поиск и фильтры
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -1048,10 +1052,58 @@ export default function App() {
         assignment_status: 'pending_accept'
     }, token!);
     addNotification(`Задание смежникам отправлено`, 'success');
-    setNewAssignment({ name: "", target_dept: "", priority: "high", deadline: "" }); 
-    setShowNewAssignment(false); 
-    setSaving(false); 
+    setNewAssignment({ name: "", target_dept: "", priority: "high", deadline: "" });
+    setShowNewAssignment(false);
+    setSaving(false);
     loadTasks(activeProject.id);
+  };
+
+  // CONV Stage 4b: запрос входных данных у смежного отдела (по требованию)
+  const requestDependencyData = async () => {
+    if (!selectedTask || !depRequest.target_dept_id || !depRequest.what_needed.trim() || !activeProject) {
+      addNotification('Заполни все обязательные поля', 'warning');
+      return;
+    }
+    setSaving(true);
+    try {
+      const targetDeptName = getDeptNameById(Number(depRequest.target_dept_id));
+      const reqTitle = `📥 Запрос данных: ${depRequest.what_needed.trim().slice(0, 100)}`;
+      const childTask: any = await post('tasks', {
+        name: reqTitle,
+        dept: targetDeptName,
+        priority: 'high',
+        deadline: depRequest.deadline_hint || selectedTask.deadline || '',
+        status: 'todo',
+        project_id: activeProject.id,
+        is_assignment: true,
+        target_dept_id: Number(depRequest.target_dept_id),
+        assignment_status: 'pending_accept',
+        description: `Запрос от задачи "${selectedTask.name}":\n\n${depRequest.what_needed}`,
+        parent_task_id: selectedTask.id,
+      }, token!);
+      const childId = Array.isArray(childTask) ? childTask[0]?.id : childTask?.id;
+      if (childId) {
+        await post('task_dependencies', {
+          parent_task_id: selectedTask.id,
+          child_task_id: childId,
+          what_needed: depRequest.what_needed.trim(),
+          deadline_hint: depRequest.deadline_hint || null,
+          status: 'pending',
+          created_by: currentUserData?.id,
+        }, token!);
+      }
+      // Перевести текущую задачу в awaiting_input
+      await patch(`tasks?id=eq.${selectedTask.id}`, { status: 'awaiting_input' }, token!);
+      setSelectedTask({ ...selectedTask, status: 'awaiting_input' });
+      addNotification(`Запрос отправлен в отдел ${targetDeptName}. Задача переведена в "Ждёт данных"`, 'success');
+      setShowDepRequest(false);
+      setDepRequest({ target_dept_id: '', what_needed: '', deadline_hint: '' });
+      loadTasks(activeProject.id);
+    } catch (err: any) {
+      addNotification(`Ошибка: ${err.message || 'не удалось отправить запрос'}`, 'warning');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAssignmentResponse = async (taskId: number, accept: boolean, comment?: string) => {
@@ -1490,6 +1542,26 @@ export default function App() {
           </div>
         </Modal>
       )}
+      {showDepRequest && selectedTask && (
+        <Modal title="Запрос данных у смежного отдела" onClose={() => setShowDepRequest(false)} C={C}>
+          <div className="form-stack">
+            <div style={{ background: "rgba(6,182,212,.08)", border: "1px solid rgba(6,182,212,.3)", borderRadius: 8, padding: 10, fontSize: 12.5, color: C.textDim, marginBottom: 4 }}>
+              ℹ Текущая задача <b>«{selectedTask.name}»</b> переведётся в статус <b>«Ждёт данных»</b>. После получения данных вернётся к тебе кнопкой «Возобновить работу».
+            </div>
+            <Field label="ОТДЕЛ-ПОЛУЧАТЕЛЬ *" C={C}>
+              <select value={depRequest.target_dept_id} onChange={e => setDepRequest({ ...depRequest, target_dept_id: e.target.value })} style={getInp(C)}>
+                <option value="">— Выбрать отдел —</option>
+                {activeProject?.depts?.filter((d:number) => String(d) !== String(currentUserData?.dept_id)).map((dId: number) => <option key={dId} value={dId}>{getDeptNameById(dId)}</option>)}
+              </select>
+            </Field>
+            <Field label="ЧТО НУЖНО ПОЛУЧИТЬ *" C={C}>
+              <textarea value={depRequest.what_needed} onChange={e => setDepRequest({ ...depRequest, what_needed: e.target.value })} placeholder="Например: Нагрузки на фундамент по осям 1-5, согласованный план..." style={{ ...getInp(C), minHeight: 80, fontFamily: "inherit", resize: "vertical" }} />
+            </Field>
+            <Field label="ЖЕЛАЕМЫЙ СРОК (необязательно)" C={C}><RuDateInput value={depRequest.deadline_hint} onChange={v => setDepRequest({ ...depRequest, deadline_hint: v })} C={C} /></Field>
+            <button className="btn btn-primary" onClick={requestDependencyData} disabled={saving || !depRequest.target_dept_id || depRequest.what_needed.trim().length < 5} style={{ width: "100%", opacity: (!depRequest.target_dept_id || depRequest.what_needed.trim().length < 5) ? 0.5 : 1 }}>{saving ? "Отправка..." : "🔗 Отправить запрос"}</button>
+          </div>
+        </Modal>
+      )}
       {showTaskDetail && selectedTask && (
         <Modal title="Задача" onClose={() => { setShowTaskDetail(false); setSelectedTask(null); setTaskComment(""); setWorkflowBlockInfo(""); setChatInput(""); loadMessages(activeProject.id); }} C={C}>
           <div className="form-stack">
@@ -1570,12 +1642,35 @@ export default function App() {
                 }} style={getInp(C)}>
                   <option value="todo">В очереди</option>
                   <option value="inprogress">В работе</option>
+                  <option value="awaiting_input">Ждёт данных</option>
                   <option value="review_lead">На проверке</option>
                   <option value="review_gip">Проверка ГИПа</option>
                   <option value="revision">Доработка</option>
                   <option value="done">Завершена</option>
                 </select>
               </Field>
+            )}
+            {/* CONV Stage 4b: запросить данные у смежного отдела (по требованию) */}
+            {isEng && String(selectedTask.assigned_to) === String(currentUserData?.id) &&
+              (selectedTask.status === "inprogress" || selectedTask.status === "todo") && (
+              <button
+                onClick={() => setShowDepRequest(true)}
+                disabled={saving}
+                style={{
+                  background: "rgba(6,182,212,.1)",
+                  border: "1px solid rgba(6,182,212,.4)",
+                  color: "#06b6d4",
+                  borderRadius: 10,
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: "inherit",
+                  marginBottom: 8,
+                }}
+              >
+                🔗 Запросить данные у смежного отдела
+              </button>
             )}
             {getTaskActions(selectedTask).length > 0 && (
               <div>
