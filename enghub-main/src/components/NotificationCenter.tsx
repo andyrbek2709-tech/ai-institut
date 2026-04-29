@@ -117,6 +117,7 @@ export function NotificationCenter({ userId, token, C, onNavigate }: Notificatio
         title="Уведомления"
       >
         🔔
+        {unreadCount > 0 && <span className="notification-pulse-dot" />}
         {unreadCount > 0 && (
           <span style={{
             position: 'absolute',
