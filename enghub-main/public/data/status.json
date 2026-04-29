@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Источник 4/8: ProductHunt",
-  "progress_pct": 37,
-  "items_processed": 31,
+  "current_step": "Источник 5/8: IndieHackers",
+  "progress_pct": 50,
+  "items_processed": 35,
   "items_total": 0,
-  "updated_at": "2026-04-29T08:05:47Z",
+  "updated_at": "2026-04-29T08:05:49Z",
   "started_at": "2026-04-29T08:05:14Z"
 }
