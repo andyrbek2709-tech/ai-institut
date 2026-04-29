@@ -71,6 +71,37 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-04-30 — Сверка repos `ai-institut` ↔ `enghub` (drift не критичен)
+
+**Контекст:** прод собирается из `andyrbek2709-tech/ai-institut` (Root: `enghub-main/`). Параллельно существует standalone `andyrbek2709-tech/enghub` (НЕ подключён к Vercel) — туда в прошлой in-browser-сессии случайно пушнули 2 коммита фикса ESLint, потом разобрались и переехали в правильный репо.
+
+**Что в `enghub` (standalone, public):**
+- Последняя активность: 2 коммита 2026-04-29 от `andyrbek2709-tech <andyrbek2709@gmail.com>`:
+  - `2fbc191` 17:18 UTC — `fix(build): add vercel-build script to trigger redeploy with eslint fix` → меняет `enghub-main/package.json` (+1 строка `"vercel-build": "react-scripts build"`)
+  - `79084dd` 17:13 UTC — `fix(eslint): add react-app extends to fix exhaustive-deps build error` → меняет `enghub-main/.eslintrc.json` (добавляет `"extends": ["react-app"]`)
+- Дальше пропуск ~1 месяц, всё ≤ 2026-03-31 (RAG/Copilot AI/«update site via AI»).
+
+**Что в `ai-institut/enghub-main` (private, прод):**
+- Последний коммит `8af6083` 2026-04-29 ~21:34 (`feat(security): RLS hardening + B1 KPI skeleton + B4 multi-project dashboards + B6 STATE sync`).
+- В период 17:30–21:34 того же дня было ~14 продуктовых коммитов: parsing v2, CONV Stage 4a/4b/4c, ActivityFeed (DD-07), LeadDashboard/EngineerDashboard (DD-15/16), B3 security cutover, RLS hardening, multi-project dashboards.
+- В standalone `enghub` НИЧЕГО из этого нет.
+
+**Сверка двух коммитов из enghub с ai-institut/enghub-main:**
+
+| Файл | Коммит из `enghub` | Состояние в `ai-institut/enghub-main` |
+|---|---|---|
+| `enghub-main/package.json` (+`vercel-build`) | `2fbc191` | ✅ уже присутствует (строка 41) — мигрирован |
+| `enghub-main/.eslintrc.json` (`extends: ["react-app"]`) | `79084dd` | ❌ НЕ мигрирован, текущее содержимое: `{ "parser": "@typescript-eslint/parser" }` |
+
+**Почему drift не критичен:**
+- Прод-деплой `dpl_35c1fFju1gC5wSNRzn621RM2ypfT` (commit `15174d5`) и последующие сборки до `8af6083` собрались READY БЕЗ `"extends": ["react-app"]`. Значит для текущей кодовой базы ai-institut этот фикс не нужен (либо `DISABLE_ESLINT_PLUGIN`/`CI=false` в Vercel env, либо нет exhaustive-deps-нарушений в актуальном коде).
+- Вторая правка (vercel-build script) УЖЕ применена в ai-institut независимо.
+- Никаких других уникальных изменений в standalone `enghub` нет.
+
+**Итог:** `enghub` — устаревший слепок с двумя осиротевшими патчами времён апрельской отладки; релевантная часть уже в проде. Мигрировать ничего не нужно.
+
+**Рекомендация пользователю:** заархивировать `andyrbek2709-tech/enghub` на GitHub (Settings → Archive) или удалить, чтобы исключить путаницу. Не делал автоматически — это разрушительное действие, оставлено на пользователя.
+
 ### 2026-04-29 — Security cutover: B3 фронт + RLS hardening + B1/B4/B6
 - **B3 (security):** коммит `e90177d` — service_role убран из фронта, перенесён в `/api/admin/*`. Этап Vercel env (создать `SUPABASE_SERVICE_KEY` без префикса, удалить `REACT_APP_SUPABASE_SERVICE_KEY`) и ротация ключа в Supabase Dashboard — на стороне пользователя (Cowork-сессия не имеет Chrome MCP).
 - **RLS hardening (миграции `019_rls_hardening`, `019b_project_storage_stats_invoker`):** включена RLS на `meetings` / `time_entries` / `task_templates` / `review_comments` (последняя замкнута admin/gip из-за schema-mismatch `review_id bigint vs reviews.id uuid` — отдельный баг). Удалены permissive-политики `Enable * for all users` на `ai_actions`, `raci_all`. `activity_log_insert` теперь требует `user_can_access_project`. `project_storage_stats` пересоздан как `security_invoker`. `search_path = public` на всех publish-функциях. `revoke execute ... from anon` на 12 security-definer auth-helpers.
