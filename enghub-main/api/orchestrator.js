@@ -866,15 +866,35 @@ module.exports = async function handler(req, res) {
 
     if (use_rag && OPENAI_API_KEY && ANTHROPIC_API_KEY) {
       const queryEmbedding = await createEmbedding(message);
-      const searchRes = await fetch(`${SURL}/rest/v1/rpc/search_normative`, {
-        method: 'POST',
-        headers: { ...headers, Prefer: 'return=representation' },
-        body: JSON.stringify({ query_embedding: queryEmbedding, match_count: 5 }),
-      });
-      const chunks = await searchRes.json();
+      // T30c: Project-aware RAG.
+      // 1) Глобальная база нормативки (search_normative) — общая для всех проектов
+      //    (СНиП, ГОСТ, СП — это отраслевые стандарты, не привязаны к проекту).
+      // 2) Документы текущего проекта (project_documents) — изолированы по project_id
+      //    через RLS (user_can_access_project). Кладём в контекст метаданные:
+      //    название, тип (tz/addendum/other), кто загрузил, размер.
+      //    Это даёт Copilot'у понимание «в этом проекте лежит ТЗ X.pdf»
+      //    без утечки контента других проектов.
+      const [normRes, projDocsRes] = await Promise.all([
+        fetch(`${SURL}/rest/v1/rpc/search_normative`, {
+          method: 'POST',
+          headers: { ...headers, Prefer: 'return=representation' },
+          body: JSON.stringify({ query_embedding: queryEmbedding, match_count: 5 }),
+        }),
+        fetch(`${SURL}/rest/v1/project_documents?project_id=eq.${project_id}&select=id,name,doc_type,size_bytes,uploaded_at&order=uploaded_at.desc&limit=10`, { headers }),
+      ]);
+      const chunks = await normRes.json();
+      const projDocs = await projDocsRes.json().catch(() => []);
       const hasContext = Array.isArray(chunks) && chunks.length > 0;
-      const contextText = hasContext ? chunks.map((c, i) => `[${i + 1}] ${c.doc_name}:\n${c.content}`).join('\n\n---\n\n') : '';
-      const userMessage = hasContext ? `Фрагменты:\n${contextText}\n\nВопрос: ${message}` : message;
+      const hasProjDocs = Array.isArray(projDocs) && projDocs.length > 0;
+      const contextText = hasContext
+        ? chunks.map((c, i) => `[${i + 1}] ${c.doc_name}:\n${c.content}`).join('\n\n---\n\n')
+        : '';
+      const projDocsList = hasProjDocs
+        ? '\n\nДокументы этого проекта (доступны для уточняющих вопросов):\n' +
+          projDocs.map((d) => `• ${d.name} [${d.doc_type}, ${(d.size_bytes / 1024).toFixed(0)} КБ]`).join('\n')
+        : '';
+      const userMessage = (hasContext ? `Фрагменты нормативки:\n${contextText}` : '') +
+        projDocsList + `\n\nВопрос: ${message}`;
       const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
@@ -883,10 +903,10 @@ module.exports = async function handler(req, res) {
           max_tokens: 1024,
           system: buildSystemPrompt(
             hasContext
-              ? 'Отвечай только по предоставленным фрагментам, и указывай источники.'
-              : 'Документов в базе по запросу не найдено. Дай общий ответ и предупреди об этом.'
+              ? 'Отвечай по предоставленным фрагментам нормативки, указывай источники. Документы текущего проекта используй для уточнений (упомяни если ссылаешься на ТЗ).'
+              : 'Документов в нормативной базе по запросу не найдено. Используй документы текущего проекта (если приведены) или дай общий ответ с предупреждением об отсутствии источников.'
           ),
-          messages: [{ role: 'user', content: userMessage }],
+          messages: [{ role: 'user', content: userMessage.trim() }],
         }),
       });
       if (!claudeRes.ok) throw new Error('Claude API failed');
@@ -897,6 +917,7 @@ module.exports = async function handler(req, res) {
         message: claudeData.content?.[0]?.text || 'Ответ недоступен',
         sources: hasContext ? [...new Set(chunks.map((c) => c.doc_name))].join(', ') : null,
         chunks_found: hasContext ? chunks.length : 0,
+        project_docs_count: hasProjDocs ? projDocs.length : 0,
       });
     }
 
