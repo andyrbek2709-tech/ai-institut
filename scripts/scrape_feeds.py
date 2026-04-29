@@ -198,13 +198,22 @@ def _fetch_rss(rss_url, source, label, lang, id_prefix, keep_comments=False):
     return out
 
 
-# -------- Habr (multiple feeds) -------- #
+# -------- Habr (multiple feeds, диверсификация: разработка + менеджмент + работа + бизнес) -------- #
 HABR_FEEDS = [
     "https://habr.com/ru/rss/articles/?fl=ru&limit=200",
     "https://habr.com/ru/rss/all/?fl=ru&limit=200",
     "https://habr.com/ru/rss/best/daily/?fl=ru&limit=200",
     "https://habr.com/ru/rss/news/?fl=ru&limit=100",
     "https://habr.com/ru/rss/hubs/programming/articles/?fl=ru&limit=100",
+    # Менеджмент и продукт — много болей про процессы и автоматизацию
+    "https://habr.com/ru/rss/hubs/pm/articles/?fl=ru&limit=100",
+    "https://habr.com/ru/rss/hubs/product_management/articles/?fl=ru&limit=100",
+    # Карьера и работа — жалобы на ручную рутину
+    "https://habr.com/ru/rss/hubs/career/articles/?fl=ru&limit=100",
+    # Финтех / бизнес-процессы
+    "https://habr.com/ru/rss/hubs/finance/articles/?fl=ru&limit=100",
+    "https://habr.com/ru/rss/hubs/legal/articles/?fl=ru&limit=100",
+    "https://habr.com/ru/rss/hubs/it_infrastructure/articles/?fl=ru&limit=100",
 ]
 
 
@@ -253,6 +262,37 @@ def fetch_ph() -> list:
 def fetch_ih() -> list:
     return _date_filter(_fetch_rss("https://www.indiehackers.com/feed.xml", "ih", "IndieHackers", "en", "ih",
                                    keep_comments=True), "IndieHackers")
+
+
+# -------- Дополнительные RU/EN источники по разным отраслям -------- #
+# Не ограничиваемся IT — нужны боли из ритейла, строительства, финансов, и т.д.
+EXTRA_FEEDS = [
+    # Hacker News-like front pages с менее техническим уклоном
+    ("https://news.ycombinator.com/rss", "hn-front", "HN Front Page", "en", "hn-front"),
+    # Lobste.rs — programmer community с жалобами на инструменты
+    ("https://lobste.rs/rss", "lobsters", "Lobsters", "en", "lobsters"),
+    # Dev.to — разработчики из разных доменов
+    ("https://dev.to/feed", "devto", "Dev.to", "en", "devto"),
+    # Хабр-альтернативы и другие RU
+    ("https://nplus1.ru/rss/news.xml", "nplus1", "N+1", "ru", "nplus1"),
+    # Бизнес-новости (vc.ru уже есть, добавляем РБК тренды и vc/finance)
+    ("https://vc.ru/finance/rss", "vc-finance", "vc.ru Финансы", "ru", "vc-finance"),
+    ("https://vc.ru/trade/rss", "vc-trade", "vc.ru Торговля", "ru", "vc-trade"),
+    ("https://vc.ru/marketing/rss", "vc-marketing", "vc.ru Маркетинг", "ru", "vc-marketing"),
+]
+
+
+def fetch_extra() -> list:
+    out = []
+    for url, src_id, src_label, lang, key in EXTRA_FEEDS:
+        try:
+            items = _fetch_rss(url, src_id, src_label, lang, key)
+            out.extend(items)
+            time.sleep(0.4)
+        except Exception as e:
+            print(f"[extra] {src_id} failed: {e}", file=sys.stderr)
+            continue
+    return _date_filter(out, "extra")
 
 
 # -------- StackOverflow (4 tag queries) -------- #
@@ -430,12 +470,13 @@ def fetch_so_answers(question_ids: list) -> list:
 
 
 FETCHERS = [
-    ("hn",   "Hacker News",      fetch_hn),
-    ("habr", "Habr (5 feeds)",   fetch_habr),
-    ("vc",   "vc.ru (4 feeds)",  fetch_vc),
-    ("ph",   "ProductHunt",      fetch_ph),
-    ("ih",   "IndieHackers",     fetch_ih),
-    ("so",   "StackOverflow x4", fetch_so),
+    ("hn",    "Hacker News",      fetch_hn),
+    ("habr",  "Habr (11 feeds)",  fetch_habr),
+    ("vc",    "vc.ru (4 feeds)",  fetch_vc),
+    ("ph",    "ProductHunt",      fetch_ph),
+    ("ih",    "IndieHackers",     fetch_ih),
+    ("so",    "StackOverflow x4", fetch_so),
+    ("extra", "Extra (HN front + Lobsters + Dev.to + N+1 + vc/finance|trade|marketing)", fetch_extra),
 ]
 
 
