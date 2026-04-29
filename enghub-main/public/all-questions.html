@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EngHub · Все открытые вопросы</title>
+<style>
+:root{
+  --bg:#0a0e1f;--panel:#121933;--panel2:#182040;--row:#0e1428;
+  --border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;
+  --accent:#4f8cff;--accent2:#a855f7;
+  --green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b;
+  --conv:#4f8cff;--design:#a855f7;--ws:#22c55e;--ai:#ef4444;--t30:#f59e0b;
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh;padding-bottom:90px}
+.wrap{max-width:1100px;margin:0 auto;padding:22px 18px 30px}
+
+header.top{padding:6px 0 16px;border-bottom:1px solid var(--border);margin-bottom:18px}
+header.top h1{margin:0 0 6px;font-size:24px;font-weight:700}
+header.top .sub{color:var(--muted);font-size:13px}
+header.top .sub b{color:var(--text)}
+
+.section{margin:24px 0 10px}
+.section h2{margin:0;font-size:16px;font-weight:700}
+.cards{display:flex;flex-direction:column;gap:10px}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:.15s}
+.card:hover{border-color:var(--accent)}
+.card.answered{border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.04)}
+.card .head{display:flex;align-items:flex-start;gap:10px;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card .id{font-size:10px;font-weight:700;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+.card .title{font-size:14px;font-weight:600;line-height:1.4;margin:4px 0 2px}
+.card .ctx{font-size:12px;color:var(--muted);line-height:1.5;margin:2px 0 10px}
+.card .badge{padding:2px 8px;border-radius:9px;font-size:10px;font-weight:600;white-space:nowrap}
+.badge.conv{background:rgba(79,140,255,.13);color:var(--conv)}
+.badge.design{background:rgba(168,85,247,.13);color:var(--design)}
+.badge.ws{background:rgba(34,197,94,.13);color:var(--ws)}
+.badge.ai{background:rgba(239,68,68,.13);color:var(--ai)}
+.badge.t30{background:rgba(245,158,11,.13);color:var(--t30)}
+
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:var(--row);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:.12s;font-size:13px}
+.opt:hover{border-color:var(--accent);background:var(--panel2)}
+.opt.selected{border-color:var(--green);background:rgba(34,197,94,.08)}
+.opt .key{font-weight:700;color:var(--accent);min-width:18px}
+.opt.selected .key{color:var(--green)}
+
+.progress-block{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.progress-block .pcount{font-size:18px;font-weight:700}
+.progress-block .pcount b{color:var(--accent)}
+.progress-block .pbar{flex:1;min-width:140px;height:10px;background:var(--row);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.progress-block .pfill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .35s;width:0%}
+.progress-block .pmeta{font-size:11px;color:var(--muted)}
+.progress-block button{background:var(--accent);color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
+.progress-block button:hover{background:#3a7ae0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>❓ Все открытые вопросы</h1>
+  <div class="sub"><b id="q-count">0</b> открытых вопросов · ответы сохраняются в браузере · копируй итог в чат</div>
+</header>
+
+<div class="progress-block">
+  <div class="pcount"><b id="answered-count">0</b> / <span id="total-count">0</span></div>
+  <div class="pbar"><div class="pfill" id="pfill"></div></div>
+  <div class="pmeta">Ответил на N вопросов</div>
+  <button id="copy-btn">📋 Скопировать ответы</button>
+</div>
+
+<div id="sections"></div>
+
+</div>
+
+<script>
+const QUESTIONS = [
+  { id:"T30A-Q1", group:"t30", category:"T30 ТЗ",
+    title:"Где в UI кнопка «Загрузить ТЗ»?",
+    ctx:"Куда поставить точку входа для загрузки технического задания.",
+    options:[
+      {key:"А", text:"Отдельная вкладка «📁 Документы» внутри страницы проекта"},
+      {key:"Б", text:"Прямо в шапке проекта рядом с названием"},
+      {key:"В", text:"И там, и там (дублирование для удобства)"}
+    ] },
+  { id:"T30A-Q2", group:"t30", category:"T30 ТЗ",
+    title:"Можно загружать несколько ТЗ на проект?",
+    ctx:"Например ТЗ + дополнения + изменения.",
+    options:[
+      {key:"А", text:"Да, несколько ТЗ — все хранятся, видна история"},
+      {key:"Б", text:"Только одно — каждое новое заменяет старое"},
+      {key:"В", text:"Только одно ТЗ + отдельный раздел «Дополнения» для остальных"}
+    ] },
+  { id:"T30A-Q3", group:"t30", category:"T30 ТЗ",
+    title:"Кто может загружать/удалять ТЗ?",
+    ctx:"Уровень доступа.",
+    options:[
+      {key:"А", text:"Только ГИП и Lead отдела"},
+      {key:"Б", text:"Все участники проекта"},
+      {key:"В", text:"Загружать — все, удалять — только ГИП"}
+    ] },
+  { id:"T30B-Q1", group:"t30", category:"T30 Файлы",
+    title:"Версионирование DWG-файлов",
+    ctx:"Когда инженер загружает новую версию чертежа — что делать со старой?",
+    options:[
+      {key:"А", text:"Хранить все версии — видно кто-когда заменял"},
+      {key:"Б", text:"Только последнюю — старая удаляется"},
+      {key:"В", text:"Хранить 3 последние версии"}
+    ] },
+  { id:"T30E-Q1", group:"t30", category:"T30 Задачи",
+    title:"Сколько файлов можно прикрепить к задаче за раз?",
+    ctx:"Лимит на одну задачу.",
+    options:[
+      {key:"А", text:"Один файл"},
+      {key:"Б", text:"До 5 файлов"},
+      {key:"В", text:"Сколько угодно (до 100MB суммарно)"}
+    ] },
+  { id:"T30E-Q2", group:"t30", category:"T30 Задачи",
+    title:"Можно ли добавить файл к существующей задаче?",
+    ctx:"После того как задача создана.",
+    options:[
+      {key:"А", text:"Да, в любое время пока задача активна"},
+      {key:"Б", text:"Только при создании задачи"},
+      {key:"В", text:"При создании + ещё можно добавить при возврате на доработку"}
+    ] },
+  { id:"T30E-Q3", group:"t30", category:"T30 Задачи",
+    title:"Что с файлами после закрытия задачи?",
+    ctx:"Когда задача отмечена «Готово» / «Утверждено».",
+    options:[
+      {key:"А", text:"Остаются в задаче навсегда (история проекта)"},
+      {key:"Б", text:"Переходят в общую папку «Документы проекта»"},
+      {key:"В", text:"Удаляются автоматически через 90 дней (для экономии места)"}
+    ] },
+];
+
+const GROUPS = [
+  { key:"t30",    label:"🗂 T30 — Документы и файлы" },
+  { key:"conv",   label:"🚜 Конвейер" },
+  { key:"design", label:"🎨 Дизайн" },
+  { key:"ws",     label:"🛠 Workspace" },
+  { key:"ai",     label:"🤖 AI" },
+];
+
+const STORAGE_KEY = 'enghub_all_questions_v1';
+const answers = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(answers)); refreshProgress(); }
+
+function renderSections(){
+  const wrap = document.getElementById('sections');
+  let html = '';
+  for(const g of GROUPS){
+    const items = QUESTIONS.filter(q => q.group === g.key);
+    if(!items.length) continue;
+    html += `<div class="section"><h2>${g.label} (${items.length})</h2></div>`;
+    html += `<div class="cards" id="${g.key}-cards">`;
+    for(const q of items){
+      const sel = answers[q.id];
+      html += `<div class="card ${sel?'answered':''}" data-id="${q.id}">
+        <div class="head">
+          <div>
+            <div class="id">#${q.id} · ${q.category}</div>
+            <div class="title">${q.title}</div>
+          </div>
+          <span class="badge ${q.group}">${g.label.split(' ')[0]}</span>
+        </div>
+        <div class="ctx">${q.ctx}</div>
+        <div class="opts">${q.options.map(o => `
+          <div class="opt ${sel===o.key?'selected':''}" data-q="${q.id}" data-k="${o.key}">
+            <span class="key">${o.key}</span><span>${o.text}</span>
+          </div>`).join('')}</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.opt').forEach(el => el.addEventListener('click', () => {
+    const q = el.getAttribute('data-q'), k = el.getAttribute('data-k');
+    answers[q] = k;
+    save();
+    renderSections();
+  }));
+}
+
+function refreshProgress(){
+  const total = QUESTIONS.length;
+  const ans = QUESTIONS.filter(q => answers[q.id]).length;
+  document.getElementById('q-count').textContent = total - ans;
+  document.getElementById('answered-count').textContent = ans;
+  document.getElementById('total-count').textContent = total;
+  document.getElementById('pfill').style.width = (ans/total*100).toFixed(1) + '%';
+}
+
+document.getElementById('copy-btn').addEventListener('click', async () => {
+  let md = '# Ответы на открытые вопросы\n\n';
+  for(const g of GROUPS){
+    const items = QUESTIONS.filter(q => q.group === g.key && answers[q.id]);
+    if(!items.length) continue;
+    md += `## ${g.label}\n\n`;
+    for(const q of items){
+      const sel = q.options.find(o => o.key === answers[q.id]);
+      md += `**${q.id} · ${q.title}**\n→ ${answers[q.id]}: ${sel?.text || ''}\n\n`;
+    }
+  }
+  await navigator.clipboard.writeText(md);
+  const btn = document.getElementById('copy-btn');
+  const old = btn.textContent;
+  btn.textContent = '✅ Скопировано';
+  setTimeout(() => btn.textContent = old, 1500);
+});
+
+renderSections();
+refreshProgress();
+</script>
+</body>
+</html>
