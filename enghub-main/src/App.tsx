@@ -1762,17 +1762,28 @@ export default function App() {
                     {taskHistory.length === 0
                       ? <div style={{ fontSize: 12, color: C.textMuted, padding: '6px 0' }}>Изменений пока нет</div>
                       : taskHistory.map(h => {
-                          const FIELD_LABELS: Record<string, string> = { status: 'Статус', priority: 'Приоритет', assigned_to: 'Исполнитель', deadline: 'Дедлайн' };
-                          const STATUS_RU: Record<string, string> = { todo: 'В очереди', inprogress: 'В работе', review_lead: 'Проверка', review_gip: 'Проверка ГИПа', revision: 'Доработка', done: 'Готово' };
+                          const FIELD_LABELS: Record<string, string> = { status: 'Статус', priority: 'Приоритет', assigned_to: 'Исполнитель', deadline: 'Дедлайн', comment: 'Комментарий' };
+                          const STATUS_RU: Record<string, string> = { todo: 'В очереди', inprogress: 'В работе', awaiting_input: 'Ждёт данных', review_lead: 'Проверка', review_gip: 'Проверка ГИПа', revision: 'Доработка', done: 'Готово' };
+                          const STATUS_EMOJI: Record<string, string> = { todo: '⏳', inprogress: '▶', awaiting_input: '🔗', review_lead: '👁', review_gip: '👁', revision: '↩', done: '✓' };
                           const fmt = (v: string, field: string) => {
-                            if (field === 'status') return STATUS_RU[v] || v;
+                            if (field === 'status') return `${STATUS_EMOJI[v]||''} ${STATUS_RU[v] || v}`.trim();
                             if (field === 'assigned_to') return getUserById(Number(v))?.full_name || `#${v}`;
                             return v || '—';
                           };
+                          const actor = h.changed_by ? (getUserById(Number(h.changed_by))?.full_name || `#${h.changed_by}`) : '';
+                          const isRevisionReturn = h.field_name === 'status' && h.new_value === 'revision';
                           return (
-                            <div key={h.id} style={{ fontSize: 12, color: C.textMuted, display: 'flex', gap: 8, padding: '4px 0', borderBottom: `1px solid ${C.border}` }}>
-                              <span style={{ color: C.textMuted, minWidth: 110 }}>{new Date(h.changed_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                              <span style={{ color: C.text }}><b>{FIELD_LABELS[h.field_name] || h.field_name}</b>: <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{fmt(h.old_value, h.field_name)}</span> → <span style={{ color: C.accent }}>{fmt(h.new_value, h.field_name)}</span></span>
+                            <div key={h.id} style={{ fontSize: 12, color: C.textMuted, padding: '6px 0', borderBottom: `1px solid ${C.border}`, background: isRevisionReturn ? 'rgba(239,68,68,.05)' : 'transparent', borderLeft: isRevisionReturn ? '2px solid rgba(239,68,68,.4)' : 'none', paddingLeft: isRevisionReturn ? 8 : 0 }}>
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                                <span style={{ color: C.textMuted, minWidth: 110, fontSize: 11 }}>{new Date(h.changed_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                {actor && <span style={{ color: C.textMuted, fontSize: 11 }}>{actor}</span>}
+                                <span style={{ color: C.text }}><b>{FIELD_LABELS[h.field_name] || h.field_name}</b>: <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{fmt(h.old_value, h.field_name)}</span> → <span style={{ color: isRevisionReturn ? '#ef4444' : C.accent }}>{fmt(h.new_value, h.field_name)}</span></span>
+                              </div>
+                              {isRevisionReturn && h.payload && typeof h.payload === 'object' && h.payload.comment && (
+                                <div style={{ marginTop: 4, marginLeft: 118, fontSize: 11.5, color: C.textDim, fontStyle: 'italic' }}>
+                                  💬 «{h.payload.comment}»
+                                </div>
+                              )}
                             </div>
                           );
                         })
