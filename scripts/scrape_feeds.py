@@ -78,6 +78,47 @@ def _safe_iso(ts) -> str:
     return _now_iso()
 
 
+
+
+# Cut off everything older than 2026-01-01 — we only care about recent pains.
+MIN_TIMESTAMP = datetime(2026, 1, 1, tzinfo=timezone.utc)
+_INVALID_TS = datetime.min.replace(tzinfo=timezone.utc)
+
+
+def _parse_ts(ts):
+    """Parse ISO-8601 string → tz-aware datetime. Invalid/None → datetime.min UTC."""
+    if not ts or not isinstance(ts, str):
+        return _INVALID_TS
+    s = ts.strip()
+    if not s:
+        return _INVALID_TS
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        d = datetime.fromisoformat(s)
+    except ValueError:
+        # last-ditch: try RFC-822 / RFC-3339 fallbacks via dateutil-like parsing
+        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            try:
+                d = datetime.strptime(s.replace("+00:00", ""), fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            return _INVALID_TS
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=timezone.utc)
+    return d
+
+
+def _date_filter(items, source_name):
+    before = len(items)
+    items = [it for it in items if _parse_ts(it.get("timestamp")) >= MIN_TIMESTAMP]
+    after = len(items)
+    if before != after:
+        print(f"[date-filter] {source_name}: {before} → {after} (отброшено {before-after})")
+    return items
+
 # -------- HN -------- #
 def fetch_hn() -> list:
     out, seen_ids = [], set()
@@ -114,6 +155,7 @@ def fetch_hn() -> list:
             time.sleep(0.8)
         except Exception as e:
             print(f"  [hn] {url}: {e}", file=sys.stderr)
+    out = _date_filter(out, "HN")
     return out
 
 
@@ -176,6 +218,7 @@ def fetch_habr() -> list:
             seen_urls.add(it["url"])
             out.append(it)
         time.sleep(0.6)
+    out = _date_filter(out, "Habr")
     return out
 
 
@@ -198,17 +241,18 @@ def fetch_vc() -> list:
             seen_urls.add(it["url"])
             out.append(it)
         time.sleep(0.6)
+    out = _date_filter(out, "vc.ru")
     return out
 
 
 def fetch_ph() -> list:
-    return _fetch_rss("https://www.producthunt.com/feed", "ph", "ProductHunt", "en", "ph",
-                      keep_comments=True)
+    return _date_filter(_fetch_rss("https://www.producthunt.com/feed", "ph", "ProductHunt", "en", "ph",
+                                   keep_comments=True), "ProductHunt")
 
 
 def fetch_ih() -> list:
-    return _fetch_rss("https://www.indiehackers.com/feed.xml", "ih", "IndieHackers", "en", "ih",
-                      keep_comments=True)
+    return _date_filter(_fetch_rss("https://www.indiehackers.com/feed.xml", "ih", "IndieHackers", "en", "ih",
+                                   keep_comments=True), "IndieHackers")
 
 
 # -------- StackOverflow (4 tag queries) -------- #
@@ -246,6 +290,7 @@ def fetch_so() -> list:
             time.sleep(2.0)  # respect SO's rate limit
         except Exception as e:
             print(f"  [so/{tag}] {e}", file=sys.stderr)
+    out = _date_filter(out, "SO")
     return out
 
 
@@ -331,7 +376,7 @@ def fetch_hn_comments(story_ids: list) -> list:
     except ImportError:
         print("  [hn-comment] aiohttp missing — skip", file=sys.stderr)
         return []
-    return asyncio.run(_fetch_hn_comments_async(capped))
+    return _date_filter(asyncio.run(_fetch_hn_comments_async(capped)), "hn-comment")
 
 
 # -------- SO answers (batched, top-3 by score per question) -------- #
@@ -380,6 +425,7 @@ def fetch_so_answers(question_ids: list) -> list:
                     "lang": "en",
                 })
         time.sleep(2.0)  # respect SO rate limit
+    out = _date_filter(out, "so-answer")
     return out
 
 

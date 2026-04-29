@@ -18,6 +18,35 @@ import re
 import sys
 import time
 from datetime import datetime, timezone
+
+
+MIN_TIMESTAMP = datetime(2026, 1, 1, tzinfo=timezone.utc)
+_INVALID_TS = datetime.min.replace(tzinfo=timezone.utc)
+
+
+def _parse_ts(ts):
+    """Best-effort ISO-8601 parser. Invalid/None → datetime.min UTC."""
+    if not ts or not isinstance(ts, str):
+        return _INVALID_TS
+    s_ = ts.strip()
+    if not s_:
+        return _INVALID_TS
+    if s_.endswith("Z"):
+        s_ = s_[:-1] + "+00:00"
+    try:
+        d = datetime.fromisoformat(s_)
+    except ValueError:
+        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            try:
+                d = datetime.strptime(s_.replace("+00:00", ""), fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            return _INVALID_TS
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=timezone.utc)
+    return d
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -232,6 +261,10 @@ def main():
 
     raw = json.loads(RAW_PATH.read_text(encoding="utf-8"))
     raw_items = raw.get("items", [])
+    _before = len(raw_items)
+    raw_items = [it for it in raw_items if _parse_ts(it.get("timestamp", "")) >= MIN_TIMESTAMP]
+    if _before != len(raw_items):
+        print(f"[date-filter] process_pains: {_before} → {len(raw_items)} (отброшено {_before-len(raw_items)})")
     raw_stats = raw.get("stats", {})
     sources_used = sorted(s for s, st in raw_stats.items() if st.get("fetched", 0) > 0)
     started_at = _now_iso()
