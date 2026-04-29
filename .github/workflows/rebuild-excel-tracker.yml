@@ -1,0 +1,56 @@
+name: rebuild-excel-tracker
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f scripts/build-excel-tracker.requirements.txt ]; then
+            pip install -r scripts/build-excel-tracker.requirements.txt
+          else
+            pip install openpyxl pyyaml requests || true
+          fi
+
+      - name: Run rebuild script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f scripts/build-excel-tracker.py ]; then
+            python scripts/build-excel-tracker.py
+          else
+            echo "TODO: scripts/build-excel-tracker.py does not exist yet"
+            echo "Skipping rebuild — please add the script and re-run"
+            exit 0
+          fi
+
+      - name: Commit if changed
+        run: |
+          git config user.email "andyrbek2709@gmail.com"
+          git config user.name "Andrey"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes"
+          else
+            git commit -m "chore(excel-tracker): daily rebuild $(date -u +%Y-%m-%d)"
+            git pull --rebase --autostash origin main || true
+            git push origin main
+          fi
