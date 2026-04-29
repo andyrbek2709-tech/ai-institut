@@ -1345,12 +1345,14 @@ export default function App() {
       if (task.status === "todo") actions.push({ label: "▶ Взять в работу", status: "inprogress", color: C.blue });
       if (task.status === "inprogress") actions.push({ label: "↑ Отправить на проверку", status: "review_lead", color: C.accent });
       if (task.status === "revision") actions.push({ label: "▶ Снова в работу", status: "inprogress", color: C.blue });
+      // CONV-Q5 (B): инженер сам подтверждает возобновление работы после получения данных
+      if (task.status === "awaiting_input") actions.push({ label: "▶ Возобновить работу (данные получены)", status: "inprogress", color: C.blue });
     }
     if (isLead) {
       const myEngIds = appUsers.filter(u => u.dept_id === currentUserData?.dept_id && u.role === "engineer").map(u => String(u.id));
-      if (myEngIds.includes(assigned) && task.status === "review_lead") { actions.push({ label: "✓ Утвердить → ГИПу", status: "review_gip", color: C.green }); actions.push({ label: "✗ На доработку", status: "revision", color: C.red }); }
+      if (myEngIds.includes(assigned) && task.status === "review_lead") { actions.push({ label: "✓ Утвердить → ГИПу", status: "review_gip", color: C.green }); actions.push({ label: "✗ На доработку (укажите причину)", status: "revision", color: C.red, requiresReason: true }); }
     }
-    if (isGip && task.status === "review_gip") { actions.push({ label: "✓ Завершить задачу", status: "done", color: C.green }); actions.push({ label: "✗ На доработку", status: "revision", color: C.red }); }
+    if (isGip && task.status === "review_gip") { actions.push({ label: "✓ Завершить задачу", status: "done", color: C.green }); actions.push({ label: "✗ На доработку (укажите причину)", status: "revision", color: C.red, requiresReason: true }); }
     return actions;
   };
 
@@ -1580,10 +1582,21 @@ export default function App() {
                 <div className="field-label" style={{ marginBottom: 8 }}>ДЕЙСТВИЯ</div>
                 {(selectedTask.status === "review_lead" || selectedTask.status === "review_gip") && (<div style={{ marginBottom: 10 }}><div className="field-label" style={{ marginBottom: 6 }}>КОММЕНТАРИЙ ПРИ ДОРАБОТКЕ</div><input value={taskComment} onChange={e => setTaskComment(e.target.value)} placeholder="Что нужно исправить..." style={getInp(C)} /></div>)}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {getTaskActions(selectedTask).map((action: any, i: number) => (
-                    <button key={i} onClick={() => updateTaskStatus(selectedTask.id, action.status, taskComment)} disabled={saving}
-                      style={{ background: action.color + "15", border: `1px solid ${action.color}30`, color: action.color, borderRadius: 10, padding: "11px", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit" }}>{action.label}</button>
-                  ))}
+                  {getTaskActions(selectedTask).map((action: any, i: number) => {
+                    // CONV-Q5: если требуется причина (revision) — кнопка disabled пока comment пустой
+                    const needsReason = action.requiresReason && (!taskComment || taskComment.trim().length < 5);
+                    return (
+                    <button key={i} onClick={() => {
+                      if (action.requiresReason && (!taskComment || taskComment.trim().length < 5)) {
+                        alert("Укажите причину возврата на доработку (минимум 5 символов)");
+                        return;
+                      }
+                      updateTaskStatus(selectedTask.id, action.status, taskComment);
+                    }} disabled={saving || needsReason}
+                      title={needsReason ? "Сначала укажите причину в поле «Комментарий при доработке» выше" : ""}
+                      style={{ background: action.color + "15", border: `1px solid ${action.color}30`, color: action.color, borderRadius: 10, padding: "11px", cursor: needsReason ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", opacity: needsReason ? 0.5 : 1 }}>{action.label}</button>
+                    );
+                  })}
                   {getTaskActions(selectedTask).length > 0 && (
                     <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
                       {getTaskActions(selectedTask).every((a: any) => isTransitionAllowed(selectedTask, a.status))

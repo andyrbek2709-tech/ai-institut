@@ -64,6 +64,7 @@ export const LIGHT = {
 export const statusMap: Record<string, { label: string; color: string; bg: string }> = {
   todo: { label: "Ожидает", color: "#8896a8", bg: "#8896a815" },
   inprogress: { label: "В работе", color: "#4a9eff", bg: "#4a9eff15" },
+  awaiting_input: { label: "Ждёт данных", color: "#06b6d4", bg: "#06b6d415" },
   review_lead: { label: "Проверка рук.", color: "#a855f7", bg: "#a855f715" },
   review_gip: { label: "Проверка ГИП", color: "#f5a623", bg: "#f5a62315" },
   revision: { label: "Доработка", color: "#ef4444", bg: "#ef444415" },
@@ -96,8 +97,9 @@ export const drawingStatusMap: Record<string, { label: string; color: string; bg
 
 // Допустимые переходы workflow задач
 export const taskWorkflowTransitions: Record<string, string[]> = {
-  todo: ["inprogress"],
-  inprogress: ["review_lead"],
+  todo: ["inprogress", "awaiting_input"],
+  inprogress: ["review_lead", "awaiting_input"],
+  awaiting_input: ["inprogress"],
   review_lead: ["review_gip", "revision"],
   review_gip: ["done", "revision"],
   revision: ["inprogress"],
