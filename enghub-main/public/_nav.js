@@ -9,6 +9,7 @@
     { href: '/health-map.html',       label: 'Карта здоровья',                emoji: '🏥' },
     { href: '/feature-picker.html',   label: 'Выбор фич',                     emoji: '✅' },
     { href: '/all-questions.html',    label: 'Все вопросы',                   emoji: '❓' },
+    { href: '/design-questions.html', label: 'Дизайн-решения',                emoji: '🎨' },
     { href: '/automation-ideas.html', label: 'Идеи автоматизации (ручная)',   emoji: '💡' },
     { href: '/parsing.html',          label: 'Поток болей',                   emoji: '🔥' },
   ];

@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EngHub · Дизайн-решения</title>
+<style>
+:root{
+  --bg:#0a0e1f;--panel:#121933;--panel2:#182040;--row:#0e1428;
+  --border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;
+  --accent:#4f8cff;--accent2:#a855f7;
+  --green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh;padding-bottom:90px}
+.wrap{max-width:1100px;margin:0 auto;padding:22px 18px 30px}
+
+header.top{padding:6px 0 16px;border-bottom:1px solid var(--border);margin-bottom:18px}
+header.top h1{margin:0 0 6px;font-size:24px;font-weight:700}
+header.top .sub{color:var(--muted);font-size:13px}
+
+.progress-block{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.progress-block .pcount{font-size:18px;font-weight:700}
+.progress-block .pcount b{color:var(--accent)}
+.progress-block .pbar{flex:1;min-width:140px;height:10px;background:var(--row);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.progress-block .pfill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .35s;width:0%}
+.progress-block .pmeta{font-size:11px;color:var(--muted)}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;transition:.15s}
+.card.decided{border-color:rgba(34,197,94,.45)}
+.card.decided .card-head .status-pill{background:rgba(34,197,94,.13);color:var(--green);border-color:rgba(34,197,94,.4)}
+
+.card-head{display:grid;grid-template-columns:auto 1fr auto auto 16px;gap:14px;align-items:center;padding:14px 18px;cursor:pointer;background:linear-gradient(90deg,var(--panel),var(--panel2));border-bottom:1px solid transparent;transition:.15s}
+.card-head:hover{background:var(--panel2)}
+.card.open .card-head{border-bottom-color:var(--border)}
+.card-head .id-tag{font-size:11px;font-weight:700;color:var(--accent);background:rgba(79,140,255,.13);border:1px solid rgba(79,140,255,.3);padding:3px 8px;border-radius:6px;letter-spacing:.04em}
+.card-head .title{font-size:15px;font-weight:600}
+.card-head .effort{font-size:11px;color:var(--muted);background:var(--row);border:1px solid var(--border);padding:3px 9px;border-radius:9px;white-space:nowrap}
+.card-head .status-pill{font-size:11px;font-weight:600;background:var(--row);color:var(--muted);border:1px solid var(--border);padding:3px 10px;border-radius:9px;white-space:nowrap}
+.card-head .arr{color:var(--muted);transition:.18s;font-size:12px}
+.card.open .card-head .arr{transform:rotate(90deg);color:var(--accent)}
+
+.card-body{display:none;padding:18px}
+.card.open .card-body{display:block}
+
+.card-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:18px}
+@media(max-width:780px){.card-grid{grid-template-columns:1fr}}
+
+.preview-box{background:var(--row);border:1px solid var(--border);border-radius:10px;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:220px}
+.preview-box .ptitle{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;align-self:flex-start}
+
+.context{font-size:13px;line-height:1.6;color:var(--text);margin-bottom:14px}
+.context .what{color:var(--muted);font-size:12px;margin-bottom:8px}
+.context p{margin:0 0 8px}
+.context .effort-line{display:inline-block;margin-top:6px;font-size:11px;color:var(--accent2);background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);padding:3px 9px;border-radius:8px}
+
+.variants{margin-top:6px}
+.variant{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:7px;cursor:pointer;transition:.12s;background:var(--row)}
+.variant:hover{border-color:var(--accent);background:var(--panel2)}
+.variant.selected{border-color:var(--accent);background:rgba(79,140,255,.08);box-shadow:0 0 0 1px var(--accent) inset}
+.variant input[type=radio]{margin-top:3px;accent-color:var(--accent);cursor:pointer}
+.variant .vlabel{flex:1;font-size:13px;line-height:1.45}
+.variant .vlabel b{display:block;font-weight:600;margin-bottom:2px}
+.variant .vlabel .vsub{color:var(--muted);font-size:11px}
+
+.comment-box{margin-top:12px}
+.comment-box label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.comment-box textarea{width:100%;background:var(--row);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:7px;font:13px/1.5 inherit;outline:none;resize:vertical;min-height:60px;transition:.15s}
+.comment-box textarea:focus{border-color:var(--accent)}
+
+.mock-feed{width:100%;font-size:12px}
+.mock-feed .feed-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.mock-feed .feed-item:last-child{border-bottom:0}
+.mock-feed .avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mock-feed .avatar.purple{background:var(--accent2)}
+.mock-feed .avatar.green{background:var(--green)}
+.mock-feed .body{flex:1;min-width:0}
+.mock-feed .body b{color:var(--text);font-weight:600}
+.mock-feed .body .badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:5px;background:rgba(34,197,94,.13);color:var(--green);border:1px solid rgba(34,197,94,.3);margin:0 3px}
+.mock-feed .body .badge.file{background:rgba(79,140,255,.13);color:var(--accent);border-color:rgba(79,140,255,.3)}
+.mock-feed .body .badge.gip{background:rgba(168,85,247,.13);color:var(--accent2);border-color:rgba(168,85,247,.3)}
+.mock-feed .time{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);white-space:nowrap}
+
+.mock-lead{width:100%;font-size:12px;display:flex;flex-direction:column;gap:10px}
+.mock-lead .section{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:9px 11px}
+.mock-lead .stitle{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.mock-lead .eng-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px}
+.mock-lead .eng-row:last-child{margin-bottom:0}
+.mock-lead .eng-name{width:70px;color:var(--text)}
+.mock-lead .eng-bar{flex:1;height:8px;background:var(--row);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.mock-lead .eng-fill{height:100%;background:var(--accent)}
+.mock-lead .eng-fill.warn{background:var(--yellow)}
+.mock-lead .eng-fill.over{background:var(--red)}
+.mock-lead .eng-num{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);min-width:34px;text-align:right}
+.mock-lead .qrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed var(--border);font-size:12px}
+.mock-lead .qrow:last-child{border-bottom:0}
+.mock-lead .qrow .qname{flex:1}
+.mock-lead .qbtns{display:flex;gap:4px}
+.mock-lead .qbtn{font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid var(--border);background:var(--row);color:var(--text)}
+.mock-lead .qbtn.acc{background:rgba(34,197,94,.13);color:var(--green);border-color:rgba(34,197,94,.3)}
+.mock-lead .qbtn.ret{background:rgba(245,158,11,.13);color:var(--yellow);border-color:rgba(245,158,11,.3)}
+
+.mock-eng{width:100%;font-size:12px;display:flex;flex-direction:column;gap:10px}
+.mock-eng .section{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:9px 11px}
+.mock-eng .stitle{font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.mock-eng .task{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px}
+.mock-eng .task .pri{width:4px;height:18px;border-radius:2px;flex-shrink:0}
+.mock-eng .task .pri.r{background:var(--red)}
+.mock-eng .task .pri.y{background:var(--yellow)}
+.mock-eng .task .pri.g{background:var(--green)}
+.mock-eng .task .tname{flex:1}
+.mock-eng .task .due{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted)}
+.mock-eng .proj{padding:3px 0;color:var(--text);font-size:12px}
+.mock-eng .proj small{color:var(--muted)}
+.mock-eng .ev{padding:3px 0;font-size:12px;color:var(--text);border-bottom:1px dashed var(--border)}
+.mock-eng .ev:last-child{border-bottom:0}
+.mock-eng .ev .e-from{color:var(--accent2);font-weight:600}
+
+.bottom-bar{position:fixed;left:0;right:0;bottom:0;background:rgba(10,14,31,.95);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--border);padding:11px 18px;display:flex;justify-content:center;gap:9px;z-index:9000;flex-wrap:wrap}
+.bottom-bar button{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:9px 16px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;font-weight:500}
+.bottom-bar button:hover{background:var(--panel2);border-color:var(--accent)}
+.bottom-bar button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.bottom-bar button.primary:hover{background:#3b75e0}
+.bottom-bar button.ghost{background:transparent;color:var(--muted)}
+.bottom-bar button.ghost:hover{color:var(--red);border-color:var(--red)}
+
+.toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;opacity:0;transition:.25s;z-index:9999;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:560px){
+  .card-head{grid-template-columns:auto 1fr 16px;gap:9px;padding:11px 13px}
+  .card-head .effort,.card-head .status-pill{display:none}
+  .card-body{padding:13px}
+  header.top h1{font-size:19px}
+  .progress-block{padding:11px 14px}
+  .progress-block .pcount{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>🎨 Дизайн-решения по EngHub</h1>
+  <div class="sub">Посмотри предложения, выбери что делать. Решения сохраняются автоматически.</div>
+</header>
+
+<div class="progress-block">
+  <div class="pcount"><b id="p-done">0</b> из <span id="p-total">4</span> решено</div>
+  <div class="pbar"><div class="pfill" id="p-fill"></div></div>
+  <div class="pmeta" id="p-meta">выбери вариант в каждой карточке</div>
+</div>
+
+<div id="cards"></div>
+
+</div>
+
+<div class="bottom-bar">
+  <button class="primary" id="btn-copy">📋 Скопировать решения</button>
+  <button id="btn-download">💾 Скачать .md</button>
+  <button class="ghost" id="btn-reset">🔄 Сбросить</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'enghub_design_decisions_v1';
+
+const DECISIONS = [
+  {
+    id: 'DD-04',
+    title: 'Pulse-dot на иконке колокольчика',
+    effort: '~30 минут',
+    what: 'Маленькая красная точка (7×7px) над иконкой 🔔 в шапке, мягко пульсирующая, когда есть непрочитанные уведомления.',
+    detail: 'Чисто визуальный сигнал «у тебя есть новое». Пульсация привлекает внимание, но не раздражает — стандартный паттерн (Slack, Linear, Notion).',
+    effortLine: 'Effort: ~30 минут CSS + JSX в NotificationCenter.tsx',
+    preview: 'svg-bell',
+    variants: [
+      { key: 'do',     emoji: '✅', label: 'Делать (рекомендую)',          sub: 'красный pulse, как в макете' },
+      { key: 'other',  emoji: '🟡', label: 'Делать с другим цветом / стилем', sub: 'опиши в комментарии (например, синий dot или счётчик-цифра)' },
+      { key: 'no',     emoji: '❌', label: 'Не делать',                    sub: 'оставить как есть' }
+    ]
+  },
+  {
+    id: 'DD-07',
+    title: 'ActivityFeed — лента событий по проекту',
+    effort: '6-8 часов',
+    what: 'Новая страница/виджет, показывающий события проекта: «Иванов отметил задачу X как выполненную» и т.п. Лента в стиле Twitter/Slack.',
+    detail: 'Помогает Lead\'ам и ГИПам быстро увидеть «что было сегодня» — без необходимости опрашивать каждого инженера. Нужна таблица activity_log в Supabase, RLS-политики, триггеры на действия и Realtime-подписка.',
+    effortLine: 'Effort: 6-8 часов + design-doc на схему',
+    preview: 'mock-feed',
+    variants: [
+      { key: 'full',   emoji: '✅', label: 'Делать в полном объёме (~8ч)', sub: 'таблица + триггеры + Realtime + UI' },
+      { key: 'min',    emoji: '🟡', label: 'Минимальная версия (~3ч)',     sub: 'только отметки задач, без файлов и утверждений' },
+      { key: 'later',  emoji: '📅', label: 'Позже — сначала обсудим архитектуру', sub: 'оставить design-doc, реализацию отложить' },
+      { key: 'no',     emoji: '❌', label: 'Не делать',                    sub: 'не нужна лента событий' }
+    ]
+  },
+  {
+    id: 'DD-15',
+    title: 'LeadDashboard — спец-дашборд для Lead отдела',
+    effort: '6-8 часов',
+    what: 'Специализированный дашборд для Lead отдела: виджет «Нагрузка инженеров» с прогресс-барами, очередь «На проверке у меня» с кнопками Принять/Вернуть, список «У ГИПа» (для информации).',
+    detail: 'Сейчас Lead видит общий дашборд — не оптимизирован под его задачи. Нужен рефакторинг и роли в системе.',
+    effortLine: 'Effort: 6-8 часов рефакторинга',
+    preview: 'mock-lead',
+    variants: [
+      { key: 'full',   emoji: '✅', label: 'Делать (рекомендую)',          sub: 'все три блока: нагрузка, очередь, у ГИПа' },
+      { key: 'mvp',    emoji: '🟡', label: 'Только очередь «На проверке» (~3ч)', sub: 'MVP — кнопки Принять/Вернуть, без виджета нагрузки' },
+      { key: 'later',  emoji: '📅', label: 'После ActivityFeed',           sub: 'сначала DD-07, потом этот' },
+      { key: 'no',     emoji: '❌', label: 'Не делать',                    sub: 'обычный дашборд достаточен' }
+    ]
+  },
+  {
+    id: 'DD-16',
+    title: 'EngineerDashboard — спец-дашборд для инженера',
+    effort: '4-6 часов',
+    what: 'Специализированный дашборд для обычного инженера: «Мои задачи» с цветной полоской приоритета, «Мои проекты», «Мои события» (что произошло по моим работам).',
+    detail: 'Сейчас инженер видит общий дашборд и тратит время на фильтрацию. Лучше показать сразу его контекст.',
+    effortLine: 'Effort: 4-6 часов',
+    preview: 'mock-eng',
+    variants: [
+      { key: 'full',   emoji: '✅', label: 'Делать',                       sub: 'все три блока: задачи + проекты + события' },
+      { key: 'mvp',    emoji: '🟡', label: 'Только «Мои задачи» (~2ч)',    sub: 'MVP — список задач с приоритетом, без проектов и событий' },
+      { key: 'later',  emoji: '📅', label: 'После ActivityFeed',           sub: 'сначала DD-07, потом этот' },
+      { key: 'no',     emoji: '❌', label: 'Не делать',                    sub: 'обычный дашборд достаточен' }
+    ]
+  }
+];
+
+function renderPreview(kind) {
+  if (kind === 'svg-bell') {
+    return `
+      <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-label="bell with pulse dot">
+        <g transform="translate(20,18)" fill="none" stroke="#e9ecf3" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M40 8 L40 14" />
+          <path d="M16 60 C16 36, 24 22, 40 22 C56 22, 64 36, 64 60 L70 66 L10 66 Z" fill="#182040"/>
+          <path d="M32 70 C32 76, 36 80, 40 80 C44 80, 48 76, 48 70" fill="#182040"/>
+        </g>
+        <circle cx="80" cy="28" r="9" fill="#ef4444" stroke="#0a0e1f" stroke-width="2.5">
+          <animate attributeName="r" values="7;10;7" dur="1.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="1;0.55;1" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="80" cy="28" r="14" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.4">
+          <animate attributeName="r" values="9;20;9" dur="1.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.5;0;0.5" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">красный dot пульсирует над колокольчиком</div>
+    `;
+  }
+  if (kind === 'mock-feed') {
+    return `
+      <div class="mock-feed" style="width:100%">
+        <div class="feed-item">
+          <div class="avatar">ИИ</div>
+          <div class="body"><b>Иванов</b> отметил задачу <b>«Расчёт нагрузок ВК»</b> <span class="badge">Готово</span></div>
+          <div class="time">10:23</div>
+        </div>
+        <div class="feed-item">
+          <div class="avatar purple">ПП</div>
+          <div class="body"><b>Петров</b> загрузил <span class="badge file">ТЗ-проект-23.pdf</span></div>
+          <div class="time">09:45</div>
+        </div>
+        <div class="feed-item">
+          <div class="avatar green">СС</div>
+          <div class="body"><b>ГИП Соколов</b> утвердил <span class="badge gip">Спецификация КЖ</span></div>
+          <div class="time">вчера</div>
+        </div>
+      </div>
+    `;
+  }
+  if (kind === 'mock-lead') {
+    return `
+      <div class="mock-lead">
+        <div class="section">
+          <div class="stitle">Нагрузка отдела</div>
+          <div class="eng-row"><span class="eng-name">Иванов</span><div class="eng-bar"><div class="eng-fill warn" style="width:80%"></div></div><span class="eng-num">8/10</span></div>
+          <div class="eng-row"><span class="eng-name">Петров</span><div class="eng-bar"><div class="eng-fill" style="width:40%"></div></div><span class="eng-num">4/10</span></div>
+          <div class="eng-row"><span class="eng-name">Сидоров</span><div class="eng-bar"><div class="eng-fill over" style="width:100%"></div></div><span class="eng-num">10/10 ⚠</span></div>
+        </div>
+        <div class="section">
+          <div class="stitle">На проверке у меня (3)</div>
+          <div class="qrow"><span class="qname">• Расчёт нагрузок ВК</span><div class="qbtns"><span class="qbtn acc">Принять</span><span class="qbtn ret">Вернуть</span></div></div>
+          <div class="qrow"><span class="qname">• Спецификация КЖ-2</span><div class="qbtns"><span class="qbtn acc">Принять</span><span class="qbtn ret">Вернуть</span></div></div>
+        </div>
+        <div class="section">
+          <div class="stitle">У ГИПа (2)</div>
+          <div class="qrow"><span class="qname">• Чертёж 23-101</span></div>
+          <div class="qrow"><span class="qname">• Документация СС</span></div>
+        </div>
+      </div>
+    `;
+  }
+  if (kind === 'mock-eng') {
+    return `
+      <div class="mock-eng">
+        <div class="section">
+          <div class="stitle">Мои задачи (5)</div>
+          <div class="task"><div class="pri r"></div><span class="tname">Расчёт нагрузок</span><span class="due">до завтра</span></div>
+          <div class="task"><div class="pri y"></div><span class="tname">Чертёж 23-105</span><span class="due">на неделе</span></div>
+          <div class="task"><div class="pri g"></div><span class="tname">Спецификация</span><span class="due">без срока</span></div>
+        </div>
+        <div class="section">
+          <div class="stitle">Мои проекты (3)</div>
+          <div class="proj">• ЖК «Каспий» <small>(4 задачи)</small></div>
+          <div class="proj">• Школа №35 <small>(1 задача)</small></div>
+        </div>
+        <div class="section">
+          <div class="stitle">Что произошло по мне</div>
+          <div class="ev"><span class="e-from">ГИП</span> утвердил «Расчёт КЖ»</div>
+          <div class="ev"><span class="e-from">Lead</span> вернул «Чертёж 23-101» с комментарием «уточни узел»</div>
+        </div>
+      </div>
+    `;
+  }
+  return '';
+}
+
+let state = loadState();
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {};
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+function shortLabel(s) {
+  if (s.length > 26) return s.slice(0, 24) + '…';
+  return s;
+}
+
+function renderCards() {
+  const root = document.getElementById('cards');
+  root.innerHTML = '';
+  DECISIONS.forEach((d, idx) => {
+    const decided = !!(state[d.id] && state[d.id].choice);
+    const open = (state[d.id] && state[d.id].open !== undefined) ? state[d.id].open : (idx === 0);
+    const card = document.createElement('div');
+    card.className = 'card' + (open ? ' open' : '') + (decided ? ' decided' : '');
+    card.dataset.id = d.id;
+
+    const choice = state[d.id] && state[d.id].choice;
+    const choiceObj = choice ? d.variants.find(v => v.key === choice) : null;
+    const statusText = choiceObj ? `${choiceObj.emoji} ${shortLabel(choiceObj.label)}` : 'не решено';
+
+    card.innerHTML = `
+      <div class="card-head" data-toggle>
+        <span class="id-tag">${d.id}</span>
+        <span class="title">${d.title}</span>
+        <span class="effort">⏱ ${d.effort}</span>
+        <span class="status-pill">${statusText}</span>
+        <span class="arr">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="card-grid">
+          <div class="preview-box">
+            <div class="ptitle">Превью</div>
+            ${renderPreview(d.preview)}
+          </div>
+          <div class="ctx-side">
+            <div class="context">
+              <div class="what"><b>Что это:</b> ${d.what}</div>
+              <p>${d.detail}</p>
+              <span class="effort-line">${d.effortLine}</span>
+            </div>
+            <div class="variants">
+              ${d.variants.map(v => `
+                <label class="variant ${choice === v.key ? 'selected' : ''}">
+                  <input type="radio" name="ch_${d.id}" value="${v.key}" ${choice === v.key ? 'checked' : ''}/>
+                  <span class="vlabel">
+                    <b>${v.emoji} ${v.label}</b>
+                    <span class="vsub">${v.sub}</span>
+                  </span>
+                </label>
+              `).join('')}
+            </div>
+            <div class="comment-box">
+              <label for="cm_${d.id}">Свой комментарий (опционально)</label>
+              <textarea id="cm_${d.id}" data-id="${d.id}" placeholder="например: «давай pulse синим, чтобы не пугало»">${(state[d.id] && state[d.id].comment) || ''}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    root.appendChild(card);
+  });
+
+  root.querySelectorAll('[data-toggle]').forEach(h => {
+    h.addEventListener('click', () => {
+      const card = h.closest('.card');
+      const id = card.dataset.id;
+      const isOpen = card.classList.toggle('open');
+      state[id] = state[id] || {};
+      state[id].open = isOpen;
+      saveState();
+    });
+  });
+  root.querySelectorAll('input[type=radio]').forEach(r => {
+    r.addEventListener('change', () => {
+      const card = r.closest('.card');
+      const id = card.dataset.id;
+      state[id] = state[id] || {};
+      state[id].choice = r.value;
+      saveState();
+      renderCards();
+      updateProgress();
+    });
+  });
+  root.querySelectorAll('textarea').forEach(t => {
+    t.addEventListener('input', () => {
+      const id = t.dataset.id;
+      state[id] = state[id] || {};
+      state[id].comment = t.value;
+      saveState();
+    });
+  });
+}
+
+function updateProgress() {
+  const total = DECISIONS.length;
+  const done = DECISIONS.filter(d => state[d.id] && state[d.id].choice).length;
+  document.getElementById('p-done').textContent = done;
+  document.getElementById('p-total').textContent = total;
+  document.getElementById('p-fill').style.width = (done / total * 100) + '%';
+  const meta = document.getElementById('p-meta');
+  if (done === 0) meta.textContent = 'выбери вариант в каждой карточке';
+  else if (done === total) meta.textContent = '✅ все решения приняты — можно копировать';
+  else meta.textContent = `осталось ${total - done}`;
+}
+
+function buildMarkdown() {
+  const date = new Date().toISOString().slice(0, 10);
+  let md = `# Дизайн-решения EngHub — ${date}\n\n`;
+  md += `Принято: ${DECISIONS.filter(d => state[d.id] && state[d.id].choice).length} из ${DECISIONS.length}\n\n`;
+  DECISIONS.forEach(d => {
+    const s = state[d.id] || {};
+    const choiceObj = s.choice ? d.variants.find(v => v.key === s.choice) : null;
+    md += `## ${d.id} — ${d.title}\n\n`;
+    md += `- Effort: ${d.effort}\n`;
+    md += `- Решение: ${choiceObj ? choiceObj.emoji + ' ' + choiceObj.label : '_не решено_'}\n`;
+    if (s.comment && s.comment.trim()) {
+      md += `- Комментарий Андрея: ${s.comment.trim()}\n`;
+    }
+    md += '\n';
+  });
+  return md;
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+document.getElementById('btn-copy').addEventListener('click', async () => {
+  const md = buildMarkdown();
+  try {
+    await navigator.clipboard.writeText(md);
+    showToast('📋 Скопировано в буфер');
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = md; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('📋 Скопировано');
+  }
+});
+
+document.getElementById('btn-download').addEventListener('click', () => {
+  const md = buildMarkdown();
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `enghub-design-decisions-${date}.md`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  showToast('💾 Файл скачан');
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!confirm('Сбросить все выбранные решения и комментарии?')) return;
+  state = {};
+  saveState();
+  renderCards();
+  updateProgress();
+  showToast('🔄 Сброшено');
+});
+
+renderCards();
+updateProgress();
+</script>
+
+<script src="/_nav.js"></script>
+</body>
+</html>
