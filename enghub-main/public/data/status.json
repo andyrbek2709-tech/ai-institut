@@ -1,9 +1,9 @@
 {
-  "status": "ai-processing",
-  "current_step": "AI обрабатывает (батч 2/2)",
-  "progress_pct": 100,
+  "status": "clustering",
+  "current_step": "Группировка по кластерам",
+  "progress_pct": 92,
   "items_processed": 59,
   "items_total": 59,
-  "updated_at": "2026-04-29T08:06:47Z",
+  "updated_at": "2026-04-29T08:06:49Z",
   "started_at": "2026-04-29T08:06:12Z"
 }
