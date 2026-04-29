@@ -113,6 +113,17 @@ details.cheat .cheatbody b{color:var(--text);display:block;margin-bottom:2px}
   .meta-head .badge:nth-of-type(2),.meta-head .tprio{display:none}
   header.top input.gsearch{min-width:160px}
 }
+
+.status-strip .stop-btn{background:#1f1320;color:#ef4444;border:1px solid rgba(239,68,68,.4);padding:5px 11px;border-radius:7px;font-size:12px;text-decoration:none;font-weight:600;display:none;align-items:center;gap:5px;transition:.15s}
+.status-strip .stop-btn.show{display:inline-flex}
+.status-strip .stop-btn:hover{background:rgba(239,68,68,.15);border-color:var(--red);color:#fff}
+.busy-overlay{margin-top:14px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.05);border-radius:10px;padding:48px 22px;text-align:center;display:none}
+.busy-overlay.show{display:block}
+.busy-overlay .big{font-size:42px;margin:0 0 8px;animation:spin 2.4s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.busy-overlay .ttl{font-size:18px;font-weight:700;color:var(--text);margin:6px 0 4px}
+.busy-overlay .sub{color:var(--muted);font-size:13px;line-height:1.55}
+.busy-overlay .step{margin-top:12px;font-size:12px;color:var(--accent);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 </style>
 </head>
 <body>
@@ -157,7 +168,7 @@ details.cheat .cheatbody b{color:var(--text);display:block;margin-bottom:2px}
 
 <div class="status-strip" id="status-strip">
   <span class="seg"><span class="dot cold" id="st-dot"></span><span id="st-label">Последнее обновление:</span> <b id="st-last">—</b></span>
-  <span class="seg"><a class="run-btn" href="https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/automation-feed.yml" target="_blank" rel="noopener">🔄 Запустить сборку</a></span>
+  <span class="seg"><a class="run-btn" id="run-btn" href="https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/automation-feed.yml" target="_blank" rel="noopener">🔄 Запустить сборку</a>&nbsp;<a class="stop-btn" id="stop-btn" href="https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/automation-feed.yml" target="_blank" rel="noopener" title="Открыть Actions для отмены — из браузера отменить нельзя без токена">⏹ Остановить</a></span>
   <span class="seg" id="seg-next">Следующий автозапуск: <b id="st-next">через …</b></span>
   <span class="seg" style="color:var(--gray);font-size:11px">только посты с <b>2026-01-01</b></span>
 </div>
@@ -165,6 +176,12 @@ details.cheat .cheatbody b{color:var(--text);display:block;margin-bottom:2px}
 <div class="progress-meta" id="progress-meta"></div>
 
 <div id="main" style="margin-top:14px"></div>
+<div class="busy-overlay" id="busy-overlay">
+  <div class="big">⏳</div>
+  <div class="ttl">🟡 Идёт новый сбор…</div>
+  <div class="sub">Старые результаты скрыты, чтобы не путаться. Прогресс — в полосе выше.</div>
+  <div class="step" id="busy-step"></div>
+</div>
 
 <details class="cheat">
 <summary>Методология категорий (8 типов автоматизаций)</summary>
@@ -188,6 +205,7 @@ const state = {
   src:"all", meta:"all", cat:"all", lang:"all", prioMin:0,
   sort:"prio", view:"hier", search:"",
   openIds:new Set(), openClusters:new Set(), openMeta:new Set(),
+  optimisticUntil:0,
 };
 
 // ---------- helpers ---------- //
@@ -224,6 +242,22 @@ function nextRunIn(){
   return "через "+h+" ч "+m+" мин";
 }
 
+function isBusy(){
+  if (Date.now() < state.optimisticUntil) return true;
+  const st = state.status && state.status.status;
+  return st === "scraping" || st === "ai-processing" || st === "clustering";
+}
+
+// Optimistic-clearing handler so user sees data hide as soon as Run is clicked.
+function attachRunClickHandler(){
+  const btn = document.getElementById("run-btn");
+  if (!btn) return;
+  btn.addEventListener("click", function(){
+    state.optimisticUntil = Date.now() + 5000;
+    render();
+  });
+}
+
 // ---------- Status strip + live progress ---------- //
 function renderStatus(){
   const st = state.status || {};
@@ -237,8 +271,12 @@ function renderStatus(){
   const fill=document.getElementById("progress-fill");
   const meta=document.getElementById("progress-meta");
 
-  const live = st.status && st.status!=="done" && st.status!=="failed" && st.status!=="scraped";
+  const live = st.status && (st.status==="scraping" || st.status==="ai-processing" || st.status==="clustering");
   const failed = st.status==="failed";
+
+  // Toggle stop button visibility
+  const stopBtn = document.getElementById("stop-btn");
+  if (stopBtn) stopBtn.classList.toggle("show", !!live);
 
   if(live){
     dotEl.className="dot live";
@@ -292,6 +330,8 @@ async function pollStatus(){
         loadData();
       }
       state._lastSeen = state.status.status;
+      // Re-render so busy-overlay toggles on status changes
+      render();
     }
   }catch(e){/* silent */}
 }
@@ -299,6 +339,7 @@ setInterval(pollStatus, 3000);
 
 // ---------- Empty state ---------- //
 function renderEmpty(){
+  const ov=document.getElementById("busy-overlay"); if(ov) ov.classList.remove("show");
   document.getElementById("main").innerHTML = `<div class="empty">
     <p class="big">🕒</p>
     <p><b>Поток ещё не обновлялся</b></p>
@@ -406,6 +447,7 @@ function bindRowClicks(scopeRoot){
 
 // ---------- View: List ---------- //
 function renderList(){
+  const ov=document.getElementById("busy-overlay"); if(ov) ov.classList.remove("show");
   const items = sortItems(applyFilters(state.data.items||[]));
   if(!items.length){
     document.getElementById("main").innerHTML = `<div class="empty"><p class="big">🤷</p><p>Под фильтр ничего не подходит.</p></div>`;
@@ -417,6 +459,7 @@ function renderList(){
 
 // ---------- View: Clusters (flat) ---------- //
 function renderClusters(){
+  const ov=document.getElementById("busy-overlay"); if(ov) ov.classList.remove("show");
   const clusters = ((state.data.clusters)||[]).slice().sort((a,b)=>(b.items_count-a.items_count)||(b.avg_priority-a.avg_priority));
   const items = applyFilters(state.data.items||[]);
   const visibleClusterIds = new Set(items.map(i=>i.cluster_id));
@@ -457,6 +500,7 @@ function renderClusters(){
 
 // ---------- View: Hierarchy ---------- //
 function renderHierarchy(){
+  const ov=document.getElementById("busy-overlay"); if(ov) ov.classList.remove("show");
   const data = state.data;
   const items = applyFilters(data.items||[]);
   const itemsByCluster = new Map();
@@ -537,10 +581,38 @@ function renderHierarchy(){
 }
 
 function render(){
+  // If a fresh build is in progress (or we just clicked Run), hide stale data.
+  if (isBusy()) { renderBusy(); return; }
   if(!state.data){ renderEmpty(); return; }
+  // Done state with zero pains — show "no new info" empty.
+  const cp = state.data.meta && state.data.meta.stats && state.data.meta.stats.confirmed_pain;
+  if (cp === 0) { renderNoNew(); return; }
   if(state.view==="list") renderList();
   else if(state.view==="clusters") renderClusters();
   else renderHierarchy();
+}
+
+function renderBusy(){
+  document.getElementById("main").innerHTML = "";
+  const ov = document.getElementById("busy-overlay");
+  if (ov) {
+    ov.classList.add("show");
+    const stepEl = document.getElementById("busy-step");
+    const st = state.status || {};
+    if (stepEl) stepEl.textContent = (st.current_step ? st.current_step : "");
+  }
+}
+
+function renderNoNew(){
+  const ov = document.getElementById("busy-overlay");
+  if (ov) ov.classList.remove("show");
+  const note = (state.data.meta && state.data.meta.note) || "Новой информации не пришло. Попробуй запустить позже.";
+  document.getElementById("main").innerHTML = `<div class="empty">
+    <p class="big">📭</p>
+    <p><b>Новой информации не пришло.</b></p>
+    <p>${escapeHtml(note)}</p>
+    <p style="font-size:11px;margin-top:14px">Попробуй запустить позже — или подожди автозапуск в <b>06:00 UTC</b>.</p>
+  </div>`;
 }
 
 // ---------- UI binding ---------- //
@@ -590,6 +662,7 @@ async function loadData(){
 
 async function load(){
   bindUI();
+  attachRunClickHandler();
   renderStatus();
   await pollStatus();
   await loadData();

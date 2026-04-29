@@ -282,7 +282,8 @@ def main():
     )
 
     if not raw_items:
-        write_feed([], [], [], len(raw_items), 0, 0, sources_used, 0.0)
+        write_feed([], [], [], len(raw_items), 0, 0, sources_used, 0.0,
+                   note="Новых болей не найдено в этом прогоне")
         status_update(status="done", current_step="Готово (пусто)", progress_pct=100,
                       started_at=started_at, commit=True)
         return 0
@@ -424,12 +425,16 @@ def main():
 
     enriched.sort(key=lambda x: -x["priority"])
 
+    note = None
+    if not enriched:
+        note = "Новых болей не найдено в этом прогоне"
     write_feed(enriched, cluster_list, meta_list,
                total_scraped=len(raw_items),
                passed=len(raw_items),
                confirmed=len(enriched),
                sources_used=sources_used,
-               cost_usd=cost)
+               cost_usd=cost,
+               note=note)
 
     status_update(
         status="done",
@@ -446,21 +451,24 @@ def main():
 
 
 def write_feed(items, clusters, meta_clusters, total_scraped, passed, confirmed,
-               sources_used, cost_usd):
-    payload = {
-        "meta": {
-            "generated_at": _now_iso(),
-            "sources_used": sources_used,
-            "stats": {
-                "total_scraped": total_scraped,
-                "ai_processed": passed,
-                "confirmed_pain": confirmed,
-                "clusters": len(clusters),
-                "meta_clusters": len(meta_clusters),
-            },
-            "categories": CATEGORIES,
-            "cost_usd": round(cost_usd, 4),
+               sources_used, cost_usd, note=None):
+    meta = {
+        "generated_at": _now_iso(),
+        "sources_used": sources_used,
+        "stats": {
+            "total_scraped": total_scraped,
+            "ai_processed": passed,
+            "confirmed_pain": confirmed,
+            "clusters": len(clusters),
+            "meta_clusters": len(meta_clusters),
         },
+        "categories": CATEGORIES,
+        "cost_usd": round(cost_usd, 4),
+    }
+    if note:
+        meta["note"] = note
+    payload = {
+        "meta": meta,
         "meta_clusters": meta_clusters,
         "clusters": clusters,
         "items": items,
