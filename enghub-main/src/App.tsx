@@ -183,6 +183,8 @@ export default function App() {
   const [screen, setScreen] = useState(localStorage.getItem('enghub_screen') || "dashboard");
   const [projects, setProjects] = useState<any[]>([]);
   const [allTasks, setAllTasks] = useState<any[]>([]);
+  // B4: глобальные задачи для дашбордов Lead/Engineer (multi-project), независимо от activeProject
+  const [dashboardTasks, setDashboardTasks] = useState<any[]>([]);
   const [taskAttachCounts, setTaskAttachCounts] = useState<Record<string, number>>({});
   const [tasks, setTasks] = useState<any[]>([]);
   const [msgs, setMsgs] = useState<any[]>([]);
@@ -376,6 +378,12 @@ export default function App() {
   // Перезагружаем задачи когда currentUserData загрузился
   useEffect(() => { if (activeProject && token && currentUserData) { loadAllTasks(activeProject.id); } }, [currentUserData?.id]);
 
+  // B4: грузим multi-project tasks для дашбордов Lead/Engineer
+  useEffect(() => {
+    if (token && currentUserData?.id && depts.length) { loadDashboardTasks(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserData?.id, depts.length]);
+
   const loadAppUsers = async () => { 
     const data = await get("app_users?order=id", token!); 
     if (Array.isArray(data)) { 
@@ -450,6 +458,27 @@ export default function App() {
   };
   // Keep loadTasks as alias
   const loadTasks = loadAllTasks;
+  // B4: multi-project тасков для Lead/Engineer dashboard'ов. Lead → задачи отдела, Engineer → свои.
+  const loadDashboardTasks = async () => {
+    if (!token || !currentUserData) return;
+    const role = String(currentUserData.role || '').toLowerCase();
+    const myId = String(currentUserData.id || '');
+    const myDeptId = currentUserData.dept_id;
+    let path: string | null = null;
+    if (role === 'engineer' && myId) {
+      path = `tasks?assigned_to=eq.${encodeURIComponent(myId)}&select=*&order=deadline.asc.nullsfirst`;
+    } else if (role === 'lead' && myDeptId) {
+      const deptName = (depts.find(d => d.id === myDeptId)?.name) || '';
+      if (deptName) {
+        path = `tasks?dept=eq.${encodeURIComponent(deptName)}&select=*&order=deadline.asc.nullsfirst`;
+      }
+    }
+    if (!path) return;
+    try {
+      const data = await get(path, token!);
+      if (Array.isArray(data)) setDashboardTasks(data);
+    } catch { /* RLS не должна ронять — просто пустой список */ }
+  };
   const loadMessages = async (pid: number, taskId?: number) => {
     const query = taskId
       ? `messages?task_id=eq.${taskId}&order=created_at`
@@ -2125,7 +2154,8 @@ export default function App() {
                     C={C}
                     currentUser={currentUserData}
                     appUsers={appUsers}
-                    allTasks={allTasks}
+                    /* B4: multi-project задачи отдела (если ещё не загрузилось — fallback на текущий проект) */
+                    allTasks={dashboardTasks.length ? dashboardTasks : allTasks}
                     setSelectedTask={setSelectedTask}
                     setShowTaskDetail={setShowTaskDetail}
                   />
@@ -2138,7 +2168,8 @@ export default function App() {
                   <EngineerDashboard
                     C={C}
                     currentUser={currentUserData}
-                    allTasks={allTasks}
+                    /* B4: все мои задачи по всем проектам, не только activeProject */
+                    allTasks={dashboardTasks.length ? dashboardTasks : allTasks}
                     projects={projects}
                     setSelectedTask={setSelectedTask}
                     setShowTaskDetail={setShowTaskDetail}
@@ -2148,7 +2179,20 @@ export default function App() {
               )}
 
               {/* ── KPI карточки ── */}
-              {(() => {
+              {/* B1: skeleton пока currentUserData не пришёл — иначе KPI секунду показывают 0/0/0/0 */}
+              {!currentUserData?.id ? (
+                <div className="stats-row">
+                  {[0,1,2,3].map(i => (
+                    <div key={i} className="stat-card" style={{ opacity: 0.6 }}>
+                      <div className="stat-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                        <span style={{ display: 'inline-block', width: 90, height: 11, background: C.border, borderRadius: 4, animation: 'pulse 1.5s ease-in-out infinite' }} />
+                        <div style={{ width: 30, height: 30, borderRadius: 8, background: C.border, animation: 'pulse 1.5s ease-in-out infinite' }} />
+                      </div>
+                      <div style={{ width: 60, height: 38, background: C.border, borderRadius: 6, animation: 'pulse 1.5s ease-in-out infinite' }} />
+                    </div>
+                  ))}
+                </div>
+              ) : (() => {
                 const now = new Date();
                 const baseTasks = (isGip || isAdmin) ? allTasks : tasks;
                 const overdueProjects = projects.filter(p => { const dl = parseDeadline(p.deadline); return dl && dl < now && p.status !== 'done' && !p.archived; }).length;

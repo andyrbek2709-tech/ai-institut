@@ -10,9 +10,20 @@
 - **Последний рабочий коммит:** см. лог git
 - **Vercel project id:** `prj_ZDihCpWH1AmIEPRebnOI7ST6d6nv` (team `team_o0boJNeRGftH6Cbi9byd0dbF`)
 - **Supabase project id:** `jbdljdwlfimvmqybzynv`
-- **Env (Vercel):** `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` + Supabase keys
-- **Миграции БД:** до `018_video_meetings.sql` применены
+- **Env (Vercel):** `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` + Supabase keys (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`). Старая `REACT_APP_SUPABASE_SERVICE_KEY` подлежит удалению (см. чеклист в BUG_FIX_PLAN_2026-04-29.md).
+- **Миграции БД:** последняя — `019b_project_storage_stats_invoker` (после `019_rls_hardening`).
 - **Бэклог:** см. `enghub-main/TASKS.md` — приоритеты T1-T28
+
+## Тестовые учётки (актуально на 2026-04-29)
+
+| Роль | Email | Пароль | Статус |
+|---|---|---|---|
+| Engineer (ОВиК отдел id=3) | troshin.m@nipicer.kz | Test1234! | ✅ работает |
+| Lead (ОВиК отдел id=3) | pravdukhin.a@nipicer.kz | Test1234! | ✅ работает |
+| GIP | skorokhod.a@nipicer.kz | через ResetPassword | ✅ работает |
+
+**Не существуют (упоминаются в старых документах — игнорировать):**
+`admin@enghub.com`, `gip@nipicer.kz`, `lead@nipicer.kz`. Admin-роль с предсказуемым паролем нужно создать через AdminPanel/`/api/admin-users` после security cutover.
 
 ## Известные проблемы
 
@@ -59,6 +70,14 @@
 - См. полный TASKS.md, разделы "Приоритет 2" и "Приоритет 3".
 
 ## Последние изменения (новые сверху)
+
+### 2026-04-29 — Security cutover: B3 фронт + RLS hardening + B1/B4/B6
+- **B3 (security):** коммит `e90177d` — service_role убран из фронта, перенесён в `/api/admin/*`. Этап Vercel env (создать `SUPABASE_SERVICE_KEY` без префикса, удалить `REACT_APP_SUPABASE_SERVICE_KEY`) и ротация ключа в Supabase Dashboard — на стороне пользователя (Cowork-сессия не имеет Chrome MCP).
+- **RLS hardening (миграции `019_rls_hardening`, `019b_project_storage_stats_invoker`):** включена RLS на `meetings` / `time_entries` / `task_templates` / `review_comments` (последняя замкнута admin/gip из-за schema-mismatch `review_id bigint vs reviews.id uuid` — отдельный баг). Удалены permissive-политики `Enable * for all users` на `ai_actions`, `raci_all`. `activity_log_insert` теперь требует `user_can_access_project`. `project_storage_stats` пересоздан как `security_invoker`. `search_path = public` на всех publish-функциях. `revoke execute ... from anon` на 12 security-definer auth-helpers.
+- **Smoke-RLS:** engineer Troshin → 8 tasks/2 projects, lead Pravdukhin → 12/4, gip Skorokhod → 14/15, anon → 0/0/0. RLS пропускает только нужные строки.
+- **B4 (multi-project dashboards):** добавлен state `dashboardTasks` + `loadDashboardTasks()` в `App.tsx`. Lead → задачи отдела по всем проектам, Engineer → свои по всем проектам. LeadDashboard/EngineerDashboard получают `dashboardTasks` (с fallback на `allTasks`).
+- **B1 (KPI race):** добавлен skeleton (4 пульсирующих stat-card'а) пока `currentUserData?.id` не пришёл. Никаких больше `0/0/0/0` на 1 секунду.
+- **B6 (тестовые юзеры):** в STATE.md добавлен реальный список (troshin/pravdukhin/skorokhod). Несуществующие `admin@enghub.com`, `gip@nipicer.kz`, `lead@nipicer.kz` помечены как «не существуют».
 
 ### 2026-04-29 — QA-прогон фич последнего деплоя (DD-07/15/16, CONV Stage 4b)
 - **Деплой:** `dpl_35c1fFju1gC5wSNRzn621RM2ypfT` (commit `15174d5`, email `andyrbek2709@gmail.com`) → READY ✅.
