@@ -191,3 +191,148 @@ export const createNotification = (payload: any) =>
   }).then(r => r.ok ? r : Promise.reject(r));
 
 export { SURL, SERVICE_KEY };
+
+// =========================================================================
+// T30 / T31 — Документы проекта, прикрепления к задачам, storage stats
+// =========================================================================
+
+export const STORAGE_BUCKET = 'project-files';
+export const FILE_SIZE_LIMIT = 50 * 1024 * 1024; // 50 MB
+
+const sanitizeName = (n: string) => n.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+const uploadToBucket = async (path: string, file: File, token: string) => {
+  const r = await fetch(`${SURL}/storage/v1/object/${STORAGE_BUCKET}/${path}`, {
+    method: 'POST',
+    headers: {
+      apikey: KEY,
+      Authorization: `Bearer ${token || KEY}`,
+      'Content-Type': file.type || 'application/octet-stream',
+      'x-upsert': 'false',
+    },
+    body: file,
+  });
+  if (!r.ok) {
+    const body = await r.text().catch(() => '');
+    throw new Error(`Storage upload failed (${r.status}): ${body}`);
+  }
+  return path;
+};
+
+export const signProjectFileUrl = async (path: string, expiresInSec: number = 60 * 60): Promise<string | null> => {
+  if (!SURL || !SERVICE_KEY) return null;
+  const r = await fetch(`${SURL}/storage/v1/object/sign/${STORAGE_BUCKET}/${path}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ expiresIn: expiresInSec }),
+  });
+  if (!r.ok) return null;
+  const j = await r.json().catch(() => ({}));
+  const signed = (j as any)?.signedURL || (j as any)?.signedUrl;
+  if (!signed) return null;
+  return signed.startsWith('http') ? signed : `${SURL}/storage/v1${signed}`;
+};
+
+const removeFromBucket = async (path: string) => {
+  if (!SURL || !SERVICE_KEY) return;
+  await fetch(`${SURL}/storage/v1/object/${STORAGE_BUCKET}/${path}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY },
+  }).catch(() => null);
+};
+
+// ----- Project documents -------------------------------------------------
+
+export type DocType = 'tz' | 'addendum' | 'other';
+
+export const listProjectDocuments = (projectId: number, token?: string) =>
+  get(`project_documents?project_id=eq.${projectId}&order=uploaded_at.desc`, token);
+
+export const uploadProjectDocument = async (
+  projectId: number,
+  docType: DocType,
+  file: File,
+  uploadedBy: number,
+  token: string,
+): Promise<any> => {
+  if (file.size > FILE_SIZE_LIMIT) {
+    throw new Error(`Файл слишком большой (${(file.size / 1024 / 1024).toFixed(1)} МБ). Лимит — 50 МБ.`);
+  }
+  const stamp = Date.now();
+  const safe = sanitizeName(file.name);
+  const path = `${projectId}/${docType}/${stamp}_${safe}`;
+  await uploadToBucket(path, file, token);
+  try {
+    const rows = await post('project_documents', {
+      project_id: projectId,
+      doc_type: docType,
+      name: file.name,
+      storage_path: path,
+      mime_type: file.type || null,
+      size_bytes: file.size,
+      uploaded_by: uploadedBy,
+    }, token);
+    return Array.isArray(rows) ? rows[0] : rows;
+  } catch (e) {
+    // откатываем загруженный файл если запись в БД не удалась
+    await removeFromBucket(path);
+    throw e;
+  }
+};
+
+export const deleteProjectDocument = async (id: string, storagePath: string, token: string) => {
+  await del(`project_documents?id=eq.${id}`, token);
+  await removeFromBucket(storagePath);
+};
+
+// ----- Task attachments --------------------------------------------------
+
+export const listTaskAttachments = (taskId: number, token?: string) =>
+  get(`task_attachments?task_id=eq.${taskId}&order=uploaded_at.desc`, token);
+
+export const listTaskAttachmentsByTaskIds = async (taskIds: number[], token?: string) => {
+  if (!taskIds.length) return [] as any[];
+  const inList = taskIds.map(t => String(t)).join(',');
+  const rows = await get(`task_attachments?task_id=in.(${inList})&select=id,task_id,name,size_bytes`, token);
+  return Array.isArray(rows) ? rows : [];
+};
+
+export const uploadTaskAttachment = async (
+  projectId: number,
+  taskId: number,
+  file: File,
+  uploadedBy: number,
+  token: string,
+): Promise<any> => {
+  if (file.size > FILE_SIZE_LIMIT) {
+    throw new Error(`Файл слишком большой (${(file.size / 1024 / 1024).toFixed(1)} МБ). Лимит — 50 МБ.`);
+  }
+  const stamp = Date.now();
+  const safe = sanitizeName(file.name);
+  const path = `${projectId}/tasks/${taskId}/${stamp}_${safe}`;
+  await uploadToBucket(path, file, token);
+  try {
+    const rows = await post('task_attachments', {
+      task_id: taskId,
+      name: file.name,
+      storage_path: path,
+      mime_type: file.type || null,
+      size_bytes: file.size,
+      uploaded_by: uploadedBy,
+    }, token);
+    return Array.isArray(rows) ? rows[0] : rows;
+  } catch (e) {
+    await removeFromBucket(path);
+    throw e;
+  }
+};
+
+export const deleteTaskAttachment = async (id: string, storagePath: string, token: string) => {
+  await del(`task_attachments?id=eq.${id}`, token);
+  await removeFromBucket(storagePath);
+};
+
+// ----- Storage stats -----------------------------------------------------
+
+export const getStorageStats = (token?: string) =>
+  get(`project_storage_stats?order=total_bytes.desc`, token);
