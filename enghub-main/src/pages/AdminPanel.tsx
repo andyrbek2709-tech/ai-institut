@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { DARK, LIGHT, roleLabels } from '../constants';
 import { get, post, patch, del, createAuthUser, updateUserPassword } from '../api/supabase';
 import { ThemeToggle, Modal, Field, AvatarComp, getInp } from '../components/ui';
+import { StorageStats } from '../components/StorageStats';
 
 interface AdminPanelProps { token: string; onLogout: () => void; dark: boolean; setDark: (v: boolean) => void; }
 
@@ -55,6 +56,7 @@ export function AdminPanel({ token, onLogout, dark, setDark }: AdminPanelProps) 
     { id: "users", icon: "👥", label: "Пользователи" },
     { id: "depts", icon: "🏢", label: "Отделы" },
     { id: "archive", icon: "📦", label: "Архив проектов" },
+    { id: "storage", icon: "📊", label: "Хранилище" },
   ];
 
   return (
@@ -257,6 +259,10 @@ export function AdminPanel({ token, onLogout, dark, setDark }: AdminPanelProps) 
                 </div>
               )}
             </div>
+          )}
+
+          {tab === "storage" && (
+            <StorageStats C={C} token={token} />
           )}
         </div>
       </div>

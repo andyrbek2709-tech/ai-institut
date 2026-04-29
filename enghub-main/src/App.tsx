@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions, transmittalStatusMap } from './constants';
 import { NavIcon, IconFolder, IconCheckSquare, IconActivity, IconArchive } from './components/icons';
-import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory } from './api/supabase';
+import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory, listTaskAttachmentsByTaskIds } from './api/supabase';
 import { getSupabaseAdminClient } from './api/supabaseClient';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput, useCountUp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
@@ -27,6 +27,8 @@ import { ReviewsTab } from './components/ReviewsTab';
 import { TransmittalsTab } from './components/TransmittalsTab';
 import { AssignmentsTab } from './components/AssignmentsTab';
 import { SpecificationsTab } from './components/SpecificationsTab';
+import { DocumentsPanel } from './components/DocumentsPanel';
+import { TaskAttachments } from './components/TaskAttachments';
 import GanttChart from './components/GanttChart';
 import MeetingsPanel from './components/MeetingsPanel';
 import TimelogPanel from './components/TimelogPanel';
@@ -57,6 +59,15 @@ const TAB_HELP: Record<string, { title: string; sections: { heading: string; tex
       { heading: "Создание задачи", text: "ГИП нажимает «+ Новая задача», заполняет название, отдел, исполнителя, срок и приоритет." },
       { heading: "Жизненный цикл", text: "Задача проходит стадии: Ожидает → В работе → На проверке руководителя → На проверке ГИПа → Завершена. Каждый участник переводит задачу в следующий статус кнопкой в карточке." },
       { heading: "Фильтры", text: "Задачи можно фильтровать по отделу через выпадающий список над списком задач." },
+    ],
+  },
+  documents: {
+    title: "📁 Документы",
+    sections: [
+      { heading: "Что это", text: "Все файлы проекта: ТЗ, дополнения, прочие документы. Доступны участникам проекта." },
+      { heading: "Загрузка", text: "Кнопка «+ Загрузить документ» — выберите тип (ТЗ / Дополнение / Прочее) и файл. Поддерживаются PDF, Word (doc/docx), Excel (xls/xlsx). Макс размер — 50 МБ." },
+      { heading: "Просмотр", text: "Двойной клик или кнопка «Открыть» на PDF/Word/Excel — встроенный preview. На DWG/прочих — скачивание." },
+      { heading: "Изоляция", text: "Файлы видны только участникам проекта. ГИП и автор файла могут удалить, остальные — только просматривать." },
     ],
   },
   drawings: {
@@ -168,6 +179,7 @@ export default function App() {
   const [screen, setScreen] = useState(localStorage.getItem('enghub_screen') || "dashboard");
   const [projects, setProjects] = useState<any[]>([]);
   const [allTasks, setAllTasks] = useState<any[]>([]);
+  const [taskAttachCounts, setTaskAttachCounts] = useState<Record<string, number>>({});
   const [tasks, setTasks] = useState<any[]>([]);
   const [msgs, setMsgs] = useState<any[]>([]);
   const [appUsers, setAppUsers] = useState<any[]>([]);
@@ -418,6 +430,17 @@ export default function App() {
       } else {
         setTasks(data.filter((t: any) => String(t.assigned_to) === String(myId)));
       }
+      // T30e: батч-подсчёт прикреплённых файлов на задачах
+      try {
+        const ids = data.map((t: any) => Number(t.id)).filter(Boolean);
+        const rows = await listTaskAttachmentsByTaskIds(ids, token!);
+        const counts: Record<string, number> = {};
+        for (const r of rows) {
+          const k = String(r.task_id);
+          counts[k] = (counts[k] || 0) + 1;
+        }
+        setTaskAttachCounts(counts);
+      } catch { /* ignore: миграция могла быть не применена */ }
     }
   };
   // Keep loadTasks as alias
@@ -1576,6 +1599,18 @@ export default function App() {
               </div>
             )}
             
+            {/* T30e: прикрепления к задаче */}
+            {activeProject && (
+              <TaskAttachments
+                C={C}
+                projectId={activeProject.id}
+                taskId={selectedTask.id}
+                currentUserId={currentUserData?.id || 0}
+                token={token!}
+                canEdit={isGip || isLead || (currentUserData && String(selectedTask.assigned_to) === String(currentUserData.id))}
+              />
+            )}
+
             <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Замечания и обсуждение</div>
               <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', height: 250 }}>
@@ -2338,9 +2373,9 @@ export default function App() {
               <div style={{ display: conferenceScreenActive ? 'none' : 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
                 <div className="tab-strip-wrap" style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                   <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch', flex: 1, marginBottom: 0 } as React.CSSProperties}>
-                    {["conference","tasks","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
+                    {["conference","tasks","documents","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
                       <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        {t === "tasks" ? "⊙ Задачи" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
+                        {t === "tasks" ? "⊙ Задачи" : t === "documents" ? "📁 Документы" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
                       </button>
                     ))}
                   </div>
@@ -2413,6 +2448,7 @@ export default function App() {
                                 return d ? <span style={{ fontSize: 11, color: C.textMuted }}>📐 {d.code}</span> : null;
                               })()}
                               {t.deadline && <span style={{ fontSize: 11, color: (() => { const dl = parseDeadline(t.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>📅 {formatDateRu(t.deadline)}</span>}
+                              {taskAttachCounts[String(t.id)] > 0 && <span style={{ fontSize: 11, color: C.textMuted }} title="Прикреплённые файлы">📎 {taskAttachCounts[String(t.id)]}</span>}
                               <span style={{ fontSize: 11, color: t.priority === "high" ? C.red : t.priority === "medium" ? C.orange : C.green, fontWeight: 600 }}>● {t.priority === "high" ? "Высокий" : t.priority === "medium" ? "Средний" : "Низкий"}</span>
                             </div>
                           </div>
@@ -2423,6 +2459,17 @@ export default function App() {
                     })}
                   </div>
                 </div>
+              )}
+
+              {sideTab === "documents" && activeProject && (
+                <DocumentsPanel
+                  C={C}
+                  projectId={activeProject.id}
+                  currentUserId={currentUserData?.id || 0}
+                  token={token!}
+                  appUsers={appUsers}
+                  canManage={isGip || isLead || currentUserData?.role === 'engineer'}
+                />
               )}
 
               {sideTab === "drawings" && (
