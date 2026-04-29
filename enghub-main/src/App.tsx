@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions, transmittalStatusMap } from './constants';
 import { NavIcon, IconFolder, IconCheckSquare, IconActivity, IconArchive } from './components/icons';
-import { get, post, patch, del, SURL, SERVICE_KEY, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory, listTaskAttachmentsByTaskIds } from './api/supabase';
+import { get, post, patch, del, SURL, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory, listTaskAttachmentsByTaskIds } from './api/supabase';
+import { apiPost, apiGet } from './api/http';
 import { getSupabaseAdminClient } from './api/supabaseClient';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput, useCountUp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
@@ -394,17 +395,14 @@ export default function App() {
   const loadArchived = async () => { const data = await get("projects?archived=eq.true&order=id", token!); if (Array.isArray(data)) setArchivedProjects(data); };
 
   const signStorageUrl = async (bucket: string, path: string, expiresInSec: number = 60 * 60) => {
-    if (!SURL || !SERVICE_KEY) return null;
-    const signRes = await fetch(`${SURL}/storage/v1/object/sign/${bucket}/${path}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ expiresIn: expiresInSec }),
-    });
-    if (!signRes.ok) return null;
-    const signJson = await signRes.json().catch(() => ({}));
-    const signedPath = (signJson as any)?.signedURL || (signJson as any)?.signedUrl;
-    if (!signedPath) return null;
-    return signedPath.startsWith('http') ? signedPath : `${SURL}/storage/v1${signedPath}`;
+    try {
+      const j = await apiPost<{ signed_url: string }>('/api/storage-sign-url', {
+        bucket, storage_path: path, expiresIn: expiresInSec,
+      });
+      return j?.signed_url || null;
+    } catch {
+      return null;
+    }
   };
 
   const loadBranding = async () => {
@@ -498,17 +496,11 @@ export default function App() {
     if (Array.isArray(data)) setNormativeDocs(data);
   };
 
-  // NORM-01 fix: открыть нормативный документ через подписанный Storage URL
+  // NORM-01 fix: открыть нормативный документ через подписанный Storage URL (через /api)
   const openNormativeDoc = async (doc: any) => {
     if (!doc?.file_path) { addNotification("Путь к файлу не найден", "warning"); return; }
     const isPdf = doc.file_type?.includes("pdf") || doc.name?.toLowerCase().endsWith(".pdf");
-    const signRes = await fetch(`${SURL}/storage/v1/object/sign/normative-docs/${doc.file_path}`, {
-      method: "POST",
-      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ expiresIn: 3600 }),
-    });
-    const signData = await signRes.json();
-    const signedUrl = signData?.signedURL ? `${SURL}/storage/v1${signData.signedURL}` : signData?.signedUrl;
+    const signedUrl = await signStorageUrl('normative-docs', doc.file_path, 3600);
     if (!signedUrl) { addNotification("Не удалось получить ссылку на файл", "warning"); return; }
     if (isPdf) {
       window.open(signedUrl, "_blank");
@@ -520,20 +512,20 @@ export default function App() {
     }
   };
 
-  // Запасной текстовый поиск через ilike (когда нет эмбеддингов)
+  // Запасной текстовый поиск через ilike (когда нет эмбеддингов) — через /api
   const searchNormativeIlike = async (query: string): Promise<any[]> => {
-    const enc = encodeURIComponent(`*${query.trim()}*`);
-    const res = await fetch(`${SURL}/rest/v1/normative_chunks?content=ilike.${enc}&select=id,doc_id,doc_name,content&limit=100`, {
-      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
-    });
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    const byDoc = new Map<string, any>();
-    for (const c of data) {
-      if (!byDoc.has(c.doc_id)) byDoc.set(c.doc_id, { ...c, similarity: null });
-      else byDoc.get(c.doc_id).matchCount = (byDoc.get(c.doc_id).matchCount || 1) + 1;
+    try {
+      const data = await apiGet<any[]>(`/api/normative-docs?ilike=${encodeURIComponent(query.trim())}`);
+      if (!Array.isArray(data)) return [];
+      const byDoc = new Map<string, any>();
+      for (const c of data) {
+        if (!byDoc.has(c.doc_id)) byDoc.set(c.doc_id, { ...c, similarity: null });
+        else byDoc.get(c.doc_id).matchCount = (byDoc.get(c.doc_id).matchCount || 1) + 1;
+      }
+      return Array.from(byDoc.values());
+    } catch {
+      return [];
     }
-    return Array.from(byDoc.values());
   };
 
   const searchNormative = async (query: string) => {
@@ -576,40 +568,41 @@ export default function App() {
     for (const file of files) {
       if (decisions[file.name] === 'skip') continue;
       try {
-        // Overwrite: удалить существующий документ
+        // Overwrite: удалить существующий документ через /api/normative-docs
+        let overwriteId: string | null = null;
         if (decisions[file.name] === 'overwrite') {
           const existing = normativeDocs.find(d => d.name === file.name);
-          if (existing) {
-            await fetch(`${SURL}/rest/v1/normative_docs?id=eq.${existing.id}`, {
-              method: 'DELETE',
-              headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
-            });
-          }
+          if (existing) overwriteId = existing.id;
         }
         const filePath = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        // Загрузка в Storage с user JWT (для bucket normative-docs должна быть Storage policy для authenticated INSERT).
         const uploadRes = await fetch(`${SURL}/storage/v1/object/normative-docs/${filePath}`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': file.type || 'application/octet-stream' },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': file.type || 'application/octet-stream' },
           body: file,
         });
         if (!uploadRes.ok) { addNotification(`Ошибка загрузки "${file.name}": Storage недоступен`, 'warning'); continue; }
 
-        const docInsertRes = await fetch(`${SURL}/rest/v1/normative_docs`, {
-          method: 'POST',
-          headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-          body: JSON.stringify({ name: file.name, file_type: file.type || 'application/octet-stream', file_path: filePath, status: 'pending' }),
-        });
-        const docData = await docInsertRes.json();
-        if (!docInsertRes.ok) { addNotification(`Ошибка записи "${file.name}": ${docData?.message || docInsertRes.status}`, 'warning'); continue; }
+        // Регистрируем документ в БД через server-side endpoint (admin/gip only).
+        let docRow: any;
+        try {
+          docRow = await apiPost('/api/normative-docs', {
+            action: 'upload_init',
+            name: file.name,
+            file_type: file.type || 'application/octet-stream',
+            file_path: filePath,
+            overwrite_id: overwriteId,
+          });
+        } catch (e: any) {
+          addNotification(`Ошибка записи "${file.name}": ${e?.message || 'unknown'}`, 'warning');
+          continue;
+        }
 
-        const docId = Array.isArray(docData) ? docData[0]?.id : docData?.id;
+        const docId = docRow?.id;
         if (!docId) continue;
 
-        fetch(`${SURL}/functions/v1/vectorize-doc`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ doc_id: docId }),
-        }).catch(() => {});
+        // Запуск векторизации — через тот же endpoint
+        apiPost('/api/normative-docs', { action: 'vectorize', doc_id: docId }).catch(() => {});
         successCount++;
       } catch {
         addNotification(`Ошибка загрузки "${file.name}"`, 'warning');
@@ -2031,7 +2024,7 @@ export default function App() {
                         try {
                           const uploadRes = await fetch(`${SURL}/storage/v1/object/avatars/${path}`, {
                             method: 'POST',
-                            headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': file.type },
+                            headers: { Authorization: `Bearer ${token}`, 'Content-Type': file.type },
                             body: file,
                           });
                           if (!uploadRes.ok) throw new Error('Upload failed');
@@ -3067,12 +3060,7 @@ export default function App() {
                         const batch = pending.slice(i, i + BATCH);
                         const results = await Promise.all(batch.map(async (doc) => {
                           try {
-                            const res = await fetch(`${SURL}/functions/v1/vectorize-doc`, {
-                              method: 'POST',
-                              headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ doc_id: doc.id }),
-                            });
-                            if (!res.ok) throw new Error(await res.text());
+                            await apiPost('/api/normative-docs', { action: 'vectorize', doc_id: doc.id });
                             return { success: true };
                           } catch (err) {
                             console.error(`Error indexing ${doc.name}:`, err);
@@ -3198,24 +3186,12 @@ export default function App() {
                               const isPdf = doc.file_type?.includes('pdf') || doc.name?.toLowerCase().endsWith('.pdf');
                               if (isPdf) {
                                 // Получить подписанный URL для PDF и открыть в новой вкладке
-                                const signRes = await fetch(`${SURL}/storage/v1/object/sign/normative-docs/${doc.file_path}`, {
-                                  method: 'POST',
-                                  headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ expiresIn: 3600 }),
-                                });
-                                const signData = await signRes.json();
-                                const signedUrl = signData?.signedURL ? `${SURL}/storage/v1${signData.signedURL}` : signData?.signedUrl;
+                                const signedUrl = await signStorageUrl('normative-docs', doc.file_path, 3600);
                                 if (signedUrl) window.open(signedUrl, '_blank');
                                 else addNotification('Не удалось получить ссылку на файл', 'warning');
                               } else {
                                 // DOCX/DOC — скачать через подписанный URL
-                                const signRes = await fetch(`${SURL}/storage/v1/object/sign/normative-docs/${doc.file_path}`, {
-                                  method: 'POST',
-                                  headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ expiresIn: 3600 }),
-                                });
-                                const signData = await signRes.json();
-                                const signedUrl = signData?.signedURL ? `${SURL}/storage/v1${signData.signedURL}` : signData?.signedUrl;
+                                const signedUrl = await signStorageUrl('normative-docs', doc.file_path, 3600);
                                 if (signedUrl) {
                                   const a = document.createElement('a');
                                   a.href = signedUrl;

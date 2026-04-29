@@ -1,0 +1,43 @@
+// Тонкий HTTP-helper для вызовов /api/* серверных функций.
+// Всегда подставляет user JWT из текущей Supabase-сессии.
+
+import { getSupabaseAnonClient } from './supabaseClient';
+
+async function getAccessToken(): Promise<string> {
+  try {
+    const sb = getSupabaseAnonClient();
+    const { data } = await sb.auth.getSession();
+    return data?.session?.access_token || '';
+  } catch {
+    return '';
+  }
+}
+
+export async function apiFetch<T = any>(path: string, opts: RequestInit = {}): Promise<T> {
+  const token = await getAccessToken();
+  const headers = new Headers(opts.headers || {});
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (!headers.has('Content-Type') && opts.body && !(opts.body instanceof FormData) && typeof opts.body === 'string') {
+    headers.set('Content-Type', 'application/json');
+  }
+  const r = await fetch(path, { ...opts, headers });
+  if (!r.ok) {
+    let msg = `API ${r.status} ${r.statusText}`;
+    try {
+      const j = await r.json();
+      msg = j?.error || j?.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  if (r.status === 204) return undefined as any;
+  const ct = r.headers.get('content-type') || '';
+  if (ct.includes('application/json')) return r.json();
+  return r.text() as any;
+}
+
+// Удобные обёртки
+export const apiGet  = <T = any>(path: string) => apiFetch<T>(path, { method: 'GET' });
+export const apiPost = <T = any>(path: string, body?: any) =>
+  apiFetch<T>(path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined });
+export const apiDelete = <T = any>(path: string, body?: any) =>
+  apiFetch<T>(path, { method: 'DELETE', body: body !== undefined ? JSON.stringify(body) : undefined });

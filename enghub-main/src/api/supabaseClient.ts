@@ -2,14 +2,11 @@ import { createClient } from '@supabase/supabase-js';
 
 const SURL = process.env.REACT_APP_SUPABASE_URL || '';
 const ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
-const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || '';
 
 let anonClient: any = null;
-let adminClient: any = null;
 
-// B11 fix: оба клиента создаются с разными storageKey + persistSession=false
-// для admin (service_role не должен иметь session-state). Это убирает warning
-// "Multiple GoTrueClient instances detected" в консоли.
+// SECURITY: admin-клиент УДАЛЁН из браузера. Все admin-операции через /api/*.
+// Если коду нужен service_role — это запрос на серверную функцию, не на клиент.
 export const getSupabaseAnonClient = () => {
   if (!anonClient) {
     anonClient = createClient(SURL, ANON_KEY, {
@@ -23,17 +20,7 @@ export const getSupabaseAnonClient = () => {
   return anonClient;
 };
 
-export const getSupabaseAdminClient = () => {
-  if (!adminClient) {
-    adminClient = createClient(SURL, SERVICE_KEY, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        storageKey: 'enghub-admin-noauth',
-      },
-    });
-  }
-  return adminClient;
-};
-
-export const getSupabaseClient = getSupabaseAnonClient; // default export
+// Backward-compat: getSupabaseAdminClient/getSupabaseClient теперь возвращают anon-клиента.
+// Любая старая страница, ходившая через admin, перестанет байпасить RLS — это и нужно.
+export const getSupabaseAdminClient = getSupabaseAnonClient;
+export const getSupabaseClient = getSupabaseAnonClient;

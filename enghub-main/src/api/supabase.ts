@@ -1,18 +1,18 @@
 // Supabase API helpers — прямые fetch запросы без SDK
+//
+// SECURITY: SERVICE_KEY БОЛЬШЕ НЕ ДОСТУПЕН В КЛИЕНТЕ.
+// Все admin-операции (создание юзера, смена пароля, подпись Storage URL,
+// удаление файла, чтение activity_log, прямые INSERT в notifications)
+// идут через серверные /api/* endpoints с user JWT.
+
+import { apiPost } from './http';
 
 const SURL = process.env.REACT_APP_SUPABASE_URL || '';
 const KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
-const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || '';
 
 const H = (token?: string) => ({
   'apikey': KEY,
   'Authorization': `Bearer ${token || KEY}`,
-  'Content-Type': 'application/json',
-});
-
-const AdminH = () => ({
-  'apikey': KEY,
-  'Authorization': `Bearer ${SERVICE_KEY}`,
   'Content-Type': 'application/json',
 });
 
@@ -59,19 +59,23 @@ export const signIn = (email: string, password: string) =>
     body: JSON.stringify({ email, password }),
   }).then(r => r.json());
 
-export const createAuthUser = (email: string, password: string) =>
-  fetch(`${SURL}/auth/v1/admin/users`, {
-    method: 'POST',
-    headers: AdminH(),
-    body: JSON.stringify({ email, password, email_confirm: true }),
-  }).then(r => r.json());
+// Admin-операции через серверные /api endpoints (требуют admin role).
+// createAuthUser теперь принимает (email, password, full_name, role, dept_id?).
+// Старая 2-arg сигнатура поддержана через дефолты для обратной совместимости.
+export const createAuthUser = async (
+  email: string,
+  password: string,
+  full_name: string = email,
+  role: string = 'engineer',
+  dept_id?: number | null,
+) =>
+  apiPost('/api/admin-users', { action: 'create', email, password, full_name, role, dept_id });
 
-export const updateUserPassword = (uid: string, newPassword: string) =>
-  fetch(`${SURL}/auth/v1/admin/users/${uid}`, {
-    method: 'PUT',
-    headers: AdminH(),
-    body: JSON.stringify({ password: newPassword }),
-  }).then(r => r.json());
+export const updateUserPassword = (supabase_uid: string, new_password: string) =>
+  apiPost('/api/admin-users', { action: 'reset_password', supabase_uid, new_password });
+
+export const updateUserRole = (user_id: number, role: string, dept_id?: number | null) =>
+  apiPost('/api/admin-users', { action: 'update_role', user_id, role, dept_id });
 
 // Domain helpers for engineering workflow
 export const listDrawings = (projectId: number, token?: string) =>
@@ -184,13 +188,9 @@ export const markAllNotificationsRead = (userId: number, token?: string) =>
   patch(`notifications?user_id=eq.${userId}&is_read=eq.false`, { is_read: true }, token);
 
 export const createNotification = (payload: any) =>
-  fetch(`${SURL}/rest/v1/notifications`, {
-    method: 'POST',
-    headers: { ...AdminH(), 'Prefer': 'return=minimal' },
-    body: JSON.stringify(payload),
-  }).then(r => r.ok ? r : Promise.reject(r));
+  apiPost('/api/notifications-create', payload);
 
-export { SURL, SERVICE_KEY };
+export { SURL };
 
 // =========================================================================
 // T30 / T31 — Документы проекта, прикрепления к задачам, storage stats
@@ -220,25 +220,23 @@ const uploadToBucket = async (path: string, file: File, token: string) => {
 };
 
 export const signProjectFileUrl = async (path: string, expiresInSec: number = 60 * 60): Promise<string | null> => {
-  if (!SURL || !SERVICE_KEY) return null;
-  const r = await fetch(`${SURL}/storage/v1/object/sign/${STORAGE_BUCKET}/${path}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ expiresIn: expiresInSec }),
-  });
-  if (!r.ok) return null;
-  const j = await r.json().catch(() => ({}));
-  const signed = (j as any)?.signedURL || (j as any)?.signedUrl;
-  if (!signed) return null;
-  return signed.startsWith('http') ? signed : `${SURL}/storage/v1${signed}`;
+  try {
+    const j = await apiPost<{ signed_url: string }>('/api/storage-sign-url', {
+      storage_path: path,
+      expiresIn: expiresInSec,
+    });
+    return j?.signed_url || null;
+  } catch {
+    return null;
+  }
 };
 
 const removeFromBucket = async (path: string) => {
-  if (!SURL || !SERVICE_KEY) return;
-  await fetch(`${SURL}/storage/v1/object/${STORAGE_BUCKET}/${path}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY },
-  }).catch(() => null);
+  try {
+    await apiPost('/api/storage-delete', { storage_path: path });
+  } catch {
+    /* best-effort */
+  }
 };
 
 // ----- Project documents -------------------------------------------------

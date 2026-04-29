@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SURL, SERVICE_KEY } from '../api/supabase';
+import { apiGet } from '../api/http';
 
 // DD-07: Лента активности проекта
 // Читает activity_log + Realtime подписка на новые события
@@ -41,10 +41,8 @@ export default function ActivityFeed({ projectId, appUsers, C, limit = 30 }: any
     if (!projectId) { setItems([]); setLoading(false); return; }
     let cancelled = false;
     setLoading(true);
-    const headers = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
-    fetch(`${SURL}/rest/v1/activity_log?project_id=eq.${projectId}&select=*&order=created_at.desc&limit=${limit}`, { headers })
-      .then(r => r.json())
-      .then((data: any[]) => { if (!cancelled) { setItems(Array.isArray(data) ? data : []); setLoading(false); } })
+    apiGet<any[]>(`/api/activity-log?project_id=${encodeURIComponent(String(projectId))}&limit=${limit}`)
+      .then((data) => { if (!cancelled) { setItems(Array.isArray(data) ? data : []); setLoading(false); } })
       .catch(() => { if (!cancelled) { setItems([]); setLoading(false); } });
     return () => { cancelled = true; };
   }, [projectId, limit]);

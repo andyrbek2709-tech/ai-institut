@@ -235,7 +235,10 @@ export function ConferenceRoom({
 
   const conferenceParticipantsRef = useRef<any[]>([]);
   const SURL = process.env.REACT_APP_SUPABASE_URL || '';
-  const SERVICE_KEY = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+  // SECURITY: REACT_APP_SUPABASE_SERVICE_KEY больше не доступен в клиенте.
+  // Этот файл — DEPRECATED legacy, не импортируется. Если кто-то его поднимет —
+  // он будет работать на ANON_KEY (с RLS). admin-операций здесь больше нет.
+  const SERVICE_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
   // ── Keep participantsRef fresh for use inside async callbacks ──
   useEffect(() => { conferenceParticipantsRef.current = conferenceParticipants; }, [conferenceParticipants]);

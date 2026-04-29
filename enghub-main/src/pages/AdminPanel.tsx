@@ -39,8 +39,12 @@ export function AdminPanel({ token, onLogout, dark, setDark }: AdminPanelProps) 
     if (!form.full_name || !form.email || !form.role) return;
     setSaving(true);
     try {
-      if (editUser) { await patch(`app_users?id=eq.${editUser.id}`, { full_name: form.full_name, position: form.position, role: form.role, dept_id: form.dept_id || null }, token); }
-      else { const authData = await createAuthUser(form.email, form.password || "Enghub2025!"); await post("app_users", { email: form.email, full_name: form.full_name, position: form.position, role: form.role, dept_id: form.dept_id || null, supabase_uid: authData.user?.id || null }, token); }
+      if (editUser) {
+        await patch(`app_users?id=eq.${editUser.id}`, { full_name: form.full_name, position: form.position, role: form.role, dept_id: form.dept_id || null }, token);
+      } else {
+        // /api/admin-users action=create создаёт auth-юзера И запись app_users атомарно.
+        await createAuthUser(form.email, form.password || "Enghub2025!", form.full_name, form.role, form.dept_id || null);
+      }
       setForm(emptyUser); setEditUser(null); setShowUserModal(false); loadUsers();
     } catch (e) { console.error(e); }
     setSaving(false);
@@ -137,10 +141,9 @@ export function AdminPanel({ token, onLogout, dark, setDark }: AdminPanelProps) 
                 setSaving(true); setPasswordMsg("");
                 try {
                   if (!passwordUser.supabase_uid) { setPasswordMsg("✗ У пользователя нет Supabase UID"); setSaving(false); return; }
-                  const res = await updateUserPassword(passwordUser.supabase_uid, newPassword);
-                  if (res.id) { setPasswordMsg("✓ Пароль успешно изменён!"); setNewPassword(""); }
-                  else { setPasswordMsg(`✗ Ошибка: ${res.msg || res.error_description || "Неизвестная ошибка"}`); }
-                } catch (e) { setPasswordMsg("✗ Ошибка сети"); }
+                  await updateUserPassword(passwordUser.supabase_uid, newPassword);
+                  setPasswordMsg("✓ Пароль успешно изменён!"); setNewPassword("");
+                } catch (e: any) { setPasswordMsg(`✗ ${e?.message || 'Ошибка сети'}`); }
                 setSaving(false);
               }}>
               {saving ? "Сохраняется..." : "Сменить пароль"}
