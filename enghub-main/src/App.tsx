@@ -37,6 +37,9 @@ import { GlobalSearch } from './components/GlobalSearch';
 import { KanbanBoard } from './components/KanbanBoard';
 import { ProjectTimeline } from './components/ProjectTimeline';
 import { NotificationCenter } from './components/NotificationCenter';
+import ActivityFeed from './components/ActivityFeed';
+import LeadDashboard from './components/LeadDashboard';
+import EngineerDashboard from './components/EngineerDashboard';
 import { TaskTemplates } from './components/TaskTemplates';
 import { ProjectReportPDF } from './components/ProjectReportPDF';
 import { GipDashboard } from './components/GipDashboard';
@@ -2122,6 +2125,35 @@ export default function App() {
                 {searchQuery && <button className="search-clear" onClick={() => setSearchQuery("")}>✕</button>}
               </div>
 
+              {/* DD-15: Role-specific dashboard for Lead */}
+              {isLead && currentUserData && (
+                <div style={{ marginBottom: 20 }}>
+                  <LeadDashboard
+                    C={C}
+                    currentUser={currentUserData}
+                    appUsers={appUsers}
+                    allTasks={allTasks}
+                    setSelectedTask={setSelectedTask}
+                    setShowTaskDetail={setShowTaskDetail}
+                  />
+                </div>
+              )}
+
+              {/* DD-16: Role-specific dashboard for Engineer */}
+              {isEng && currentUserData && (
+                <div style={{ marginBottom: 20 }}>
+                  <EngineerDashboard
+                    C={C}
+                    currentUser={currentUserData}
+                    allTasks={allTasks}
+                    projects={projects}
+                    setSelectedTask={setSelectedTask}
+                    setShowTaskDetail={setShowTaskDetail}
+                    setActiveProject={setActiveProject}
+                  />
+                </div>
+              )}
+
               {/* ── KPI карточки ── */}
               {(() => {
                 const now = new Date();
@@ -2492,9 +2524,9 @@ export default function App() {
               <div style={{ display: conferenceScreenActive ? 'none' : 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
                 <div className="tab-strip-wrap" style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                   <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch', flex: 1, marginBottom: 0 } as React.CSSProperties}>
-                    {["conference","tasks","documents","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
+                    {["conference","tasks","documents","activity","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
                       <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        {t === "tasks" ? "⊙ Задачи" : t === "documents" ? "📁 Документы" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
+                        {t === "tasks" ? "⊙ Задачи" : t === "documents" ? "📁 Документы" : t === "activity" ? "📰 Активность" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
                       </button>
                     ))}
                   </div>
@@ -2589,6 +2621,13 @@ export default function App() {
                   appUsers={appUsers}
                   canManage={isGip || isLead || currentUserData?.role === 'engineer'}
                 />
+              )}
+
+              {sideTab === "activity" && activeProject && (
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12 }}>📰 Активность проекта</div>
+                  <ActivityFeed projectId={activeProject.id} appUsers={appUsers} C={C} limit={50} />
+                </div>
               )}
 
               {sideTab === "drawings" && (
