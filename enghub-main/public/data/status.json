@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Источник 6/8: StackOverflow x4",
-  "progress_pct": 62,
+  "current_step": "Источник 7/8: HN comments (150 stories)",
+  "progress_pct": 75,
   "items_processed": 249,
   "items_total": 0,
-  "updated_at": "2026-04-29T05:19:47Z",
+  "updated_at": "2026-04-29T05:19:58Z",
   "started_at": "2026-04-29T05:19:14Z"
 }
