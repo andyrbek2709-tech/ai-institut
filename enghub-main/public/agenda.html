@@ -259,4 +259,31 @@ function applyFilters() {
   document.querySelectorAll('.item').forEach(it => {
     const text = it.getAttribute('data-text') || '';
     const tags = (it.getAttribute('data-tags') || '').split(' ');
-    const matchSearch = !search || text.includes(searc
+    const matchSearch = !search || text.includes(search);
+    const matchTag = activeTag === 'all' || tags.includes(activeTag);
+    it.style.display = (matchSearch && matchTag) ? '' : 'none';
+  });
+}
+
+document.getElementById('search').addEventListener('input', applyFilters);
+document.querySelectorAll('.controls button[data-tag]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.controls button[data-tag]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilters();
+  });
+});
+document.querySelectorAll('.kpi').forEach(k => {
+  k.addEventListener('click', () => {
+    const target = k.getAttribute('data-target');
+    if (!target) return;
+    const el = document.getElementById(target);
+    if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+  });
+});
+
+render();
+applyFilters();
+</script>
+</body>
+</html>
