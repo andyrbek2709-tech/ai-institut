@@ -71,6 +71,34 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-04-30 05:42 UTC — HOTFIX admin password reset (commit `970058a`)
+
+**Симптом:** в AdminPanel кнопка «🔑 Пароль» → ввод нового пароля → красная ошибка («Не получилось обновить пароль»). До security-cutover работало.
+
+**Корневая причина (две проблемы одновременно):**
+1. **Min length mismatch:** AdminPanel.tsx разрешал пароль ≥6 симв, бэкенд `/api/admin-users` handleResetPassword требовал ≥8 → 400 без понятного объяснения, если юзер вводил 6–7 симв.
+2. **Голая диагностика** при upstream-ошибке Supabase Auth API: ответ Supabase скрывался за безликим `HTTP <code>` без body — невозможно было понять, что именно не нравится `/auth/v1/admin/users/{uid}` после ротации service_role JWT → `sb_secret_*`.
+
+**Что сделано (`enghub-main/api/admin-users.js`):**
+- `handleResetPassword`: primary path теперь — supabase-js SDK `sb.auth.admin.updateUserById(uid, { password })`; REST `/auth/v1/admin/users/{uid}` оставлен fallback'ом. SDK устойчивее к новому формату ключей.
+- Min длина пароля бэкенда: 8 → 6 (синхронизировано с frontend).
+- Все ошибки теперь логируются в Vercel runtime: `[admin-users] reset:sdk` / `reset:rest` с upstream status + body (первые 500 байт), и возвращаются в response с осмысленным `Auth admin API: <msg>`.
+- Глобальный try/catch вокруг handler'а — никаких голых 500.
+- Sanity-check `SUPABASE_URL`/`SUPABASE_SERVICE_KEY` до auth.
+
+**Что сделано (`enghub-main/api/_spec_helpers.js`):**
+- `verifyUserAndProfile`: при вызове `/auth/v1/user` пробуется apikey=ANON_KEY, при неудаче — fallback на apikey=SERVICE_KEY.
+- В response вместо безликого `Invalid or expired token` теперь `Invalid or expired token (auth/v1/user → <status>)`.
+- В runtime logs пишется `[verifyUserAndProfile]` с диагностикой.
+
+**Push & deploy:**
+- Email коммита: `andyrbek2709@gmail.com` ✅ (правильный, не Claude Automation).
+- Vercel deploy `dpl_FBPrqdQqqifhDsGaSHtbFRnYxbRg` (commit `970058a`) → **READY** ✅ (~4 мин).
+
+**Verify:** ожидает теста пользователем в браузере. При следующем успешном reset password — `auth.users.encrypted_password` обновится (текущий хэш зафиксирован: `$2a$10$QFKSh…`, updated_at `2026-04-29 07:17`). Если останется ошибка — теперь её содержательный текст придёт во фронт.
+
+**Файлы:** `enghub-main/api/admin-users.js`, `enghub-main/api/_spec_helpers.js`, `STATE.md`.
+
 ### 2026-04-30 05:04 UTC — DISABLE_ESLINT_PLUGIN удалён из Vercel + verify deploy
 
 **Что сделано (автономно из dispatch task):**
@@ -216,30 +244,4 @@ Legacy anon/service_role JWT (`/settings/api-keys/legacy`):
 ### 2026-04-29 — Security cutover: B3 фронт + RLS hardening + B1/B4/B6
 - **B3 (security):** коммит `e90177d` — service_role убран из фронта, перенесён в `/api/admin/*`. Этап Vercel env (создать `SUPABASE_SERVICE_KEY` без префикса, удалить `REACT_APP_SUPABASE_SERVICE_KEY`) и ротация ключа в Supabase Dashboard — на стороне пользователя (Cowork-сессия не имеет Chrome MCP).
 - **RLS hardening (миграции `019_rls_hardening`, `019b_project_storage_stats_invoker`):** включена RLS на `meetings` / `time_entries` / `task_templates` / `review_comments` (последняя замкнута admin/gip из-за schema-mismatch `review_id bigint vs reviews.id uuid` — отдельный баг). Удалены permissive-политики `Enable * for all users` на `ai_actions`, `raci_all`. `activity_log_insert` теперь требует `user_can_access_project`. `project_storage_stats` пересоздан как `security_invoker`. `search_path = public` на всех publish-функциях. `revoke execute ... from anon` на 12 security-definer auth-helpers.
-- **Smoke-RLS:** engineer Troshin → 8 tasks/2 projects, lead Pravdukhin → 12/4, gip Skorokhod → 14/15, anon → 0/0/0. RLS пропускает только нужные строки.
-- **B4 (multi-project dashboards):** добавлен state `dashboardTasks` + `loadDashboardTasks()` в `App.tsx`. Lead → задачи отдела по всем проектам, Engineer → свои по всем проектам. LeadDashboard/EngineerDashboard получают `dashboardTasks` (с fallback на `allTasks`).
-- **B1 (KPI race):** добавлен skeleton (4 пульсирующих stat-card'а) пока `currentUserData?.id` не пришёл. Никаких больше `0/0/0/0` на 1 секунду.
-- **B6 (тестовые юзеры):** в STATE.md добавлен реальный список (troshin/pravdukhin/skorokhod). Несуществующие `admin@enghub.com`, `gip@nipicer.kz`, `lead@nipicer.kz` помечены как «не существуют».
-
-### 2026-04-29 — QA-прогон фич последнего деплоя (DD-07/15/16, CONV Stage 4b)
-- **Деплой:** `dpl_35c1fFju1gC5wSNRzn621RM2ypfT` (commit `15174d5`, email `andyrbek2709@gmail.com`) → READY ✅.
-- **Что проверено и работает:** /parsing.html без логина, EngineerDashboard (DD-16), LeadDashboard (DD-15), ActivityFeed вкладка (DD-07) — рендерит 4 события с эмодзи/именами/переходами, валидация комментария при возврате (≥5 симв), прикрепление файлов к задаче.
-- **Найдены баги:**
-  - 🚨 **CRITICAL:** в JS-bundle `main.5d8fd3a7.js` обнаружено 3 service_role JWT + sb_secret. Полный bypass RLS. План фикса: вынести admin-ops в /api/*, удалить REACT_APP_SUPABASE_SERVICE_KEY из Vercel, ротировать ключ. Не фикшено в этой сессии.
-  - 🟡 z-index конфликт: модал «Запрос данных у смежного отдела» был скрыт за карточкой задачи (оба .modal-overlay имели z-index 1000). **Починено локально:** добавлен `Modal.topmost` (z-index 1100) в `src/components/ui.tsx`, использован в App.tsx для `showDepRequest`. **Ожидает push** (bash sandbox недоступен — «no space left on device»).
-  - 🟡 KPI инженера временно показывают 0 — race `loadAllTasks` vs `currentUserData`. Саморешается через 1 сек.
-  - 🟡 Lead/Engineer Dashboard работают только с активным проектом (allTasks из loadAllTasks(activeProject.id)).
-  - ⚠ Тестовые юзеры из плана (admin@enghub.com, gip@nipicer.kz, lead@nipicer.kz) **не существуют** в БД. Реально работают: troshin.m@nipicer.kz (engineer), pravdukhin.a@nipicer.kz (lead) — пароль Test1234!.
-- **Файлы:** `src/components/ui.tsx`, `src/App.tsx`, `enghub-main/QA_REPORT_2026-04-29.md` (новый), `STATE.md`.
-- **Pending:** один коммит `fix(ui): topmost Modal для Stage 4b — поверх Task Detail (z-index 1100)` ожидает работы bash для push.
-
-### 2026-04-29 — ⏸ ЧЕКПОИНТ QA-сессии (остановлена пользователем, не закоммичено)
-- **Где остановились:** только что подтвердили готовность прод-деплоя после фикса git email.
-- **Vercel deployment ✅ READY:**
-  - id: `dpl_35c1fFju1gC5wSNRzn621RM2ypfT`
-  - URL: https://enghub-three.vercel.app
-  - commit: `15174d5` — "docs(agenda): итоговая запись Парсинг v2 в Сделано"
-  - author email: `andyrbek2709@gmail.com` ✅ (правильный)
-  - state: READY, target: production
-- **Что успели проверить:** только статус Vercel (через `list_deployments`). До браузерных тестов не дошли.
-- **Что НЕ начато (план для в
+- **Smoke-RLS:** engineer Troshin → 8 tasks/2 projects, lead P
