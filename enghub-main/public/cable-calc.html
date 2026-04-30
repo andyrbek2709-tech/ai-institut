@@ -108,6 +108,35 @@
   .footer {
     text-align: center; color: var(--muted); font-size: 12px; padding: 24px 0 12px;
   }
+  .file-block { margin-top: 20px; }
+  .file-block input[type=file] {
+    padding: 6px; border: 1px dashed var(--border); border-radius: 8px;
+    background: #f8fafc; cursor: pointer;
+  }
+  .btn-secondary {
+    background: #475569 !important;
+  }
+  .btn-secondary:hover { background: #334155 !important; }
+  .btn-success { background: var(--ok) !important; }
+  .btn-success:hover { background: #15803d !important; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .download-row { margin-top: 14px; display: none; }
+  .file-results table { font-size: 12px; }
+  .file-results th, .file-results td { padding: 6px 8px; }
+  .row-ok { background: #f0fdf4; }
+  .row-warn { background: #fffbeb; }
+  .row-fail { background: #fef2f2; }
+  .status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px;
+    font-weight: 700;
+  }
+  .status-OK { background: #dcfce7; color: var(--ok); }
+  .status-WARN { background: #fef3c7; color: var(--warn); }
+  .status-FAIL { background: #fee2e2; color: var(--err); }
+  .status-UNKNOWN { background: #e5e7eb; color: #4b5563; }
+  .summary-pills { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; font-size: 13px; }
+  .summary-pills span { padding: 4px 10px; border-radius: 8px; font-weight: 600; }
+  .table-wrap { max-height: 400px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
 </style>
 </head>
 <body>
@@ -249,6 +278,59 @@
       <button id="btn-calc">Рассчитать</button>
     </div>
 
+    <!-- Проверка по файлу — занимает всю ширину второй строки сетки, блок 1 -->
+    <div class="card" style="grid-column: 1 / -1">
+      <h2>📂 Проверка кабельного журнала по файлу</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">
+        Загрузите кабельный журнал (Excel <code>.xlsx</code>, PDF, Word <code>.docx</code>) — система распознает строки,
+        проверит сечения по таблицам МЭК и вернёт отчёт с подсветкой OK / WARN / FAIL.
+      </div>
+      <div class="row">
+        <div>
+          <label>Материал жилы (для проверки)</label>
+          <select id="f-material">
+            <option value="Cu">Cu — медь</option>
+            <option value="Al">Al — алюминий</option>
+          </select>
+        </div>
+        <div>
+          <label>Изоляция</label>
+          <select id="f-insulation">
+            <option value="PVC">PVC</option>
+            <option value="XLPE">XLPE</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Способ прокладки</label>
+          <select id="f-method">
+            <option value="A1">A1</option><option value="A2">A2</option>
+            <option value="B1">B1</option><option value="B2">B2</option>
+            <option value="C" selected>C</option>
+            <option value="D1">D1</option><option value="D2">D2</option>
+            <option value="E">E</option><option value="F">F</option><option value="G">G</option>
+          </select>
+        </div>
+        <div>
+          <label>Темп. среды, °C</label>
+          <input type="number" id="f-ambient" value="30" step="1" />
+        </div>
+      </div>
+      <div class="row full file-block">
+        <div>
+          <label>Файл (.xlsx / .xlsm / .pdf / .docx)</label>
+          <input type="file" id="file-input" accept=".xlsx,.xlsm,.xls,.pdf,.docx,.doc" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="btn-parse">📥 Проверить файл</button>
+        <button id="btn-download-xlsx" class="btn-success" style="display:none">📊 Скачать результат Excel</button>
+      </div>
+      <div id="file-status" style="margin-top:10px;font-size:13px"></div>
+      <div id="file-results" class="file-results" style="margin-top:14px"></div>
+    </div>
+
     <!-- Результат -->
     <div class="card">
       <h2>Результат
@@ -305,6 +387,10 @@
           <summary>📋 Методика расчёта (формулы и значения)</summary>
           <div id="r-methodology"></div>
         </details>
+
+        <div class="download-row" id="download-row" style="display:block">
+          <button id="btn-download-docx" class="btn-success" style="display:none">📄 Скачать отчёт (Word)</button>
+        </div>
 
       </div>
     </div>
@@ -381,120 +467,4 @@ function renderMethodology(m) {
       html += '</tbody></table>';
     }
     if (obj.result_a !== undefined)     html += `<p>Результат: <strong>${obj.result_a} А</strong></p>`;
-    if (obj.result_pct !== undefined)   html += `<p>Результат: <strong>${obj.result_pct}%</strong> (предел ${obj.limit_pct}%)</p>`;
-    if (obj.result_1ph_a !== undefined) html += `<p>I КЗ 1ф = <strong>${obj.result_1ph_a} А</strong>; I КЗ 3ф = <strong>${obj.result_3ph_a} А</strong></p>`;
-    if (obj.norm)      html += `<p style="font-size:11px;color:var(--muted)">${obj.norm}</p>`;
-    if (obj.table_ref) html += `<p style="font-size:11px;color:var(--muted)">${obj.table_ref}</p>`;
-    html += '</details>';
-    return html;
-  }
-
-  sections.push(block('1. Расчётный ток', m.i_calc));
-  sections.push(block('2. Допустимый ток', m.i_allowable));
-  sections.push(block('3. Падение напряжения', m.delta_u));
-  sections.push(block('4. Ток КЗ', m.kz));
-  sections.push(block('5. Защита (АВ / предохранитель)', m.protection));
-  root.innerHTML = sections.join('');
-}
-
-function renderResult(r) {
-  $('results-empty').style.display = 'none';
-  $('results-content').style.display = 'block';
-
-  setText('r-icalc',  r.i_calc_a,  1);
-  setText('r-sec',    r.section_mm2);
-  setText('r-iallow', r.i_allowable_a, 1);
-  setText('r-du',     r.delta_u_pct, 3);
-  setText('r-kz1',    r.i_kz_1ph_a,  0);
-  setText('r-kz3',    r.i_kz_3ph_a,  0);
-  setText('r-cb',     r.cb_rating_a);
-  setText('r-sec0',   r.section_zero_mm2);
-
-  setText('r-ktemp',  r.k_temp,  3);
-  setText('r-kgroup', r.k_group, 3);
-  setText('r-ksoil',  r.k_soil,  3);
-
-  setText('r-cb-rating', r.cb_rating_a);
-  setText('r-cb-th',     r.cb_thermal_a);
-  setText('r-cb-mag',    r.cb_mag_a);
-  setText('r-fuse',      r.fuse_rating_a);
-
-  const badge = $('status-badge');
-  badge.style.display = 'inline-block';
-  badge.textContent = r.status;
-  badge.className = 'badge ' + (r.status === 'OK' ? 'ok' : (r.status === 'WARNING' ? 'warn' : 'err'));
-
-  const checks = $('r-checks');
-  checks.innerHTML = '';
-  const items = [
-    {label: 'Ток',       ok: r.check_current},
-    {label: 'Напряжение', ok: r.check_voltage},
-    {label: 'КЗ',        ok: r.check_kz},
-  ];
-  for (const it of items) {
-    const span = document.createElement('span');
-    span.className = it.ok ? 'pass' : 'fail';
-    span.textContent = (it.ok ? '✓ ' : '✗ ') + it.label;
-    checks.appendChild(span);
-  }
-
-  const hints = $('r-hints');
-  hints.innerHTML = '';
-  if (r.hints && r.hints.length) {
-    for (const h of r.hints) {
-      const div = document.createElement('div');
-      div.className = 'hint';
-      div.textContent = '💡 ' + h;
-      hints.appendChild(div);
-    }
-  }
-
-  renderMethodology(r.methodology);
-}
-
-function renderError(msg) {
-  $('results-empty').style.display = 'none';
-  $('results-content').style.display = 'block';
-  $('r-methodology').innerHTML = '';
-  ['r-icalc','r-sec','r-iallow','r-du','r-kz1','r-kz3','r-cb','r-sec0',
-   'r-ktemp','r-kgroup','r-ksoil','r-cb-rating','r-cb-th','r-cb-mag','r-fuse']
-    .forEach(id => $(id).textContent = '—');
-  $('r-checks').innerHTML = '';
-  $('r-hints').innerHTML = '<div class="error-box">⚠ ' + msg + '</div>';
-  const badge = $('status-badge');
-  badge.style.display = 'inline-block';
-  badge.textContent = 'ERROR';
-  badge.className = 'badge err';
-}
-
-async function calculate() {
-  const btn = $('btn-calc');
-  btn.disabled = true; btn.textContent = 'Считаю...';
-  try {
-    const payload = readForm();
-    const resp = await fetch('/api/cable-calc/calc', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload),
-    });
-    const data = await resp.json();
-    if (!resp.ok) {
-      renderError((data && data.error) ? data.error : ('HTTP ' + resp.status));
-    } else {
-      renderResult(data);
-    }
-  } catch (e) {
-    renderError('Сеть/парсинг: ' + e.message);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Рассчитать';
-  }
-}
-
-$('btn-calc').addEventListener('click', calculate);
-// Enter в любом поле = рассчитать
-document.querySelectorAll('input').forEach(el => {
-  el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') calculate(); });
-});
-</script>
-</body>
-</html>
+    if (obj.result_pct 

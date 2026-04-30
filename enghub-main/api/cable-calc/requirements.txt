@@ -1,0 +1,5 @@
+# Расчёт кабелей 1кВ — Python serverless function для Vercel.
+# Engine (calc.py): только stdlib.
+# Парсеры (parse.py) и отчёты (report.py / report-xlsx.py) тянут:
+pdfplumber
+o
