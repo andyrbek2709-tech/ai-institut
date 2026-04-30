@@ -52,8 +52,8 @@
 
 ## Журнал (новые сверху, последние ~7 дней)
 
-### 2026-04-30 — Чистка проекта
-Удалены устаревшие планы/отчёты в корне `enghub-main/` (BUG_FIX_PLAN, IMPLEMENTATION_STATUS, APPLY_SECURITY_FIX, QA_REPORT, TEST_REPORT_STEP2_TO_12 — всё уже выполнено). STATE.md и CLAUDE.md переписаны компактно. agenda.html — убраны битые ссылки на удалённые документы.
+### 2026-04-30 — Чистка проекта + восстановление agenda.html
+Удалены устаревшие планы/отчёты в корне `enghub-main/` (BUG_FIX_PLAN, IMPLEMENTATION_STATUS, APPLY_SECURITY_FIX, QA_REPORT, TEST_REPORT_STEP2_TO_12 — всё уже выполнено). STATE.md и CLAUDE.md переписаны компактно. agenda.html — убраны битые ссылки на удалённые документы (3 PLAN-* карточки + блок «Документы:» в шапке). Дополнительно: восстановлен обрезанный хвост скрипта в `agenda.html` — файл много коммитов жил усечённым на `text.includes(searc` (Cowork-mount truncation), доска рендерилась 0/0/0. Live: 3 in_progress / 0 decided / 60 done. Verify deploy `a8bdc34`.
 
 ### 2026-04-30 — Hotfix admin password reset
 `src/api/http.ts`: `getAccessToken()` теперь читает `localStorage.enghub_token` (где живёт реальный токен после `signIn`), потом fallback на supabase-js. Раньше `apiFetch` слал пустой Authorization → AdminPanel «🔑 Пароль» падал с «Authorization Bearer token is required». Verified: bundle `main.2ff00481.js` (deploy `dpl_9vsZ4myEkaVf2iPGiBNiZWT1YvWH`, commit `5952359`), Supabase `auth.users.encrypted_password` для skorokhod.a@nipicer.kz реально обновился.
