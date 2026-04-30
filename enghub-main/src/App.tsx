@@ -1558,7 +1558,13 @@ export default function App() {
             <Field label="ОТДЕЛ-ПОЛУЧАТЕЛЬ *" C={C}>
               <select value={newAssignment.target_dept} onChange={e => setNewAssignment({ ...newAssignment, target_dept: e.target.value })} style={getInp(C)}>
                 <option value="">— Выбрать отдел —</option>
-                {activeProject?.depts?.filter((d:number) => String(d) !== String(currentUserData?.dept_id)).map((dId: number) => <option key={dId} value={dId}>{getDeptNameById(dId)}</option>)}
+                {(() => {
+                  // BUG-2 fix: fallback на все отделы, если проектный список пуст.
+                  const projectDeptIds: number[] = (activeProject?.depts || []).filter((d:number) => String(d) !== String(currentUserData?.dept_id));
+                  const fallback: number[] = depts.map((d:any) => Number(d.id)).filter((id:number) => String(id) !== String(currentUserData?.dept_id));
+                  const list: number[] = projectDeptIds.length > 0 ? projectDeptIds : fallback;
+                  return list.map((dId: number) => <option key={dId} value={dId}>{getDeptNameById(dId)}</option>);
+                })()}
               </select>
             </Field>
             <Field label="ПРИОРИТЕТ" C={C}><select value={newAssignment.priority} onChange={e => setNewAssignment({ ...newAssignment, priority: e.target.value })} style={getInp(C)}><option value="high">🔴 Высокий</option><option value="medium">🟡 Средний</option><option value="low">⚪ Низкий</option></select></Field>
@@ -1576,7 +1582,13 @@ export default function App() {
             <Field label="ОТДЕЛ-ПОЛУЧАТЕЛЬ *" C={C}>
               <select value={depRequest.target_dept_id} onChange={e => setDepRequest({ ...depRequest, target_dept_id: e.target.value })} style={getInp(C)}>
                 <option value="">— Выбрать отдел —</option>
-                {activeProject?.depts?.filter((d:number) => String(d) !== String(currentUserData?.dept_id)).map((dId: number) => <option key={dId} value={dId}>{getDeptNameById(dId)}</option>)}
+                {(() => {
+                  // BUG-2 fix: если в проекте мало отделов (или совпадает с моим), падаем на все отделы.
+                  const projectDeptIds: number[] = (activeProject?.depts || []).filter((d:number) => String(d) !== String(currentUserData?.dept_id));
+                  const fallback: number[] = depts.map((d:any) => Number(d.id)).filter((id:number) => String(id) !== String(currentUserData?.dept_id));
+                  const list: number[] = projectDeptIds.length > 0 ? projectDeptIds : fallback;
+                  return list.map((dId: number) => <option key={dId} value={dId}>{getDeptNameById(dId)}</option>);
+                })()}
               </select>
             </Field>
             <Field label="ЧТО НУЖНО ПОЛУЧИТЬ *" C={C}>
