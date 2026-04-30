@@ -40,14 +40,42 @@ async function verifyUserAndProfile(token) {
   }
   if (!token) return { ok: false, status: 401, error: 'Authorization Bearer token is required' };
 
-  const userRes = await fetch(`${SURL}/auth/v1/user`, {
-    headers: {
-      apikey: ANON_KEY || SERVICE_KEY,
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!userRes.ok) return { ok: false, status: 401, error: 'Invalid or expired token' };
-  const authUser = await userRes.json().catch(() => null);
+  // /auth/v1/user — пробуем сначала с ANON_KEY apikey, если он есть.
+  // Если ANON_KEY пуст или вызов вернул не-OK — повторяем с SERVICE_KEY (он
+  // тоже валиден как apikey для public auth-эндпоинтов в новой ключевой схеме).
+  const tryFetchUser = async (apikey, label) => {
+    if (!apikey) return { ok: false, status: 0, body: '', label };
+    try {
+      const r = await fetch(`${SURL}/auth/v1/user`, {
+        headers: { apikey, Authorization: `Bearer ${token}` },
+      });
+      const body = await r.text().catch(() => '');
+      return { ok: r.ok, status: r.status, body, label };
+    } catch (e) {
+      return { ok: false, status: 0, body: String(e && e.message || e), label };
+    }
+  };
+
+  let userResult = await tryFetchUser(ANON_KEY, 'anon');
+  if (!userResult.ok) {
+    const fallback = await tryFetchUser(SERVICE_KEY, 'service');
+    if (fallback.ok) userResult = fallback;
+  }
+  if (!userResult.ok) {
+    try {
+      console.error('[verifyUserAndProfile] /auth/v1/user failed:', JSON.stringify({
+        anon_present: !!ANON_KEY, service_present: !!SERVICE_KEY,
+        last_status: userResult.status, body: String(userResult.body || '').slice(0, 300),
+      }));
+    } catch (_e) {}
+    return {
+      ok: false,
+      status: 401,
+      error: `Invalid or expired token (auth/v1/user → ${userResult.status || 'network-error'})`,
+    };
+  }
+  let authUser = null;
+  try { authUser = userResult.body ? JSON.parse(userResult.body) : null; } catch (_e) { authUser = null; }
   const email = authUser && authUser.email;
   if (!email) return { ok: false, status: 401, error: 'Token does not resolve to a user' };
 

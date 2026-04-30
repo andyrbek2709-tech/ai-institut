@@ -7,8 +7,21 @@
 //          → UPDATE app_users + sync user_metadata
 //
 // Все операции требуют auth + role=admin (или gip для create engineer'а — пока просто admin).
+//
+// 2026-04-30: hotfix admin password reset.
+//  - Verbose диагностика (включаем upstream Supabase error в response + console.error).
+//  - Снижен min длины пароля с 8 до 6 (frontend разрешал ≥6 — был mismatch).
+//  - supabase-js SDK как primary путь для auth.admin.updateUserById (надёжнее
+//    с новыми sb_secret_* ключами), REST как fallback.
+//  - Sanity-чек ENV до requireAuth, чтобы не отдавать загадочный 401 при отсутствии ключей.
+//  - Глобальный try/catch вокруг handler'а — никаких голых 500.
 
-const { SURL, SERVICE_KEY, ANON_KEY, adminHeaders, requireAuth, handleCors, readJsonBody } = require('./_admin');
+const { SURL, SERVICE_KEY, ANON_KEY, getAdmin, adminHeaders, requireAuth, handleCors, readJsonBody } = require('./_admin');
+
+function logErr(label, info) {
+  try { console.error(`[admin-users] ${label}:`, JSON.stringify(info).slice(0, 1000)); }
+  catch (_e) { console.error(`[admin-users] ${label}:`, info); }
+}
 
 async function handleCreate(req, res, auth, body) {
   const { email, password, full_name, role, dept_id } = body || {};
@@ -16,7 +29,6 @@ async function handleCreate(req, res, auth, body) {
     return res.status(400).json({ error: 'email, password, full_name, role обязательны' });
   }
 
-  // 1. Создаём auth-юзера
   const aRes = await fetch(`${SURL}/auth/v1/admin/users`, {
     method: 'POST',
     headers: adminHeaders(),
@@ -24,14 +36,15 @@ async function handleCreate(req, res, auth, body) {
   });
   const aJson = await aRes.json().catch(() => ({}));
   if (!aRes.ok) {
-    return res.status(aRes.status).json({ error: aJson?.msg || aJson?.error || `HTTP ${aRes.status}` });
+    logErr('create:auth.admin.users', { status: aRes.status, body: aJson });
+    return res.status(aRes.status).json({ error: aJson?.msg || aJson?.error_description || aJson?.error || `HTTP ${aRes.status}` });
   }
   const supabase_uid = aJson?.id || aJson?.user?.id;
   if (!supabase_uid) {
+    logErr('create:no-uid', { body: aJson });
     return res.status(500).json({ error: 'Не получили supabase_uid из auth.admin.createUser' });
   }
 
-  // 2. INSERT в app_users
   const profilePayload = { email, full_name, role, dept_id: dept_id || null, supabase_uid };
   const pRes = await fetch(`${SURL}/rest/v1/app_users`, {
     method: 'POST',
@@ -40,7 +53,7 @@ async function handleCreate(req, res, auth, body) {
   });
   const pJson = await pRes.json().catch(() => null);
   if (!pRes.ok) {
-    // откат auth-юзера
+    logErr('create:app_users', { status: pRes.status, body: pJson });
     await fetch(`${SURL}/auth/v1/admin/users/${supabase_uid}`, {
       method: 'DELETE',
       headers: adminHeaders(),
@@ -58,17 +71,50 @@ async function handleResetPassword(req, res, auth, body) {
   if (!supabase_uid || !new_password) {
     return res.status(400).json({ error: 'supabase_uid и new_password обязательны' });
   }
-  if (String(new_password).length < 8) {
-    return res.status(400).json({ error: 'Пароль должен быть ≥8 символов' });
+  if (String(new_password).length < 6) {
+    return res.status(400).json({ error: 'Пароль должен быть ≥6 символов' });
   }
-  const r = await fetch(`${SURL}/auth/v1/admin/users/${encodeURIComponent(supabase_uid)}`, {
-    method: 'PUT',
-    headers: adminHeaders(),
-    body: JSON.stringify({ password: new_password }),
-  });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) return res.status(r.status).json({ error: j?.msg || j?.error || `HTTP ${r.status}` });
-  return res.status(200).json({ ok: true });
+
+  // Primary: supabase-js SDK (учитывает формат новых sb_secret_* ключей).
+  try {
+    const sb = getAdmin();
+    const { data, error } = await sb.auth.admin.updateUserById(String(supabase_uid), {
+      password: String(new_password),
+    });
+    if (!error && data) {
+      return res.status(200).json({ ok: true, via: 'sdk' });
+    }
+    logErr('reset:sdk', {
+      uid: supabase_uid,
+      status: error?.status,
+      name: error?.name,
+      message: error?.message,
+    });
+    // SDK не справился → REST fallback ниже.
+  } catch (e) {
+    logErr('reset:sdk-throw', { uid: supabase_uid, message: e?.message, name: e?.name });
+  }
+
+  // Fallback: прямой REST вызов /auth/v1/admin/users/{uid}.
+  try {
+    const r = await fetch(`${SURL}/auth/v1/admin/users/${encodeURIComponent(supabase_uid)}`, {
+      method: 'PUT',
+      headers: adminHeaders(),
+      body: JSON.stringify({ password: String(new_password) }),
+    });
+    const text = await r.text();
+    let j = null;
+    try { j = text ? JSON.parse(text) : null; } catch (_e) { /* not json */ }
+    if (!r.ok) {
+      logErr('reset:rest', { uid: supabase_uid, status: r.status, body: text?.slice(0, 500) });
+      const msg = j?.msg || j?.error_description || j?.error || (text && text.slice(0, 200)) || `HTTP ${r.status}`;
+      return res.status(r.status).json({ error: `Auth admin API: ${msg}`, status: r.status });
+    }
+    return res.status(200).json({ ok: true, via: 'rest' });
+  } catch (e) {
+    logErr('reset:rest-throw', { uid: supabase_uid, message: e?.message });
+    return res.status(500).json({ error: `Сетевая ошибка при смене пароля: ${e?.message || 'unknown'}` });
+  }
 }
 
 async function handleUpdateRole(req, res, auth, body) {
@@ -85,10 +131,12 @@ async function handleUpdateRole(req, res, auth, body) {
     body: JSON.stringify(update),
   });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) return res.status(r.status).json({ error: j?.message || j?.error || `HTTP ${r.status}` });
+  if (!r.ok) {
+    logErr('update_role:patch', { user_id, status: r.status, body: j });
+    return res.status(r.status).json({ error: j?.message || j?.error || `HTTP ${r.status}` });
+  }
   const profile = Array.isArray(j) ? j[0] : j;
 
-  // Sync user_metadata.role в Supabase Auth (best-effort)
   if (profile?.supabase_uid) {
     fetch(`${SURL}/auth/v1/admin/users/${encodeURIComponent(profile.supabase_uid)}`, {
       method: 'PUT',
@@ -107,18 +155,30 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const auth = await requireAuth(req, res, { roles: ['admin'] });
-  if (!auth) return;
+  if (!SURL || !SERVICE_KEY) {
+    logErr('env-missing', { has_url: !!SURL, has_service_key: !!SERVICE_KEY });
+    return res.status(500).json({ error: 'Server misconfigured: SUPABASE_URL/SUPABASE_SERVICE_KEY отсутствуют' });
+  }
 
-  let body;
-  try { body = await readJsonBody(req); }
-  catch (e) { return res.status(400).json({ error: 'Invalid JSON body' }); }
+  try {
+    const auth = await requireAuth(req, res, { roles: ['admin'] });
+    if (!auth) return;
 
-  const action = body?.action;
-  switch (action) {
-    case 'create':         return handleCreate(req, res, auth, body);
-    case 'reset_password': return handleResetPassword(req, res, auth, body);
-    case 'update_role':    return handleUpdateRole(req, res, auth, body);
-    default: return res.status(400).json({ error: 'Unknown action. Allowed: create, reset_password, update_role' });
+    let body;
+    try { body = await readJsonBody(req); }
+    catch (e) { return res.status(400).json({ error: 'Invalid JSON body' }); }
+
+    const action = body?.action;
+    switch (action) {
+      case 'create':         return handleCreate(req, res, auth, body);
+      case 'reset_password': return handleResetPassword(req, res, auth, body);
+      case 'update_role':    return handleUpdateRole(req, res, auth, body);
+      default: return res.status(400).json({ error: 'Unknown action. Allowed: create, reset_password, update_role' });
+    }
+  } catch (e) {
+    logErr('handler-throw', { message: e?.message, stack: e?.stack?.slice(0, 500) });
+    if (!res.headersSent) {
+      return res.status(500).json({ error: `Внутренняя ошибка: ${e?.message || 'unknown'}` });
+    }
   }
 };
