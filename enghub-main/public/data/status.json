@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Источник 6/9: StackOverflow x4",
-  "progress_pct": 55,
-  "items_processed": 962,
+  "current_step": "Источник 7/9: Extra (HN front + Lobsters + Dev.to + N+1 + vc/finance|trade|marketing)",
+  "progress_pct": 66,
+  "items_processed": 963,
   "items_total": 0,
-  "updated_at": "2026-04-30T08:09:46Z",
+  "updated_at": "2026-04-30T08:09:56Z",
   "started_at": "2026-04-30T08:08:57Z"
 }
