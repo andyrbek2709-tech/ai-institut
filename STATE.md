@@ -88,6 +88,13 @@
 
 **Файлы:** `enghub-main/src/api/http.ts`.
 
+**VERIFIED ON PROD (2026-04-30 06:04 UTC):**
+- Bundle: `main.2ff00481.js` (deploy `dpl_9vsZ4myEkaVf2iPGiBNiZWT1YvWH`, commit `5952359`).
+- Chrome MCP: AdminPanel → юзер «Скороход Андрей Дмитриевич» → «🔑 Пароль» → ввод `Test1234NEW` → клик «Сменить пароль» → зелёная плашка «✓ Пароль успешно изменён!». Без ошибки «Authorization Bearer token is required».
+- Supabase `auth.users` для `skorokhod.a@nipicer.kz`:
+  - `updated_at`: было `2026-04-29 07:17:10` → стало `2026-04-30 06:03:57` (Δ ~15 сек до проверки в SQL).
+  - `encrypted_password` prefix: `$2a$10$QFKShI28MC9fT` → `$2a$10$85anAA17Bj0do` — реально новый bcrypt-хэш.
+
 
 ### 2026-04-30 05:42 UTC — HOTFIX admin password reset (commit `970058a`)
 
