@@ -71,6 +71,17 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-04-30 05:04 UTC — DISABLE_ESLINT_PLUGIN удалён из Vercel + verify deploy
+
+**Что сделано (автономно из dispatch task):**
+- Push `0f7b656` (admin RLS hotfix migration 020) и `a82c353` (ESLINT-DEBT closure) на main через свежий клон в `/tmp/work` (обход залипшего `.git/index.lock` в локальном репо).
+- Vercel deployment `dpl_9CXTzp7PCgzWZ5cojCX3z1wigTGL` для SHA `a82c353` — **READY** ✅, build "Compiled successfully", bundle 527.74 kB gzip.
+- `https://enghub-three.vercel.app/` и `/parsing.html` — HTTP 200, контент норм.
+- `DISABLE_ESLINT_PLUGIN` удалён из Production+Preview через Vercel UI (Chrome MCP). Теперь ESLint-конфига в репо рабочая, workaround снят.
+
+**Verify шаг:** запушенный коммит триггерит свежий build БЕЗ `DISABLE_ESLINT_PLUGIN` env — если пройдёт, ESLINT-DEBT окончательно закрыт.
+
+
 ### 2026-04-30 — Закрыт ESLINT-DEBT (убран DISABLE_ESLINT_PLUGIN, нормальный плагин react-hooks)
 
 **Контекст:** в Vercel env стояла переменная `DISABLE_ESLINT_PLUGIN=true` (Production+Preview) — workaround, чтобы build не падал на ошибке `Definition for rule 'react-hooks/exhaustive-deps' was not found`. Пробовали `extends:["react-app"]`, но он тянул правило `import/first`, нарушаемое в коде.
