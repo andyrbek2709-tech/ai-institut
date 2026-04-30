@@ -77,6 +77,39 @@
 ## Последние изменения (новые сверху)
 
 
+### 2026-04-30 09:55 UTC — BUG-2 закрыт: Stage 4b «Запросить данные у смежного отдела» работает end-to-end
+
+**BUG-2 как был зафиксирован:** В модалке «🔗 Запросить данные у смежного отдела» (Stage 4b) выпадающий список «Отдел-получатель» казался не реагирующим на клик/input.
+
+**Реально это была цепочка из 3 проблем, все три починены:**
+
+1. **Frontend — пустой dropdown** (commit `fdfdcac`, файл `enghub-main/src/App.tsx`):
+   `activeProject?.depts?.filter(d => d !== my_dept_id)` возвращал `[]` для проектов с `depts:[my_dept_id]` — поэтому в `<select>` оставался только placeholder. **Фикс:** fallback на глобальный `depts` (минус свой отдел) если проектный список пуст. Применён к двум модалкам — «Запрос данных» и «Задание смежнику».
+
+2. **Schema — `tasks.parent_task_id` был uuid, а `tasks.id` — bigint** (миграция `021_fix_tasks_parent_task_id_bigint`):
+   Insert child-таски валился с `invalid input syntax for type uuid: "38"`. В колонке было 0 строк — конвертация безопасна. Добавлен FK на `tasks(id) ON DELETE SET NULL`.
+
+3. **RLS — engineer не мог INSERT в `tasks`** (миграция `022_tasks_insert_engineer_assignment`):
+   Политика `tasks_insert` разрешала только admin/gip/lead. Stage 4b требует, чтобы инженер создал assignment-таску для смежного отдела. **Фикс:** добавлено условие `auth_app_user_role()='engineer' AND is_assignment=true AND auth_can_see_project(project_id)`.
+
+**+ Бонус-фикс (попутно): case-sensitive email в RLS-помощниках** (миграция `023_email_case_insensitive_rls_helpers`):
+`app_users.email` хранил `Bordokina.O@nipicer.kz` (CamelCase), а JWT отдавал lowercase → лиды/юзеры с CamelCase email НЕ ВИДЕЛИ ни одного проекта. Этот баг ломал не только Stage 4b receiving, но всю работу таких юзеров. **Фикс:** `auth_app_user_email()` теперь возвращает `lower(...)`, плюс `UPDATE app_users SET email=lower(email)`.
+
+**E2E verify (Chrome MCP, prod `enghub-three.vercel.app`, deploy `dpl_6XqLamkHimHZPm4aX1ZCp254NAQs` SHA `fdfdcac`):**
+- Engineer Troshin (ЭС) логин → задача `QA-задача №1: тест workflow` (id=38) → клик «🔗 Запросить данные у смежного отдела» → dropdown показывает 7 отделов (АК, АС, ВК, ГП, ПБ, СМ, ТХ — все кроме ЭС) ✅
+- Выбран АК, в textarea набран кириллический текст «Прошу выдать архитектурные планы…» (через native value setter + input event) → клик «Отправить запрос» → toast «✓ Запрос отправлен в отдел АК. Задача переведена в "Ждёт данных"» ✅
+- DB verify: tasks.id=38 status=`awaiting_input`; child task id=41 (`is_assignment=true, target_dept_id=9, parent_task_id=38, dept='АК'`); task_dependencies.id=1 (parent=38, child=41, what_needed=full cyrillic, status=pending, created_by=7).
+- Lead АК (Bordokina) логин → видит проект `QA Тест 29.04` ✅, видит child task 41 через REST select.
+
+**BUG-1 (кириллица) — НЕ настоящий баг, артефакт `form_input` тестового тула:**
+Native typing через Chrome MCP `computer.type` с кириллицей `Привет ЭС нагрузки` отрабатывает чисто; набор кириллицы через JS native value setter + input event тоже отрабатывает чисто. То что в QA-репорте было обозначено как BUG-1, — это особенность инструмента `form_input` (он шлёт текст не через keydown). **Закрыто как `not a real bug, test framework artifact`.**
+
+**Файлы:**
+- Code: `enghub-main/src/App.tsx` (+14 -2)
+- Миграции БД: `021_fix_tasks_parent_task_id_bigint`, `022_tasks_insert_engineer_assignment`, `023_email_case_insensitive_rls_helpers`
+- Vercel deploy: `dpl_6XqLamkHimHZPm4aX1ZCp254NAQs` → READY 2026-04-30 09:39 UTC
+
+
 ### 2026-04-30 07:01 UTC — Массовый сброс паролей + QA-промт для in-browser Claude
 
 **Что сделано:**
@@ -235,48 +268,4 @@ Legacy anon/service_role JWT (`/settings/api-keys/legacy`):
 - `.github/workflows/build-voice-bot-apk.yml` — новый CI workflow:
   - Триггеры: push в `main` с изменениями в `android-voicebot/**` либо ручной `workflow_dispatch`.
   - JDK 17 + Android SDK + Gradle cache.
-  - Если `android-voicebot/gradlew` ещё не закоммичен — корректно «no-op» (печатает TODO).
-  - При успешной сборке создаёт Release `voice-bot-vYYYYMMDD-HHMM` с APK.
-- `android-voicebot/README.md` — описание архитектуры будущего нативного приложения (Kotlin + TDLib + SpeechRecognizer), структура каталогов, инструкция по установке.
-- `enghub-main/public/agenda.html`:
-  - Исправлен устаревший путь шапки `D:\ai-site` → `D:\ai-institut`.
-  - Добавлено меню навигации со ссылками на 6 досок (включая voice-bot).
-  - `VOICE-01` перенесён из `decided` в `done` с обновлённым описанием.
-
-**Не трогалось (по правилам):**
-- `in_progress: T30f, T30g` — оба «отложено, ждёт сигнала Андрея».
-- Параллельная задача «Verify Supabase keys state» — не пересекается.
-- «Disable JWT-based API keys» в Supabase — отдельный тикет на 2026-05-02.
-
-**Push:** ожидает запуска через готовые git-команды (Cowork bash недоступен — «Workspace unavailable»).
-
-### 2026-04-30 — Сверка repos `ai-institut` ↔ `enghub` (drift не критичен)
-
-**Контекст:** прод собирается из `andyrbek2709-tech/ai-institut` (Root: `enghub-main/`). Параллельно существует standalone `andyrbek2709-tech/enghub` (НЕ подключён к Vercel) — туда в прошлой in-browser-сессии случайно пушнули 2 коммита фикса ESLint, потом разобрались и переехали в правильный репо.
-
-**Что в `enghub` (standalone, public):**
-- Последняя активность: 2 коммита 2026-04-29 от `andyrbek2709-tech <andyrbek2709@gmail.com>`:
-  - `2fbc191` 17:18 UTC — `fix(build): add vercel-build script to trigger redeploy with eslint fix` → меняет `enghub-main/package.json` (+1 строка `"vercel-build": "react-scripts build"`)
-  - `79084dd` 17:13 UTC — `fix(eslint): add react-app extends to fix exhaustive-deps build error` → меняет `enghub-main/.eslintrc.json` (добавляет `"extends": ["react-app"]`)
-- Дальше пропуск ~1 месяц, всё ≤ 2026-03-31 (RAG/Copilot AI/«update site via AI»).
-
-**Что в `ai-institut/enghub-main` (private, прод):**
-- Последний коммит `8af6083` 2026-04-29 ~21:34 (`feat(security): RLS hardening + B1 KPI skeleton + B4 multi-project dashboards + B6 STATE sync`).
-- В период 17:30–21:34 того же дня было ~14 продуктовых коммитов: parsing v2, CONV Stage 4a/4b/4c, ActivityFeed (DD-07), LeadDashboard/EngineerDashboard (DD-15/16), B3 security cutover, RLS hardening, multi-project dashboards.
-- В standalone `enghub` НИЧЕГО из этого нет.
-
-**Сверка двух коммитов из enghub с ai-institut/enghub-main:**
-
-| Файл | Коммит из `enghub` | Состояние в `ai-institut/enghub-main` |
-|---|---|---|
-| `enghub-main/package.json` (+`vercel-build`) | `2fbc191` | ✅ уже присутствует (строка 41) — мигрирован |
-| `enghub-main/.eslintrc.json` (`extends: ["react-app"]`) | `79084dd` | ❌ НЕ мигрирован, текущее содержимое: `{ "parser": "@typescript-eslint/parser" }` |
-
-**Почему drift не критичен:**
-- Прод-деплой `dpl_35c1fFju1gC5wSNRzn621RM2ypfT` (commit `15174d5`) и последующие сборки до `8af6083` собрались READY БЕЗ `"extends": ["react-app"]`. Значит для текущей кодовой базы ai-institut этот фикс не нужен (либо `DISABLE_ESLINT_PLUGIN`/`CI=false` в Vercel env, либо нет exhaustive-deps-нарушений в актуальном коде).
-- Вторая правка (vercel-build script) УЖЕ применена в ai-institut независимо.
-- Никаких других уникальных изменений в standalone `enghub` нет.
-
-**Итог:** `enghub` — устаревший слепок с двумя осиротевшими патчами времён апрельской отладки; релевантная часть уже в проде. Мигрировать ничего не нужно.
-
-**Рекомендация пользователю:** заархивировать `andyrbek2709-tech/enghub` на GitHub (S
+  - Если `android-voiceb
