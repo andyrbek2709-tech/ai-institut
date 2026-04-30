@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Источник 7/9: Extra (HN front + Lobsters + Dev.to + N+1 + vc/finance|trade|marketing)",
-  "progress_pct": 66,
-  "items_processed": 963,
+  "current_step": "Источник 8/9: HN comments (150 stories)",
+  "progress_pct": 77,
+  "items_processed": 1030,
   "items_total": 0,
-  "updated_at": "2026-04-30T08:09:56Z",
+  "updated_at": "2026-04-30T08:10:02Z",
   "started_at": "2026-04-30T08:08:57Z"
 }
