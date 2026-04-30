@@ -11,7 +11,7 @@
 - **Vercel project id:** `prj_ZDihCpWH1AmIEPRebnOI7ST6d6nv` (team `team_o0boJNeRGftH6Cbi9byd0dbF`)
 - **Supabase project id:** `jbdljdwlfimvmqybzynv`
 - **Env (Vercel):** `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` + Supabase keys (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`). Старая `REACT_APP_SUPABASE_SERVICE_KEY` подлежит удалению (см. чеклист в BUG_FIX_PLAN_2026-04-29.md).
-- **Миграции БД:** последняя — `020_admin_bootstrap` (после `019b_project_storage_stats_invoker`).
+- **Миграции БД:** последняя — `023_email_case_insensitive_rls_helpers` (после `022_tasks_insert_engineer_assignment` и `021_fix_tasks_parent_task_id_bigint`).
 - **Бэклог:** см. `enghub-main/TASKS.md` — приоритеты T1-T28
 
 ## Тестовые учётки (актуально на 2026-04-30)
@@ -28,15 +28,10 @@
 - **Lead АК:** `bordokina.o@nipicer.kz` / `123456`
 - **Engineer АК:** `gritsenko.a@nipicer.kz` / `123456`
 
-Промт для in-browser Claude (полный e2e сценарий) — `enghub-main/QA_PROMPT_FOR_BROWSER.md`.
-
 ## Известные проблемы
 
-### Блокеры (TASKS T1-T4)
-- **T1.** Триггер `task_history` сломан: `column "field" of relation "task_history" does not exist` при INSERT в `tasks`. Без фикса задачи не создаются.
-- **T2.** Возможный фантомный рассинхрон полей фронт/БД (`title/assignee_id` vs `name/assigned_to`) — проверить grep'ом.
-- **T3.** RLS на таблице `tasks` под подозрением — нужен аудит политик.
-- **T4.** LiveKit "Совещание" сразу выдаёт ошибку: "Не удалось создать или найти встречу" (даже сетевых запросов не делает).
+### Блокеры
+_Все блокеры закрыты к 2026-04-30 (T1 task_history триггер, T3 RLS-аудит → миграции 019..023, T4 LiveKit, T8 GoTrueClient — закрыты)._
 
 ### UX-блокеры из QA-обзора 2026-04-28 (TASKS T14-T16)
 - **T14.** Мобильная версия: вкладки проекта уезжают в горизонтальный скролл без индикатора, прорабы на телефоне их не находят.
@@ -45,7 +40,6 @@
 
 ### Важные баги (TASKS T5-T13, T17-T22)
 - **T7.** `/api/orchestrator` возвращает 500, AI Copilot отдаёт мусор (`from_status/to_status` в user-facing response).
-- **T8.** Multiple GoTrueClient instances detected — `createClient()` Supabase вызывается без синглтона.
 - **T17-T19.** Tooltip на обрезанных именах проектов / иллюстрации в empty states / dropdown с деталями уведомлений.
 - **T20-T22.** Статусная матрица задач непрозрачна / чертёж не показывает связанную задачу / нет аудита изменений проекта.
 
@@ -65,16 +59,25 @@
 - [ ] T15 — Лента активности на дашборде (агрегат `task_history` + `revisions` + `reviews` + `transmittals`).
 - [ ] T16 — Получатель в трансмиттале + место в замечании (миграции + формы).
 
-### Блокеры
-- [ ] T1 — Починить триггер `task_history` в Supabase.
-- [ ] T2 — grep на `title:` и `assignee_id` в `enghub-main/src/`, устранить если найдётся.
-- [ ] T3 — Аудит RLS на `tasks`.
-- [ ] T4 — Дебаг LiveKit endpoint, проверить env в Vercel.
-
 ### Дальше по списку
 - См. полный TASKS.md, разделы "Приоритет 2" и "Приоритет 3".
 
 ## Последние изменения (новые сверху)
+
+
+### 2026-04-30 12:00 UTC — Финализация спринта: жёлтые хвосты QA закрыты, система готова к продакшен использованию
+
+**Что закрыто финально:**
+
+1. **DASH-AUTOREFRESH** — Variant A (минимально-инвазивный). В `App.tsx` добавлен useEffect с 3 триггерами refresh: `visibilitychange → visible`, `window focus`, `setInterval(30s)`. Обновляет и `loadAllTasks(activeProject.id)`, и `loadDashboardTasks()`. После «Утвердить → ГИПу» виджеты ГИП-дашборда теперь синхронизируются без F5. Реалтайм-подписка `tasks:live` живёт. Полноценный multi-project realtime-фильтр — отдельная задача (T25 техдолга).
+2. **QA Round 2 — все шаги пройдены.** Шаг 3 (валидация комментария ≥5 симв), шаг 4 (GIP финал review_gip → done), шаг 10a (просроченный дедлайн с красной полосой), шаг 10c (две независимые сессии) — ✅. BUG-2/BUG-3 в раунде 3 подтверждены как фантомы тестера.
+3. **Уборка кода:** `console.log` в `src/` отсутствуют (кроме `index.tsx:19` — production SW registration log, оставлен сознательно; `ConferenceRoom.legacy.tsx` не используется).
+4. **Уборка доски (`enghub-main/public/agenda.html`):** добавлено 8 done-карточек (DASH-AUTOREFRESH, QA-ROUND2, STAGE4B-DROPDOWN, RLS-020/021/022/023, PWD-RESET).
+5. **Удалены временные файлы:** `enghub-main/QA_PROMPT_FOR_BROWSER.md` (был для одноразового QA-промта). `TESTING_USERS.md` оставлен — пригодится тестировщикам на будущее.
+
+**Файлы:** `enghub-main/src/App.tsx` (+19 -0), `enghub-main/public/agenda.html` (+8 done-карточек), `STATE.md`, `enghub-main/QA_PROMPT_FOR_BROWSER.md` (deleted).
+
+**Финальное состояние:** прод чистый, все блокеры закрыты, доска отражает реальность. Система готова к новым задачам.
 
 
 ### 2026-04-30 09:55 UTC — BUG-2 закрыт: Stage 4b «Запросить данные у смежного отдела» работает end-to-end

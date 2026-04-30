@@ -686,6 +686,7 @@ export default function App() {
   const appUsersRef = useRef<any[]>([]);
   const addNotifRef = useRef(addNotification);
   const loadTasksRef = useRef(loadAllTasks);
+  const loadDashboardTasksRef = useRef(loadDashboardTasks);
   const msgsRef = useRef<any[]>([]);
   const projectsRef = useRef<any[]>([]);
   const sideTabRef = useRef(sideTab);
@@ -694,10 +695,30 @@ export default function App() {
   useEffect(() => { appUsersRef.current = appUsers; }, [appUsers]);
   useEffect(() => { addNotifRef.current = addNotification; });
   useEffect(() => { loadTasksRef.current = loadAllTasks; });
+  useEffect(() => { loadDashboardTasksRef.current = loadDashboardTasks; });
   useEffect(() => { msgsRef.current = msgs; }, [msgs]);
   useEffect(() => { projectsRef.current = projects; }, [projects]);
   useEffect(() => { sideTabRef.current = sideTab; }, [sideTab]);
   useEffect(() => { window.scrollTo(0, 0); setShowTabHelp(false); }, [sideTab]);
+
+  // DASH-AUTOREFRESH: refresh on tab focus + 30s polling fallback (если Realtime лагает)
+  useEffect(() => {
+    if (!token || !currentUserData?.id) return;
+    const refresh = () => {
+      const ap = activeProjectRef.current;
+      if (ap?.id) loadTasksRef.current?.(ap.id);
+      loadDashboardTasksRef.current?.();
+    };
+    const onVisibility = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', refresh);
+    const intervalId = window.setInterval(refresh, 30000);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', refresh);
+      window.clearInterval(intervalId);
+    };
+  }, [token, currentUserData?.id]);
 
   // ── Supabase Realtime: подписка на изменения задач ──
   useEffect(() => {
