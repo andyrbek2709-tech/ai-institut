@@ -71,6 +71,24 @@
 
 ## Последние изменения (новые сверху)
 
+
+### 2026-04-30 05:55 UTC — REAL HOTFIX admin password reset (Authorization header не доходил)
+
+**Симптом:** на проде юзер кликал «🔑 Пароль» в AdminPanel → ввод пароля → красный текст «Authorization Bearer token is required». Прошлый фикс (970058a) только улучшил диагностику бэка, но НЕ устранил причину — фронт никогда не слал `Authorization` header.
+
+**Корневая причина:**
+- `LoginPage.tsx` использует прямой `fetch('/auth/v1/token?grant_type=password')` (см. `signIn` в `src/api/supabase.ts`), сохраняет access_token в `localStorage.enghub_token` и в state `App.tsx`.
+- `apiFetch` в `src/api/http.ts` тянул токен через `getSupabaseAnonClient().auth.getSession()`. Но supabase-js клиент НИКОГДА не вызывал `signInWithPassword` → его сессия пустая → токен '' → `Authorization` header не добавлялся.
+- Списки (load users, projects) работали, потому что `get()` берёт токен явно из App-state. А `apiPost('/api/admin-users')` для reset_password / create / update_role шёл через `apiFetch` без токена → бэк отдавал 401 «Authorization Bearer token is required».
+
+**Фикс (`enghub-main/src/api/http.ts`):**
+`getAccessToken()` теперь сначала читает `localStorage.enghub_token` (актуальное место хранения), и только потом fallback на supabase-js session. Никаких других файлов не тронуто.
+
+**Verify:** прокликать на проде admin@enghub.com → AdminPanel → юзер skorokhod.a@nipicer.kz → «🔑 Пароль» → ввести `Test1234NEW` → запрос /api/admin-users должен вернуть 200, dialog закрыться. Проверить через Supabase `auth.users.encrypted_password.updated_at`.
+
+**Файлы:** `enghub-main/src/api/http.ts`.
+
+
 ### 2026-04-30 05:42 UTC — HOTFIX admin password reset (commit `970058a`)
 
 **Симптом:** в AdminPanel кнопка «🔑 Пароль» → ввод нового пароля → красная ошибка («Не получилось обновить пароль»). До security-cutover работало.

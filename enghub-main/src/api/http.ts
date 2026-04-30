@@ -4,6 +4,17 @@
 import { getSupabaseAnonClient } from './supabaseClient';
 
 async function getAccessToken(): Promise<string> {
+  // Primary: токен сохранённый LoginPage через прямой fetch /auth/v1/token (см. signIn в supabase.ts).
+  // Этот путь активен прямо сейчас на проде — supabase-js клиент сессию НЕ знает.
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = window.localStorage.getItem('enghub_token');
+      if (stored) return stored;
+    }
+  } catch {
+    /* SSR / privacy mode */
+  }
+  // Fallback: на случай миграции на supabase-js sign-in.
   try {
     const sb = getSupabaseAnonClient();
     const { data } = await sb.auth.getSession();
