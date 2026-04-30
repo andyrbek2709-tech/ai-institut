@@ -46,8 +46,30 @@ header .sub{color:var(--muted);font-size:13px;line-height:1.6}
 .copy-mini{background:var(--accent);color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:11px}
 .value-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:12px monospace;line-height:1.6;margin:8px 0;word-break:break-all;white-space:pre-wrap}
 .value-block .lbl{color:var(--muted);font-family:inherit;display:block;margin-bottom:3px;text-transform:uppercase;font-size:9px;letter-spacing:.05em}
-.path-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
-@media(max-width:600px){.path-pick{grid-template-columns:1fr}}
+.path-pick{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px}
+@media(max-width:900px){.path-pick{grid-template-columns:1fr}}
+.path .chosen-badge{display:inline-block;background:var(--green);color:#fff;font-size:9px;padding:1px 7px;border-radius:9px;font-weight:700;letter-spacing:.04em;margin-left:6px;vertical-align:middle}
+.path .price.cyan{color:var(--cyan)}
+.nav-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;padding:8px 10px;background:var(--panel);border:1px solid var(--border);border-radius:10px;font-size:12px;align-items:center}
+.nav-bar a{color:var(--accent);text-decoration:none;padding:3px 9px;border-radius:6px;background:rgba(79,140,255,.08)}
+.nav-bar a:hover{background:rgba(79,140,255,.18)}
+.nav-bar .sep{color:var(--muted);margin:0 2px}
+.nav-bar .pin{color:var(--green);font-weight:600;margin-left:auto;font-size:11px}
+.build-status{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;border-left:4px solid var(--cyan)}
+.build-status h2{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}
+.build-status h2 .num{background:var(--cyan);color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.build-status .row{display:grid;grid-template-columns:140px 1fr;gap:10px 16px;margin:6px 0;font-size:13px}
+@media(max-width:600px){.build-status .row{grid-template-columns:1fr}}
+.build-status .row .lbl{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;align-self:center}
+.build-status .row .val{font-family:monospace;font-size:12px}
+.build-status .badge{display:inline-block;padding:2px 9px;border-radius:9px;font-size:11px;font-weight:600}
+.build-status .badge.pending{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+.build-status .actions-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.build-status .dl-btn{background:var(--cyan);color:#fff;border:none;padding:8px 14px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;text-decoration:none;display:inline-block;opacity:.5;pointer-events:none}
+.build-status .dl-btn.ready{opacity:1;pointer-events:auto}
+.build-status .dl-btn:hover.ready{background:#0891b2}
+.build-status .ci-link{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:7px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-block}
+.build-status .ci-link:hover{border-color:var(--accent)}
 .path{padding:14px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:.15s}
 .path:hover{border-color:var(--accent)}
 .path.chosen{border-color:var(--green);background:rgba(34,197,94,.06)}
@@ -74,8 +96,18 @@ ul.steps-mini code{background:var(--panel2);padding:1px 5px;border-radius:3px;fo
 <div class="sub">Цель — за вечер сделать так, чтобы ты говорил телефону и сообщение уходило в Telegram. Кликаешь по карточке, отмечаешь «✓ готово» / «✗ застрял». Поля для TOKEN и chat_id сохраняются локально в браузере.</div>
 </header>
 
+<div class="nav-bar">
+<a href="/agenda.html">📋 Повестка</a>
+<a href="/status.html">📊 Статус</a>
+<a href="/parsing.html">🏭 Парсинг</a>
+<a href="/health-map.html">🩺 Health</a>
+<a href="/qa-review.html">🔍 QA</a>
+<a href="/conveyor.html">🚜 Конвейер</a>
+<span class="pin">👑 Решение 29.04: путь D — нативный APK</span>
+</div>
+
 <div class="tip">
-💡 <b>Сначала попробуй бесплатное.</b> На любом Android есть Google Assistant. Скажи: <b>«Окей Гугл, отправь сообщение в Telegram &lt;имя контакта&gt; текст: я задержусь»</b>. Если Telegram не привязан — Assistant спросит про привязку, разрешишь. <b>Если работает — деньги тратить не надо.</b> Если нет/раздражает «Окей Гугл»/нужно своё слово — продолжай с Tasker ниже.
+💡 <b>Решение Андрея 29.04:</b> выбран путь <b>D — нативный Android APK с TDLib</b>. Сборка идёт в CI (см. блок «Статус сборки» ниже). Пути A (Google Assistant) и B (Tasker+AutoVoice) оставлены ниже как fallback на случай если кто-то захочет повторить эксперимент. Поля для TOKEN и chat_id сохраняются локально в браузере.
 </div>
 
 <div class="kpis">
@@ -98,11 +130,46 @@ ul.steps-mini code{background:var(--panel2);padding:1px 5px;border-radius:3px;fo
 <div class="price gray">~2500 тенге · 30-40 минут</div>
 <p>Своё триггер-слово через AutoVoice (настраиваешь сам), своё приложение в Tasker, свой Telegram-бот. Полный контроль, но нужно купить 2 приложения и настроить.</p>
 </div>
+<div class="path" data-path="apk">
+<h3>🅳 Нативный APK (TDLib)<span class="chosen-badge">ВЫБРАН</span></h3>
+<div class="price cyan">бесплатно · 1 установка</div>
+<p>Своё APK-приложение с встроенным Telegram-клиентом (TDLib). Своё триггер-слово, своё фоновое прослушивание, никаких покупок. Сборка — в GitHub Actions, скачивание — из релизов репо. Статус сборки ниже.</p>
+</div>
 </div>
 <div class="actions">
 <button class="act-btn done" data-status="done">✓ выбрал</button>
 <button class="act-btn skip" data-status="skip">— потом</button>
 </div>
+</div>
+
+<div class="build-status" id="apk-build-status">
+<h2><span class="num">D</span> Путь D — нативный APK · статус сборки</h2>
+<div class="row">
+<div class="lbl">Статус</div>
+<div class="val"><span class="badge pending" id="apk-status-badge">⏳ ожидает первой сборки в CI</span></div>
+</div>
+<div class="row">
+<div class="lbl">Workflow</div>
+<div class="val"><code>.github/workflows/build-voice-bot-apk.yml</code></div>
+</div>
+<div class="row">
+<div class="lbl">Триггер</div>
+<div class="val">push в <code>main</code> с изменениями в <code>android-voicebot/</code> · <code>workflow_dispatch</code> вручную</div>
+</div>
+<div class="row">
+<div class="lbl">Артефакт</div>
+<div class="val">GitHub Release · тег <code>voice-bot-vN</code> · файл <code>voice-bot-release.apk</code></div>
+</div>
+<div class="row">
+<div class="lbl">Что делает APK</div>
+<div class="val">Слушает фразу «<i>отправь в телеграм …</i>» через Android SpeechRecognizer → шлёт текст после «телеграм» в Telegram через TDLib (свой клиент, не Bot API).</div>
+</div>
+<div class="actions-row">
+<a class="ci-link" href="https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/build-voice-bot-apk.yml" target="_blank">🔧 Открыть CI workflow</a>
+<a class="ci-link" href="https://github.com/andyrbek2709-tech/ai-institut/releases" target="_blank">📦 Релизы (последний APK)</a>
+<a class="dl-btn" id="apk-dl-btn" href="#" target="_blank">⬇ Скачать APK</a>
+</div>
+<p style="font-size:12px;color:var(--muted);margin:10px 0 0;line-height:1.6"><b>Когда APK готов:</b> CI публикует релиз с тегом <code>voice-bot-vN</code> → кнопка «Скачать APK» становится активной (определяется автоматически по <code>fetch</code> к GitHub Releases API при загрузке страницы). Установка на телефон: разреши «установка из неизвестных источников», открой <code>.apk</code>, дай разрешения на микрофон и фоновую работу.</p>
 </div>
 
 <div class="section" data-step="1">
@@ -329,6 +396,33 @@ tokenInput.addEventListener('input', () => { state.token = tokenInput.value; sav
 chatidInput.addEventListener('input', () => { state.chatid = chatidInput.value; save(); syncDerived(); });
 syncDerived();
 updateStats();
+
+// ─── путь D: проверка статуса релизов APK через GitHub API ──────────────────
+(function checkApkRelease() {
+  const badge = document.getElementById('apk-status-badge');
+  const dlBtn = document.getElementById('apk-dl-btn');
+  if (!badge || !dlBtn) return;
+  const url = 'https://api.github.com/repos/andyrbek2709-tech/ai-institut/releases';
+  fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(releases => {
+      const apkRel = (releases || []).find(r => /voice-bot/i.test(r.tag_name || '') && (r.assets || []).some(a => /\.apk$/i.test(a.name)));
+      if (apkRel) {
+        const apk = apkRel.assets.find(a => /\.apk$/i.test(a.name));
+        badge.textContent = '✅ собран · ' + apkRel.tag_name + ' · ' + new Date(apkRel.published_at).toLocaleDateString('ru-RU');
+        badge.className = 'badge';
+        badge.style.cssText = 'background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)';
+        dlBtn.href = apk.browser_download_url;
+        dlBtn.classList.add('ready');
+        dlBtn.textContent = '⬇ Скачать ' + apk.name + ' (' + Math.round(apk.size / 1024 / 1024) + ' МБ)';
+      } else {
+        badge.textContent = '⏳ ожидает первой сборки в CI (релизов с APK пока нет)';
+      }
+    })
+    .catch(() => {
+      badge.textContent = '⏳ статус недоступен (GitHub API не отвечает)';
+    });
+})();
 </script>
 </body>
 </html>

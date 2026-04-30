@@ -1,0 +1,98 @@
+name: build-voice-bot-apk
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android-voicebot/**'
+      - '.github/workflows/build-voice-bot-apk.yml'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Тег релиза (например voice-bot-v1). Если пусто — будет voice-bot-vN по дате.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android-voicebot/**/*.gradle*', 'android-voicebot/**/gradle-wrapper.properties') }}
+
+      - name: Build APK
+        run: |
+          if [ -d android-voicebot ] && [ -f android-voicebot/gradlew ]; then
+            cd android-voicebot
+            chmod +x gradlew
+            ./gradlew assembleRelease --no-daemon
+          else
+            echo "⚠ android-voicebot/ source tree not yet committed — skipping native build."
+            echo "Этот workflow ждёт когда будет добавлен android-проект (Kotlin + TDLib)."
+            echo "Структура ожидаемая: android-voicebot/app/src/main/... + Gradle wrapper."
+            echo "Шаги по добавлению — см. android-voicebot/README.md (TODO)."
+            mkdir -p out && echo "stub" > out/voice-bot-release.apk.placeholder
+            exit 0
+          fi
+
+      - name: Find APK
+        id: find_apk
+        run: |
+          APK=$(find android-voicebot/app/build/outputs -name '*-release*.apk' 2>/dev/null | head -n 1 || true)
+          if [ -n "$APK" ]; then
+            echo "apk_path=$APK" >> $GITHUB_OUTPUT
+            echo "found_apk=true" >> $GITHUB_OUTPUT
+          else
+            echo "found_apk=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Compute release tag
+        if: steps.find_apk.outputs.found_apk == 'true'
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.release_tag }}" ]; then
+            echo "tag=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=voice-bot-v$(date -u +%Y%m%d-%H%M)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release with APK
+        if: steps.find_apk.outputs.found_apk == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: 'Voice-Bot APK ${{ steps.tag.outputs.tag }}'
+          body: |
+            Нативный Android APK для голосовой отправки сообщений в Telegram через TDLib.
+
+            Установка:
+            1. Скачай APK на телефон
+            2. Разреши «установка из неизвестных источников» в настройках
+            3. Открой APK и установи
+            4. Дай разрешения: микрофон, фоновую работу, отключи оптимизацию батареи
+            5. В приложении укажи Telegram-аккаунт (TDLib QR/SMS-логин)
+            6. Скажи: «отправь в телеграм проверка работает»
+          files: ${{ steps.find_apk.outputs.apk_path }}
+          fail_on_unmatched_files: false
+          token: ${{ secrets.GITHUB_TOKEN }}

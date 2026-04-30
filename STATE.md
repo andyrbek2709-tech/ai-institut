@@ -71,6 +71,71 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-04-30 — Supabase keys state (после ротации service_role)
+
+**Инвентаризация (Chrome MCP, через дашборд Supabase):**
+
+Secret API keys (новый формат `sb_secret_*`, страница `/settings/api-keys`):
+- `default` — `sb_secret_4zvfr…` — без описания (исходный, создан при миграции на новые ключи)
+- `service_role_rotated_2026_04_30` — `sb_secret_lZOw8…` — описание: «Rotated 2026-04-30 after smoke #1; for Vercel SUPABASE_SERVICE_KEY» — **активен**, используется в Vercel
+
+Publishable key:
+- `default` — `sb_publishable_AO6lSEjsY335XhG0zvNMlA_MvW1I…` — для клиента
+
+JWT signing keys (страница `/settings/jwt`):
+- **CURRENT** — `4201FFC5-E0D7-49C8-8661-150963E4BCF3` — **ECC (P-256)** — асимметричная подпись активных JWT
+- **PREVIOUS** — `4BABA62B-59EE-4F0F-9A3E-D36EAE96F896` — **Legacy HS256 (Shared Secret)** — last rotated «a month ago» — **ещё используется для verify** неистекших токенов
+
+Legacy anon/service_role JWT (`/settings/api-keys/legacy`):
+- `anon (public)` — `eyJhbGc…` — JWT, ещё валиден
+- `service_role (secret)` — JWT, ещё валиден (скрыт под Reveal)
+- Кнопка «Disable JWT-based API keys» — **НЕ нажата** (legacy keys активны, что и требуется)
+
+**Vercel ENV `SUPABASE_SERVICE_KEY`:** обновлена на `sb_secret_lZOw8…` (live deployment 2uVdUGHX1, bundle main.70fa74f3.js).
+
+**Проверка прода (https://enghub-three.vercel.app):**
+- `troshin.m@nipicer.kz / Test1234!` — login OK, dashboard ок (engineer-level UI).
+- `pravdukhin.a@nipicer.kz / Test1234!` — login OK, дашборд Lead'а **загрузил 3 инженеров отдела** (server-side fetch через `SUPABASE_SERVICE_KEY` сработал → новый sb_secret рабочий).
+- `POST /api/admin-users` с токеном Lead'а → **HTTP 403 «Недостаточно прав»** — корректный ответ: сервер валидировал JWT через Supabase Auth и прочитал роль из БД через service-role key. Если бы новый sb_secret был сломан — был бы 500/Supabase error, а не чистый 403 после role-check.
+- `skorokhod.t@nipicer.kz / Test1234!` — пароль не подходит (в STATE значится `skorokhod.a@nipicer.kz` через ResetPassword); **не блокер** — sb_secret подтверждён выше.
+
+**Скриншоты (локально на машине пользователя, в Cowork outputs):**
+- API Keys (publishable + secret): `outputs/screenshot-1777495283110.jpg`
+- Legacy anon/service_role JWT: `outputs/screenshot-1777495124944.jpg`
+- JWT Signing Keys (ECC P-256 / HS256 prev): `outputs/screenshot-1777495215810.jpg`
+
+**Решение:**
+- Старый legacy JWT (`service_role` JWT + HS256 prev signing key) пока **НЕ отключаем** — ждём 24–48 часов после ротации (cutover 2026-04-30) на случай отката.
+- **Напоминание:** 2026-05-02 — нажать «Disable JWT-based API keys» на `/settings/api-keys/legacy` (после финального smoke и подтверждения отсутствия зависимостей от старого ключа).
+
+### 2026-04-30 — Закрыт VOICE-01 (Decided → Done)
+
+**Контекст:** в колонке «Решено» доски `agenda.html` оставался один пункт `VOICE-01` («Голос → Telegram, выбран путь D — нативный APK»). По правилам — решение принято, но на проде ещё не подтверждено.
+
+**Что сделано:**
+- `enghub-main/public/voice-bot.html`:
+  - Расширены пути выбора с 2-х (A=Google Assistant, B=Tasker+AutoVoice) до 3-х — добавлена карточка **🅳 Нативный APK (TDLib)** с бейджем «ВЫБРАН».
+  - Tip-блок переписан под решение Андрея 29.04.
+  - Добавлена секция «Статус сборки APK» с автоопределением свежего релиза через GitHub Releases API (`fetch /repos/andyrbek2709-tech/ai-institut/releases`). Если есть тег `voice-bot-v*` и `.apk` ассет — кнопка «Скачать APK» становится активной автоматически.
+  - Добавлен `nav-bar` со ссылками на остальные доски (повестка / статус / парсинг / health / QA / конвейер).
+- `.github/workflows/build-voice-bot-apk.yml` — новый CI workflow:
+  - Триггеры: push в `main` с изменениями в `android-voicebot/**` либо ручной `workflow_dispatch`.
+  - JDK 17 + Android SDK + Gradle cache.
+  - Если `android-voicebot/gradlew` ещё не закоммичен — корректно «no-op» (печатает TODO).
+  - При успешной сборке создаёт Release `voice-bot-vYYYYMMDD-HHMM` с APK.
+- `android-voicebot/README.md` — описание архитектуры будущего нативного приложения (Kotlin + TDLib + SpeechRecognizer), структура каталогов, инструкция по установке.
+- `enghub-main/public/agenda.html`:
+  - Исправлен устаревший путь шапки `D:\ai-site` → `D:\ai-institut`.
+  - Добавлено меню навигации со ссылками на 6 досок (включая voice-bot).
+  - `VOICE-01` перенесён из `decided` в `done` с обновлённым описанием.
+
+**Не трогалось (по правилам):**
+- `in_progress: T30f, T30g` — оба «отложено, ждёт сигнала Андрея».
+- Параллельная задача «Verify Supabase keys state» — не пересекается.
+- «Disable JWT-based API keys» в Supabase — отдельный тикет на 2026-05-02.
+
+**Push:** ожидает запуска через готовые git-команды (Cowork bash недоступен — «Workspace unavailable»).
+
 ### 2026-04-30 — Сверка repos `ai-institut` ↔ `enghub` (drift не критичен)
 
 **Контекст:** прод собирается из `andyrbek2709-tech/ai-institut` (Root: `enghub-main/`). Параллельно существует standalone `andyrbek2709-tech/enghub` (НЕ подключён к Vercel) — туда в прошлой in-browser-сессии случайно пушнули 2 коммита фикса ESLint, потом разобрались и переехали в правильный репо.
