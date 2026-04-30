@@ -1,0 +1,2 @@
+# Расчёт кабелей 1кВ — Python serverless function для Vercel.
+# Используется только stdlib (math, json, dataclasses, http.server) — внешних зависимостей нет.
