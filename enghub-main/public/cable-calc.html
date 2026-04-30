@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Расчёт кабелей до 1 кВ — EngHub</title>
+<style>
+  :root {
+    --bg: #f5f7fb;
+    --card: #ffffff;
+    --border: #e1e5ee;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --ok: #16a34a;
+    --warn: #d97706;
+    --err: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+  }
+  .nav-bar {
+    background: #1e293b; color: #fff; padding: 10px 20px;
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  .nav-bar a {
+    color: #cbd5e1; text-decoration: none; font-size: 14px;
+    padding: 4px 10px; border-radius: 6px; transition: all .15s;
+  }
+  .nav-bar a:hover { background: #334155; color: #fff; }
+  .nav-bar a.active { background: var(--accent); color: #fff; }
+  .nav-bar .nav-title { font-weight: 600; margin-right: 12px; }
+  .container { max-width: 1200px; margin: 24px auto; padding: 0 20px; }
+  h1 { margin: 0 0 8px; font-size: 26px; font-weight: 700; }
+  .subtitle { color: var(--muted); margin-bottom: 20px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 920px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .card h2 { margin: 0 0 14px; font-size: 16px; font-weight: 600; color: #111827; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+  .row.full { grid-template-columns: 1fr; }
+  label {
+    display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 500;
+  }
+  input, select {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; background: #fff; color: var(--text);
+  }
+  input:focus, select:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+  }
+  button {
+    width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .15s;
+  }
+  button:hover { background: var(--accent-hover); }
+  button:disabled { background: #9ca3af; cursor: not-allowed; }
+  .results { margin-top: 20px; }
+  .badge {
+    display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: .03em;
+  }
+  .badge.ok { background: #dcfce7; color: var(--ok); }
+  .badge.warn { background: #fef3c7; color: var(--warn); }
+  .badge.err { background: #fee2e2; color: var(--err); }
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0;
+  }
+  @media (max-width: 720px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi {
+    background: #f8fafc; border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .kpi .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .value { font-size: 18px; font-weight: 700; margin-top: 3px; color: #111827; }
+  .kpi .unit { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+  table {
+    width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px;
+  }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--muted); background: #f8fafc; font-size: 12px; }
+  td.formula { font-family: ui-monospace, monospace; font-size: 12px; color: #4b5563; }
+  td.value-cell { font-weight: 600; color: #111827; }
+  .hint {
+    background: #fef3c7; border-left: 3px solid var(--warn); padding: 10px 12px;
+    border-radius: 6px; margin-top: 8px; font-size: 13px; color: #78350f;
+  }
+  .check-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; font-size: 13px; }
+  .check-row span { padding: 3px 8px; border-radius: 6px; }
+  .check-row .pass { background: #dcfce7; color: var(--ok); }
+  .check-row .fail { background: #fee2e2; color: var(--err); }
+  details { margin-top: 12px; }
+  details summary {
+    cursor: pointer; font-weight: 600; padding: 8px 0; color: var(--accent); font-size: 14px;
+  }
+  details summary:hover { color: var(--accent-hover); }
+  .error-box {
+    background: #fee2e2; border: 1px solid #fecaca; color: #991b1b;
+    padding: 10px 14px; border-radius: 8px; margin-top: 12px; font-size: 14px;
+  }
+  .footer {
+    text-align: center; color: var(--muted); font-size: 12px; padding: 24px 0 12px;
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav-bar">
+  <span class="nav-title">EngHub →</span>
+  <a href="/">Главная</a>
+  <a href="/agenda.html">📋 Повестка</a>
+  <a href="/status.html">📊 Статус</a>
+  <a href="/parsing.html">📑 Парсинг</a>
+  <a href="/voice-bot.html">🎤 Голособот</a>
+  <a href="/health-map.html">🗺 Health-map</a>
+  <a href="/conveyor.html">🏭 Конвейер</a>
+  <a href="/cable-calc.html" class="active">🔌 Расчёт кабелей</a>
+</nav>
+
+<div class="container">
+  <h1>🔌 Расчёт кабелей до 1 кВ</h1>
+  <div class="subtitle">МЭК 60364-5-52 • ПУЭ • метод Беляева для ТКЗ. Подбор сечения, проверка ΔU, ток КЗ, выбор АВ.</div>
+
+  <div class="grid">
+
+    <!-- Форма ввода -->
+    <div class="card">
+      <h2>Исходные данные</h2>
+
+      <div class="row">
+        <div>
+          <label>Режим</label>
+          <select id="mode">
+            <option value="select">Подбор сечения</option>
+            <option value="check">Проверка сечения</option>
+            <option value="max_load">Макс. нагрузка</option>
+          </select>
+        </div>
+        <div>
+          <label>Фазы</label>
+          <select id="phases">
+            <option value="3">3-фазная</option>
+            <option value="1">1-фазная</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Мощность P, кВт</label>
+          <input type="number" id="power_kw" value="100" step="0.1" />
+        </div>
+        <div>
+          <label>cos φ</label>
+          <input type="number" id="cos_phi" value="0.85" step="0.01" min="0" max="1" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Длина L, м</label>
+          <input type="number" id="length_m" value="50" step="1" />
+        </div>
+        <div>
+          <label>Доп. ΔU, %</label>
+          <input type="number" id="delta_u_pct_max" value="5" step="0.1" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Материал жилы</label>
+          <select id="material">
+            <option value="Cu">Cu — медь</option>
+            <option value="Al">Al — алюминий</option>
+          </select>
+        </div>
+        <div>
+          <label>Изоляция</label>
+          <select id="insulation">
+            <option value="PVC">PVC — ПВХ (70°C)</option>
+            <option value="XLPE">XLPE — сшитый ПЭ (90°C)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Способ прокладки</label>
+          <select id="method">
+            <option value="A1">A1 — изолир. провода в трубе в стене</option>
+            <option value="A2">A2 — кабель в трубе в стене</option>
+            <option value="B1">B1 — изолир. провода в трубе по стене</option>
+            <option value="B2">B2 — кабель в трубе по стене</option>
+            <option value="C" selected>C — открыто на стене / лотке</option>
+            <option value="D1">D1 — кабель в трубе в земле</option>
+            <option value="D2">D2 — кабель напрямую в земле</option>
+            <option value="E">E — кабель в воздухе на лотке</option>
+            <option value="F">F — кабель в воздухе на крюках</option>
+            <option value="G">G — лесенка/полки в воздухе</option>
+          </select>
+        </div>
+        <div>
+          <label>Темп. среды, °C</label>
+          <input type="number" id="ambient_temp_c" value="30" step="1" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Кабелей в группе</label>
+          <input type="number" id="cables_nearby" value="1" min="1" step="1" />
+        </div>
+        <div>
+          <label>Параллельных N</label>
+          <input type="number" id="cable_count" value="1" min="1" step="1" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Сечение, мм² <span style="color:var(--muted)">(для check / max_load)</span></label>
+          <input type="number" id="section_mm2" placeholder="—" step="0.1" />
+        </div>
+        <div>
+          <label>Кратность пуска I<sub>п</sub>/I<sub>н</sub></label>
+          <input type="number" id="start_current_ratio" value="1.0" step="0.1" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>U<sub>ном</sub>, В</label>
+          <input type="number" id="u_nom_v" value="380" step="1" />
+        </div>
+        <div>
+          <label>Z<sub>тр-ра</sub>, мОм</label>
+          <input type="number" id="z_t_mohm" value="54" step="0.1" />
+        </div>
+      </div>
+
+      <button id="btn-calc">Рассчитать</button>
+    </div>
+
+    <!-- Результат -->
+    <div class="card">
+      <h2>Результат
+        <span id="status-badge" class="badge ok" style="margin-left:8px;display:none">OK</span>
+      </h2>
+      <div id="results-empty" style="color:var(--muted);font-size:14px">
+        Заполните данные слева и нажмите «Рассчитать».<br><br>
+        <strong>Тестовый пример:</strong> P=100 кВт, cos φ=0.85, L=50 м, Cu, PVC, способ C, t=30°C →
+        I<sub>расч</sub>≈178.7 А, S=70 мм², I<sub>доп</sub>=184 А.
+      </div>
+      <div id="results-content" style="display:none">
+
+        <div class="kpi-grid">
+          <div class="kpi"><div class="label">I расч.</div><div class="value"><span id="r-icalc">—</span><span class="unit">А</span></div></div>
+          <div class="kpi"><div class="label">Сечение</div><div class="value"><span id="r-sec">—</span><span class="unit">мм²</span></div></div>
+          <div class="kpi"><div class="label">I доп.</div><div class="value"><span id="r-iallow">—</span><span class="unit">А</span></div></div>
+          <div class="kpi"><div class="label">ΔU</div><div class="value"><span id="r-du">—</span><span class="unit">%</span></div></div>
+          <div class="kpi"><div class="label">I КЗ 1ф</div><div class="value"><span id="r-kz1">—</span><span class="unit">А</span></div></div>
+          <div class="kpi"><div class="label">I КЗ 3ф</div><div class="value"><span id="r-kz3">—</span><span class="unit">А</span></div></div>
+          <div class="kpi"><div class="label">АВ ном.</div><div class="value"><span id="r-cb">—</span><span class="unit">А</span></div></div>
+          <div class="kpi"><div class="label">Сеч. нуля</div><div class="value"><span id="r-sec0">—</span><span class="unit">мм²</span></div></div>
+        </div>
+
+        <div class="check-row" id="r-checks"></div>
+
+        <div id="r-hints"></div>
+
+        <details open>
+          <summary>📐 Поправочные коэффициенты</summary>
+          <table>
+            <thead><tr><th>Коэффициент</th><th>Значение</th><th>Источник</th></tr></thead>
+            <tbody>
+              <tr><td>k<sub>темп</sub> (температура)</td><td class="value-cell" id="r-ktemp">—</td><td>МЭК B.52.14/B.52.15</td></tr>
+              <tr><td>k<sub>гр</sub> (группирование)</td><td class="value-cell" id="r-kgroup">—</td><td>МЭК B.52.17/B.52.18</td></tr>
+              <tr><td>k<sub>γ</sub> (грунт)</td><td class="value-cell" id="r-ksoil">—</td><td>МЭК B.52.16</td></tr>
+            </tbody>
+          </table>
+        </details>
+
+        <details open>
+          <summary>🛡 Защита</summary>
+          <table>
+            <thead><tr><th>Параметр</th><th>Значение, А</th></tr></thead>
+            <tbody>
+              <tr><td>Номинал АВ</td><td class="value-cell" id="r-cb-rating">—</td></tr>
+              <tr><td>Уставка теплового расц.</td><td class="value-cell" id="r-cb-th">—</td></tr>
+              <tr><td>Уставка ЭМ расц.</td><td class="value-cell" id="r-cb-mag">—</td></tr>
+              <tr><td>Предохранитель ППН</td><td class="value-cell" id="r-fuse">—</td></tr>
+            </tbody>
+          </table>
+        </details>
+
+        <details>
+          <summary>📋 Методика расчёта (формулы и значения)</summary>
+          <div id="r-methodology"></div>
+        </details>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    EngHub • Расчёт кабелей 1 кВ • МЭК 60364-5-52 • ПУЭ • Беляев Е.Н.
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+function readForm() {
+  const out = {
+    mode: $('mode').value,
+    phases: parseInt($('phases').value, 10),
+    power_kw: parseFloat($('power_kw').value),
+    cos_phi: parseFloat($('cos_phi').value),
+    length_m: parseFloat($('length_m').value),
+    delta_u_pct_max: parseFloat($('delta_u_pct_max').value),
+    material: $('material').value,
+    insulation: $('insulation').value,
+    method: $('method').value,
+    ambient_temp_c: parseFloat($('ambient_temp_c').value),
+    cables_nearby: parseInt($('cables_nearby').value, 10) || 1,
+    cable_count: parseInt($('cable_count').value, 10) || 1,
+    start_current_ratio: parseFloat($('start_current_ratio').value) || 1.0,
+    u_nom_v: parseFloat($('u_nom_v').value),
+    z_t_mohm: parseFloat($('z_t_mohm').value),
+  };
+  const sec = $('section_mm2').value.trim();
+  if (sec !== '') out.section_mm2 = parseFloat(sec);
+  return out;
+}
+
+function setText(id, val, decimals) {
+  const el = $(id); if (!el) return;
+  if (val === null || val === undefined || (typeof val === 'number' && isNaN(val))) {
+    el.textContent = '—'; return;
+  }
+  if (typeof val === 'number' && decimals !== undefined) {
+    el.textContent = val.toFixed(decimals);
+  } else {
+    el.textContent = val;
+  }
+}
+
+function renderMethodology(m) {
+  const root = $('r-methodology');
+  if (!m || typeof m !== 'object') { root.innerHTML = '<p style="color:var(--muted)">—</p>'; return; }
+  const sections = [];
+
+  function block(title, obj) {
+    if (!obj) return '';
+    let html = `<details open style="margin:8px 0"><summary style="font-size:13px">${title}</summary>`;
+    if (obj.formula) {
+      html += `<p style="font-family:ui-monospace,monospace;font-size:12px;background:#f8fafc;padding:6px 10px;border-radius:6px;margin:6px 0">${obj.formula}</p>`;
+    }
+    if (obj.formula_1ph) {
+      html += `<p style="font-family:ui-monospace,monospace;font-size:12px;background:#f8fafc;padding:6px 10px;border-radius:6px;margin:6px 0">1ф КЗ: ${obj.formula_1ph}</p>`;
+    }
+    if (obj.formula_3ph) {
+      html += `<p style="font-family:ui-monospace,monospace;font-size:12px;background:#f8fafc;padding:6px 10px;border-radius:6px;margin:6px 0">3ф КЗ: ${obj.formula_3ph}</p>`;
+    }
+    if (obj.values) {
+      html += '<table><thead><tr><th>Параметр</th><th>Значение</th></tr></thead><tbody>';
+      for (const [k, v] of Object.entries(obj.values)) {
+        const display = (v === null || v === undefined) ? '—' :
+          (typeof v === 'number' ? v : String(v));
+        html += `<tr><td>${k}</td><td class="value-cell">${display}</td></tr>`;
+      }
+      html += '</tbody></table>';
+    }
+    if (obj.result_a !== undefined)     html += `<p>Результат: <strong>${obj.result_a} А</strong></p>`;
+    if (obj.result_pct !== undefined)   html += `<p>Результат: <strong>${obj.result_pct}%</strong> (предел ${obj.limit_pct}%)</p>`;
+    if (obj.result_1ph_a !== undefined) html += `<p>I КЗ 1ф = <strong>${obj.result_1ph_a} А</strong>; I КЗ 3ф = <strong>${obj.result_3ph_a} А</strong></p>`;
+    if (obj.norm)      html += `<p style="font-size:11px;color:var(--muted)">${obj.norm}</p>`;
+    if (obj.table_ref) html += `<p style="font-size:11px;color:var(--muted)">${obj.table_ref}</p>`;
+    html += '</details>';
+    return html;
+  }
+
+  sections.push(block('1. Расчётный ток', m.i_calc));
+  sections.push(block('2. Допустимый ток', m.i_allowable));
+  sections.push(block('3. Падение напряжения', m.delta_u));
+  sections.push(block('4. Ток КЗ', m.kz));
+  sections.push(block('5. Защита (АВ / предохранитель)', m.protection));
+  root.innerHTML = sections.join('');
+}
+
+function renderResult(r) {
+  $('results-empty').style.display = 'none';
+  $('results-content').style.display = 'block';
+
+  setText('r-icalc',  r.i_calc_a,  1);
+  setText('r-sec',    r.section_mm2);
+  setText('r-iallow', r.i_allowable_a, 1);
+  setText('r-du',     r.delta_u_pct, 3);
+  setText('r-kz1',    r.i_kz_1ph_a,  0);
+  setText('r-kz3',    r.i_kz_3ph_a,  0);
+  setText('r-cb',     r.cb_rating_a);
+  setText('r-sec0',   r.section_zero_mm2);
+
+  setText('r-ktemp',  r.k_temp,  3);
+  setText('r-kgroup', r.k_group, 3);
+  setText('r-ksoil',  r.k_soil,  3);
+
+  setText('r-cb-rating', r.cb_rating_a);
+  setText('r-cb-th',     r.cb_thermal_a);
+  setText('r-cb-mag',    r.cb_mag_a);
+  setText('r-fuse',      r.fuse_rating_a);
+
+  const badge = $('status-badge');
+  badge.style.display = 'inline-block';
+  badge.textContent = r.status;
+  badge.className = 'badge ' + (r.status === 'OK' ? 'ok' : (r.status === 'WARNING' ? 'warn' : 'err'));
+
+  const checks = $('r-checks');
+  checks.innerHTML = '';
+  const items = [
+    {label: 'Ток',       ok: r.check_current},
+    {label: 'Напряжение', ok: r.check_voltage},
+    {label: 'КЗ',        ok: r.check_kz},
+  ];
+  for (const it of items) {
+    const span = document.createElement('span');
+    span.className = it.ok ? 'pass' : 'fail';
+    span.textContent = (it.ok ? '✓ ' : '✗ ') + it.label;
+    checks.appendChild(span);
+  }
+
+  const hints = $('r-hints');
+  hints.innerHTML = '';
+  if (r.hints && r.hints.length) {
+    for (const h of r.hints) {
+      const div = document.createElement('div');
+      div.className = 'hint';
+      div.textContent = '💡 ' + h;
+      hints.appendChild(div);
+    }
+  }
+
+  renderMethodology(r.methodology);
+}
+
+function renderError(msg) {
+  $('results-empty').style.display = 'none';
+  $('results-content').style.display = 'block';
+  $('r-methodology').innerHTML = '';
+  ['r-icalc','r-sec','r-iallow','r-du','r-kz1','r-kz3','r-cb','r-sec0',
+   'r-ktemp','r-kgroup','r-ksoil','r-cb-rating','r-cb-th','r-cb-mag','r-fuse']
+    .forEach(id => $(id).textContent = '—');
+  $('r-checks').innerHTML = '';
+  $('r-hints').innerHTML = '<div class="error-box">⚠ ' + msg + '</div>';
+  const badge = $('status-badge');
+  badge.style.display = 'inline-block';
+  badge.textContent = 'ERROR';
+  badge.className = 'badge err';
+}
+
+async function calculate() {
+  const btn = $('btn-calc');
+  btn.disabled = true; btn.textContent = 'Считаю...';
+  try {
+    const payload = readForm();
+    const resp = await fetch('/api/cable-calc/calc', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      renderError((data && data.error) ? data.error : ('HTTP ' + resp.status));
+    } else {
+      renderResult(data);
+    }
+  } catch (e) {
+    renderError('Сеть/парсинг: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Рассчитать';
+  }
+}
+
+$('btn-calc').addEventListener('click', calculate);
+// Enter в любом поле = рассчитать
+document.querySelectorAll('input').forEach(el => {
+  el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') calculate(); });
+});
+</script>
+</body>
+</html>
