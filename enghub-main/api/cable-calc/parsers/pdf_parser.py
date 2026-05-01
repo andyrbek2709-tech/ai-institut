@@ -4,6 +4,8 @@ PDF-парсер кабельных журналов.
   1. pdfplumber: попытка извлечь структурированные таблицы (для цифровых PDF)
   2. Если нет текста и доступен pytesseract — OCR (для сканов).
      На Vercel tesseract отсутствует — OCR будет пропущен с warning.
+  3. Если pdfplumber+tesseract вернули 0 строк И есть OPENAI_API_KEY —
+     fallback на pdf_vision_parser (OpenAI Vision).
 """
 import os
 import re
@@ -110,41 +112,59 @@ def parse_pdf(path: str) -> ParseResult:
     result = ParseResult(source_file=os.path.basename(path))
     row_num = 1
 
-    with pdfplumber.open(path) as pdf:
-        result.total_pages = len(pdf.pages)
-
-        for page_idx, page in enumerate(pdf.pages):
-            if _has_text(page):
-                tables = page.extract_tables()
-                if tables:
-                    for table in tables:
-                        for cells in table:
-                            cells_str = [str(c or "").strip() for c in cells]
-                            row = _row_from_cells(cells_str, row_num)
-                            if row:
-                                result.rows.append(row)
-                                row_num += 1
-                            else:
-                                result.skipped_count += 1
+    try:
+        with pdfplumber.open(path) as pdf:
+            result.total_pages = len(pdf.pages)
+            for page_idx, page in enumerate(pdf.pages):
+                if _has_text(page):
+                    tables = page.extract_tables()
+                    if tables:
+                        for table in tables:
+                            for cells in table:
+                                cells_str = [str(c or "").strip() for c in cells]
+                                row = _row_from_cells(cells_str, row_num)
+                                if row:
+                                    result.rows.append(row)
+                                    row_num += 1
+                                else:
+                                    result.skipped_count += 1
+                    else:
+                        txt = page.extract_text() or ""
+                        new_rows = _parse_text_lines(txt, row_num)
+                        result.rows.extend(new_rows)
+                        row_num += len(new_rows)
                 else:
-                    txt = page.extract_text() or ""
+                    if not (_HAS_PIL and _HAS_TESSERACT):
+                        result.warnings.append(
+                            f"Стр.{page_idx + 1}: текстового слоя нет, tesseract недоступен"
+                        )
+                        continue
+                    txt = _ocr_page(page)
+                    if not txt.strip():
+                        result.warnings.append(f"Стр.{page_idx + 1}: OCR вернул пустой результат")
+                        continue
                     new_rows = _parse_text_lines(txt, row_num)
                     result.rows.extend(new_rows)
                     row_num += len(new_rows)
-            else:
-                if not (_HAS_PIL and _HAS_TESSERACT):
-                    result.warnings.append(
-                        f"Стр.{page_idx + 1}: текстового слоя нет, tesseract недоступен"
-                    )
-                    continue
-                txt = _ocr_page(page)
-                if not txt.strip():
-                    result.warnings.append(f"Стр.{page_idx + 1}: OCR вернул пустой результат")
-                    continue
-                new_rows = _parse_text_lines(txt, row_num)
-                result.rows.extend(new_rows)
-                row_num += len(new_rows)
+    except Exception as e:
+        result.warnings.append(f"pdfplumber failed: {e}")
 
     result.parsed_count = len(result.rows)
 
-    # V
+    # Vision fallback: если pdfplumber+tesseract вернули 0 строк, а есть OPENAI_API_KEY,
+    # запускаем OpenAI Vision (для AutoCAD-PDF без шрифтов и текстового слоя).
+    if result.parsed_count == 0 and os.environ.get("OPENAI_API_KEY", "").strip():
+        try:
+            from .pdf_vision_parser import parse_pdf_via_vision
+            result.warnings.append(
+                "pdfplumber+tesseract не извлекли строки -> fallback на OpenAI Vision"
+            )
+            vision_result = parse_pdf_via_vision(path)
+            if vision_result is not None:
+                old_warnings = list(result.warnings)
+                result = vision_result
+                result.warnings = old_warnings + list(vision_result.warnings)
+        except Exception as e:
+            result.warnings.append(f"Vision fallback не сработал: {e}")
+
+    return result
