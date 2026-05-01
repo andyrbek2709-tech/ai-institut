@@ -16,10 +16,10 @@ from .utils import parse_section
 OPENAI_API_BASE = "https://api.openai.com/v1"
 DEFAULT_MODEL = os.environ.get("OPENAI_VISION_MODEL", "gpt-4o-mini")
 
-MAX_VISION_PAGES = int(os.environ.get("MAX_VISION_PAGES", "3"))
-VISION_DPI = int(os.environ.get("VISION_DPI", "160"))
+MAX_VISION_PAGES = int(os.environ.get("MAX_VISION_PAGES", "2"))
+VISION_DPI = int(os.environ.get("VISION_DPI", "110"))
 VISION_MAX_WORKERS = int(os.environ.get("VISION_MAX_WORKERS", "3"))
-VISION_TIMEOUT_S = int(os.environ.get("VISION_TIMEOUT_S", "8"))
+VISION_TIMEOUT_S = int(os.environ.get("VISION_TIMEOUT_S", "25"))
 
 CABLE_JOURNAL_SCHEMA = {
     "name": "cable_journal",

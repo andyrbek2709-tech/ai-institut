@@ -2,10 +2,16 @@
   "functions": {
     "api/spec-export.js": {
       "includeFiles": "{api/template.xlsx,node_modules/exceljs/**}"
+    },
+    "api/cable-calc/parse.py": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
   ],
   "crons": [
     {
