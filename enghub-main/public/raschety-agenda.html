@@ -88,6 +88,7 @@ header.meta .updated a{color:var(--accent);text-decoration:none}
 
 <nav class="nav-bar">
   <span class="nav-title">Расчёты →</span>
+  <a href="/agenda.html" style="border:1px solid #4f8cff;background:rgba(79,140,255,.08)">↗ Все проекты (Master board)</a>
   <a href="/raschety.html">📐 Раздел Расчёты</a>
   <a href="/raschety-agenda.html" class="active">📋 Доска расчётов</a>
   <a href="/cable-calc.html">🔌 Кабели 1кВ</a>
@@ -237,14 +238,4 @@ function applyFilters() {
 document.getElementById('search').addEventListener('input', applyFilters);
 document.querySelectorAll('.controls button[data-cat]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.controls button[data-cat]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    applyFilters();
-  });
-});
-
-render();
-applyFilters();
-</script>
-</body>
-</html>
+    document.querySelectorAll('.controls button[data-cat]').forEach(b => b.classList.

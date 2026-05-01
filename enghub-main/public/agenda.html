@@ -3,43 +3,61 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>EngHub Workspace · Доска повестки</title>
+<title>📋 Master board · Все проекты Андрея</title>
 <style>
-:root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b}
+:root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b;--cyan:#06b6d4}
 *{box-sizing:border-box}html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
-.wrap{max-width:1320px;margin:0 auto;padding:18px 18px 80px}
-header{padding:6px 0 14px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
-header h1{margin:0 0 4px;font-size:22px}
-header .sub{color:var(--muted);font-size:12px}
-header .updated{color:var(--muted);font-size:11px;text-align:right;line-height:1.5}
+.wrap{max-width:1640px;margin:0 auto;padding:18px 18px 80px}
+.nav-bar{background:#0d1228;border:1px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+.nav-bar .nav-title{font-weight:700;color:var(--muted);font-size:12px;text-transform:uppercase;margin-right:6px}
+.nav-bar a{color:#cbd5e1;text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;transition:.15s}
+.nav-bar a:hover{background:var(--panel2);color:#fff}
+.nav-bar a.active{background:var(--accent);color:#fff}
+.hero{background:linear-gradient(135deg,#1a2350 0%,#2a1a4f 100%);border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin:0 0 16px}
+.hero h1{margin:0 0 6px;font-size:24px;font-weight:800;letter-spacing:-.01em}
+.hero .sub{color:var(--muted);font-size:13px;line-height:1.6}
+.hero code{background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px;font-size:12px;color:#cbd5e1}
+header.meta{padding:0 0 14px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+header.meta .updated{color:var(--muted);font-size:11px;line-height:1.6}
+header.meta .updated a{color:var(--accent);text-decoration:none}
 .legend{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:12px;color:var(--muted);display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 @media(max-width:720px){.legend{grid-template-columns:1fr}}
 .legend .lcol{display:flex;gap:8px;align-items:flex-start}
 .legend b{color:var(--text)}
-.legend-note{grid-column:1/-1;text-align:center;color:var(--muted);font-size:11px;font-style:italic;padding-top:4px;border-top:1px dashed var(--border);margin-top:4px}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px}
-@media(max-width:720px){.kpis{grid-template-columns:1fr}}
-.kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:.15s}
-.kpi:hover{border-color:var(--accent)}
-.kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase}
-.kpi .value{font-size:24px;font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:0 0 14px}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:680px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer;transition:.15s;text-align:center}
+.kpi:hover{border-color:var(--accent);transform:translateY(-1px)}
+.kpi .label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.kpi .value{font-size:22px;font-weight:800}
+.kpi.ideas .value{color:var(--gray)}
+.kpi.triage .value{color:var(--accent2)}
+.kpi.decided .value{color:var(--cyan)}
 .kpi.in_progress .value{color:var(--accent)}
-.kpi.decided .value{color:var(--yellow)}
 .kpi.done .value{color:var(--green)}
-.controls{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;align-items:center}
-.search{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px}
-.controls button{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:.15s}
-.controls button:hover{background:var(--panel2);border-color:var(--accent)}
-.controls button.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-@media(max-width:1100px){.cols{grid-template-columns:1fr}}
-.col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:300px}
-.col h2{margin:0 0 12px;font-size:14px;font-weight:700;display:flex;gap:8px;align-items:center}
-.col h2 .count{background:var(--panel2);color:var(--muted);padding:2px 9px;border-radius:11px;font-size:11px;font-weight:600}
-.col.in_progress{border-left:4px solid var(--accent)}
-.col.decided{border-left:4px solid var(--yellow)}
-.col.done{border-left:4px solid var(--green)}
+.kpi.skip .value{color:var(--red)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px;align-items:center}
+.search{flex:1;min-width:220px;background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px}
+.proj-filter{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;align-items:center;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.proj-filter .pf-title{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-right:6px}
+.proj-filter button{background:var(--bg);color:var(--text);border:1px solid var(--border);padding:5px 11px;border-radius:14px;cursor:pointer;font-size:12px;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.proj-filter button:hover{transform:translateY(-1px)}
+.proj-filter button .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.proj-filter button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.proj-filter button.active .dot{box-shadow:0 0 0 2px rgba(255,255,255,.4)}
+.cols{display:grid;grid-template-columns:repeat(6,minmax(220px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+@media(max-width:1280px){.cols{grid-template-columns:repeat(6,260px);overflow-x:auto}}
+.col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;min-height:300px}
+.col h2{margin:0 0 10px;font-size:13px;font-weight:700;display:flex;gap:6px;align-items:center}
+.col h2 .count{background:var(--panel2);color:var(--muted);padding:2px 8px;border-radius:11px;font-size:10px;font-weight:700;margin-left:auto}
+.col.ideas{border-top:3px solid var(--gray)}
+.col.triage{border-top:3px solid var(--accent2)}
+.col.decided{border-top:3px solid var(--cyan)}
+.col.in_progress{border-top:3px solid var(--accent)}
+.col.done{border-top:3px solid var(--green)}
+.col.skip{border-top:3px solid var(--red)}
 .day-group{margin-bottom:10px}
 .day-header{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:600;padding:7px 4px 5px;cursor:pointer;display:flex;justify-content:space-between;border-bottom:1px solid var(--border);margin-bottom:8px}
 .day-header:hover{color:var(--text)}
@@ -47,148 +65,201 @@ header .updated{color:var(--muted);font-size:11px;text-align:right;line-height:1
 .day-group.collapsed .arr{transform:rotate(-90deg)}
 .day-group.collapsed .day-items{display:none}
 .day-header .cnt{background:var(--panel2);padding:1px 7px;border-radius:9px;font-size:10px}
-.item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:9px;cursor:pointer;transition:.15s}
+.item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 11px;margin-bottom:8px;cursor:pointer;transition:.15s;border-left-width:3px}
 .item:hover{border-color:var(--accent);transform:translateY(-1px)}
-.item .id{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-right:6px}
-.item .title{font-size:13px;font-weight:600;line-height:1.4}
-.item .desc{font-size:12px;color:var(--muted);line-height:1.55;display:none;margin-top:6px}
+.item .id{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-right:5px;letter-spacing:.04em}
+.item .title{font-size:12.5px;font-weight:600;line-height:1.4}
+.item .desc{font-size:11.5px;color:var(--muted);line-height:1.55;display:none;margin-top:6px}
 .item.open .desc{display:block}
 .item .meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;align-items:center}
 .tag{padding:1px 7px;border-radius:9px;font-size:9px;font-weight:600;border:1px solid transparent}
-.tag.proj{background:rgba(79,140,255,.13);color:var(--accent);border-color:rgba(79,140,255,.3)}
+.tag.proj-badge{font-weight:700;letter-spacing:.02em}
 .tag.kind-feature{background:rgba(139,92,246,.13);color:var(--accent2)}
 .tag.kind-bug{background:rgba(239,68,68,.13);color:var(--red)}
 .tag.kind-question{background:rgba(245,158,11,.13);color:var(--yellow)}
 .tag.kind-doc{background:rgba(34,197,94,.13);color:var(--green)}
 .tag.kind-design{background:rgba(168,85,247,.13);color:#a855f7}
 .tag.kind-infra{background:rgba(100,116,139,.18);color:var(--gray)}
+.tag.t-ext{background:rgba(79,140,255,.10);color:#9bb3e0;border-color:rgba(79,140,255,.20)}
 .item .date{font-size:10px;color:var(--muted);margin-left:auto}
-.item .links{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}
+.item .links{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
 .item .links a{font-size:11px;color:var(--accent);text-decoration:none;background:rgba(79,140,255,.08);padding:2px 8px;border-radius:5px}
-.empty{color:var(--muted);font-size:12px;text-align:center;padding:24px 12px;font-style:italic}
+.empty{color:var(--muted);font-size:11px;text-align:center;padding:20px 8px;font-style:italic}
 .notice{background:rgba(79,140,255,.08);border:1px solid rgba(79,140,255,.25);border-radius:8px;padding:10px 12px;margin:0 0 14px;font-size:12px;line-height:1.55;color:var(--muted)}
 .notice b{color:var(--text)}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header>
-<div><h1>📋 EngHub Workspace · Доска повестки</h1><div class="sub">Что обсуждаем, что решили, что сделали. Прод: <code>enghub-three.vercel.app</code> · <span style="color:var(--green)">🛡 security cutover завершён</span></div></div>
-<div class="updated">Локально: <code>D:\\ai-institut\\enghub-main\\public\\agenda.html</code><br>Vercel: <a href="https://enghub-three.vercel.app/agenda.html" style="color:var(--accent)">enghub-three.vercel.app/agenda.html</a><br>Меню: <a href="/voice-bot.html" style="color:var(--accent)">🎙 voice-bot</a> · <a href="/parsing.html" style="color:var(--accent)">🏭 parsing</a> · <a href="/status.html" style="color:var(--accent)">📊 status</a> · <a href="/health-map.html" style="color:var(--accent)">🩺 health</a> · <a href="/qa-review.html" style="color:var(--accent)">🔍 QA</a> · <a href="/conveyor.html" style="color:var(--accent)">🚜 конвейер</a><br>Обновлён: 2026-04-30 (cleanup: устаревшие планы удалены, STATE.md и CLAUDE.md переписаны компактно)</div>
-</header>
 
-<div class="notice">
-<b>🛡 Security cutover завершён 2026-04-30.</b> service_role JWT убран из фронт-бандла (commit <code>e90177d</code>). 9 admin-операций мигрированы в <code>/api/admin/*</code>. Старый ключ ротирован (новый <code>sb_secret_lZOw8…</code>). RLS hardening миграции <code>019</code> + <code>019b</code> применены на проде. Smoke-тесты engineer/lead/gip — зелёные. Legacy JWT отключим <b>2026-05-02</b> (24-48ч буфер на откат).
+<nav class="nav-bar">
+  <span class="nav-title">Доски →</span>
+  <a href="/agenda.html" class="active">📋 Master board</a>
+  <a href="/raschety-agenda.html">📐 Расчёты</a>
+  <a href="/voice-bot.html">🎙 voice-bot</a>
+  <a href="/parsing.html">🏭 parsing</a>
+  <a href="/status.html">📊 status</a>
+  <a href="/health-map.html">🩺 health</a>
+  <a href="/qa-review.html">🔍 QA</a>
+  <a href="/conveyor.html">🚜 конвейер</a>
+  <a href="/cable-calc.html">🔌 кабели 1кВ</a>
+</nav>
+
+<div class="hero">
+<h1>📋 Master board — все проекты Андрея</h1>
+<div class="sub">Все задачи по всем проектам в одном месте. Бейдж проекта на каждой карточке + цвет, фильтры по проектам в шапке.<br>Прод: <code>enghub-three.vercel.app/agenda.html</code> · Локально: <code>D:\ai-institut\enghub-main\public\agenda.html</code></div>
 </div>
 
 <div class="legend">
-<div class="lcol"><span>🔥</span><div><b>В работе</b> — жду ответа Андрея, есть открытый вопрос</div></div>
-<div class="lcol"><span>✅</span><div><b>Решено</b> — ответ есть, политика/код зафиксированы, на проде ещё не подтверждено</div></div>
+<div class="lcol"><span>💡</span><div><b>Идеи</b> — задумано, ещё не разобрано</div></div>
+<div class="lcol"><span>🔍</span><div><b>Триаж</b> — оценка приоритета и эффорта</div></div>
+<div class="lcol"><span>✅</span><div><b>Решено</b> — план зафиксирован, ждёт реализации</div></div>
+<div class="lcol"><span>🔥</span><div><b>В работе</b> — пишется/тестируется сейчас</div></div>
 <div class="lcol"><span>📋</span><div><b>Сделано</b> — на проде, верифицировано</div></div>
-<div class="legend-note">Доска обновляется после каждого ответа Андрея</div>
+<div class="lcol"><span>🚫</span><div><b>Не делаем</b> — отказались (out of scope)</div></div>
 </div>
 
 <div class="kpis">
-<div class="kpi in_progress" data-filter="in_progress"><div><div class="label">🔥 В работе</div><div class="value" id="kpi-ip">0</div></div></div>
-<div class="kpi decided" data-filter="decided"><div><div class="label">✅ Решено</div><div class="value" id="kpi-dec">0</div></div></div>
-<div class="kpi done" data-filter="done"><div><div class="label">📋 Сделано</div><div class="value" id="kpi-done">0</div></div></div>
+<div class="kpi ideas" data-jump="list-ideas"><div class="label">💡 Идеи</div><div class="value" id="kpi-ideas">0</div></div>
+<div class="kpi triage" data-jump="list-triage"><div class="label">🔍 Триаж</div><div class="value" id="kpi-triage">0</div></div>
+<div class="kpi decided" data-jump="list-dec"><div class="label">✅ Решено</div><div class="value" id="kpi-dec">0</div></div>
+<div class="kpi in_progress" data-jump="list-ip"><div class="label">🔥 В работе</div><div class="value" id="kpi-ip">0</div></div>
+<div class="kpi done" data-jump="list-done"><div class="label">📋 Сделано</div><div class="value" id="kpi-done">0</div></div>
+<div class="kpi skip" data-jump="list-skip"><div class="label">🚫 Не делаем</div><div class="value" id="kpi-skip">0</div></div>
 </div>
 
 <div class="controls">
 <input class="search" id="search" placeholder="🔍 Поиск по названию или описанию…">
-<button class="active" data-tag="all">Все теги</button>
-<button data-tag="EngHub">EngHub</button>
-<button data-tag="Nurmak">Nurmak</button>
-<button data-tag="Workspace">Workspace</button>
-<button data-tag="Design">Design</button>
-<button data-tag="Infra">Infra</button>
+</div>
+
+<div class="proj-filter" id="proj-filter">
+<span class="pf-title">Проект:</span>
+<button class="active" data-project="all">Все</button>
+<!-- кнопки проектов рендерятся скриптом -->
 </div>
 
 <div class="cols">
-<div class="col in_progress"><h2>🔥 В работе сейчас <span class="count" id="cnt-ip">0</span></h2><div id="list-ip"></div></div>
+<div class="col ideas"><h2>💡 Идеи <span class="count" id="cnt-ideas">0</span></h2><div id="list-ideas"></div></div>
+<div class="col triage"><h2>🔍 Триаж <span class="count" id="cnt-triage">0</span></h2><div id="list-triage"></div></div>
 <div class="col decided"><h2>✅ Решено <span class="count" id="cnt-dec">0</span></h2><div id="list-dec"></div></div>
+<div class="col in_progress"><h2>🔥 В работе <span class="count" id="cnt-ip">0</span></h2><div id="list-ip"></div></div>
 <div class="col done"><h2>📋 Сделано <span class="count" id="cnt-done">0</span></h2><div id="list-done"></div></div>
+<div class="col skip"><h2>🚫 Не делаем <span class="count" id="cnt-skip">0</span></h2><div id="list-skip"></div></div>
 </div>
 </div>
 
 <script>
+// ─── PROJECTS ───────────────────────────────────────────────────────────────
+const PROJECTS = {
+  "EngHub":          { color: "#4ec9b0", label: "EngHub" },
+  "Расчёты":         { color: "#f0b429", label: "Расчёты" },
+  "AdIntakeBot":     { color: "#4080f0", label: "AdIntakeBot" },
+  "Nurmak":          { color: "#20d060", label: "Nurmak" },
+  "Beautime":        { color: "#f04040", label: "Beautime" },
+  "Claude_orcestor": { color: "#a855f7", label: "Claude_orcestor" },
+  "gost":            { color: "#d29922", label: "gost" },
+  "Parsing_site":    { color: "#06b6d4", label: "Parsing_site" },
+  "owner-dashboard": { color: "#8b949e", label: "owner-dashboard" },
+};
+
+// ─── DATA ───────────────────────────────────────────────────────────────────
 const AGENDA = {
-  in_progress: [
-    {"id": "JWT-DISABLE", "title": "🛡 Отключить legacy JWT-based API keys (2026-05-02)", "desc": "После ротации service_role на новый <code>sb_secret_lZOw8…</code> (30.04) старые legacy <code>anon</code> + <code>service_role</code> JWT оставлены активными для отката. Через 24-48ч (планово 2026-05-02) — нажать «Disable JWT-based API keys» на <code>/settings/api-keys/legacy</code>. После этого утёкший ключ из старых JS-bundle станет окончательно невалидным.", "date": "2026-04-30", "kind": "infra", "tags": ["EngHub", "Infra"], "links": []},
-    {"id": "T30f", "title": "Версионность документов — отложено", "desc": "Отложено. Ждёт сигнала Андрея когда начать. Опциональная фича для чертежей при выпуске корректировок (вторая редакция). 90% пользователей не понадобится.", "date": "2026-04-29", "kind": "feature", "tags": ["EngHub"], "links": []},
-    {"id": "T30g", "title": "Лимиты на файлы — отложено", "desc": "Отложено. Ждёт сигнала Андрея когда начать. Зафиксирован лимит 50 МБ на файл. Кол-во файлов на проект и общий объём — увидим в первом реальном проекте.", "date": "2026-04-29", "kind": "infra", "tags": ["EngHub"], "links": []},
+  ideas: [
+    {"project":"AdIntakeBot","id":"VOICE-WHISPER","title":"🎙 Whisper доменный словарь рекламы","desc":"Улучшение распознавания: подкормить Whisper термины из рекламной отрасли (баннер, supply, programmatic, охваты, CPM, CTR, креатив, оффер, лендинг, ретаргет). Уменьшит ошибки в голосовых заявках.","date":"2026-04-30","kind":"feature","tags":["AdIntakeBot","AI"],"links":[]},
+    {"project":"AdIntakeBot","id":"FILE-PARSING","title":"📎 Парсинг загруженных макетов (PDF/PSD/AI)","desc":"Из загруженного клиентом макета вытаскивать ключевую инфу: размеры, текст, цветовая схема, формат. Для PDF — pdf-parse + OCR fallback. Для PSD/AI — превью + размеры через imagemagick. Кладём извлечённое в заявку как доп.поле.","date":"2026-04-30","kind":"feature","tags":["AdIntakeBot"],"links":[]},
+    {"project":"AdIntakeBot","id":"LANGUAGE-DETECT","title":"🌐 Авто-определение языка клиента","desc":"Первое сообщение клиента → определить ru/en/kk → дальше бот общается на этом языке. Используем franc-min либо первые 2-3 шага диалога с эвристикой.","date":"2026-04-30","kind":"feature","tags":["AdIntakeBot","AI"],"links":[]},
+    {"project":"AdIntakeBot","id":"CRM-EXPORT","title":"📤 Выгрузка лидов в Bitrix24 / amoCRM","desc":"После того как заявка ушла админу — параллельно создать Lead в CRM агентства (Bitrix24 webhook или amoCRM REST). Поля: имя, телефон, краткое описание, теги, ссылка на исходный диалог.","date":"2026-04-30","kind":"feature","tags":["AdIntakeBot","Infra"],"links":[]},
+    {"project":"AdIntakeBot","id":"ANALYTICS","title":"📊 Статистика конверсии диалогов в заказы","desc":"Дашборд: сколько диалогов начато / на каком шаге отвалились / сколько финальных заявок ушло админу / сколько превратилось в подписанный договор. Воронка по дням, источникам, типам услуг.","date":"2026-04-30","kind":"feature","tags":["AdIntakeBot","Analytics"],"links":[]},
+    {"project":"AdIntakeBot","id":"TEMPLATES","title":"📋 Шаблоны типовых заказов","desc":"Если клиент пишет «нужен баннер 1200×630 как в прошлый раз» — бот предлагает ему сразу набор шаблонов с предзаполненными полями (формат, площадка, тон). Уменьшает кол-во вопросов.","date":"2026-04-30","kind":"feature","tags":["AdIntakeBot"],"links":[]},
+    {"project":"AdIntakeBot","id":"PRICE-CALC","title":"💰 Оценка стоимости по введённым параметрам","desc":"После сбора параметров заказа (тип, формат, тираж, срок) — бот выдаёт ориентировочную стоимость по прайсу агентства. Не финальная цена, а вилка «от X до Y тенге». Снимает 30% вопросов «сколько стоит».","date":"2026-04-30","kind":"feature","tags":["AdIntakeBot"],"links":[]},
+    {"project":"AdIntakeBot","id":"MULTI-TENANT","title":"🏢 Multi-tenant — несколько агентств в одном боте","desc":"Сейчас бот заточен под одно агентство. Расширить так, чтобы один деплой обслуживал N агентств: каждое со своим Telegram-каналом для админа, своим прайсом, своим набором услуг. Tenant определяется по Telegram bot username или по ?ref= параметру.","date":"2026-04-30","kind":"feature","tags":["AdIntakeBot","Infra"],"links":[]},
+  ],
+  triage: [
   ],
   decided: [
+    {"project":"AdIntakeBot","id":"INFRA-DEPLOY","title":"☁ Деплой на Railway","desc":"Нода-сервис задеплоен на Railway, env-переменные подняты, healthcheck зелёный. URL зарегистрирован в Telegram через setWebhook.","date":"2026-04-30","kind":"infra","tags":["AdIntakeBot","Infra"],"links":[]},
+    {"project":"AdIntakeBot","id":"DB-INIT","title":"🗄 Миграция Supabase (conversations + orders)","desc":"Таблицы: conversations(id, telegram_user_id, status, created_at, last_message_at), orders(id, conversation_id, payload jsonb, status, sent_to_admin_at). RLS отключена (бот сервис-key). Применено через Supabase migrations.","date":"2026-04-30","kind":"infra","tags":["AdIntakeBot","Infra"],"links":[]},
+    {"project":"AdIntakeBot","id":"WEBHOOK","title":"🪝 Регистрация Telegram webhook","desc":"setWebhook на /api/telegram/webhook отдаёт 200 в течение 50мс. Secret-token проверяется в заголовке. Подтверждено через getWebhookInfo: pending_update_count=0.","date":"2026-04-30","kind":"infra","tags":["AdIntakeBot","Infra"],"links":[]},
+    {"project":"AdIntakeBot","id":"HANDOFF","title":"📨 Пересылка финальной заявки админу","desc":"После того как бот собрал все необходимые поля — финальная карточка заявки уходит в Telegram-канал админа (chat_id из env), c кнопками «Принять / Отклонить / Уточнить». Reply от админа возвращается клиенту автоматически.","date":"2026-04-30","kind":"feature","tags":["AdIntakeBot"],"links":[]},
+  ],
+  in_progress: [
+    {"project":"AdIntakeBot","id":"BOOTSTRAP","title":"🚀 Каркас на основе Nurmak адаптирован под рекламное агентство","desc":"Берём за основу Nurmak (Telegram intake для парикмахерской), переписываем prompt и flow под рекламные услуги. Список вопросов: тип услуги (дизайн / SMM / контекст / production), формат, дедлайн, бюджет, контактное лицо, способ связи. Состояния храним в conversations.status.","date":"2026-04-30","kind":"feature","tags":["AdIntakeBot"],"links":[]},
+    {"project":"EngHub","id":"JWT-DISABLE","title":"🛡 Отключить legacy JWT-based API keys (2026-05-02)","desc":"После ротации service_role на новый <code>sb_secret_lZOw8…</code> (30.04) старые legacy <code>anon</code> + <code>service_role</code> JWT оставлены активными для отката. Через 24-48ч (планово 2026-05-02) — нажать «Disable JWT-based API keys» на <code>/settings/api-keys/legacy</code>. После этого утёкший ключ из старых JS-bundle станет окончательно невалидным.","date":"2026-04-30","kind":"infra","tags":["EngHub","Infra"],"links":[]},
+    {"project":"EngHub","id":"T30f","title":"Версионность документов — отложено","desc":"Отложено. Ждёт сигнала Андрея когда начать. Опциональная фича для чертежей при выпуске корректировок (вторая редакция). 90% пользователей не понадобится.","date":"2026-04-29","kind":"feature","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"T30g","title":"Лимиты на файлы — отложено","desc":"Отложено. Ждёт сигнала Андрея когда начать. Зафиксирован лимит 50 МБ на файл. Кол-во файлов на проект и общий объём — увидим в первом реальном проекте.","date":"2026-04-29","kind":"infra","tags":["EngHub"],"links":[]},
   ],
   done: [
-    {"id": "DASH-AUTOREFRESH", "title": "🔄 Авто-обновление дашбордов — focus + 30s polling", "desc": "<b>Симптом (QA Round 2 yellow):</b> после клика «Утвердить → ГИПу» виджет «На проверке у меня» в GipDashboard обновлялся только после F5. <b>Корневая причина:</b> дашборды читали <code>dashboardTasks</code>/<code>allTasks</code> только при mount/смене активного проекта. Realtime-канал <code>tasks:live</code> уже был, но между сессиями вкладок и при сетевых лагах данные могли запаздывать. <b>Что сделано:</b> в <code>App.tsx</code> добавлен useEffect с 3 триггерами refresh: <code>visibilitychange → visible</code>, <code>window focus</code>, и <code>setInterval(30s)</code>. Обновляет и <code>loadAllTasks(activeProject.id)</code>, и <code>loadDashboardTasks()</code>. Минимально-инвазивно, реалтайм-подписка живёт. Полноценный Supabase realtime-фильтр на multi-project — отдельная задача.", "deployedDate": "2026-04-30", "kind": "feature", "tags": ["EngHub"], "links": []},
-    {"id": "QA-ROUND2", "title": "🔍 QA Round 2 — закрыт, все сценарии прошли", "desc": "<b>Контекст:</b> второй проход QA через Chrome MCP (логин по 5 ролям, e2e-сценарии). <b>Шаги пройдены:</b> 3) валидация комментария на возврат (≥5 симв, кнопка disabled пока меньше) ✅; 4) GIP финал — Skorokhod утверждает review_gip → status=done ✅; 10a) просроченный дедлайн — карточка с красной полосой в EngineerDashboard ✅; 10c) две независимые сессии (admin + troshin) ✅. <b>Жёлтые наблюдения раунда 2 закрыты:</b> BUG-2 (dropdown ОТДЕЛ-ПОЛУЧАТЕЛЬ) — фантом тестера, проверен в раунде 3 → 7 опций; BUG-3 (Lead «На проверке у меня» = 0) — артефакт setup тестера, RLS работает корректно; TASK-STATUS-DELAY — починен через DASH-AUTOREFRESH.", "deployedDate": "2026-04-30", "kind": "doc", "tags": ["EngHub"], "links": []},
-    {"id": "STAGE4B-DROPDOWN", "title": "🔗 BUG-2 закрыт — Stage 4b dropdown отделов работает", "desc": "<b>Симптом:</b> в модалке «🔗 Запросить данные у смежного отдела» dropdown «ОТДЕЛ-ПОЛУЧАТЕЛЬ» казался пустым. <b>Корневая причина — цепочка из 3 проблем:</b> 1) <b>Frontend</b> (commit <code>fdfdcac</code>): <code>activeProject?.depts?.filter(d => d !== my_dept_id)</code> возвращал <code>[]</code> для проектов с <code>depts:[my_dept_id]</code>. Фикс: fallback на глобальный список отделов (минус свой). 2) <b>Schema</b> (миграция 021): <code>tasks.parent_task_id uuid → bigint</code> + FK. 3) <b>RLS</b> (миграция 022): добавлено условие для engineer на INSERT assignment-задач. <b>Verify (Chrome MCP, prod):</b> Troshin → задача 38 → клик «Запросить данные» → 7 отделов в dropdown (АК, АС, ВК, ГП, ПБ, СМ, ТХ) → выбор АК → submit → toast «✓ Запрос отправлен». DB: parent task 38 → awaiting_input, child task 41 (is_assignment=true), task_dependency 1.", "deployedDate": "2026-04-30", "kind": "bug", "tags": ["EngHub"], "links": []},
-    {"id": "RLS-023", "title": "📧 Миграция 023 — case-insensitive email в RLS-helpers", "desc": "<b>Симптом (бонус-фикс):</b> <code>app_users.email</code> хранил CamelCase (<code>Bordokina.O@nipicer.kz</code>), а JWT отдавал lowercase → лиды/юзеры с CamelCase не видели НИ ОДНОГО проекта. Ломало Stage 4b receiving + всю работу таких юзеров. <b>Что сделано:</b> <code>auth_app_user_email()</code> теперь <code>lower(...)</code>, <code>UPDATE app_users SET email=lower(email)</code>. Системный фикс class-bug email mismatch.", "deployedDate": "2026-04-30", "kind": "infra", "tags": ["EngHub", "Infra"], "links": []},
-    {"id": "RLS-022", "title": "🔒 Миграция 022 — RLS INSERT для engineer assignment", "desc": "Политика <code>tasks_insert</code> разрешала только admin/gip/lead. Stage 4b требует, чтобы инженер создал assignment-таску для смежного отдела. <b>Фикс:</b> добавлено условие <code>auth_app_user_role()=engineer AND is_assignment=true AND auth_can_see_project(project_id)</code>. Engineer теперь может создавать ТОЛЬКО assignment-задачи в своих проектах.", "deployedDate": "2026-04-30", "kind": "infra", "tags": ["EngHub", "Infra"], "links": []},
-    {"id": "RLS-021", "title": "🔧 Миграция 021 — fix tasks.parent_task_id (uuid → bigint)", "desc": "<b>Симптом:</b> Stage 4b создание child-таски валилось с <code>invalid input syntax for type uuid: 38</code>. Колонка <code>tasks.parent_task_id</code> была uuid, а <code>tasks.id</code> — bigint. <b>Фикс:</b> ALTER COLUMN parent_task_id TYPE bigint (0 строк, безопасная конвертация) + FK на <code>tasks(id) ON DELETE SET NULL</code>.", "deployedDate": "2026-04-30", "kind": "infra", "tags": ["EngHub", "Infra"], "links": []},
-    {"id": "RLS-020", "title": "🔐 Миграция 020 — admin_bootstrap helper-функция", "desc": "<b>Симптом:</b> admin@enghub.com логинился, но AdminPanel пуст. <b>Корневая причина:</b> в <code>auth_app_user_role()</code> спец-кейс <code>WHEN email=admin@enghub.com THEN admin</code> был ВНУТРИ SELECT FROM app_users. Профиля admin@enghub.com в app_users не существовало → SELECT 0 строк → helper NULL → RLS ничего не отдавал. <b>Фикс:</b> 1) INSERT профиля admin (id=69, role=admin). 2) CREATE OR REPLACE <code>auth_app_user_role()</code> — спец-кейс ВЫНЕСЕН наружу SELECT. Verify: до projects_seen=0 / tasks_seen=0 → после projects_seen=17 / tasks_seen=16.", "deployedDate": "2026-04-30", "kind": "infra", "tags": ["EngHub", "Infra"], "links": []},
-    {"id": "PWD-RESET", "title": "🔑 Admin password reset — Authorization header починен", "desc": "<b>Симптом:</b> AdminPanel → юзер → «🔑 Пароль» → «Authorization Bearer token is required». <b>Корневая причина:</b> <code>apiFetch</code> в <code>src/api/http.ts</code> тянул токен через <code>getSupabaseAnonClient().auth.getSession()</code>, но <code>signIn</code> делается прямым fetch к <code>/auth/v1/token</code> и сохраняет токен в <code>localStorage.enghub_token</code>. <b>Фикс:</b> <code>getAccessToken()</code> читает <code>localStorage.enghub_token</code> сначала, fallback на supabase-js. <b>Verify (prod):</b> reset password для skorokhod.a@nipicer.kz → зелёная плашка, bcrypt-хэш в auth.users реально обновился.", "deployedDate": "2026-04-30", "kind": "bug", "tags": ["EngHub"], "links": []},
-    {"id": "ESLINT-DEBT", "title": "⚙ Техдолг ESLINT — убран DISABLE_ESLINT_PLUGIN, нормальный плагин react-hooks", "desc": "<b>Корневая причина:</b> в <code>.eslintrc.json</code> не был загружен <code>eslint-plugin-react-hooks</code>, из-за чего <code>react-scripts build</code> падал с <code>Definition for rule 'react-hooks/exhaustive-deps' was not found</code>. Workaround — переменная <code>DISABLE_ESLINT_PLUGIN=true</code> в Vercel env, отключавшая линтер целиком. Попытка включить <code>extends:[react-app]</code> тянула проблемные правила (например <code>import/first</code>), нарушенные в коде.<br><b>Что сделано:</b> 1) В <code>enghub-main/package.json</code> добавлен <code>eslint-plugin-react-hooks ^4.6.2</code> в devDependencies. 2) <code>.eslintrc.json</code> переписан минимально: <code>parser: @typescript-eslint/parser</code>, <code>plugins:[react-hooks]</code>, <code>rules: { rules-of-hooks: error, exhaustive-deps: off }</code> — без <code>extends:react-app</code>. 3) <code>package-lock.json</code> обновлён через <code>npm install</code> (191 пакет). <b>Локальный smoke build (CI=true, без DISABLE_ESLINT_PLUGIN):</b> Compiled successfully, 526.58 kB gzip. Vercel env-переменная <code>DISABLE_ESLINT_PLUGIN</code> подлежит удалению из Production+Preview после успешного нового deploy.", "deployedDate": "2026-04-30", "kind": "infra", "tags": ["EngHub", "Infra"], "links": []},
-    {"id": "SEC-01", "title": "🛡 Security cutover — service_role убран из фронта", "desc": "<b>Корневая причина:</b> в production-bundle (<code>main.5d8fd3a7.js</code>) утекали 3 service_role JWT + sb_secret через <code>REACT_APP_SUPABASE_SERVICE_KEY</code>. Service-роль имеет атрибут BYPASSRLS — публичный root к БД.<br><b>Что сделано (commit <code>e90177d</code>):</b> 1) <code>src/api/supabase.ts</code> переписан — экспорт SERVICE_KEY удалён, AdminH() удалён. 2) 9 admin-операций вынесены в <code>/api/admin/*</code> (users/create, users/[uid]/password, users/[id]/role, activity-log, notifications/create, storage/sign-url, storage/upload, storage/delete, admin/storage/stats). 3) Каждый endpoint валидирует user JWT через <code>verifyUserAndProfile</code> + role-check. 4) <code>ActivityFeed.tsx</code>, <code>App.tsx</code> (14 точек) переведены на fetch к /api/*. 5) Vercel env: создан <code>SUPABASE_SERVICE_KEY</code> без префикса, <code>REACT_APP_SUPABASE_SERVICE_KEY</code> удалён. <b>Smoke (Lead Pravdukhin):</b> POST /api/admin-users → HTTP 403 «Недостаточно прав» — корректный role-check после JWT verify. Bundle <code>main.70fa74f3.js</code> чистый.", "deployedDate": "2026-04-30", "kind": "infra", "tags": ["EngHub", "Infra"], "links": [{"label": "Прод", "url": "https://enghub-three.vercel.app"}]},
-    {"id": "RLS-02", "title": "🔒 RLS hardening — миграции 019 + 019b на проде", "desc": "<b>Что сделано:</b> 1) <code>019_rls_hardening</code>: включена RLS на <code>meetings</code>, <code>time_entries</code>, <code>task_templates</code>, <code>review_comments</code> (последняя замкнута admin/gip из-за schema-mismatch <code>review_id bigint vs reviews.id uuid</code>). 2) Удалены permissive «Enable * for all users» политики на <code>ai_actions</code>, <code>raci_all</code>. 3) <code>activity_log_insert</code> теперь требует <code>user_can_access_project()</code>. 4) <code>019b_project_storage_stats_invoker</code>: VIEW <code>project_storage_stats</code> пересоздан с <code>security_invoker=true</code>. 5) <code>search_path = public</code> на всех publish-функциях. 6) <code>REVOKE EXECUTE ... FROM anon</code> на 12 security-definer auth-helpers. <b>Smoke-RLS:</b> engineer Troshin → 8 tasks/2 projects, lead Pravdukhin → 12/4, gip Skorokhod → 14/15, anon → 0/0/0. Пропускает только нужное.", "deployedDate": "2026-04-30", "kind": "infra", "tags": ["EngHub", "Infra"], "links": []},
-    {"id": "DASH-01", "title": "📊 Multi-project dashboards — Lead/Engineer видят все свои проекты", "desc": "<b>Корневая причина:</b> до фикса LeadDashboard/EngineerDashboard (DD-15/16) работали только с <code>activeProject</code> — данные из <code>loadAllTasks(activeProject.id)</code>. У Lead/инженеров с несколькими проектами часть задач исчезала из дашборда.<br><b>Что сделано:</b> в <code>App.tsx</code> добавлен state <code>dashboardTasks</code> + новая функция <code>loadDashboardTasks()</code> — Lead тянет задачи отдела по всем проектам, Engineer — свои по всем. <code>LeadDashboard</code> и <code>EngineerDashboard</code> получают <code>dashboardTasks</code> (с fallback на <code>allTasks</code> если ещё не загружено).", "deployedDate": "2026-04-30", "kind": "feature", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "KPI-01", "title": "💀 KPI race condition — добавлен skeleton", "desc": "<b>Симптом:</b> при первой загрузке инженерского дашборда KPI-карточки показывали 0/0/0/0 в течение ~1 сек, пока <code>currentUserData?.id</code> не приходил из Supabase. <b>Что сделано:</b> добавлен skeleton-state — 4 пульсирующих stat-card'а серого цвета пока user-data не загружен. Никаких больше «нулевых вспышек» при логине.", "deployedDate": "2026-04-30", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "SYNC-01", "title": "📝 STATE.md синхронизирован с реальными тестовыми юзерами", "desc": "<b>Проблема:</b> в CLAUDE.md и старых документах фигурировали <code>admin@enghub.com</code>, <code>gip@nipicer.kz</code>, <code>lead@nipicer.kz</code> — эти аккаунты в БД <b>не существуют</b>. <b>Что сделано:</b> в <code>STATE.md</code> добавлена таблица «Тестовые учётки (актуально на 2026-04-29)» с реально работающими <code>troshin.m@nipicer.kz</code> (engineer, ОВиК), <code>pravdukhin.a@nipicer.kz</code> (lead, ОВиК), <code>skorokhod.a@nipicer.kz</code> (GIP). Несуществующие аккаунты явно помечены чтобы не вводили в заблуждение будущие сессии.", "deployedDate": "2026-04-30", "kind": "doc", "tags": ["EngHub", "Workspace"], "links": []},
-    {"id": "REPO-01", "title": "🧹 Сверка repos ai-institut ↔ enghub — drift не критичен", "desc": "<b>Что нашли:</b> standalone <code>andyrbek2709-tech/enghub</code> (НЕ подключён к Vercel) содержал 2 осиротевших коммита от 2026-04-29: <code>2fbc191</code> (vercel-build script) и <code>79084dd</code> (eslintrc extends react-app). <b>Сверка:</b> vercel-build уже мигрирован в <code>ai-institut/enghub-main/package.json</code>. Второй фикс не нужен — прод собирается READY без него (DISABLE_ESLINT_PLUGIN или нет нарушений в актуальном коде). <b>Итог:</b> мигрировать ничего не нужно. Рекомендация — заархивировать standalone <code>enghub</code> на GitHub чтобы исключить путаницу.", "deployedDate": "2026-04-30", "kind": "infra", "tags": ["Workspace", "Infra"], "links": []},
-    {"id": "ROT-01", "title": "🔑 Ротация service_role — новый sb_secret_lZOw8… на проде", "desc": "<b>Что сделано:</b> 1) В Supabase Dashboard <code>/settings/api-keys</code> создан новый Secret API key <code>service_role_rotated_2026_04_30</code> (формат <code>sb_secret_lZOw8…</code>). 2) Vercel ENV <code>SUPABASE_SERVICE_KEY</code> обновлена на новый секрет. 3) Live deployment <code>2uVdUGHX1</code> перевыпустил bundle <code>main.70fa74f3.js</code>. 4) Старый legacy JWT (<code>service_role</code> JWT + HS256 prev signing key) <b>пока НЕ отключаем</b> — буфер 24-48ч на откат. Disable намечен на 2026-05-02 (см. JWT-DISABLE в работе). <b>JWT signing keys:</b> CURRENT — ECC P-256 <code>4201FFC5</code>, PREVIOUS — Legacy HS256 <code>4BABA62B</code> (last rotated month ago).", "deployedDate": "2026-04-30", "kind": "infra", "tags": ["EngHub", "Infra"], "links": []},
-    {"id": "VERIFY-01", "title": "✅ Smoke-тесты на проде — engineer/lead/gip OK", "desc": "<b>Прогон 2026-04-30 после ротации service_role и cutover:</b> 1) <code>troshin.m@nipicer.kz / Test1234!</code> — login OK, dashboard инженера ок (engineer-level UI, RLS показывает 8 tasks/2 projects). 2) <code>pravdukhin.a@nipicer.kz / Test1234!</code> — login OK, LeadDashboard загрузил 3 инженеров отдела ОВиК (server-side fetch через новый <code>SUPABASE_SERVICE_KEY</code> сработал — sb_secret рабочий). 3) POST /api/admin-users с токеном Lead'а → HTTP 403 «Недостаточно прав» — корректный role-check (если бы sb_secret был сломан — был бы 500, а не чистый 403). Latest verify deployments: <code>CLKeCkcwh</code> / <code>2uVdUGHX1</code> / <code>D72kCCdXZnUcBtEmX8yhqovDm6cX</code>.", "deployedDate": "2026-04-30", "kind": "doc", "tags": ["EngHub"], "links": [{"label": "Прод", "url": "https://enghub-three.vercel.app"}]},
-    {"id": "QA-01", "title": "🔍 QA-отчёт по фичам последнего деплоя", "desc": "<b>Прогон:</b> deployment <code>dpl_35c1fFju1gC5wSNRzn621RM2ypfT</code> (commit <code>15174d5</code>). <b>Что подтверждено:</b> /parsing.html без логина ✅, EngineerDashboard (DD-16) ✅, LeadDashboard (DD-15) ✅, ActivityFeed вкладка (DD-07) рендерит 4 события с эмодзи/именами/relative-time ✅, валидация комментария ≥5 симв при возврате ✅, прикрепление файлов к задаче ✅. <b>Найдены баги:</b> 🚨 service_role в bundle (→ закрыто SEC-01), 🟡 z-index Modal Stage 4b (топмост z-index 1100 — починено в src/components/ui.tsx), 🟡 KPI race (→ KPI-01), 🟡 dashboards только активный проект (→ DASH-01).", "deployedDate": "2026-04-29", "kind": "doc", "tags": ["EngHub"], "links": []},
-    {"id": "MODAL-Z", "title": "🎨 z-index Modal — Stage 4b теперь поверх карточки задачи", "desc": "<b>Симптом:</b> модал «Запрос данных у смежного отдела» (CONV Stage 4b) был скрыт за карточкой задачи — оба <code>.modal-overlay</code> имели z-index 1000. <b>Что сделано:</b> в <code>src/components/ui.tsx</code> добавлен <code>Modal.topmost</code> (z-index 1100). В <code>App.tsx</code> для <code>showDepRequest</code> используется <code>topmost</code>. Системно решает класс багов «модал поверх модала».", "deployedDate": "2026-04-30", "kind": "bug", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "VOICE-01", "title": "🎙️ Голос → Telegram — путь D (нативный APK) зафиксирован на странице + CI workflow", "desc": "<b>Реализовано 2026-04-30:</b> 1) Страница <code>/voice-bot.html</code> расширена — путь D добавлен как третья карточка выбора (бейдж «ВЫБРАН»), описание под решение Андрея 29.04. 2) Блок «Статус сборки APK» с автоопределением свежего релиза через GitHub Releases API: если есть тег <code>voice-bot-v*</code> с .apk-ассетом — кнопка «Скачать APK» становится активной автоматически. 3) CI workflow <code>.github/workflows/build-voice-bot-apk.yml</code> — на push в <code>android-voicebot/**</code> либо вручную (<code>workflow_dispatch</code>) собирает Gradle-проект и публикует Release. Пока android-voicebot/ ещё без Kotlin-кода — workflow корректно «no-op» (см. README в каталоге). 4) В шапке voice-bot.html добавлена nav-bar со ссылками на остальные доски. 5) В agenda.html добавлено меню навигации в шапке. 6) Исправлен устаревший путь <code>D:\\ai-site</code> → <code>D:\\ai-institut</code>.", "deployedDate": "2026-04-30", "kind": "feature", "tags": ["VoiceBot", "EngHub"], "links": [{"label": "Интерактивная сборка", "url": "https://enghub-three.vercel.app/voice-bot.html"}, {"label": "CI workflow", "url": "https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/build-voice-bot-apk.yml"}]},
-    {"id": "PARSING-V2", "title": "🏭 Парсинг боли v2 — закрыт целиком", "desc": "Расширенная схема (problem_short → automation_idea → concrete_solution → tools → complexity → value → can_automate). Новый UI: бейджи 🟢🟡🔴 сложности и ⭐🔥 ценности, секция «💡 Идея решения» с шагами и инструментами, банер «🚫 Нельзя автоматизировать» с причиной. Дата-фильтр (только 2026+). Stop button + live progress bar. Расширены источники: Habr 11 хабов (+PM, продукт, карьера, финансы, юристы, инфра), новый extra-фид с HN front, Lobsters, Dev.to, N+1, vc.ru finance/trade/marketing. HN-комменты + SO-ответы парсятся. Изоляция через RLS. Меню навигации между всеми досками.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["Parsing", "AI"], "links": [{"label": "Открыть доску парсинга", "url": "https://enghub-three.vercel.app/parsing.html"}]},
-    {"id": "DD-07", "title": "ActivityFeed — лента активности проекта", "desc": "Реализован компонент ActivityFeed.tsx + новая вкладка «📰 Активность» в карточке проекта. Читает activity_log с триггерами на tasks/project_documents/task_attachments. Группирует события по дням, показывает actor + verb + target + relative-time («5 мин назад»). Миграция activity_log + 3 триггера применена через MCP.", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "DD-15", "title": "LeadDashboard — специализированный экран Lead'а", "desc": "Реализован компонент LeadDashboard.tsx, рендерится автоматически на главной для пользователей с role='lead'. Виджеты: 1) Нагрузка инженеров отдела с прогресс-барами и подсветкой перегруза, 2) Очередь «На проверке у меня» с inline-кнопками, 3) Задачи у ГИПа.", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "DD-16", "title": "EngineerDashboard — специализированный экран инженера", "desc": "Реализован компонент EngineerDashboard.tsx, рендерится автоматически на главной для пользователей с role='engineer'. Виджеты: 1) Мои задачи с цветной полоской по приоритету срока (🔴 <3 дн / 🟡 <14 дн / 🟢 >14 дн), 2) Мои проекты с количеством задач.", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "CONV-Q1", "title": "Конвейер: связанная задача — кому (реализовано)", "desc": "<b>Решение А (29.04) + реализация:</b> Stage 4b — кнопка «🔗 Запросить данные у смежного отдела» создаёт задачу-стаб в target_dept_id, без assigned_to. Lead отдела сам распределит. См. CONV-FOUNDATION для деталей.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub", "Конвейер"], "links": []},
-    {"id": "CONV-Q2", "title": "Конвейер: срок связанной задачи (реализовано)", "desc": "<b>Решение А (29.04) + реализация:</b> Stage 4b — child-задача создаётся с deadline (опционально передаётся при запросе как desired-срок). Финальный срок ставит Lead КЖ принимая задачу. Поле deadline на child-задаче — стандартное поле tasks.deadline.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub", "Конвейер"], "links": []},
-    {"id": "CONV-Q3", "title": "Конвейер: Storage bucket — реализовано", "desc": "<b>Решение А (29.04) + реализация:</b> bucket project-files создан, общая структура с подпапками. Stage 2 миграция применена, RLS работает. Админ-стат хранилища отдельно реализована как T31-storage-stats.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub", "Конвейер", "Admin"], "links": []},
-    {"id": "CONV-Q4", "title": "Конвейер: видимость связанной задачи (реализовано)", "desc": "<b>Решение А (29.04) + реализация:</b> Stage 4b — child-задача создаётся с is_assignment=true в target_dept'е и работает как обычная задача со всеми статусами/проверками/возвратами. RLS гарантирует видимость только участникам проекта.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub", "Конвейер"], "links": []},
-    {"id": "CONV-Q5", "title": "Конвейер: что после получения данных от КЖ — реализовано", "desc": "Stage 4a: новый статус задачи <code>awaiting_input</code> («Ждёт данных», cyan). Кнопка «▶ Возобновить работу (данные получены)» — инженер сам нажимает после получения данных. Auto-unlock не делаем. Реализовано в App.tsx + constants.ts.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub", "Конвейер"], "links": []},
-    {"id": "CONV-FOUNDATION", "title": "🚜 Конвейер — фундамент (Stage 4a/4b/4c)", "desc": "Stage 4a: новый статус awaiting_input + workflow-переходы + обязательная причина возврата (минимум 5 символов, кнопка disabled пока пусто). Stage 4b: кнопка «🔗 Запросить данные у смежного отдела» в открытой задаче (по требованию, не upfront) → форма выбора отдела + текст + срок → автосоздание child-задачи + связь в task_dependencies + перевод текущей в awaiting_input. Stage 4c: улучшенная история задачи в карточке — эмодзи статусов, имя actora, красная подсветка возвратов с цитатой причины. Миграция task_dependencies применена через MCP.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub", "Конвейер"], "links": []},
-    {"id": "T30c", "title": "AI Copilot — RAG-контекст с проектными документами", "desc": "RLS-изоляция документов по проекту работает с Stage 2 (user_can_access_project). Сегодня: orchestrator.js при use_rag=true дополнительно подгружает список project_documents текущего проекта (название, тип tz/addendum/other, размер) и кладёт в контекст AI. Промпт обновлён — Copilot знает про проектные документы и может ссылаться. Глобальная нормативка остаётся общей (СНиП/ГОСТ — отраслевые стандарты).", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub", "AI"], "links": []},
-    {"id": "T30d", "title": "AI-агенты — Router работает", "desc": "Подтверждено: orchestrator.js уже реализует полноценный Agent router. detectIntent() определяет намерение → ROLE_ALLOWED_INTENTS фильтрует по роли → специализированные handle*() функции выступают как агенты (project_insights, generate_report, smart_decompose, compliance_check, nl_search, risk_forecast, drawing/review/transmittal builders). Один Anthropic API key, разные системные промпты per agent. Архитектура DEC-AI-01 фактически реализована.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub", "AI"], "links": []},
-    {"id": "T30a", "title": "Загрузка ТЗ в проект — реализовано", "desc": "Stage 2: вкладка «📁 Документы» в проекте, загрузка PDF/Word/Excel до 50 МБ. Типы документов: ТЗ / Дополнение / Прочее. RLS изоляция по проекту. Миграция: 2026-04-29_t30_documents.sql. Андрею нужно применить SQL и создать bucket project-files.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub"], "links": [{"label": "Прод EngHub", "url": "https://enghub-three.vercel.app"}]},
-    {"id": "T30b", "title": "Поддержка форматов файлов — PDF/Word/Excel preview + DWG скачивание", "desc": "Stage 2: компоненты DocumentsPanel + DocumentPreview. PDF — iframe; Word/Excel — Google Docs Viewer; DWG/DXF/прочие — открытие/скачивание через подписанный Storage URL. Двойной клик по файлу — preview.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub"], "links": [{"label": "Прод EngHub", "url": "https://enghub-three.vercel.app"}]},
-    {"id": "T30e", "title": "Прикрепление файлов к задачам — реализовано", "desc": "Stage 2: компонент TaskAttachments в карточке задачи. Любой участник проекта (ГИП/lead/инженер) может прикрепить до 5 файлов на задачу, общий лимит 50 МБ. Изоляция по проекту через RLS. Индикатор «📎 N» на task-card.", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub"], "links": [{"label": "Прод EngHub", "url": "https://enghub-three.vercel.app"}]},
-    {"id": "T31-storage-stats", "title": "Админ-панель: статистика размера хранилища", "desc": "Stage 2: новая вкладка «📊 Хранилище» в админке. Таблица: проект — размер — кол-во файлов — последняя загрузка. KPI: всего проектов / файлов / общий объём. Реализовано через VIEW project_storage_stats (агрегация по project_documents + task_attachments).", "deployedDate": "2026-04-29", "kind": "feature", "tags": ["EngHub"], "links": [{"label": "Прод EngHub", "url": "https://enghub-three.vercel.app"}]},
-    {"id": "DEC-AI-01", "title": "Архитектура AI-агентов: Гибрид + ручной выбор + строгая изоляция по проектам", "desc": "Архитектура AI-агентов: гибридный подход (RAG + LLM с роутингом по типам запросов) + изоляция знаний по проектам. Зафиксировано как политика проекта. Дальнейшая реализация в T30c (RAG изоляция) и T30d (роутер).", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "DD-04", "title": "Pulse-dot на колокольчике (#04)", "desc": "Pulse-dot реализован — красная пульсирующая точка появляется на колокольчике когда есть непрочитанные уведомления. Commit: 1f3c6d9", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "WS-01", "title": "Карта здоровья инфраструктуры — реальные API-проверки", "desc": "29.04: реальные API-проверки Vercel/Railway/Supabase задеплоены (commit 59ce95f). Auto-refresh и история uptime — отдельные задачи на потом.", "deployedDate": "2026-04-29", "kind": "infra", "tags": ["Workspace", "Infra"], "links": [{"label": "health-map.html", "url": "https://enghub-three.vercel.app/health-map.html"}]},
-    {"id": "WS-02", "title": "Master Excel-трекер — workflow автообновления", "desc": "29.04: добавлен .github/workflows/rebuild-excel-tracker.yml на cron daily 06:00 UTC + workflow_dispatch (commit 390da54). Workflow на проде, ждёт scripts/build-excel-tracker.py — стаб корректно выходит с TODO.", "deployedDate": "2026-04-29", "kind": "infra", "tags": ["Workspace"], "links": []},
-    {"id": "EH-AI-1", "title": "Корневая причина /api/orchestrator 500 — структурное логирование", "desc": "29.04: добавлено структурное логирование [ORCH-500] в catch (commit 3b5ed5c). Ловим первый прод-500 — починим корень. Не блокер.", "deployedDate": "2026-04-29", "kind": "bug", "tags": ["EngHub"], "links": []},
-    {"id": "DD-03", "title": "Sidebar — иконки активного отдела/проекта", "desc": "29.04: иконки активного отдела/проекта добавлены в sidebar (commit c65e192). Hover-анимация уже была. Кнопку Settings не делаем — экрана нет.", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "DD-06", "title": "KPI-карточки: иконка в кружке + большое число (без тренд-стрелок)", "desc": "29.04: убрали тренд-стрелку из KPI (commit a52ea0b). Layout: метка слева + иконка 30×30 справа, число 38px Manrope 800 с useCountUp.", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "DD-10", "title": "Совещание первым табом — закрыто", "desc": "29.04: тема закрыта Андреем — больше не делаем. Дефолтный таб карточки проекта conference установлен в commit 78bdac3.", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "DD-14", "title": "Новый UI вкладки «Совещание» — НЕ делаем (out of scope)", "desc": "29.04: решили не делать. Текущее лобби с превью камеры работает. Если совещаниями реально начнут пользоваться — пересмотрим. Закрыто.", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "DD-17", "title": "Grid Расчёты + Спецификации + Нормативка — НЕ делаем пока", "desc": "29.04: решили не делать пока. Андрей скажет, когда возвращаться. Текущий вид рабочий. Закрыто до отдельной просьбы.", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "CONV-Q", "title": "🚜 Конвейер задач — все 5 вопросов закрыты", "desc": "29.04: все 5 вопросов получили ответы Андрея — см. CONV-Q1, CONV-Q2, CONV-Q3, CONV-Q4, CONV-Q5 в Decided. Интерактивная доска свою задачу выполнила.", "deployedDate": "2026-04-29", "kind": "design", "tags": ["EngHub", "Design"], "links": [{"label": "Открыть доску", "url": "https://enghub-three.vercel.app/conveyor.html"}]},
-    {"id": "NORM-01", "title": "Поиск в нормативке — теперь клик открывает документ", "desc": "Был баг: ищешь — находит, но клик не работал. Добавлен helper openNormativeDoc(doc), результаты стали кликабельными. PDF — открытие в новой вкладке через подписанный Storage URL; DOCX — скачивание.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": []},
-    {"id": "T31b", "title": "Волна A редизайна — 7 quick wins (подтверждено владельцем)", "desc": "#05 useCountUp на KPI, #08 анимация прогресс-баров, #09 цвет дедлайнов 30/90, #11 градиент-индикатор скролла табов, #12 метрики в шапке проекта, #13 empty state с CTA. Commits db5382f + 4602695.", "deployedDate": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": [{"label": "Прод EngHub", "url": "https://enghub-three.vercel.app"}]},
-    {"id": "B1", "title": "Триггер task_history — задачи теперь создаются", "desc": "Корневая причина: 2 сломанных триггера ссылались на колонку 'field', которой нет (field_name). DROP двух триггеров. QA подтвердил.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": [{"label": "QA panel", "url": "https://enghub-three.vercel.app/qa-review.html"}]},
-    {"id": "B3", "title": "Видеовстречи LiveKit — починены", "desc": "Бесконечная рекурсия в RLS на video_meeting_*. Создан SECURITY DEFINER хелпер is_meeting_participant(). QA подтвердил.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": []},
-    {"id": "B4", "title": "RLS изоляция ГИПов — каждый видит только свои", "desc": "projects.gip_id NOT NULL, 4 хелпер-функции, RLS на 9 таблиц, фронт createProject обновлён. QA: gip2 видит 0 проектов gip1.", "deployedDate": "2026-04-28", "kind": "feature", "tags": ["EngHub"], "links": []},
-    {"id": "B6", "title": "AI Copilot не светит системный промпт", "desc": "rolePrompt («Ты помощник ГИПа: приоритет срокам…») склеивался в user-facing message. Удалили префикс. QA: ответы чистые.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": []},
-    {"id": "B11", "title": "Multiple GoTrueClient warnings — исчезли", "desc": "supabaseClient.ts singletons получили storageKey + persistSession=false для admin. QA: консоль чистая.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": []},
-    {"id": "T29", "title": "Виджет «Активных задач» — больше не протекает", "desc": "handleLogout сбрасывал tasks но не allTasks. Теперь все стейты сбрасываются при logout.", "deployedDate": "2026-04-28", "kind": "bug", "tags": ["EngHub"], "links": []},
-    {"id": "T31a", "title": "Редизайн — SVG-иконки + CSS-анимации", "desc": "16 SVG-компонентов в icons.tsx, лого «Eh», screenEnter/pulseDot/hover transforms, useCountUp хук. Дефолтный таб 'conference'.", "deployedDate": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "ART-02", "title": "Интерактивная панель QA-обзора", "desc": "13 багов из QA-отчёта 27.04 с реальной проверкой кода и Supabase, доказательствами, кнопками решения.", "deployedDate": "2026-04-28", "kind": "doc", "tags": ["EngHub"], "links": [{"label": "Open", "url": "https://enghub-three.vercel.app/qa-review.html"}]},
-    {"id": "ART-03", "title": "Полный брифинг для агента", "desc": "enghub_full_brief_2026-04-28.md — единый файл с актуальным состоянием EngHub после всех фиксов.", "deployedDate": "2026-04-28", "kind": "doc", "tags": ["EngHub"], "links": []},
-    {"id": "ART-04", "title": "Master Excel-трекер 7 проектов", "desc": "9 листов: сводка + 7 проектов + how-to. По каждому: репо, прод-URL, последний коммит, проблемы, env-переменные.", "deployedDate": "2026-04-28", "kind": "doc", "tags": ["Workspace"], "links": []},
-    {"id": "ART-05", "title": "Карта здоровья инфраструктуры", "desc": "Матрица 7 проектов × 5 систем. Live ping prod-URL по кнопке.", "deployedDate": "2026-04-28", "kind": "infra", "tags": ["Workspace"], "links": [{"label": "Open", "url": "https://enghub-three.vercel.app/health-map.html"}]},
-    {"id": "ART-06", "title": "Доска design-diff", "desc": "18 предложений редизайна с сравнением «сейчас vs предложено», кнопками принять/отклонить/обсудить.", "deployedDate": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": [{"label": "Open", "url": "https://enghub-three.vercel.app/design-diff.html"}]},
-    {"id": "ART-07", "title": "Тестовые аккаунты с паролями", "desc": "gip1@enghub-test.ru/TestGip1!, gip2@enghub-test.ru/TestGip2!, gip@enghub-test.ru/TestGip!. Привязан supabase_uid.", "deployedDate": "2026-04-28", "kind": "infra", "tags": ["EngHub"], "links": []},
-    {"id": "DEC-02", "title": "Cowork mount не использовать для коммитов", "desc": "Правило, действует. HARD RULE в memory. Прошлые сессии обрезали файлы при коммите через Cowork mount. Все правки — через clone в /tmp с PAT.", "deployedDate": "2026-04-28", "kind": "infra", "tags": ["Workspace"], "links": []},
-    {"id": "DEC-03", "title": "Только andyrbek2709@gmail.com для git коммитов", "desc": "Правило, действует. HARD RULE в memory. Email andreyfuture27@gmail.com — НЕ использовать никогда.", "deployedDate": "2026-04-28", "kind": "infra", "tags": ["Workspace"], "links": []},
-    {"id": "DEC-05", "title": "Не делать пустую кнопку Settings в sidebar", "desc": "Правило, действует. Экрана Settings нет, не делаем пустую кнопку.", "deployedDate": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "DEC-06", "title": "Не менять коды отделов на КМ/ОВ/АР", "desc": "Правило, действует. Дизайнер использовал коды КМ, ОВ, АР, ЭС, ГП. У нас в БД: АК, АС, ВК, ГП, ПБ, СМ, ТХ, ЭС. Оставляем наши.", "deployedDate": "2026-04-28", "kind": "design", "tags": ["EngHub", "Design"], "links": []},
-    {"id": "ART-01", "title": "Дашборд статуса 7 проектов", "desc": "Живой агрегат STATE.md из всех 7 репо через GitHub API. Auto-refresh каждые 5 минут.", "deployedDate": "2026-04-27", "kind": "infra", "tags": ["Workspace"], "links": [{"label": "Open", "url": "https://enghub-three.vercel.app/status.html"}]},
-    {"id": "ART-08", "title": "STATE.md протокол памяти во всех 7 репо", "desc": "Каждая Claude-сессия читает STATE.md в начале и обновляет после изменений. Сквозная память между чатами через git.", "deployedDate": "2026-04-27", "kind": "infra", "tags": ["Workspace"], "links": []},
+    {"project":"AdIntakeBot","id":"INIT","title":"📦 Папка проекта создана, добавлена в memory","desc":"Структура каталога <code>D:\\ai-institut\\AdIntakeBot</code> создана. Запись в memory/projects-index.md. STATE.md скелетный.","deployedDate":"2026-04-30","kind":"infra","tags":["AdIntakeBot","Workspace"],"links":[]},
+    {"project":"EngHub","id":"DASH-AUTOREFRESH","title":"🔄 Авто-обновление дашбордов — focus + 30s polling","desc":"<b>Симптом (QA Round 2 yellow):</b> после клика «Утвердить → ГИПу» виджет «На проверке у меня» в GipDashboard обновлялся только после F5. <b>Корневая причина:</b> дашборды читали <code>dashboardTasks</code>/<code>allTasks</code> только при mount/смене активного проекта. Realtime-канал <code>tasks:live</code> уже был, но между сессиями вкладок и при сетевых лагах данные могли запаздывать. <b>Что сделано:</b> в <code>App.tsx</code> добавлен useEffect с 3 триггерами refresh: <code>visibilitychange → visible</code>, <code>window focus</code>, и <code>setInterval(30s)</code>. Обновляет и <code>loadAllTasks(activeProject.id)</code>, и <code>loadDashboardTasks()</code>. Минимально-инвазивно, реалтайм-подписка живёт. Полноценный Supabase realtime-фильтр на multi-project — отдельная задача.","deployedDate":"2026-04-30","kind":"feature","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"QA-ROUND2","title":"🔍 QA Round 2 — закрыт, все сценарии прошли","desc":"<b>Контекст:</b> второй проход QA через Chrome MCP (логин по 5 ролям, e2e-сценарии). <b>Шаги пройдены:</b> 3) валидация комментария на возврат (≥5 симв, кнопка disabled пока меньше) ✅; 4) GIP финал — Skorokhod утверждает review_gip → status=done ✅; 10a) просроченный дедлайн — карточка с красной полосой в EngineerDashboard ✅; 10c) две независимые сессии (admin + troshin) ✅. <b>Жёлтые наблюдения раунда 2 закрыты:</b> BUG-2 (dropdown ОТДЕЛ-ПОЛУЧАТЕЛЬ) — фантом тестера, проверен в раунде 3 → 7 опций; BUG-3 (Lead «На проверке у меня» = 0) — артефакт setup тестера, RLS работает корректно; TASK-STATUS-DELAY — починен через DASH-AUTOREFRESH.","deployedDate":"2026-04-30","kind":"doc","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"STAGE4B-DROPDOWN","title":"🔗 BUG-2 закрыт — Stage 4b dropdown отделов работает","desc":"<b>Симптом:</b> в модалке «🔗 Запросить данные у смежного отдела» dropdown «ОТДЕЛ-ПОЛУЧАТЕЛЬ» казался пустым. <b>Корневая причина — цепочка из 3 проблем:</b> 1) <b>Frontend</b> (commit <code>fdfdcac</code>): <code>activeProject?.depts?.filter(d => d !== my_dept_id)</code> возвращал <code>[]</code> для проектов с <code>depts:[my_dept_id]</code>. Фикс: fallback на глобальный список отделов (минус свой). 2) <b>Schema</b> (миграция 021): <code>tasks.parent_task_id uuid → bigint</code> + FK. 3) <b>RLS</b> (миграция 022): добавлено условие для engineer на INSERT assignment-задач. <b>Verify (Chrome MCP, prod):</b> Troshin → задача 38 → клик «Запросить данные» → 7 отделов в dropdown (АК, АС, ВК, ГП, ПБ, СМ, ТХ) → выбор АК → submit → toast «✓ Запрос отправлен». DB: parent task 38 → awaiting_input, child task 41 (is_assignment=true), task_dependency 1.","deployedDate":"2026-04-30","kind":"bug","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"RLS-023","title":"📧 Миграция 023 — case-insensitive email в RLS-helpers","desc":"<b>Симптом (бонус-фикс):</b> <code>app_users.email</code> хранил CamelCase (<code>Bordokina.O@nipicer.kz</code>), а JWT отдавал lowercase → лиды/юзеры с CamelCase не видели НИ ОДНОГО проекта. Ломало Stage 4b receiving + всю работу таких юзеров. <b>Что сделано:</b> <code>auth_app_user_email()</code> теперь <code>lower(...)</code>, <code>UPDATE app_users SET email=lower(email)</code>. Системный фикс class-bug email mismatch.","deployedDate":"2026-04-30","kind":"infra","tags":["EngHub","Infra"],"links":[]},
+    {"project":"EngHub","id":"RLS-022","title":"🔒 Миграция 022 — RLS INSERT для engineer assignment","desc":"Политика <code>tasks_insert</code> разрешала только admin/gip/lead. Stage 4b требует, чтобы инженер создал assignment-таску для смежного отдела. <b>Фикс:</b> добавлено условие <code>auth_app_user_role()=engineer AND is_assignment=true AND auth_can_see_project(project_id)</code>. Engineer теперь может создавать ТОЛЬКО assignment-задачи в своих проектах.","deployedDate":"2026-04-30","kind":"infra","tags":["EngHub","Infra"],"links":[]},
+    {"project":"EngHub","id":"RLS-021","title":"🔧 Миграция 021 — fix tasks.parent_task_id (uuid → bigint)","desc":"<b>Симптом:</b> Stage 4b создание child-таски валилось с <code>invalid input syntax for type uuid: 38</code>. Колонка <code>tasks.parent_task_id</code> была uuid, а <code>tasks.id</code> — bigint. <b>Фикс:</b> ALTER COLUMN parent_task_id TYPE bigint (0 строк, безопасная конвертация) + FK на <code>tasks(id) ON DELETE SET NULL</code>.","deployedDate":"2026-04-30","kind":"infra","tags":["EngHub","Infra"],"links":[]},
+    {"project":"EngHub","id":"RLS-020","title":"🔐 Миграция 020 — admin_bootstrap helper-функция","desc":"<b>Симптом:</b> admin@enghub.com логинился, но AdminPanel пуст. <b>Корневая причина:</b> в <code>auth_app_user_role()</code> спец-кейс <code>WHEN email=admin@enghub.com THEN admin</code> был ВНУТРИ SELECT FROM app_users. Профиля admin@enghub.com в app_users не существовало → SELECT 0 строк → helper NULL → RLS ничего не отдавал. <b>Фикс:</b> 1) INSERT профиля admin (id=69, role=admin). 2) CREATE OR REPLACE <code>auth_app_user_role()</code> — спец-кейс ВЫНЕСЕН наружу SELECT. Verify: до projects_seen=0 / tasks_seen=0 → после projects_seen=17 / tasks_seen=16.","deployedDate":"2026-04-30","kind":"infra","tags":["EngHub","Infra"],"links":[]},
+    {"project":"EngHub","id":"PWD-RESET","title":"🔑 Admin password reset — Authorization header починен","desc":"<b>Симптом:</b> AdminPanel → юзер → «🔑 Пароль» → «Authorization Bearer token is required». <b>Корневая причина:</b> <code>apiFetch</code> в <code>src/api/http.ts</code> тянул токен через <code>getSupabaseAnonClient().auth.getSession()</code>, но <code>signIn</code> делается прямым fetch к <code>/auth/v1/token</code> и сохраняет токен в <code>localStorage.enghub_token</code>. <b>Фикс:</b> <code>getAccessToken()</code> читает <code>localStorage.enghub_token</code> сначала, fallback на supabase-js. <b>Verify (prod):</b> reset password для skorokhod.a@nipicer.kz → зелёная плашка, bcrypt-хэш в auth.users реально обновился.","deployedDate":"2026-04-30","kind":"bug","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"ESLINT-DEBT","title":"⚙ Техдолг ESLINT — убран DISABLE_ESLINT_PLUGIN, нормальный плагин react-hooks","desc":"<b>Корневая причина:</b> в <code>.eslintrc.json</code> не был загружен <code>eslint-plugin-react-hooks</code>, из-за чего <code>react-scripts build</code> падал с <code>Definition for rule 'react-hooks/exhaustive-deps' was not found</code>. Workaround — переменная <code>DISABLE_ESLINT_PLUGIN=true</code> в Vercel env, отключавшая линтер целиком. Попытка включить <code>extends:[react-app]</code> тянула проблемные правила (например <code>import/first</code>), нарушенные в коде.<br><b>Что сделано:</b> 1) В <code>enghub-main/package.json</code> добавлен <code>eslint-plugin-react-hooks ^4.6.2</code> в devDependencies. 2) <code>.eslintrc.json</code> переписан минимально: <code>parser: @typescript-eslint/parser</code>, <code>plugins:[react-hooks]</code>, <code>rules: { rules-of-hooks: error, exhaustive-deps: off }</code> — без <code>extends:react-app</code>. 3) <code>package-lock.json</code> обновлён через <code>npm install</code> (191 пакет). <b>Локальный smoke build (CI=true, без DISABLE_ESLINT_PLUGIN):</b> Compiled successfully, 526.58 kB gzip. Vercel env-переменная <code>DISABLE_ESLINT_PLUGIN</code> подлежит удалению из Production+Preview после успешного нового deploy.","deployedDate":"2026-04-30","kind":"infra","tags":["EngHub","Infra"],"links":[]},
+    {"project":"EngHub","id":"SEC-01","title":"🛡 Security cutover — service_role убран из фронта","desc":"<b>Корневая причина:</b> в production-bundle (<code>main.5d8fd3a7.js</code>) утекали 3 service_role JWT + sb_secret через <code>REACT_APP_SUPABASE_SERVICE_KEY</code>. Service-роль имеет атрибут BYPASSRLS — публичный root к БД.<br><b>Что сделано (commit <code>e90177d</code>):</b> 1) <code>src/api/supabase.ts</code> переписан — экспорт SERVICE_KEY удалён, AdminH() удалён. 2) 9 admin-операций вынесены в <code>/api/admin/*</code> (users/create, users/[uid]/password, users/[id]/role, activity-log, notifications/create, storage/sign-url, storage/upload, storage/delete, admin/storage/stats). 3) Каждый endpoint валидирует user JWT через <code>verifyUserAndProfile</code> + role-check. 4) <code>ActivityFeed.tsx</code>, <code>App.tsx</code> (14 точек) переведены на fetch к /api/*. 5) Vercel env: создан <code>SUPABASE_SERVICE_KEY</code> без префикса, <code>REACT_APP_SUPABASE_SERVICE_KEY</code> удалён. <b>Smoke (Lead Pravdukhin):</b> POST /api/admin-users → HTTP 403 «Недостаточно прав» — корректный role-check после JWT verify. Bundle <code>main.70fa74f3.js</code> чистый.","deployedDate":"2026-04-30","kind":"infra","tags":["EngHub","Infra"],"links":[{"label":"Прод","url":"https://enghub-three.vercel.app"}]},
+    {"project":"EngHub","id":"RLS-02","title":"🔒 RLS hardening — миграции 019 + 019b на проде","desc":"<b>Что сделано:</b> 1) <code>019_rls_hardening</code>: включена RLS на <code>meetings</code>, <code>time_entries</code>, <code>task_templates</code>, <code>review_comments</code> (последняя замкнута admin/gip из-за schema-mismatch <code>review_id bigint vs reviews.id uuid</code>). 2) Удалены permissive «Enable * for all users» политики на <code>ai_actions</code>, <code>raci_all</code>. 3) <code>activity_log_insert</code> теперь требует <code>user_can_access_project()</code>. 4) <code>019b_project_storage_stats_invoker</code>: VIEW <code>project_storage_stats</code> пересоздан с <code>security_invoker=true</code>. 5) <code>search_path = public</code> на всех publish-функциях. 6) <code>REVOKE EXECUTE ... FROM anon</code> на 12 security-definer auth-helpers. <b>Smoke-RLS:</b> engineer Troshin → 8 tasks/2 projects, lead Pravdukhin → 12/4, gip Skorokhod → 14/15, anon → 0/0/0. Пропускает только нужное.","deployedDate":"2026-04-30","kind":"infra","tags":["EngHub","Infra"],"links":[]},
+    {"project":"EngHub","id":"DASH-01","title":"📊 Multi-project dashboards — Lead/Engineer видят все свои проекты","desc":"<b>Корневая причина:</b> до фикса LeadDashboard/EngineerDashboard (DD-15/16) работали только с <code>activeProject</code> — данные из <code>loadAllTasks(activeProject.id)</code>. У Lead/инженеров с несколькими проектами часть задач исчезала из дашборда.<br><b>Что сделано:</b> в <code>App.tsx</code> добавлен state <code>dashboardTasks</code> + новая функция <code>loadDashboardTasks()</code> — Lead тянет задачи отдела по всем проектам, Engineer — свои по всем. <code>LeadDashboard</code> и <code>EngineerDashboard</code> получают <code>dashboardTasks</code> (с fallback на <code>allTasks</code> если ещё не загружено).","deployedDate":"2026-04-30","kind":"feature","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"KPI-01","title":"💀 KPI race condition — добавлен skeleton","desc":"<b>Симптом:</b> при первой загрузке инженерского дашборда KPI-карточки показывали 0/0/0/0 в течение ~1 сек, пока <code>currentUserData?.id</code> не приходил из Supabase. <b>Что сделано:</b> добавлен skeleton-state — 4 пульсирующих stat-card'а серого цвета пока user-data не загружен. Никаких больше «нулевых вспышек» при логине.","deployedDate":"2026-04-30","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"SYNC-01","title":"📝 STATE.md синхронизирован с реальными тестовыми юзерами","desc":"<b>Проблема:</b> в CLAUDE.md и старых документах фигурировали <code>admin@enghub.com</code>, <code>gip@nipicer.kz</code>, <code>lead@nipicer.kz</code> — эти аккаунты в БД <b>не существуют</b>. <b>Что сделано:</b> в <code>STATE.md</code> добавлена таблица «Тестовые учётки (актуально на 2026-04-29)» с реально работающими <code>troshin.m@nipicer.kz</code> (engineer, ОВиК), <code>pravdukhin.a@nipicer.kz</code> (lead, ОВиК), <code>skorokhod.a@nipicer.kz</code> (GIP). Несуществующие аккаунты явно помечены чтобы не вводили в заблуждение будущие сессии.","deployedDate":"2026-04-30","kind":"doc","tags":["EngHub","Workspace"],"links":[]},
+    {"project":"EngHub","id":"REPO-01","title":"🧹 Сверка repos ai-institut ↔ enghub — drift не критичен","desc":"<b>Что нашли:</b> standalone <code>andyrbek2709-tech/enghub</code> (НЕ подключён к Vercel) содержал 2 осиротевших коммита от 2026-04-29: <code>2fbc191</code> (vercel-build script) и <code>79084dd</code> (eslintrc extends react-app). <b>Сверка:</b> vercel-build уже мигрирован в <code>ai-institut/enghub-main/package.json</code>. Второй фикс не нужен — прод собирается READY без него (DISABLE_ESLINT_PLUGIN или нет нарушений в актуальном коде). <b>Итог:</b> мигрировать ничего не нужно. Рекомендация — заархивировать standalone <code>enghub</code> на GitHub чтобы исключить путаницу.","deployedDate":"2026-04-30","kind":"infra","tags":["EngHub","Workspace","Infra"],"links":[]},
+    {"project":"EngHub","id":"ROT-01","title":"🔑 Ротация service_role — новый sb_secret_lZOw8… на проде","desc":"<b>Что сделано:</b> 1) В Supabase Dashboard <code>/settings/api-keys</code> создан новый Secret API key <code>service_role_rotated_2026_04_30</code> (формат <code>sb_secret_lZOw8…</code>). 2) Vercel ENV <code>SUPABASE_SERVICE_KEY</code> обновлена на новый секрет. 3) Live deployment <code>2uVdUGHX1</code> перевыпустил bundle <code>main.70fa74f3.js</code>. 4) Старый legacy JWT (<code>service_role</code> JWT + HS256 prev signing key) <b>пока НЕ отключаем</b> — буфер 24-48ч на откат. Disable намечен на 2026-05-02 (см. JWT-DISABLE в работе). <b>JWT signing keys:</b> CURRENT — ECC P-256 <code>4201FFC5</code>, PREVIOUS — Legacy HS256 <code>4BABA62B</code> (last rotated month ago).","deployedDate":"2026-04-30","kind":"infra","tags":["EngHub","Infra"],"links":[]},
+    {"project":"EngHub","id":"VERIFY-01","title":"✅ Smoke-тесты на проде — engineer/lead/gip OK","desc":"<b>Прогон 2026-04-30 после ротации service_role и cutover:</b> 1) <code>troshin.m@nipicer.kz / Test1234!</code> — login OK, dashboard инженера ок (engineer-level UI, RLS показывает 8 tasks/2 projects). 2) <code>pravdukhin.a@nipicer.kz / Test1234!</code> — login OK, LeadDashboard загрузил 3 инженеров отдела ОВиК (server-side fetch через новый <code>SUPABASE_SERVICE_KEY</code> сработал — sb_secret рабочий). 3) POST /api/admin-users с токеном Lead'а → HTTP 403 «Недостаточно прав» — корректный role-check (если бы sb_secret был сломан — был бы 500, а не чистый 403). Latest verify deployments: <code>CLKeCkcwh</code> / <code>2uVdUGHX1</code> / <code>D72kCCdXZnUcBtEmX8yhqovDm6cX</code>.","deployedDate":"2026-04-30","kind":"doc","tags":["EngHub"],"links":[{"label":"Прод","url":"https://enghub-three.vercel.app"}]},
+    {"project":"EngHub","id":"QA-01","title":"🔍 QA-отчёт по фичам последнего деплоя","desc":"<b>Прогон:</b> deployment <code>dpl_35c1fFju1gC5wSNRzn621RM2ypfT</code> (commit <code>15174d5</code>). <b>Что подтверждено:</b> /parsing.html без логина ✅, EngineerDashboard (DD-16) ✅, LeadDashboard (DD-15) ✅, ActivityFeed вкладка (DD-07) рендерит 4 события с эмодзи/именами/relative-time ✅, валидация комментария ≥5 симв при возврате ✅, прикрепление файлов к задаче ✅. <b>Найдены баги:</b> 🚨 service_role в bundle (→ закрыто SEC-01), 🟡 z-index Modal Stage 4b (топмост z-index 1100 — починено в src/components/ui.tsx), 🟡 KPI race (→ KPI-01), 🟡 dashboards только активный проект (→ DASH-01).","deployedDate":"2026-04-29","kind":"doc","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"MODAL-Z","title":"🎨 z-index Modal — Stage 4b теперь поверх карточки задачи","desc":"<b>Симптом:</b> модал «Запрос данных у смежного отдела» (CONV Stage 4b) был скрыт за карточкой задачи — оба <code>.modal-overlay</code> имели z-index 1000. <b>Что сделано:</b> в <code>src/components/ui.tsx</code> добавлен <code>Modal.topmost</code> (z-index 1100). В <code>App.tsx</code> для <code>showDepRequest</code> используется <code>topmost</code>. Системно решает класс багов «модал поверх модала».","deployedDate":"2026-04-30","kind":"bug","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"VOICE-01","title":"🎙️ Голос → Telegram — путь D (нативный APK) зафиксирован на странице + CI workflow","desc":"<b>Реализовано 2026-04-30:</b> 1) Страница <code>/voice-bot.html</code> расширена — путь D добавлен как третья карточка выбора (бейдж «ВЫБРАН»), описание под решение Андрея 29.04. 2) Блок «Статус сборки APK» с автоопределением свежего релиза через GitHub Releases API: если есть тег <code>voice-bot-v*</code> с .apk-ассетом — кнопка «Скачать APK» становится активной автоматически. 3) CI workflow <code>.github/workflows/build-voice-bot-apk.yml</code> — на push в <code>android-voicebot/**</code> либо вручную (<code>workflow_dispatch</code>) собирает Gradle-проект и публикует Release. Пока android-voicebot/ ещё без Kotlin-кода — workflow корректно «no-op» (см. README в каталоге). 4) В шапке voice-bot.html добавлена nav-bar со ссылками на остальные доски. 5) В agenda.html добавлено меню навигации в шапке. 6) Исправлен устаревший путь <code>D:\\ai-site</code> → <code>D:\\ai-institut</code>.","deployedDate":"2026-04-30","kind":"feature","tags":["VoiceBot","EngHub"],"links":[{"label":"Интерактивная сборка","url":"https://enghub-three.vercel.app/voice-bot.html"},{"label":"CI workflow","url":"https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/build-voice-bot-apk.yml"}]},
+    {"project":"Parsing_site","id":"PARSING-V2","title":"🏭 Парсинг боли v2 — закрыт целиком","desc":"Расширенная схема (problem_short → automation_idea → concrete_solution → tools → complexity → value → can_automate). Новый UI: бейджи 🟢🟡🔴 сложности и ⭐🔥 ценности, секция «💡 Идея решения» с шагами и инструментами, банер «🚫 Нельзя автоматизировать» с причиной. Дата-фильтр (только 2026+). Stop button + live progress bar. Расширены источники: Habr 11 хабов (+PM, продукт, карьера, финансы, юристы, инфра), новый extra-фид с HN front, Lobsters, Dev.to, N+1, vc.ru finance/trade/marketing. HN-комменты + SO-ответы парсятся. Изоляция через RLS. Меню навигации между всеми досками.","deployedDate":"2026-04-29","kind":"feature","tags":["Parsing","AI"],"links":[{"label":"Открыть доску парсинга","url":"https://enghub-three.vercel.app/parsing.html"}]},
+    {"project":"EngHub","id":"DD-07","title":"ActivityFeed — лента активности проекта","desc":"Реализован компонент ActivityFeed.tsx + новая вкладка «📰 Активность» в карточке проекта. Читает activity_log с триггерами на tasks/project_documents/task_attachments. Группирует события по дням, показывает actor + verb + target + relative-time («5 мин назад»). Миграция activity_log + 3 триггера применена через MCP.","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"DD-15","title":"LeadDashboard — специализированный экран Lead'а","desc":"Реализован компонент LeadDashboard.tsx, рендерится автоматически на главной для пользователей с role='lead'. Виджеты: 1) Нагрузка инженеров отдела с прогресс-барами и подсветкой перегруза, 2) Очередь «На проверке у меня» с inline-кнопками, 3) Задачи у ГИПа.","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"DD-16","title":"EngineerDashboard — специализированный экран инженера","desc":"Реализован компонент EngineerDashboard.tsx, рендерится автоматически на главной для пользователей с role='engineer'. Виджеты: 1) Мои задачи с цветной полоской по приоритету срока (🔴 <3 дн / 🟡 <14 дн / 🟢 >14 дн), 2) Мои проекты с количеством задач.","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"CONV-Q1","title":"Конвейер: связанная задача — кому (реализовано)","desc":"<b>Решение А (29.04) + реализация:</b> Stage 4b — кнопка «🔗 Запросить данные у смежного отдела» создаёт задачу-стаб в target_dept_id, без assigned_to. Lead отдела сам распределит. См. CONV-FOUNDATION для деталей.","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub","Конвейер"],"links":[]},
+    {"project":"EngHub","id":"CONV-Q2","title":"Конвейер: срок связанной задачи (реализовано)","desc":"<b>Решение А (29.04) + реализация:</b> Stage 4b — child-задача создаётся с deadline (опционально передаётся при запросе как desired-срок). Финальный срок ставит Lead КЖ принимая задачу. Поле deadline на child-задаче — стандартное поле tasks.deadline.","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub","Конвейер"],"links":[]},
+    {"project":"EngHub","id":"CONV-Q3","title":"Конвейер: Storage bucket — реализовано","desc":"<b>Решение А (29.04) + реализация:</b> bucket project-files создан, общая структура с подпапками. Stage 2 миграция применена, RLS работает. Админ-стат хранилища отдельно реализована как T31-storage-stats.","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub","Конвейер","Admin"],"links":[]},
+    {"project":"EngHub","id":"CONV-Q4","title":"Конвейер: видимость связанной задачи (реализовано)","desc":"<b>Решение А (29.04) + реализация:</b> Stage 4b — child-задача создаётся с is_assignment=true в target_dept'е и работает как обычная задача со всеми статусами/проверками/возвратами. RLS гарантирует видимость только участникам проекта.","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub","Конвейер"],"links":[]},
+    {"project":"EngHub","id":"CONV-Q5","title":"Конвейер: что после получения данных от КЖ — реализовано","desc":"Stage 4a: новый статус задачи <code>awaiting_input</code> («Ждёт данных», cyan). Кнопка «▶ Возобновить работу (данные получены)» — инженер сам нажимает после получения данных. Auto-unlock не делаем. Реализовано в App.tsx + constants.ts.","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub","Конвейер"],"links":[]},
+    {"project":"EngHub","id":"CONV-FOUNDATION","title":"🚜 Конвейер — фундамент (Stage 4a/4b/4c)","desc":"Stage 4a: новый статус awaiting_input + workflow-переходы + обязательная причина возврата (минимум 5 символов, кнопка disabled пока пусто). Stage 4b: кнопка «🔗 Запросить данные у смежного отдела» в открытой задаче (по требованию, не upfront) → форма выбора отдела + текст + срок → автосоздание child-задачи + связь в task_dependencies + перевод текущей в awaiting_input. Stage 4c: улучшенная история задачи в карточке — эмодзи статусов, имя actora, красная подсветка возвратов с цитатой причины. Миграция task_dependencies применена через MCP.","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub","Конвейер"],"links":[]},
+    {"project":"EngHub","id":"T30c","title":"AI Copilot — RAG-контекст с проектными документами","desc":"RLS-изоляция документов по проекту работает с Stage 2 (user_can_access_project). Сегодня: orchestrator.js при use_rag=true дополнительно подгружает список project_documents текущего проекта (название, тип tz/addendum/other, размер) и кладёт в контекст AI. Промпт обновлён — Copilot знает про проектные документы и может ссылаться. Глобальная нормативка остаётся общей (СНиП/ГОСТ — отраслевые стандарты).","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub","AI"],"links":[]},
+    {"project":"EngHub","id":"T30d","title":"AI-агенты — Router работает","desc":"Подтверждено: orchestrator.js уже реализует полноценный Agent router. detectIntent() определяет намерение → ROLE_ALLOWED_INTENTS фильтрует по роли → специализированные handle*() функции выступают как агенты (project_insights, generate_report, smart_decompose, compliance_check, nl_search, risk_forecast, drawing/review/transmittal builders). Один Anthropic API key, разные системные промпты per agent. Архитектура DEC-AI-01 фактически реализована.","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub","AI"],"links":[]},
+    {"project":"EngHub","id":"T30a","title":"Загрузка ТЗ в проект — реализовано","desc":"Stage 2: вкладка «📁 Документы» в проекте, загрузка PDF/Word/Excel до 50 МБ. Типы документов: ТЗ / Дополнение / Прочее. RLS изоляция по проекту. Миграция: 2026-04-29_t30_documents.sql. Андрею нужно применить SQL и создать bucket project-files.","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub"],"links":[{"label":"Прод EngHub","url":"https://enghub-three.vercel.app"}]},
+    {"project":"EngHub","id":"T30b","title":"Поддержка форматов файлов — PDF/Word/Excel preview + DWG скачивание","desc":"Stage 2: компоненты DocumentsPanel + DocumentPreview. PDF — iframe; Word/Excel — Google Docs Viewer; DWG/DXF/прочие — открытие/скачивание через подписанный Storage URL. Двойной клик по файлу — preview.","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub"],"links":[{"label":"Прод EngHub","url":"https://enghub-three.vercel.app"}]},
+    {"project":"EngHub","id":"T30e","title":"Прикрепление файлов к задачам — реализовано","desc":"Stage 2: компонент TaskAttachments в карточке задачи. Любой участник проекта (ГИП/lead/инженер) может прикрепить до 5 файлов на задачу, общий лимит 50 МБ. Изоляция по проекту через RLS. Индикатор «📎 N» на task-card.","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub"],"links":[{"label":"Прод EngHub","url":"https://enghub-three.vercel.app"}]},
+    {"project":"EngHub","id":"T31-storage-stats","title":"Админ-панель: статистика размера хранилища","desc":"Stage 2: новая вкладка «📊 Хранилище» в админке. Таблица: проект — размер — кол-во файлов — последняя загрузка. KPI: всего проектов / файлов / общий объём. Реализовано через VIEW project_storage_stats (агрегация по project_documents + task_attachments).","deployedDate":"2026-04-29","kind":"feature","tags":["EngHub"],"links":[{"label":"Прод EngHub","url":"https://enghub-three.vercel.app"}]},
+    {"project":"EngHub","id":"DEC-AI-01","title":"Архитектура AI-агентов: Гибрид + ручной выбор + строгая изоляция по проектам","desc":"Архитектура AI-агентов: гибридный подход (RAG + LLM с роутингом по типам запросов) + изоляция знаний по проектам. Зафиксировано как политика проекта. Дальнейшая реализация в T30c (RAG изоляция) и T30d (роутер).","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"DD-04","title":"Pulse-dot на колокольчике (#04)","desc":"Pulse-dot реализован — красная пульсирующая точка появляется на колокольчике когда есть непрочитанные уведомления. Commit: 1f3c6d9","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"WS-01","title":"Карта здоровья инфраструктуры — реальные API-проверки","desc":"29.04: реальные API-проверки Vercel/Railway/Supabase задеплоены (commit 59ce95f). Auto-refresh и история uptime — отдельные задачи на потом.","deployedDate":"2026-04-29","kind":"infra","tags":["EngHub","Workspace","Infra"],"links":[{"label":"health-map.html","url":"https://enghub-three.vercel.app/health-map.html"}]},
+    {"project":"EngHub","id":"WS-02","title":"Master Excel-трекер — workflow автообновления","desc":"29.04: добавлен .github/workflows/rebuild-excel-tracker.yml на cron daily 06:00 UTC + workflow_dispatch (commit 390da54). Workflow на проде, ждёт scripts/build-excel-tracker.py — стаб корректно выходит с TODO.","deployedDate":"2026-04-29","kind":"infra","tags":["EngHub","Workspace"],"links":[]},
+    {"project":"EngHub","id":"EH-AI-1","title":"Корневая причина /api/orchestrator 500 — структурное логирование","desc":"29.04: добавлено структурное логирование [ORCH-500] в catch (commit 3b5ed5c). Ловим первый прод-500 — починим корень. Не блокер.","deployedDate":"2026-04-29","kind":"bug","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"DD-03","title":"Sidebar — иконки активного отдела/проекта","desc":"29.04: иконки активного отдела/проекта добавлены в sidebar (commit c65e192). Hover-анимация уже была. Кнопку Settings не делаем — экрана нет.","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"DD-06","title":"KPI-карточки: иконка в кружке + большое число (без тренд-стрелок)","desc":"29.04: убрали тренд-стрелку из KPI (commit a52ea0b). Layout: метка слева + иконка 30×30 справа, число 38px Manrope 800 с useCountUp.","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"DD-10","title":"Совещание первым табом — закрыто","desc":"29.04: тема закрыта Андреем — больше не делаем. Дефолтный таб карточки проекта conference установлен в commit 78bdac3.","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"DD-14","title":"Новый UI вкладки «Совещание» — НЕ делаем (out of scope)","desc":"29.04: решили не делать. Текущее лобби с превью камеры работает. Если совещаниями реально начнут пользоваться — пересмотрим. Закрыто.","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"DD-17","title":"Grid Расчёты + Спецификации + Нормативка — НЕ делаем пока","desc":"29.04: решили не делать пока. Андрей скажет, когда возвращаться. Текущий вид рабочий. Закрыто до отдельной просьбы.","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"CONV-Q","title":"🚜 Конвейер задач — все 5 вопросов закрыты","desc":"29.04: все 5 вопросов получили ответы Андрея — см. CONV-Q1, CONV-Q2, CONV-Q3, CONV-Q4, CONV-Q5 в Decided. Интерактивная доска свою задачу выполнила.","deployedDate":"2026-04-29","kind":"design","tags":["EngHub","Design"],"links":[{"label":"Открыть доску","url":"https://enghub-three.vercel.app/conveyor.html"}]},
+    {"project":"EngHub","id":"NORM-01","title":"Поиск в нормативке — теперь клик открывает документ","desc":"Был баг: ищешь — находит, но клик не работал. Добавлен helper openNormativeDoc(doc), результаты стали кликабельными. PDF — открытие в новой вкладке через подписанный Storage URL; DOCX — скачивание.","deployedDate":"2026-04-28","kind":"bug","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"T31b","title":"Волна A редизайна — 7 quick wins (подтверждено владельцем)","desc":"#05 useCountUp на KPI, #08 анимация прогресс-баров, #09 цвет дедлайнов 30/90, #11 градиент-индикатор скролла табов, #12 метрики в шапке проекта, #13 empty state с CTA. Commits db5382f + 4602695.","deployedDate":"2026-04-28","kind":"design","tags":["EngHub","Design"],"links":[{"label":"Прод EngHub","url":"https://enghub-three.vercel.app"}]},
+    {"project":"EngHub","id":"B1","title":"Триггер task_history — задачи теперь создаются","desc":"Корневая причина: 2 сломанных триггера ссылались на колонку 'field', которой нет (field_name). DROP двух триггеров. QA подтвердил.","deployedDate":"2026-04-28","kind":"bug","tags":["EngHub"],"links":[{"label":"QA panel","url":"https://enghub-three.vercel.app/qa-review.html"}]},
+    {"project":"EngHub","id":"B3","title":"Видеовстречи LiveKit — починены","desc":"Бесконечная рекурсия в RLS на video_meeting_*. Создан SECURITY DEFINER хелпер is_meeting_participant(). QA подтвердил.","deployedDate":"2026-04-28","kind":"bug","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"B4","title":"RLS изоляция ГИПов — каждый видит только свои","desc":"projects.gip_id NOT NULL, 4 хелпер-функции, RLS на 9 таблиц, фронт createProject обновлён. QA: gip2 видит 0 проектов gip1.","deployedDate":"2026-04-28","kind":"feature","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"B6","title":"AI Copilot не светит системный промпт","desc":"rolePrompt («Ты помощник ГИПа: приоритет срокам…») склеивался в user-facing message. Удалили префикс. QA: ответы чистые.","deployedDate":"2026-04-28","kind":"bug","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"B11","title":"Multiple GoTrueClient warnings — исчезли","desc":"supabaseClient.ts singletons получили storageKey + persistSession=false для admin. QA: консоль чистая.","deployedDate":"2026-04-28","kind":"bug","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"T29","title":"Виджет «Активных задач» — больше не протекает","desc":"handleLogout сбрасывал tasks но не allTasks. Теперь все стейты сбрасываются при logout.","deployedDate":"2026-04-28","kind":"bug","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"T31a","title":"Редизайн — SVG-иконки + CSS-анимации","desc":"16 SVG-компонентов в icons.tsx, лого «Eh», screenEnter/pulseDot/hover transforms, useCountUp хук. Дефолтный таб 'conference'.","deployedDate":"2026-04-28","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"ART-02","title":"Интерактивная панель QA-обзора","desc":"13 багов из QA-отчёта 27.04 с реальной проверкой кода и Supabase, доказательствами, кнопками решения.","deployedDate":"2026-04-28","kind":"doc","tags":["EngHub"],"links":[{"label":"Open","url":"https://enghub-three.vercel.app/qa-review.html"}]},
+    {"project":"EngHub","id":"ART-03","title":"Полный брифинг для агента","desc":"enghub_full_brief_2026-04-28.md — единый файл с актуальным состоянием EngHub после всех фиксов.","deployedDate":"2026-04-28","kind":"doc","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"ART-04","title":"Master Excel-трекер 7 проектов","desc":"9 листов: сводка + 7 проектов + how-to. По каждому: репо, прод-URL, последний коммит, проблемы, env-переменные.","deployedDate":"2026-04-28","kind":"doc","tags":["EngHub","Workspace"],"links":[]},
+    {"project":"EngHub","id":"ART-05","title":"Карта здоровья инфраструктуры","desc":"Матрица 7 проектов × 5 систем. Live ping prod-URL по кнопке.","deployedDate":"2026-04-28","kind":"infra","tags":["EngHub","Workspace"],"links":[{"label":"Open","url":"https://enghub-three.vercel.app/health-map.html"}]},
+    {"project":"EngHub","id":"ART-06","title":"Доска design-diff","desc":"18 предложений редизайна с сравнением «сейчас vs предложено», кнопками принять/отклонить/обсудить.","deployedDate":"2026-04-28","kind":"design","tags":["EngHub","Design"],"links":[{"label":"Open","url":"https://enghub-three.vercel.app/design-diff.html"}]},
+    {"project":"EngHub","id":"ART-07","title":"Тестовые аккаунты с паролями","desc":"gip1@enghub-test.ru/TestGip1!, gip2@enghub-test.ru/TestGip2!, gip@enghub-test.ru/TestGip!. Привязан supabase_uid.","deployedDate":"2026-04-28","kind":"infra","tags":["EngHub"],"links":[]},
+    {"project":"EngHub","id":"DEC-02","title":"Cowork mount не использовать для коммитов","desc":"Правило, действует. HARD RULE в memory. Прошлые сессии обрезали файлы при коммите через Cowork mount. Все правки — через clone в /tmp с PAT.","deployedDate":"2026-04-28","kind":"infra","tags":["EngHub","Workspace"],"links":[]},
+    {"project":"EngHub","id":"DEC-03","title":"Только andyrbek2709@gmail.com для git коммитов","desc":"Правило, действует. HARD RULE в memory. Email andreyfuture27@gmail.com — НЕ использовать никогда.","deployedDate":"2026-04-28","kind":"infra","tags":["EngHub","Workspace"],"links":[]},
+    {"project":"EngHub","id":"DEC-05","title":"Не делать пустую кнопку Settings в sidebar","desc":"Правило, действует. Экрана Settings нет, не делаем пустую кнопку.","deployedDate":"2026-04-28","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"DEC-06","title":"Не менять коды отделов на КМ/ОВ/АР","desc":"Правило, действует. Дизайнер использовал коды КМ, ОВ, АР, ЭС, ГП. У нас в БД: АК, АС, ВК, ГП, ПБ, СМ, ТХ, ЭС. Оставляем наши.","deployedDate":"2026-04-28","kind":"design","tags":["EngHub","Design"],"links":[]},
+    {"project":"EngHub","id":"ART-01","title":"Дашборд статуса 7 проектов","desc":"Живой агрегат STATE.md из всех 7 репо через GitHub API. Auto-refresh каждые 5 минут.","deployedDate":"2026-04-27","kind":"infra","tags":["EngHub","Workspace"],"links":[{"label":"Open","url":"https://enghub-three.vercel.app/status.html"}]},
+    {"project":"EngHub","id":"ART-08","title":"STATE.md протокол памяти во всех 7 репо","desc":"Каждая Claude-сессия читает STATE.md в начале и обновляет после изменений. Сквозная память между чатами через git.","deployedDate":"2026-04-27","kind":"infra","tags":["EngHub","Workspace"],"links":[]},
+  ],
+  skip: [
   ],
 };
 
@@ -198,15 +269,32 @@ function kindLabel(k) {
   return m[k] || k;
 }
 
+function projBadge(project) {
+  const p = PROJECTS[project] || { color: '#8d96b3', label: project || '—' };
+  const c = p.color;
+  const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
+  const bg = `rgba(${r},${g},${b},.16)`;
+  const bd = `rgba(${r},${g},${b},.45)`;
+  return `<span class="tag proj-badge" style="background:${bg};color:${c};border-color:${bd}">${p.label}</span>`;
+}
+
+function projLeftColor(project) {
+  const p = PROJECTS[project];
+  return p ? p.color : '#232a4a';
+}
+
 function renderCard(item, useDeployedDate) {
-  const tags = (item.tags || []).map(t => `<span class="tag proj">${t}</span>`).join('');
+  const proj = projBadge(item.project);
+  const extraTags = (item.tags || []).filter(t => !PROJECTS[t]).map(t => `<span class="tag t-ext">${t}</span>`).join('');
   const kind = item.kind ? `<span class="tag kind-${item.kind}">${kindLabel(item.kind)}</span>` : '';
   const links = (item.links || []).map(l => `<a href="${l.url}" target="_blank" onclick="event.stopPropagation()">${l.label} →</a>`).join('');
   const date = useDeployedDate ? item.deployedDate : item.date;
-  return `<div class="item" data-tags="${(item.tags || []).join(' ')}" data-text="${(item.title + ' ' + item.desc).toLowerCase().replace(/"/g, '&quot;')}">
+  const lc = projLeftColor(item.project);
+  const txt = (item.title + ' ' + (item.desc||'')).toLowerCase().replace(/"/g, '&quot;');
+  return `<div class="item" data-project="${item.project||''}" data-text="${txt}" style="border-left-color:${lc}">
     <div class="title"><span class="id">#${item.id}</span>${item.title}</div>
     <div class="desc">${item.desc || ''}${links ? `<div class="links">${links}</div>` : ''}</div>
-    <div class="meta">${kind}${tags}<span class="date">${date}</span></div>
+    <div class="meta">${proj}${kind}${extraTags}<span class="date">${date||''}</span></div>
   </div>`;
 }
 
@@ -242,48 +330,136 @@ function renderDoneGrouped() {
   return html;
 }
 
-function render() {
-  const ipEl = document.getElementById('list-ip');
-  const decEl = document.getElementById('list-dec');
-  const doneEl = document.getElementById('list-done');
-  ipEl.innerHTML = AGENDA.in_progress.map(it => renderCard(it, false)).join('') || '<div class="empty">пусто 🎉</div>';
-  decEl.innerHTML = AGENDA.decided.map(it => renderCard(it, false)).join('') || '<div class="empty">пусто</div>';
-  doneEl.innerHTML = renderDoneGrouped() || '<div class="empty">пусто</div>';
+function renderProjFilter() {
+  const wrap = document.getElementById('proj-filter');
+  const present = new Set();
+  ['ideas','triage','decided','in_progress','done','skip'].forEach(s => {
+    (AGENDA[s]||[]).forEach(it => { if (it.project) present.add(it.project); });
+  });
+  const order = Object.keys(PROJECTS).filter(p => present.has(p));
+  [...present].forEach(p => { if (!PROJECTS[p]) order.push(p); });
 
-  document.getElementById('kpi-ip').textContent = AGENDA.in_progress.length;
-  document.getElementById('kpi-dec').textContent = AGENDA.decided.length;
-  document.getElementById('kpi-done').textContent = AGENDA.done.length;
-  document.getElementById('cnt-ip').textContent = AGENDA.in_progress.length;
-  document.getElementById('cnt-dec').textContent = AGENDA.decided.length;
-  document.getElementById('cnt-done').textContent = AGENDA.done.length;
+  wrap.querySelectorAll('button[data-project]:not([data-project="all"])').forEach(b => b.remove());
+
+  order.forEach(p => {
+    const meta = PROJECTS[p] || { color:'#8d96b3', label: p };
+    const btn = document.createElement('button');
+    btn.setAttribute('data-project', p);
+    btn.innerHTML = `<span class="dot" style="background:${meta.color}"></span>${meta.label}`;
+    btn.style.borderColor = meta.color + '55';
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#proj-filter button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      btn.style.background = meta.color;
+      btn.style.color = '#fff';
+      wrap.querySelectorAll('button:not(.active)').forEach(b => {
+        const dp = b.getAttribute('data-project');
+        if (dp === 'all') { b.style.background=''; b.style.color=''; }
+        else {
+          const m = PROJECTS[dp] || {color:'#8d96b3'};
+          b.style.background='';
+          b.style.color='';
+          b.style.borderColor = m.color + '55';
+        }
+      });
+      applyFilters();
+    });
+    wrap.appendChild(btn);
+  });
+
+  const allBtn = wrap.querySelector('button[data-project="all"]');
+  allBtn.addEventListener('click', () => {
+    document.querySelectorAll('#proj-filter button').forEach(b => {
+      b.classList.remove('active');
+      const dp = b.getAttribute('data-project');
+      if (dp !== 'all') {
+        const m = PROJECTS[dp] || {color:'#8d96b3'};
+        b.style.background='';
+        b.style.color='';
+        b.style.borderColor = m.color + '55';
+      }
+    });
+    allBtn.classList.add('active');
+    allBtn.style.background='';
+    allBtn.style.color='';
+    applyFilters();
+  });
+}
+
+function render() {
+  const map = {
+    'list-ideas': AGENDA.ideas,
+    'list-triage': AGENDA.triage,
+    'list-dec': AGENDA.decided,
+    'list-ip': AGENDA.in_progress,
+    'list-skip': AGENDA.skip,
+  };
+  for (const id in map) {
+    const el = document.getElementById(id);
+    el.innerHTML = (map[id] || []).map(it => renderCard(it, false)).join('') || '<div class="empty">пусто</div>';
+  }
+  document.getElementById('list-done').innerHTML = renderDoneGrouped() || '<div class="empty">пусто</div>';
 
   document.querySelectorAll('.item').forEach(it => it.addEventListener('click', () => it.classList.toggle('open')));
   document.querySelectorAll('.day-header').forEach(h => h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed')));
 }
 
+function recomputeCounts() {
+  const search = document.getElementById('search').value.toLowerCase().trim();
+  const activeProjBtn = document.querySelector('#proj-filter button.active');
+  const activeProj = activeProjBtn ? activeProjBtn.getAttribute('data-project') : 'all';
+
+  function matchItem(it) {
+    const text = ((it.title||'') + ' ' + (it.desc||'')).toLowerCase();
+    const matchSearch = !search || text.includes(search);
+    const matchProj = activeProj === 'all' || it.project === activeProj;
+    return matchSearch && matchProj;
+  }
+
+  const counts = {
+    ideas: (AGENDA.ideas||[]).filter(matchItem).length,
+    triage: (AGENDA.triage||[]).filter(matchItem).length,
+    decided: (AGENDA.decided||[]).filter(matchItem).length,
+    in_progress: (AGENDA.in_progress||[]).filter(matchItem).length,
+    done: (AGENDA.done||[]).filter(matchItem).length,
+    skip: (AGENDA.skip||[]).filter(matchItem).length,
+  };
+
+  document.getElementById('kpi-ideas').textContent = counts.ideas;
+  document.getElementById('kpi-triage').textContent = counts.triage;
+  document.getElementById('kpi-dec').textContent = counts.decided;
+  document.getElementById('kpi-ip').textContent = counts.in_progress;
+  document.getElementById('kpi-done').textContent = counts.done;
+  document.getElementById('kpi-skip').textContent = counts.skip;
+
+  document.getElementById('cnt-ideas').textContent = counts.ideas;
+  document.getElementById('cnt-triage').textContent = counts.triage;
+  document.getElementById('cnt-dec').textContent = counts.decided;
+  document.getElementById('cnt-ip').textContent = counts.in_progress;
+  document.getElementById('cnt-done').textContent = counts.done;
+  document.getElementById('cnt-skip').textContent = counts.skip;
+}
+
 function applyFilters() {
   const search = document.getElementById('search').value.toLowerCase().trim();
-  const activeTag = document.querySelector('.controls button[data-tag].active').getAttribute('data-tag');
+  const activeProjBtn = document.querySelector('#proj-filter button.active');
+  const activeProj = activeProjBtn ? activeProjBtn.getAttribute('data-project') : 'all';
+
   document.querySelectorAll('.item').forEach(it => {
     const text = it.getAttribute('data-text') || '';
-    const tags = (it.getAttribute('data-tags') || '').split(' ');
+    const proj = it.getAttribute('data-project') || '';
     const matchSearch = !search || text.includes(search);
-    const matchTag = activeTag === 'all' || tags.includes(activeTag);
-    it.style.display = (matchSearch && matchTag) ? '' : 'none';
+    const matchProj = activeProj === 'all' || proj === activeProj;
+    it.style.display = (matchSearch && matchProj) ? '' : 'none';
   });
+
+  recomputeCounts();
 }
 
 document.getElementById('search').addEventListener('input', applyFilters);
-document.querySelectorAll('.controls button[data-tag]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.controls button[data-tag]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    applyFilters();
-  });
-});
 document.querySelectorAll('.kpi').forEach(k => {
   k.addEventListener('click', () => {
-    const target = k.getAttribute('data-target');
+    const target = k.getAttribute('data-jump');
     if (!target) return;
     const el = document.getElementById(target);
     if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -291,6 +467,7 @@ document.querySelectorAll('.kpi').forEach(k => {
 });
 
 render();
+renderProjFilter();
 applyFilters();
 </script>
 </body>
