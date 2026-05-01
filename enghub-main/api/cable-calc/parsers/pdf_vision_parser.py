@@ -1,18 +1,19 @@
 """
 Vision-based PDF parser для кабельных журналов AutoCAD/PScript-экспорта.
 
-Этот парсер используется как fallback когда:
-  - pdfplumber не нашёл текстовый слой (PDF — векторная графика, шрифты не embedded);
-  - tesseract недоступен или не справился;
-  - есть OPENAI_API_KEY в окружении.
+Используется как fallback когда pdfplumber не нашёл текстовый слой
+(PDF — векторная графика, шрифты не embedded) и tesseract недоступен.
 
 Стратегия:
-  1. PyMuPDF render каждой страницы в PNG 220 DPI.
-  2. Каждая страница base64 → OpenAI chat/completions (gpt-4o) с image_url + json_schema.
-  3. Объединение всех строк в ParseResult.
+  1. PyMuPDF render каждой страницы в PNG (DPI настраиваемое).
+  2. Каждая страница base64 → OpenAI chat/completions (gpt-4o-mini) с image_url + json_schema.
+  3. ThreadPoolExecutor для параллельных запросов — пачка страниц обрабатывается одновременно.
+  4. Объединение всех строк в ParseResult.
 
-ВАЖНО: response_format=json_schema (strict=true) — гарантирует структуру.
-Используем gpt-4o-mini для экономии (рекомендованный default OpenAI cookbook'а).
+Vercel-aware:
+  - MAX_VISION_PAGES (env, default 8) — лимит, чтобы не упереться в timeout.
+  - VISION_DPI (env, default 180) — баланс читаемости и токенов.
+  - VISION_MAX_WORKERS (env, default 4) — параллелизм.
 """
 import base64
 import io
@@ -21,7 +22,8 @@ import os
 import re
 import urllib.request
 import urllib.error
-from typing import List, Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, Optional, Tuple
 
 from .models import CableJournalRow, ParseResult
 from .utils import parse_section, parse_length, parse_cable_mark, parse_voltage
@@ -29,7 +31,11 @@ from .utils import parse_section, parse_length, parse_cable_mark, parse_voltage
 OPENAI_API_BASE = "https://api.openai.com/v1"
 DEFAULT_MODEL = os.environ.get("OPENAI_VISION_MODEL", "gpt-4o-mini")
 
-# JSON schema для структурированного ответа
+MAX_VISION_PAGES = int(os.environ.get("MAX_VISION_PAGES", "8"))
+VISION_DPI = int(os.environ.get("VISION_DPI", "180"))
+VISION_MAX_WORKERS = int(os.environ.get("VISION_MAX_WORKERS", "4"))
+VISION_TIMEOUT_S = int(os.environ.get("VISION_TIMEOUT_S", "45"))
+
 CABLE_JOURNAL_SCHEMA = {
     "name": "cable_journal",
     "schema": {
@@ -80,20 +86,26 @@ def _has_openai_key() -> bool:
     return bool(os.environ.get("OPENAI_API_KEY", "").strip())
 
 
-def _render_pages_to_png(path: str, dpi: int = 220) -> List[bytes]:
-    """PyMuPDF: вернуть список PNG-байтов для каждой страницы."""
+def _render_pages_to_png(path: str, dpi: int = None, max_pages: int = None) -> List[bytes]:
+    """PyMuPDF: вернуть список PNG-байтов для каждой страницы (до max_pages)."""
     import fitz
+    dpi = dpi or VISION_DPI
     pages = []
     with fitz.open(path) as pdf:
         mat = fitz.Matrix(dpi / 72, dpi / 72)
-        for p in pdf:
+        n = len(pdf)
+        if max_pages:
+            n = min(n, max_pages)
+        for i in range(n):
+            p = pdf[i]
             pix = p.get_pixmap(matrix=mat, alpha=False)
             pages.append(pix.tobytes("png"))
     return pages
 
 
-def _post_openai_vision(png_bytes: bytes, model: str, timeout: int = 60) -> dict:
+def _post_openai_vision(png_bytes: bytes, model: str, timeout: int = None) -> dict:
     """Один запрос к chat/completions с одной картинкой и json_schema."""
+    timeout = timeout or VISION_TIMEOUT_S
     api_key = os.environ.get("OPENAI_API_KEY", "")
     b64 = base64.b64encode(png_bytes).decode("ascii")
     payload = {
@@ -164,7 +176,6 @@ def _row_from_vision(item: dict, row_num: int) -> Optional[CableJournalRow]:
         section_str=section_str[:60] if section_str else "",
     )
 
-    # Распарсим сечение в числа через утилиту проекта
     if section_str:
         try:
             phases, s, zs, _raw = parse_section(section_str)
@@ -193,6 +204,18 @@ def _row_from_vision(item: dict, row_num: int) -> Optional[CableJournalRow]:
     return row
 
 
+def _process_page(page_idx: int, png: bytes, model: str) -> Tuple[int, List[dict], Optional[str]]:
+    """Воркер для пула: возвращает (idx, lines, error)."""
+    try:
+        response = _post_openai_vision(png, model=model)
+        content = response["choices"][0]["message"]["content"]
+        parsed = json.loads(content)
+        lines = parsed.get("lines", []) or []
+        return page_idx, lines, None
+    except Exception as e:
+        return page_idx, [], str(e)
+
+
 def parse_pdf_via_vision(path: str, model: str = None) -> ParseResult:
     """
     Полноценный парсер через OpenAI Vision.
@@ -210,40 +233,10 @@ def parse_pdf_via_vision(path: str, model: str = None) -> ParseResult:
     model = model or DEFAULT_MODEL
     result = ParseResult(source_file=os.path.basename(path))
 
-    page_pngs = _render_pages_to_png(path, dpi=220)
-    result.total_pages = len(page_pngs)
+    # Сначала прочитаем общее количество страниц
+    import fitz as _fitz
+    with _fitz.open(path) as pdf_obj:
+        result.total_pages = len(pdf_obj)
 
-    row_num = 1
-    for page_idx, png in enumerate(page_pngs):
-        try:
-            response = _post_openai_vision(png, model=model, timeout=60)
-        except Exception as e:
-            result.warnings.append(f"Стр.{page_idx + 1}: Vision API error: {e}")
-            continue
-
-        try:
-            content = response["choices"][0]["message"]["content"]
-            parsed = json.loads(content)
-            lines = parsed.get("lines", []) or []
-        except Exception as e:
-            result.warnings.append(
-                f"Стр.{page_idx + 1}: не удалось разобрать ответ Vision: {e}"
-            )
-            continue
-
-        page_rows = 0
-        for item in lines:
-            row = _row_from_vision(item, row_num)
-            if row:
-                result.rows.append(row)
-                row_num += 1
-                page_rows += 1
-            else:
-                result.skipped_count += 1
-        if page_rows == 0:
-            result.warnings.append(
-                f"Стр.{page_idx + 1}: Vision вернул 0 строк (возможно, заглавный лист)"
-            )
-
-    result.parsed_count = len(result.rows)
-    return result
+    pages_to_process = min(result.total_pages, MAX_VISION_PAGES)
+    if pages_to_process < result.total
