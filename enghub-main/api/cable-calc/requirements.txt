@@ -2,3 +2,4 @@ pdfplumber
 openpyxl
 python-docx
 Pillow
+PyMuPDF

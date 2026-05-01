@@ -134,7 +134,7 @@ def parse_pdf(path: str) -> ParseResult:
             else:
                 if not (_HAS_PIL and _HAS_TESSERACT):
                     result.warnings.append(
-                        f"Стр.{page_idx + 1}: скан-PDF, OCR недоступен на сервере"
+                        f"Стр.{page_idx + 1}: текстового слоя нет, tesseract недоступен"
                     )
                     continue
                 txt = _ocr_page(page)
@@ -146,4 +146,5 @@ def parse_pdf(path: str) -> ParseResult:
                 row_num += len(new_rows)
 
     result.parsed_count = len(result.rows)
-    return result
+
+    # V
