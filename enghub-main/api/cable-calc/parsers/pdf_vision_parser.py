@@ -31,10 +31,10 @@ from .utils import parse_section, parse_length, parse_cable_mark, parse_voltage
 OPENAI_API_BASE = "https://api.openai.com/v1"
 DEFAULT_MODEL = os.environ.get("OPENAI_VISION_MODEL", "gpt-4o-mini")
 
-MAX_VISION_PAGES = int(os.environ.get("MAX_VISION_PAGES", "8"))
-VISION_DPI = int(os.environ.get("VISION_DPI", "180"))
-VISION_MAX_WORKERS = int(os.environ.get("VISION_MAX_WORKERS", "4"))
-VISION_TIMEOUT_S = int(os.environ.get("VISION_TIMEOUT_S", "45"))
+MAX_VISION_PAGES = int(os.environ.get("MAX_VISION_PAGES", "3"))
+VISION_DPI = int(os.environ.get("VISION_DPI", "160"))
+VISION_MAX_WORKERS = int(os.environ.get("VISION_MAX_WORKERS", "3"))
+VISION_TIMEOUT_S = int(os.environ.get("VISION_TIMEOUT_S", "8"))
 
 CABLE_JOURNAL_SCHEMA = {
     "name": "cable_journal",
@@ -239,4 +239,4 @@ def parse_pdf_via_vision(path: str, model: str = None) -> ParseResult:
         result.total_pages = len(pdf_obj)
 
     pages_to_process = min(result.total_pages, MAX_VISION_PAGES)
-    if pages_to_process < result.total
+    if pages_to_process < result.total_

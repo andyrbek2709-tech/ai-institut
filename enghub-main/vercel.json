@@ -2,9 +2,6 @@
   "functions": {
     "api/spec-export.js": {
       "includeFiles": "{api/template.xlsx,node_modules/exceljs/**}"
-    },
-    "api/cable-calc/parse.py": {
-      "maxDuration": 60
     }
   },
   "rewrites": [
@@ -12,4 +9,8 @@
   ],
   "crons": [
     {
-      "path": "/
+      "path": "/api/weekly-digest",
+      "schedule": "0 8 * * 1"
+    }
+  ]
+}
