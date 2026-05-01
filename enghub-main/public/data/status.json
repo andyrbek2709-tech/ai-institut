@@ -1,9 +1,9 @@
 {
   "status": "ai-processing",
-  "current_step": "Старт AI: 881 элементов",
-  "progress_pct": 0,
-  "items_processed": 0,
+  "current_step": "AI обрабатывает (батч 5/30)",
+  "progress_pct": 16,
+  "items_processed": 150,
   "items_total": 881,
-  "updated_at": "2026-05-01T08:05:33Z",
+  "updated_at": "2026-05-01T08:06:03Z",
   "started_at": "2026-05-01T08:05:33Z"
 }
