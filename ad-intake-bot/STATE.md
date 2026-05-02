@@ -119,3 +119,22 @@ _Последнее обновление: 2026-05-01_
 **Push:** в `andyrbek2709-tech/ai-institut`, ветка `main`. Railway автодеплой из `main`.
 **Локально:** D:\AdIntakeBot — синхронизирован с repo (handlers/prompts/openai/whisper/supabase/state + migration).
 **Smoke-тест:** из песочницы Railway/api.telegram.org в allowlist нет → нужен реальный тест от пользователя.
+
+---
+
+## 2026-05-02 — FEAT: переписан system prompt — менеджер рекламного агентства
+
+**Что сделано:**
+- `src/bot/prompts.js` → SYSTEM_PROMPT_BASE полностью переписан
+- Новая роль: «менеджер рекламного агентства», не анкета
+- Принцип: сначала ПОНЯТЬ (отразить что услышал) → потом СПРАШИВАТЬ
+- Логика для вывесок: место → размер → содержание → макет → срок → контакт
+- Реакция на изображения обязательна: комментарий + уточняющий вопрос
+- Контакт: переспрашивать мягко если непонятно («лучше телефон или Telegram?»)
+- Многоязычность сохранена — блок `{LANG_NAME}` поднят в начало промта (КРИТИЧНО)
+- `SAVE_ORDER_FUNCTION` schema НЕ изменена (поля те же)
+- `handlers.js` / `openai.js` / `whisper.js` — без изменений (один промт на всех)
+
+**Commit:** `4733875` `feat(ad-intake-bot): rewrite system prompt — conversational manager with sign-shop logic`
+**Push:** в `andyrbek2709-tech/ai-institut`, ветка `main` (Railway автодеплой).
+**Verified:** `/health` = OK, Telegram `sendMessage` chat 463076251 → `ok:true, message_id=40`. Пользователю отправлено уведомление: «🤖 Промт обновлён, бот перезапущен на Railway. Можно тестировать».
