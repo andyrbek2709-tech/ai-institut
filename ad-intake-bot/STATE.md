@@ -79,3 +79,43 @@ _Последнее обновление: 2026-05-01_
 ### Будущее (когда будет время)
 - Расширить PAT на отдельный репо `ad-intake-bot` или сделать его основным деплоем
 - Сейчас архитектура «бот живёт подпапкой ai-institut» — нормально для MVP
+
+---
+
+## 2026-05-02 — HOTFIX: бот игнорировал текст/голос от менеджера
+
+**Симптом:** `/start` отвечал, но «вывеска», голосовые и фото — молчали.
+
+**Причина:** `handleText/handleVoice/handleFile` имели guard
+`if (chat.id === MANAGER_CHAT_ID) return` — задумывалось как защита от
+случайных LLM-вызовов в чате менеджера, но менеджер у нас и есть
+единственный тестировщик (chat 463076251 = MANAGER_CHAT_ID), поэтому всё,
+кроме команд, дропалось.
+
+**Fix:** убрал guard'ы из text/voice/file. Менеджерские маршруты
+(`/new`, `/active`, `/today`, callback_query) остались в порядке —
+они роутятся ДО `bot.on('text')`.
+
+**Commit:** `8cfcea9` `fix(ad-intake-bot): handle text/voice/files for manager too`
+**Verified:** POST синтетического update'а на `/webhook/<TOKEN>` → 200,
+тело ответа `sendChatAction:typing` для chat 463076251. Никаких
+последующих ошибок в `getWebhookInfo`. Бот реально отвечает.
+
+---
+
+## 2026-05-02 — FEAT: автоопределение языка (ru/kk/en) + бейдж в карточке
+
+**Что сделано:**
+- `/start` многоязычный (RU+KK+EN, без кнопок выбора)
+- Автодетект через `gpt-4o-mini` (дешевый промт, 1 токен ответ) на каждой текстовой реплике клиента — это позволяет ловить и переключение языка по ходу диалога
+- В `prompts.js` system-prompt параметризован: подставляется «русский / казахский / English»
+- `whisper.js` принимает `language` хинт, когда язык уже известен
+- Supabase: новые колонки `conversations.lang` и `orders.lang` (миграция `002_add_lang.sql`, применена через MCP)
+- Менеджеру в карточке заявки первая строка теперь содержит бейдж: `🆕 Новая заявка №xxxx [🇰🇿 KZ]` (или RU / EN)
+- Флаг-эмодзи (🇷🇺 / 🇰🇿 / 🇬🇧) префиксится в ответ бота **только при смене языка** — чтобы не загромождать диалог
+- Финальное подтверждение `✅ Заявка №xxxx принята!` локализовано (ru/kk/en)
+
+**Commit:** `f453a28` `feat(ad-intake-bot): auto language detection (ru/kk/en) with flag prefix`
+**Push:** в `andyrbek2709-tech/ai-institut`, ветка `main`. Railway автодеплой из `main`.
+**Локально:** D:\AdIntakeBot — синхронизирован с repo (handlers/prompts/openai/whisper/supabase/state + migration).
+**Smoke-тест:** из песочницы Railway/api.telegram.org в allowlist нет → нужен реальный тест от пользователя.
