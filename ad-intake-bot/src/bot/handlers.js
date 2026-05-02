@@ -12,6 +12,7 @@ import {
 import {
   createLead,
   getLeadById,
+  getActiveLeadByChatId,
   updateLead,
   getLeadsByStatus,
   getLeadsByTier,
@@ -110,6 +111,36 @@ async function handleReset(ctx) {
   await ctx.reply("Окей, начнём заново 🔄\n\nРасскажите, что за заказ?");
 }
 
+// ─── Post-finalize forward: после оформления заявки клиентский чат
+//     ведёт менеджер. Любые сообщения клиента форвардим в MANAGER_CHAT_ID
+//     с префиксом «📨 Клиент #<leadId>», LLM не дёргаем. ───────────────────
+async function forwardCompletedClientMessage(ctx, text) {
+  try {
+    const chatId = ctx.chat?.id;
+    if (!chatId) return false;
+    if (String(chatId) === MANAGER_CHAT_ID) return false;
+    const lead = await getActiveLeadByChatId(chatId);
+    if (!lead) return false;
+
+    const leadShort = String(lead.id).substring(0, 8);
+    const username = ctx.from?.username
+      ? `@${ctx.from.username}`
+      : `id${ctx.from?.id ?? ""}`;
+    const header = `📨 Клиент #${leadShort} (${username}, chat ${chatId}):`;
+    const body = String(text || "").trim();
+    await _bot.telegram.sendMessage(MANAGER_CHAT_ID, `${header}\n${body}`);
+
+    if (lead.conversation_id) {
+      try { await appendConversationMessage(lead.conversation_id, "user", body); }
+      catch (e) { console.error("appendConversationMessage(post-finalize) failed:", e.message); }
+    }
+    return true;
+  } catch (err) {
+    console.error("forwardCompletedClientMessage error:", err.message);
+    return false;
+  }
+}
+
 // ─── Text / Voice / Files ────────────────────────────────────────────────────
 
 export async function handleText(ctx) {
@@ -127,6 +158,9 @@ export async function handleText(ctx) {
     }
   }
 
+  // После finalize ведёт менеджер — форвардим, не запускаем LLM заново.
+  if (await forwardCompletedClientMessage(ctx, userMessage)) return;
+
   await processUserMessage(ctx, userMessage);
 }
 
@@ -139,6 +173,8 @@ export async function handleVoice(ctx) {
       await ctx.reply("Не получилось распознать голос, попробуйте ещё раз или напишите текстом 🙏");
       return;
     }
+    // После finalize: голосовой текст уходит менеджеру, не в LLM.
+    if (await forwardCompletedClientMessage(ctx, `🎙 ${text}`)) return;
     // (voice echo removed — speak content directly)
     await processUserMessage(ctx, text);
   } catch (err) {
@@ -166,6 +202,18 @@ export async function handleFile(ctx) {
     }
 
     const link = await ctx.telegram.getFileLink(fileId);
+
+    // После finalize: файлы тоже отдаём менеджеру, без LLM-цикла.
+    {
+      const caption0 = ctx.message.caption?.trim();
+      const fwdMsg = `📎 ${label}: ${link.href}${caption0 ? `\nподпись: ${caption0}` : ""}`;
+      if (await forwardCompletedClientMessage(ctx, fwdMsg)) {
+        try { addFile(ctx.chat.id, link.href); } catch { /* ignore */ }
+        await ctx.reply("Принял, передал менеджеру 👍");
+        return;
+      }
+    }
+
     addFile(ctx.chat.id, link.href);
 
     const caption = ctx.message.caption?.trim();

@@ -117,6 +117,23 @@ export async function createLead({ conversationId, orderId, telegramUserId, tele
   return lead;
 }
 
+export async function getActiveLeadByChatId(telegramChatId) {
+  if (!telegramChatId && telegramChatId !== 0) return null;
+  const { data, error } = await supabase
+    .from("leads")
+    .select("*")
+    .eq("telegram_chat_id", Number(telegramChatId))
+    .in("status", ["new", "in_progress"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error("getActiveLeadByChatId error:", error.message);
+    return null;
+  }
+  return data || null;
+}
+
 export async function getLeadById(id) {
   const { data, error } = await supabase.from("leads").select("*").eq("id", id).single();
   if (error) throw new Error(error.message);
