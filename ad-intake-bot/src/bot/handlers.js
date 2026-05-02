@@ -104,7 +104,7 @@ export async function handleVoice(ctx) {
       await ctx.reply("Не получилось распознать голос, попробуйте ещё раз или напишите текстом 🙏");
       return;
     }
-    await ctx.reply(`🎙 ${text}`);
+    // (voice echo removed — speak content directly)
     await processUserMessage(ctx, text);
   } catch (err) {
     console.error("Voice error:", err.message);
@@ -342,14 +342,14 @@ async function processUserMessage(ctx, userMessage) {
     }).catch((err) => console.error("Conversation upsert failed:", err.message));
 
     if (parts.length === 2) {
-      const first = flagShown ? `${meta.flag} ${parts[0]}` : parts[0];
+      const first = parts[0];
       await ctx.reply(first);
       await sleep(420);
       await ctx.sendChatAction("typing").catch(() => {});
       await sleep(80);
       await ctx.reply(parts[1]);
     } else {
-      const single = flagShown ? `${meta.flag} ${parts[0]}` : parts[0];
+      const single = parts[0];
       await ctx.reply(single);
     }
   } catch (err) {
