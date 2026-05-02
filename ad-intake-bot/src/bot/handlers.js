@@ -10,6 +10,18 @@ import {
   getOrdersToday,
 } from "../services/supabase.js";
 import {
+  createLead,
+  getLeadById,
+  updateLead,
+  getLeadsByStatus,
+  getLeadsByTier,
+  getLeadsSummary,
+  getConversationHistoryForLead,
+  appendConversationMessage,
+  calcLeadScore,
+  scoreBadge,
+} from "../services/leads.js";
+import {
   getContext,
   setContext,
   clearContext,
@@ -32,6 +44,10 @@ const MANAGER_CHAT_ID = String(process.env.MANAGER_CHAT_ID);
 
 let _bot = null;
 
+// In-memory state для clarify-flow: ждём ответа менеджера на ForceReply.
+// key = managerChatId (string), value = { leadId, promptMessageId }
+const pendingClarify = new Map();
+
 export function registerHandlers(bot) {
   _bot = bot;
 
@@ -45,6 +61,8 @@ export function registerHandlers(bot) {
   bot.command("new", ownerOnly((ctx) => handleOwnerList(ctx, "new", "🆕 Новые заявки")));
   bot.command("active", ownerOnly((ctx) => handleOwnerList(ctx, "in_progress", "🔄 В работе")));
   bot.command("today", ownerOnly(handleOwnerToday));
+  bot.command("leads", ownerOnly(handleLeadsCommand));
+  bot.command("reply", ownerOnly(handleReplyCommand));
   bot.command("help", handleHelp);
   bot.command("reset", handleReset);
 
@@ -93,6 +111,18 @@ async function handleReset(ctx) {
 export async function handleText(ctx) {
   const userMessage = ctx.message.text?.trim();
   if (!userMessage) return;
+
+  // ─── Clarify-flow: менеджер ответил на ForceReply от lead:clarify ──────
+  if (String(ctx.chat?.id) === MANAGER_CHAT_ID) {
+    const pc = pendingClarify.get(MANAGER_CHAT_ID);
+    const replyToId = ctx.message?.reply_to_message?.message_id;
+    if (pc && replyToId && replyToId === pc.promptMessageId) {
+      pendingClarify.delete(MANAGER_CHAT_ID);
+      await sendManagerReplyToClient(ctx, pc.leadId, userMessage);
+      return;
+    }
+  }
+
   await processUserMessage(ctx, userMessage);
 }
 
@@ -470,6 +500,23 @@ async function finalizeOrder(ctx, entry, args) {
       lang,
     });
 
+    // ─── CRM: создаём лида со score ────────────────────────────────────────
+    let lead = null;
+    try {
+      const score = calcLeadScore({ orderData: entry.orderData, files: entry.files });
+      lead = await createLead({
+        conversationId: conversation.id,
+        orderId: order.id,
+        telegramUserId: userId,
+        telegramChatId: chatId,
+        data: { ...(entry.orderData || {}), order_id: order.id, lang, username: ctx.from?.username || null },
+        leadScore: score,
+      });
+      console.log(`[lead] created id=${lead.id} score=${score} order=${order.id.substring(0,8)}`);
+    } catch (err) {
+      console.error("Lead creation failed:", err.message);
+    }
+
     await completeConversation(conversation.id);
     clearContext(chatId);
 
@@ -481,7 +528,7 @@ async function finalizeOrder(ctx, entry, args) {
     }[lang] || `✅ Заявка №${short} принята!`;
     await ctx.reply(confirm);
 
-    await notifyManager(ctx, order, lang, args);
+    await notifyManager(ctx, order, lang, args, lead);
   } catch (err) {
     console.error("Finalize error:", err.message);
     await ctx.reply("Заявку записал, но возникла техническая ошибка при сохранении. Менеджер всё равно увидит ваше обращение.");
@@ -494,18 +541,21 @@ async function finalizeOrder(ctx, entry, args) {
   }
 }
 
-async function notifyManager(ctx, order, lang = "ru", rawArgs = {}) {
+async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null) {
   const username = ctx.from?.username ? `@${ctx.from.username}` : `id:${ctx.from?.id}`;
   const meta = getLangMeta(lang);
+  const score = lead?.lead_score ?? 50;
+  const badge = scoreBadge(score);
+  const headerId = lead ? `#${lead.id}` : `№${order.id.substring(0, 8)}`;
+
   const lines = [
-    `🆕 Новая заявка №${order.id.substring(0, 8)} [${meta.badge}]`,
+    `🆕 Новый лид ${headerId} [${meta.badge}] ${badge} (${score})`,
     ``,
     `🎯 Услуга: ${order.service_type || "—"}`,
     `📝 ${order.description || "—"}`,
   ];
   if (order.size) lines.push(`📐 Размер: ${order.size}`);
   if (order.quantity) lines.push(`🔢 Кол-во: ${order.quantity}`);
-  // Дополнительные поля сценария — если есть в rawArgs (БД их пока не персистит отдельными колонками).
   const extras = [
     ["📍 Где",     rawArgs.location],
     ["💡 Подсветка", rawArgs.lighting],
@@ -529,9 +579,19 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}) {
   lines.push(``, `👤 От: ${username}`);
   if (order.files?.length) lines.push(`📎 Файлов: ${order.files.length}`);
 
-  const keyboard = {
+  // Если лид не создался — fallback на старые order-кнопки.
+  const keyboard = lead ? {
+    inline_keyboard: [
+      [{ text: "🎯 Взять в работу", callback_data: `lead:take:${lead.id}` }],
+      [{ text: "💬 Уточнить",       callback_data: `lead:clarify:${lead.id}` }],
+      [
+        { text: "✓ Закрыть",   callback_data: `lead:close:${lead.id}` },
+        { text: "✗ Отклонить", callback_data: `lead:reject:${lead.id}` },
+      ],
+    ],
+  } : {
     inline_keyboard: [[
-      { text: "✅ Принять", callback_data: `accept:${order.id}` },
+      { text: "✅ Принять",   callback_data: `accept:${order.id}` },
       { text: "❌ Отклонить", callback_data: `reject:${order.id}` },
     ]],
   };
@@ -548,14 +608,21 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}) {
 async function handleCallback(ctx) {
   const data = ctx.callbackQuery?.data;
   if (!data) return;
-  const [action, id] = data.split(":");
-  if (!id) return;
 
   const chatId = String(ctx.callbackQuery.message?.chat?.id);
   if (chatId !== MANAGER_CHAT_ID) {
     await ctx.answerCbQuery("Только менеджер").catch(() => {});
     return;
   }
+
+  // Lead-callbacks: lead:take:N, lead:clarify:N, lead:close:N, lead:reject:N, lead:open:N
+  if (data.startsWith("lead:")) {
+    return handleLeadCallback(ctx, data, chatId);
+  }
+
+  // Legacy order-callbacks: accept:UUID, reject:UUID
+  const [action, id] = data.split(":");
+  if (!id) return;
 
   try {
     const msgId = ctx.callbackQuery.message.message_id;
@@ -590,7 +657,330 @@ async function handleCallback(ctx) {
   }
 }
 
-// ─── Manager-only listings ───────────────────────────────────────────────────
+// ─── Lead callbacks (CRM в Telegram) ─────────────────────────────────────────
+
+async function handleLeadCallback(ctx, data, chatId) {
+  const [, action, leadIdStr] = data.split(":");
+  const leadId = parseInt(leadIdStr, 10);
+  if (!leadId || !action) {
+    await ctx.answerCbQuery("Неверные данные").catch(() => {});
+    return;
+  }
+
+  const msgId = ctx.callbackQuery.message?.message_id;
+
+  try {
+    let lead;
+    try {
+      lead = await getLeadById(leadId);
+    } catch (e) {
+      await ctx.answerCbQuery("Лид не найден").catch(() => {});
+      return;
+    }
+
+    if (action === "take") {
+      await updateLead(leadId, { status: "in_progress", assigned_to: Number(ctx.from.id) });
+      await ctx.answerCbQuery("Взято в работу").catch(() => {});
+      if (msgId) {
+        await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, {
+          inline_keyboard: [
+            [{ text: "💬 Уточнить",   callback_data: `lead:clarify:${leadId}` }],
+            [
+              { text: "✓ Закрыть",   callback_data: `lead:close:${leadId}` },
+              { text: "✗ Отклонить", callback_data: `lead:reject:${leadId}` },
+            ],
+          ],
+        }).catch(() => {});
+      }
+      await ctx.telegram.sendMessage(chatId,
+        `🎯 Вы взяли заявку #${leadId} в работу.\n` +
+        `Можете писать клиенту через бота: /reply ${leadId} <текст>`
+      );
+      return;
+    }
+
+    if (action === "clarify") {
+      const sent = await ctx.telegram.sendMessage(
+        chatId,
+        `💬 Введите сообщение клиенту по заявке #${leadId}:`,
+        { reply_markup: { force_reply: true, selective: true } }
+      );
+      pendingClarify.set(MANAGER_CHAT_ID, { leadId, promptMessageId: sent.message_id });
+      await ctx.answerCbQuery("Ответьте на это сообщение").catch(() => {});
+      return;
+    }
+
+    if (action === "close") {
+      await updateLead(leadId, { status: "closed" });
+      await ctx.answerCbQuery("Закрыто").catch(() => {});
+      if (msgId) await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+      await ctx.telegram.sendMessage(chatId, `✓ Заявка #${leadId} закрыта.`);
+      const cLang = lead.data?.lang || "ru";
+      const closedMsg = {
+        ru: "Спасибо за обращение! Заявка обработана ✅",
+        kk: "Хабарласқаныңызға рахмет! Өтінім өңделді ✅",
+        en: "Thank you! Your request has been handled ✅",
+      }[cLang] || "Спасибо за обращение! Заявка обработана ✅";
+      if (lead.telegram_chat_id) {
+        await ctx.telegram.sendMessage(String(lead.telegram_chat_id), closedMsg).catch(() => {});
+      }
+      return;
+    }
+
+    if (action === "reject") {
+      await updateLead(leadId, { status: "rejected" });
+      await ctx.answerCbQuery("Отклонено").catch(() => {});
+      if (msgId) await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+      await ctx.telegram.sendMessage(chatId, `✗ Заявка #${leadId} отклонена.`);
+      const cLang = lead.data?.lang || "ru";
+      const rejectedMsg = {
+        ru: "К сожалению, по вашему запросу мы не сможем помочь. Спасибо за обращение!",
+        kk: "Өкінішке орай, сіздің сұранысыңыз бойынша көмектесе алмаймыз. Хабарласқаныңызға рахмет!",
+        en: "Unfortunately, we can't help with your request. Thanks for reaching out!",
+      }[cLang] || "К сожалению, по вашему запросу мы не сможем помочь.";
+      if (lead.telegram_chat_id) {
+        await ctx.telegram.sendMessage(String(lead.telegram_chat_id), rejectedMsg).catch(() => {});
+      }
+      return;
+    }
+
+    if (action === "open") {
+      await ctx.answerCbQuery().catch(() => {});
+      await sendLeadDetail(ctx, leadId);
+      return;
+    }
+
+    await ctx.answerCbQuery("Неизвестное действие").catch(() => {});
+  } catch (err) {
+    console.error("Lead callback error:", err.message);
+    await ctx.answerCbQuery(`Ошибка: ${err.message}`).catch(() => {});
+  }
+}
+
+// ─── Manager → Client reply (через /reply N <текст> или clarify ForceReply) ──
+
+async function sendManagerReplyToClient(ctx, leadId, text) {
+  try {
+    const lead = await getLeadById(leadId);
+    if (!lead) {
+      await ctx.reply(`Лид #${leadId} не найден.`);
+      return;
+    }
+    if (!lead.telegram_chat_id) {
+      await ctx.reply(`У лида #${leadId} нет chat_id клиента.`);
+      return;
+    }
+
+    const cLang = lead.data?.lang || "ru";
+    const prefix = { ru: "Менеджер:", kk: "Менеджер:", en: "Manager:" }[cLang] || "Менеджер:";
+    const msg = `${prefix} ${text}`;
+
+    await _bot.telegram.sendMessage(String(lead.telegram_chat_id), msg);
+
+    if (lead.conversation_id) {
+      await appendConversationMessage(lead.conversation_id, "manager", text);
+    }
+
+    if (lead.status === "new") {
+      await updateLead(leadId, { status: "in_progress", assigned_to: Number(ctx.from.id) });
+    }
+
+    await ctx.reply(`✓ Отправлено клиенту по лиду #${leadId}.`);
+  } catch (err) {
+    console.error("sendManagerReplyToClient error:", err.message);
+    await ctx.reply(`Ошибка отправки: ${err.message}`);
+  }
+}
+
+async function handleReplyCommand(ctx) {
+  const raw = (ctx.message?.text || "").replace(/^\/reply(@\w+)?\s*/, "").trim();
+  const m = raw.match(/^(\d+)\s+([\s\S]+)$/);
+  if (!m) {
+    await ctx.reply("Использование: /reply <ID лида> <текст>\nПример: /reply 12 Здравствуйте! Уточните, пожалуйста, размер.");
+    return;
+  }
+  const leadId = parseInt(m[1], 10);
+  const text = m[2].trim();
+  await sendManagerReplyToClient(ctx, leadId, text);
+}
+
+// ─── /leads command ──────────────────────────────────────────────────────────
+
+async function handleLeadsCommand(ctx) {
+  const raw = (ctx.message?.text || "").replace(/^\/leads(@\w+)?/, "").trim();
+  const parts = raw ? raw.split(/\s+/) : [];
+
+  if (parts.length === 0) return sendLeadsSummary(ctx);
+
+  const arg = parts[0].toLowerCase();
+  if (/^\d+$/.test(arg)) return sendLeadDetail(ctx, parseInt(arg, 10));
+  if (arg === "new" || arg === "in_progress" || arg === "closed" || arg === "rejected") {
+    return sendLeadsListByStatus(ctx, arg);
+  }
+  if (arg === "hot" || arg === "warm" || arg === "cold") {
+    return sendLeadsListByTier(ctx, arg);
+  }
+  await ctx.reply([
+    "Использование:",
+    "/leads — сводка",
+    "/leads new — новые",
+    "/leads in_progress — в работе",
+    "/leads hot|warm|cold — по score",
+    "/leads <ID> — детали",
+  ].join("\n"));
+}
+
+async function sendLeadsSummary(ctx) {
+  try {
+    const s = await getLeadsSummary();
+    const lines = [
+      `📊 Лиды — сводка`,
+      ``,
+      `Всего: ${s.total}  •  активных: ${s.active}`,
+      ``,
+      `🆕 new: ${s.by_status.new}`,
+      `🔄 in_progress: ${s.by_status.in_progress}`,
+      `✓ closed: ${s.by_status.closed}`,
+      `✗ rejected: ${s.by_status.rejected}`,
+      ``,
+      `🔥 HOT: ${s.by_tier.hot}`,
+      `🟡 WARM: ${s.by_tier.warm}`,
+      `🔵 COLD: ${s.by_tier.cold}`,
+      ``,
+      `Команды: /leads new, /leads in_progress, /leads hot, /leads <ID>`,
+    ];
+    await ctx.reply(lines.join("\n"));
+  } catch (err) {
+    await ctx.reply(`Ошибка сводки: ${err.message}`);
+  }
+}
+
+function leadShortLine(lead) {
+  const badge = scoreBadge(lead.lead_score ?? 50);
+  const cLang = (lead.data?.lang || "ru").toUpperCase();
+  const desc = String(lead.data?.description || lead.data?.type || "—").slice(0, 60);
+  const deadline = lead.data?.deadline || "—";
+  return `#${lead.id} ${badge} [${cLang}] ${desc} • срок: ${deadline}`;
+}
+
+async function sendLeadsListByStatus(ctx, status) {
+  try {
+    const leads = await getLeadsByStatus(status, 10);
+    if (!leads.length) {
+      await ctx.reply(`Лидов со статусом «${status}» нет.`);
+      return;
+    }
+    for (const lead of leads) {
+      const line = leadShortLine(lead);
+      await ctx.reply(line, {
+        reply_markup: {
+          inline_keyboard: [[{ text: "Открыть", callback_data: `lead:open:${lead.id}` }]],
+        },
+      });
+    }
+  } catch (err) {
+    await ctx.reply(`Ошибка: ${err.message}`);
+  }
+}
+
+async function sendLeadsListByTier(ctx, tier) {
+  try {
+    const leads = await getLeadsByTier(tier, 10);
+    if (!leads.length) {
+      await ctx.reply(`Активных лидов уровня «${tier}» нет.`);
+      return;
+    }
+    for (const lead of leads) {
+      const line = leadShortLine(lead);
+      await ctx.reply(line, {
+        reply_markup: {
+          inline_keyboard: [[{ text: "Открыть", callback_data: `lead:open:${lead.id}` }]],
+        },
+      });
+    }
+  } catch (err) {
+    await ctx.reply(`Ошибка: ${err.message}`);
+  }
+}
+
+async function sendLeadDetail(ctx, leadId) {
+  try {
+    const lead = await getLeadById(leadId);
+    if (!lead) {
+      await ctx.reply(`Лид #${leadId} не найден.`);
+      return;
+    }
+    const score = lead.lead_score ?? 50;
+    const badge = scoreBadge(score);
+    const cLang = (lead.data?.lang || "ru").toUpperCase();
+    const d = lead.data || {};
+
+    const head = [
+      `📋 Лид #${lead.id} ${badge} (${score}) [${cLang}]`,
+      `Статус: ${lead.status}${lead.assigned_to ? ` • назначен: ${lead.assigned_to}` : ""}`,
+      `Создан: ${new Date(lead.created_at).toISOString().slice(0, 16).replace("T", " ")}`,
+    ];
+
+    const fields = [
+      ["🎯 Тип",        d.type],
+      ["📝 Описание",   d.description],
+      ["📐 Размер",     d.size],
+      ["🔢 Кол-во",     d.quantity],
+      ["📍 Где",        d.location],
+      ["💡 Подсветка",  d.lighting],
+      ["🏷 Использование", d.where_use],
+      ["⚪ Форма",      d.shape],
+      ["✨ Материал",   d.material],
+      ["👕 Размеры",    d.sizes],
+      ["🖨 Технология", d.print_type],
+      ["📄 Бумага",     d.paper_type],
+      ["🎁 Изделие",    d.item],
+      ["🎨 Содержание", d.content],
+      ["🖼 Макет",      d.design],
+      ["📅 Срок",       d.deadline],
+      ["💰 Бюджет",     d.budget],
+      ["📞 Контакт",    d.contact],
+    ].filter(([, v]) => v && String(v).trim());
+
+    const lines = [
+      ...head,
+      "",
+      ...fields.map(([k, v]) => `${k}: ${v}`),
+    ];
+    if (Array.isArray(d.files) && d.files.length) lines.push(`📎 Файлов: ${d.files.length}`);
+
+    const kbRows = [];
+    if (lead.status === "new") {
+      kbRows.push([{ text: "🎯 Взять в работу", callback_data: `lead:take:${lead.id}` }]);
+    }
+    if (lead.status === "new" || lead.status === "in_progress") {
+      kbRows.push([{ text: "💬 Уточнить", callback_data: `lead:clarify:${lead.id}` }]);
+      kbRows.push([
+        { text: "✓ Закрыть",   callback_data: `lead:close:${lead.id}` },
+        { text: "✗ Отклонить", callback_data: `lead:reject:${lead.id}` },
+      ]);
+    }
+
+    await ctx.reply(lines.join("\n"), kbRows.length ? { reply_markup: { inline_keyboard: kbRows } } : {});
+
+    if (lead.conversation_id) {
+      const { history } = await getConversationHistoryForLead(lead.conversation_id, 10);
+      if (history && history.length) {
+        const histLines = ["💬 Последние сообщения:"];
+        for (const m of history) {
+          const role = m.role === "assistant" ? "🤖" : (m.role === "manager" ? "👤" : "👥");
+          const txt = String(m.content || "").slice(0, 200).replace(/\n+/g, " ");
+          histLines.push(`${role} ${txt}`);
+        }
+        await ctx.reply(histLines.join("\n"));
+      }
+    }
+  } catch (err) {
+    await ctx.reply(`Ошибка: ${err.message}`);
+  }
+}
+
+// ─── Manager-only listings (legacy /new, /active, /today) ────────────────────
 
 async function handleOwnerList(ctx, status, title) {
   try {

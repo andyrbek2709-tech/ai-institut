@@ -156,3 +156,22 @@ _Последнее обновление: 2026-05-01_
 **Sanity-tests** (мердж локально через node, без openai-deps): files dedup, null→skip, boolean overwrite, longer-string-wins, missing-required — все ок.
 
 **Принципы:** «не задавать промежуточных вопросов сверх существующих сценариев» — финальная валидация только в момент save_order; обычный диалог идёт через `nextStepFor + getQuestion` как и раньше.
+
+---
+
+## 2026-05-02 — FEAT: in-Telegram CRM (leads + score + действия + /leads + /reply)
+
+**Что сделано:**
+- `supabase/migrations/004_leads.sql` — новая таблица `leads` (id BIGSERIAL, conversation_id UUID, order_id UUID, telegram_user_id/chat_id BIGINT, status, lead_score 0-100, assigned_to, data JSONB), индексы по status/assigned/created/score, RLS включён, политика `service_role_all`. Применена через Supabase MCP к проекту `jbdljdwlfimvmqybzynv`.
+- `src/services/leads.js` — `calcLeadScore` (полнота +30, дедлайн <7д +20 / 7-30д +10, бюджет +15, качественный контакт +10, файлы +10), `scoreBadge` (🔥/🟡/🔵), CRUD: createLead/getLeadById/updateLead/getLeadsByStatus/getLeadsByTier/getLeadsSummary, `appendConversationMessage`.
+- `src/bot/handlers.js`:
+  - `finalizeOrder` теперь после INSERT в orders создаёт лида (orderId связан, score рассчитан).
+  - `notifyManager` — новые inline-кнопки: 🎯 Взять в работу / 💬 Уточнить / ✓ Закрыть / ✗ Отклонить. Заголовок: «🆕 Новый лид #ID [LANG] 🔥/🟡/🔵 (score)».
+  - `handleLeadCallback` — обрабатывает `lead:take/clarify/close/reject/open`. take ставит in_progress + assigned_to. clarify открывает ForceReply, перехватывается в `handleText`, сообщение менеджера форвардится клиенту с префиксом «Менеджер:» (локализовано ru/kk/en) и логируется в conversation.history.
+  - Новая команда `/leads` (только менеджер): без аргументов — сводка (всего/активных, по статусам, по tier). `/leads new|in_progress|closed|rejected` — список с кнопкой [Открыть]. `/leads hot|warm|cold` — фильтр по score. `/leads <ID>` — детали лида + последние 10 сообщений диалога + кнопки действий.
+  - Новая команда `/reply N <текст>` — менеджер пишет клиенту по лиду N. Если статус был new — переводится в in_progress.
+  - Старые `accept`/`reject` callbacks сохранены как fallback.
+- Многоязычность ru/kk/en сохранена для клиентских сообщений (close/reject/manager-reply prefix). Менеджерские тексты — на русском.
+
+**Принципы соблюдены:** никакого веб-приложения, всё через Telegram. Существующие таблицы orders/conversations не затронуты. Команды менеджера авторизуются по `MANAGER_CHAT_ID`.
+
