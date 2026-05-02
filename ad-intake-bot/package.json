@@ -1,0 +1,21 @@
+{
+  "name": "ad-intake-bot",
+  "version": "0.1.0",
+  "description": "Telegram intake bot for advertising agency — collects briefs via voice + text + files, GPT-4o-mini + Whisper, stores in Supabase, forwards to manager",
+  "main": "src/index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.0",
+    "openai": "^6.34.0",
+    "telegraf": "^4.16.3"
+  }
+}
