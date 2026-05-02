@@ -1,6 +1,8 @@
 import OpenAI from "openai";
 import { buildSystemPrompt, SAVE_ORDER_FUNCTION } from "../bot/prompts.js";
 import { SERVICE_TYPES } from "../bot/scenarios.js";
+import { EXTRACT_SYSTEM, buildExtractUserMessage } from "../bot/extractPrompt.js";
+import { normalizeToSchema, makeEmptyOrder } from "../bot/orderSchema.js";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -203,4 +205,140 @@ export async function extractPartialBrief(messages) {
     console.error("extractPartialBrief failed:", err.message);
     return {};
   }
+}
+
+// ─── Formal structured extraction (extractData + mergeData) ──────────────────
+
+/**
+ * Извлечь delta-JSON из одного сообщения пользователя.
+ * Возвращает только НОВЫЕ или БОЛЕЕ ТОЧНЫЕ поля.
+ * Никогда не бросает — на ошибке логирует и возвращает {}.
+ *
+ * @param {string} userMessage  — последнее сообщение клиента (может содержать [файл прикреплён: URL])
+ * @param {object} currentData  — уже собранный orderData (см. ORDER_SCHEMA)
+ * @param {string} lang         — "ru" | "kk" | "en" (хинт; промт сам мультиязычный)
+ * @returns {Promise<object>} delta
+ */
+export async function extractData(userMessage, currentData = {}, lang = "ru") {
+  if (!userMessage || !String(userMessage).trim()) return {};
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: EXTRACT_SYSTEM },
+        {
+          role: "user",
+          content: buildExtractUserMessage({
+            currentData: stripEmpty(currentData),
+            userMessage,
+          }),
+        },
+      ],
+      temperature: 0,
+      max_tokens: 350,
+      response_format: { type: "json_object" },
+    });
+    const raw = response.choices[0].message.content || "{}";
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      console.error("extractData: JSON parse failed:", e.message, "raw:", raw);
+      return {};
+    }
+    // Нормализуем legacy-имена (service_type → type) и фильтруем мусор.
+    const normalized = normalizeToSchema(parsed);
+    const cleaned = {};
+    for (const [k, v] of Object.entries(normalized)) {
+      if (v == null) continue;
+      if (typeof v === "string" && !v.trim()) continue;
+      if (Array.isArray(v) && v.length === 0) continue;
+      cleaned[k] = v;
+    }
+    console.log(`[extractData lang=${lang}] delta=`, JSON.stringify(cleaned));
+    return cleaned;
+  } catch (err) {
+    console.error("extractData failed:", err.message);
+    return {};
+  }
+}
+
+// Внутренняя: убирает null/пустые значения для компактного промта.
+function stripEmpty(obj) {
+  if (!obj || typeof obj !== "object") return {};
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v == null) continue;
+    if (typeof v === "string" && !v.trim()) continue;
+    if (Array.isArray(v) && v.length === 0) continue;
+    if (typeof v === "boolean" && v === false && k !== "needs_measurement") continue;
+    out[k] = v;
+  }
+  return out;
+}
+
+/**
+ * Merge delta в существующий orderData по правилам:
+ *  - null/undefined в delta — пропускаем (не затираем)
+ *  - files: append (de-dup), всегда массив
+ *  - boolean — обновляется всегда (явно сказано true/false)
+ *  - existing пустое → берём delta
+ *  - delta более длинная (точнее) → берём delta
+ *
+ * Никогда не бросает; возвращает новый объект.
+ */
+export function mergeData(existing = {}, delta = {}) {
+  const base = existing && typeof existing === "object" ? existing : {};
+  const merged = { ...makeEmptyOrder(), ...base };
+  if (!delta || typeof delta !== "object") return merged;
+
+  for (const [k, v] of Object.entries(delta)) {
+    if (v === null || v === undefined) continue;
+
+    if (k === "files" && Array.isArray(v)) {
+      const prev = Array.isArray(merged.files) ? merged.files : [];
+      const seen = new Set(prev);
+      const append = [];
+      for (const f of v) {
+        if (typeof f !== "string") continue;
+        if (seen.has(f)) continue;
+        seen.add(f);
+        append.push(f);
+      }
+      merged.files = [...prev, ...append];
+      continue;
+    }
+
+    if (typeof v === "boolean") {
+      merged[k] = v;
+      continue;
+    }
+
+    const existingVal = merged[k];
+    if (existingVal === null || existingVal === undefined || existingVal === "") {
+      merged[k] = v;
+      continue;
+    }
+
+    // Более длинное / точное значение — берём.
+    if (String(v).length > String(existingVal).length) {
+      merged[k] = v;
+      continue;
+    }
+
+    // Иначе оставляем существующее.
+  }
+  return merged;
+}
+
+/**
+ * Какие из обязательных полей всё ещё пустые.
+ */
+export function missingRequiredFields(orderData, requiredFields = ["type", "size", "deadline", "contact"]) {
+  const missing = [];
+  for (const f of requiredFields) {
+    const v = orderData?.[f];
+    if (v == null || (typeof v === "string" && !v.trim())) missing.push(f);
+  }
+  return missing;
 }

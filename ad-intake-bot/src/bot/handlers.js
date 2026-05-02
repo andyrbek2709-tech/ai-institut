@@ -1,4 +1,4 @@
-import { chat, detectLang, describeImage, extractPartialBrief, classifyServiceTypeLLM } from "../services/openai.js";
+import { chat, detectLang, describeImage, extractPartialBrief, classifyServiceTypeLLM, extractData, mergeData, missingRequiredFields } from "../services/openai.js";
 import { transcribeVoice } from "../services/whisper.js";
 import {
   upsertConversation,
@@ -26,6 +26,7 @@ import {
   SCENARIOS,
 } from "./scenarios.js";
 import { getQuestion } from "./questions.js";
+import { makeEmptyOrder, normalizeToSchema, REQUIRED_FIELDS } from "./orderSchema.js";
 
 const MANAGER_CHAT_ID = String(process.env.MANAGER_CHAT_ID);
 
@@ -137,6 +138,17 @@ export async function handleFile(ctx) {
     const existing = getContext(ctx.chat.id);
     const lang = existing?.lang || "ru";
 
+    // Подмешиваем файл в формальный orderData: files += url;
+    // design = "есть макет" если ещё не задан явно.
+    if (existing) {
+      const cur = existing.orderData || makeEmptyOrder();
+      const fileDelta = { files: [link.href] };
+      if (!cur.design) fileDelta.design = "есть макет";
+      existing.orderData = mergeData(cur, fileDelta);
+      setContext(ctx.chat.id, existing);
+      console.log(`[orderData/file] chat=${ctx.chat.id} files=${existing.orderData.files.length} design=${existing.orderData.design}`);
+    }
+
     let vision = null;
     if (isImage) {
       try {
@@ -232,7 +244,9 @@ async function processUserMessage(ctx, userMessage) {
     lang: null,
     flagShown: false,
     serviceCode: null,
+    orderData: makeEmptyOrder(),
   };
+  if (!entry.orderData) entry.orderData = makeEmptyOrder();
   entry.messages = [...entry.messages, { role: "user", content: userMessage }];
 
   // Detect language
@@ -273,6 +287,20 @@ async function processUserMessage(ctx, userMessage) {
       // Если есть прикреплённые файлы — design = "есть макет".
       if ((entry.files || []).length > 0 && !collected.design) {
         collected.design = "есть макет";
+      }
+
+      // ─── Formal structured extraction (extractData → mergeData) ─────
+      console.log(`[processUserMessage] chat=${chatId} userMessage=`, JSON.stringify(String(userMessage).slice(0, 200)));
+      try {
+        const delta = await extractData(userMessage, entry.orderData, lang);
+        const before = entry.orderData;
+        entry.orderData = mergeData(entry.orderData, delta);
+        console.log(`[orderData] chat=${chatId} merged=`, JSON.stringify(entry.orderData));
+        // Подмешиваем legacy-collected (LLM-вызов выше) — нормализуем и сольём.
+        const collectedNormalized = normalizeToSchema(collected);
+        entry.orderData = mergeData(entry.orderData, collectedNormalized);
+      } catch (err) {
+        console.error("extractData/mergeData failed:", err.message);
       }
 
       // Classify / re-classify
@@ -339,6 +367,7 @@ async function processUserMessage(ctx, userMessage) {
       files: entry.files,
       lang,
       status: "active",
+      metadata: { order: entry.orderData || null },
     }).catch((err) => console.error("Conversation upsert failed:", err.message));
 
     if (parts.length === 2) {
@@ -373,6 +402,37 @@ async function finalizeOrder(ctx, entry, args) {
   const userId = ctx.from.id;
   const lang = entry.lang || "ru";
 
+  // ─── Final required-fields validation (formal schema source-of-truth) ─────
+  // entry.orderData собран через extractData/mergeData по ходу диалога.
+  // Если LLM вызвал save_order, но обязательные поля пустые — задаём вопрос
+  // на нужном языке вместо сохранения.
+  try {
+    const od = entry.orderData || {};
+    // Если LLM в args что-то прислал, а в orderData этого ещё нет — подмешаем,
+    // чтобы валидатор увидел свежие данные (LLM иногда extract'ит быстрее, чем extractData).
+    const cross = {
+      type: od.type || args.service_type || null,
+      size: od.size || args.size || null,
+      deadline: od.deadline || args.deadline || null,
+      contact: od.contact || args.contact || null,
+    };
+    const missing = missingRequiredFields(cross, REQUIRED_FIELDS);
+    // contact обработаем ниже (есть отдельная reask-логика)
+    const missingNoContact = missing.filter((f) => f !== "contact");
+    if (missingNoContact.length > 0) {
+      const first = missingNoContact[0];
+      const stepKey = first === "type" ? "service_type" : first;
+      const q = getQuestion(lang, stepKey) || getQuestion(lang, "service_type");
+      if (q) {
+        console.log(`[finalize/validate] chat=${chatId} missing=${missingNoContact.join(",")} ask=${stepKey}`);
+        await ctx.reply(q);
+        return;
+      }
+    }
+  } catch (err) {
+    console.error("Required-fields validation threw:", err.message);
+  }
+
   const fallback = buildTelegramFallbackContact(ctx);
   if (isPlaceholderContact(args.contact) || (!args.contact && fallback)) {
     if (fallback) args.contact = fallback;
@@ -395,13 +455,17 @@ async function finalizeOrder(ctx, entry, args) {
       files: entry.files,
       lang,
       status: "completed",
+      metadata: { order: entry.orderData || null },
     });
 
+    // Подмешиваем формальный orderData в args — попадёт в orders.json_data.
+    const enrichedArgs = { ...args, order_data: entry.orderData || null };
+    console.log(`[finalize] chat=${chatId} args=`, JSON.stringify(args), "orderData=", JSON.stringify(entry.orderData));
     const order = await saveOrder({
       conversationId: conversation.id,
       telegramUserId: userId,
       telegramChatId: chatId,
-      data: args,
+      data: enrichedArgs,
       files: entry.files,
       lang,
     });

@@ -4,7 +4,7 @@ export const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPAB
 
 // ─── Conversations ───────────────────────────────────────────────────────────
 
-export async function upsertConversation({ telegramUserId, telegramChatId, history, files = [], lang = null, status = "active" }) {
+export async function upsertConversation({ telegramUserId, telegramChatId, history, files = [], lang = null, status = "active", metadata = null }) {
   // Find active conversation for this chat
   const { data: existing } = await supabase
     .from("conversations")
@@ -23,13 +23,23 @@ export async function upsertConversation({ telegramUserId, telegramChatId, histo
       updated_at: new Date().toISOString(),
     };
     if (lang) update.lang = lang;
+    if (metadata && typeof metadata === "object") update.metadata = metadata;
     const { data, error } = await supabase
       .from("conversations")
       .update(update)
       .eq("id", existing.id)
       .select()
       .single();
-    if (error) throw new Error(`Conversation update failed: ${error.message}`);
+    if (error) {
+      // Если колонки metadata ещё нет в БД — повторим без неё, не валим бот.
+      if (/metadata/.test(error.message) && update.metadata) {
+        delete update.metadata;
+        const retry = await supabase.from("conversations").update(update).eq("id", existing.id).select().single();
+        if (retry.error) throw new Error(`Conversation update failed: ${retry.error.message}`);
+        return retry.data;
+      }
+      throw new Error(`Conversation update failed: ${error.message}`);
+    }
     return data;
   }
 
@@ -41,12 +51,21 @@ export async function upsertConversation({ telegramUserId, telegramChatId, histo
     status,
   };
   if (lang) insert.lang = lang;
+  if (metadata && typeof metadata === "object") insert.metadata = metadata;
   const { data, error } = await supabase
     .from("conversations")
     .insert(insert)
     .select()
     .single();
-  if (error) throw new Error(`Conversation insert failed: ${error.message}`);
+  if (error) {
+    if (/metadata/.test(error.message) && insert.metadata) {
+      delete insert.metadata;
+      const retry = await supabase.from("conversations").insert(insert).select().single();
+      if (retry.error) throw new Error(`Conversation insert failed: ${retry.error.message}`);
+      return retry.data;
+    }
+    throw new Error(`Conversation insert failed: ${error.message}`);
+  }
   return data;
 }
 

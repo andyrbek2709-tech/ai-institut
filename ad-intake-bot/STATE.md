@@ -138,3 +138,21 @@ _Последнее обновление: 2026-05-01_
 **Commit:** `4733875` `feat(ad-intake-bot): rewrite system prompt — conversational manager with sign-shop logic`
 **Push:** в `andyrbek2709-tech/ai-institut`, ветка `main` (Railway автодеплой).
 **Verified:** `/health` = OK, Telegram `sendMessage` chat 463076251 → `ok:true, message_id=40`. Пользователю отправлено уведомление: «🤖 Промт обновлён, бот перезапущен на Railway. Можно тестировать».
+
+---
+
+## 2026-05-02 — FEAT: формальная структурированная экстракция (orderSchema + extractData + mergeData)
+
+**Что сделано:**
+- `src/bot/orderSchema.js` — каноническая схема ORDER_SCHEMA (type/location/size/needs_measurement/content/design/lighting/where_use/shape/material/quantity/sizes/print_type/paper_type/item/deadline/budget/contact/description/files), helpers `makeEmptyOrder`, `normalizeToSchema` (service_type→type), `REQUIRED_FIELDS = [type,size,deadline,contact]`.
+- `src/bot/extractPrompt.js` — `EXTRACT_SYSTEM` (мультиязычный ru/kk/en, выдаёт ТОЛЬКО JSON-delta) + `buildExtractUserMessage(currentData, userMessage)`.
+- `src/services/openai.js` — добавлены `extractData(userMessage, currentData, lang)` и `mergeData(existing, delta)` (правила: null→skip, files→append+dedup, boolean→overwrite, longer string wins) + `missingRequiredFields()`. `extractPartialBrief` оставлен как legacy-источник для совместимости.
+- `src/bot/handlers.js` — после каждого text/voice/file: `extractData → mergeData` → `entry.orderData`. Файлы из `handleFile` подмешиваются как `{files:[url], design:"есть макет"}`. В `processUserMessage` логируем входящее сообщение, delta и итоговый orderData. В `finalizeOrder` валидация обязательных полей (type/size/deadline) — если пусто, задаём вопрос на нужном языке через `getQuestion(lang, step)` вместо сохранения. orderData также пишется в `orders.json_data.order_data` и в `conversations.metadata.order`.
+- `src/services/supabase.js` — `upsertConversation` принимает опциональный `metadata`; есть graceful fallback если колонки ещё нет (повторяет insert/update без metadata).
+- `supabase/migrations/003_add_metadata.sql` — `ALTER TABLE conversations ADD COLUMN metadata JSONB`. Применена через MCP к проекту `jbdljdwlfimvmqybzynv`. Индекс GIN на metadata.
+
+**Существующая логика (НЕ ломалось):** scenarios.js, questions.js, prompts.js, classifyServiceTypeLLM, extractPartialBrief, branching по service_type, многоязычность ru/kk/en — всё работает как раньше; новые extractData/mergeData параллельно собирают формальный JSON.
+
+**Sanity-tests** (мердж локально через node, без openai-deps): files dedup, null→skip, boolean overwrite, longer-string-wins, missing-required — все ок.
+
+**Принципы:** «не задавать промежуточных вопросов сверх существующих сценариев» — финальная валидация только в момент save_order; обычный диалог идёт через `nextStepFor + getQuestion` как и раньше.
