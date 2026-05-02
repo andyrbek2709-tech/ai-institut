@@ -1,6 +1,9 @@
 """
 Vision-based PDF parser для кабельных журналов AutoCAD/PScript-экспорта.
 Использует OpenAI Vision (gpt-4o-mini) с json_schema strict.
+
+Поддерживает диапазон страниц: parse_pdf_via_vision(path, start_page=1, end_page=3)
+Если start_page/end_page не заданы — берёт первые MAX_VISION_PAGES страниц.
 """
 import base64
 import json
@@ -68,15 +71,25 @@ def _has_openai_key() -> bool:
     return bool(os.environ.get("OPENAI_API_KEY", "").strip())
 
 
-def _render_pages_to_png(path: str, dpi: int, max_pages: int) -> List[bytes]:
+def get_pdf_total_pages(path: str) -> int:
+    """Быстро возвращает количество страниц без рендера."""
+    import fitz
+    with fitz.open(path) as pdf:
+        return len(pdf)
+
+
+def _render_page_range_to_png(path: str, dpi: int, start_idx: int, end_idx: int) -> List[Tuple[int, bytes]]:
+    """Рендерит страницы [start_idx, end_idx) в PNG. Возвращает список (real_page_idx, png)."""
     import fitz
     pages = []
     with fitz.open(path) as pdf:
         mat = fitz.Matrix(dpi / 72, dpi / 72)
-        n = min(len(pdf), max_pages)
-        for i in range(n):
+        n = len(pdf)
+        s = max(0, start_idx)
+        e = min(n, end_idx)
+        for i in range(s, e):
             pix = pdf[i].get_pixmap(matrix=mat, alpha=False)
-            pages.append(pix.tobytes("png"))
+            pages.append((i, pix.tobytes("png")))
     return pages
 
 
@@ -177,7 +190,14 @@ def _process_page(page_idx: int, png: bytes, model: str, timeout: int) -> Tuple[
         return page_idx, [], str(e)
 
 
-def parse_pdf_via_vision(path: str, model: str = None) -> ParseResult:
+def parse_pdf_via_vision(path: str, model: str = None,
+                         start_page: Optional[int] = None,
+                         end_page: Optional[int] = None,
+                         row_num_start: int = 1) -> ParseResult:
+    """
+    start_page, end_page — 1-based, включительно. Если оба None — берёт первые MAX_VISION_PAGES.
+    row_num_start — нумерация строк начинается с этого значения (для склейки батчей в UI).
+    """
     if not _has_openai_key():
         raise RuntimeError("OPENAI_API_KEY не задан")
 
@@ -193,26 +213,44 @@ def parse_pdf_via_vision(path: str, model: str = None) -> ParseResult:
     with _fitz.open(path) as pdf_obj:
         result.total_pages = len(pdf_obj)
 
-    pages_to_process = min(result.total_pages, MAX_VISION_PAGES)
-    if pages_to_process < result.total_pages:
+    # Определяем диапазон страниц (0-based для рендера)
+    if start_page is not None or end_page is not None:
+        sp = max(1, int(start_page or 1))
+        ep = min(result.total_pages, int(end_page or result.total_pages))
+        start_idx = sp - 1
+        end_idx = ep
         result.warnings.append(
-            "Vision: обработано первых " + str(pages_to_process) + " из " +
-            str(result.total_pages) + " стр. (лимит MAX_VISION_PAGES=" +
-            str(MAX_VISION_PAGES) + ")"
+            "Vision: диапазон страниц " + str(sp) + "-" + str(ep) +
+            " из " + str(result.total_pages)
         )
+    else:
+        start_idx = 0
+        end_idx = min(result.total_pages, MAX_VISION_PAGES)
+        if end_idx < result.total_pages:
+            result.warnings.append(
+                "Vision: обработано первых " + str(end_idx) + " из " +
+                str(result.total_pages) + " стр. (лимит MAX_VISION_PAGES=" +
+                str(MAX_VISION_PAGES) + ")"
+            )
 
-    page_pngs = _render_pages_to_png(path, dpi=VISION_DPI, max_pages=pages_to_process)
+    page_pngs = _render_page_range_to_png(path, dpi=VISION_DPI,
+                                          start_idx=start_idx, end_idx=end_idx)
+
+    if not page_pngs:
+        result.parsed_count = 0
+        return result
 
     page_results = []
     workers = max(1, min(VISION_MAX_WORKERS, len(page_pngs)))
     with ThreadPoolExecutor(max_workers=workers) as ex:
-        futures = {ex.submit(_process_page, i, png, model, VISION_TIMEOUT_S): i for i, png in enumerate(page_pngs)}
+        futures = {ex.submit(_process_page, real_idx, png, model, VISION_TIMEOUT_S): real_idx
+                   for real_idx, png in page_pngs}
         for fut in as_completed(futures):
             page_results.append(fut.result())
 
     page_results.sort(key=lambda x: x[0])
 
-    row_num = 1
+    row_num = row_num_start
     for page_idx, lines, err in page_results:
         if err:
             result.warnings.append("Стр." + str(page_idx + 1) + ": Vision API error: " + err)

@@ -512,7 +512,8 @@ let LAST_MODE = null;     // "verify" | "calc"
 
 function setUploadStatus(text, cls){
   const el=g('upload_status');
-  el.textContent=text||'';
+  // Разрешаем HTML (нужен для <span class="spinner"></span>): значения строятся внутри кода, не от пользователя.
+  el.innerHTML=text||'';
   el.className='batch-status'+(cls?' '+cls:'');
 }
 
@@ -525,32 +526,83 @@ function getDefaults(){
   };
 }
 
-async function uploadFile(){
-  const f=g('i_file').files[0];
-  if(!f){setUploadStatus('Файл не выбран','err');return;}
-  const d=getDefaults();
+// Размер пакета для PDF: сколько страниц обрабатывается за один запрос /api/cable-calc/parse.
+// Vercel maxDuration=60s, Vision per-page ~10–15s с параллельностью 3 → 3 страницы за запрос — безопасно.
+const BATCH_PAGES = 3;
+
+function buildFD(file, d, extra){
   const fd=new FormData();
-  fd.append('file',f);
+  fd.append('file',file);
   fd.append('material',d.material);
   fd.append('insulation',d.insulation);
   fd.append('method',d.method);
   fd.append('ambient_temp_c',String(d.ambient_temp_c));
+  if(extra && extra.start_page){fd.append('start_page',String(extra.start_page));}
+  if(extra && extra.end_page){fd.append('end_page',String(extra.end_page));}
+  if(extra && extra.row_num_start){fd.append('row_num_start',String(extra.row_num_start));}
+  return fd;
+}
+
+async function postParse(file, d, extra){
+  const fd=buildFD(file, d, extra);
+  const r=await fetch('/api/cable-calc/parse',{method:'POST',body:fd});
+  const j=await r.json();
+  if(!r.ok || !j.ok){
+    throw new Error(j.error||r.statusText||'parse failed');
+  }
+  return j;
+}
+
+async function uploadFile(){
+  const f=g('i_file').files[0];
+  if(!f){setUploadStatus('Файл не выбран','err');return;}
+  const d=getDefaults();
+  const isPDF=/\.pdf$/i.test(f.name);
   setUploadStatus('Парсинг файла «'+f.name+'»…','');
   g('btn_upload').disabled=true;
   try{
-    const r=await fetch('/api/cable-calc/parse',{method:'POST',body:fd});
-    const j=await r.json();
-    if(!r.ok || !j.ok){
-      setUploadStatus('✗ Ошибка: '+(j.error||r.statusText),'err');
-      return;
-    }
-    JOURNAL={source_file:j.source_file||f.name,defaults:d,lines:j.lines||[],warnings:j.warnings||[]};
-    const total=JOURNAL.lines.length;
-    setUploadStatus(`✓ Распознано ${total} строк (skipped ${j.skipped_count||0})`,'ok');
+    // Для PDF просим первый батч 1..BATCH_PAGES и узнаём total_pages.
+    // Для Excel/Word без диапазона — обработка целиком за один запрос.
+    const firstExtra = isPDF ? {start_page:1, end_page:BATCH_PAGES, row_num_start:1} : null;
+    const j0 = await postParse(f, d, firstExtra);
+    const total_pages = j0.total_pages||0;
+    let allLines = (j0.lines||[]).slice();
+    let allWarnings = (j0.warnings||[]).slice();
+    let skipped = j0.skipped_count||0;
+
+    JOURNAL={source_file:j0.source_file||f.name, defaults:d, lines:allLines, warnings:allWarnings, total_pages:total_pages};
     g('batch_actions').style.display='flex';
     g('batch_table_wrap').style.display='block';
     renderBatchTable('parsed');
     updateStats();
+
+    if(isPDF && total_pages > BATCH_PAGES){
+      const firstEnd = Math.min(BATCH_PAGES, total_pages);
+      setUploadStatus('<span class="spinner"></span>Обработано '+firstEnd+'/'+total_pages+' стр. ('+allLines.length+' строк)…','');
+      let nextStart = BATCH_PAGES + 1;
+      while(nextStart <= total_pages){
+        const ep = Math.min(nextStart + BATCH_PAGES - 1, total_pages);
+        const rowStart = allLines.length + 1;
+        try{
+          const jb = await postParse(f, d, {start_page:nextStart, end_page:ep, row_num_start:rowStart});
+          if(jb.lines && jb.lines.length){ allLines = allLines.concat(jb.lines); }
+          if(jb.warnings && jb.warnings.length){ allWarnings = allWarnings.concat(jb.warnings); }
+          skipped += (jb.skipped_count||0);
+        }catch(be){
+          allWarnings.push('Стр. '+nextStart+'-'+ep+': ошибка батча — '+be.message);
+        }
+        JOURNAL.lines = allLines;
+        JOURNAL.warnings = allWarnings;
+        renderBatchTable('parsed');
+        updateStats();
+        setUploadStatus('<span class="spinner"></span>Обработано '+ep+'/'+total_pages+' стр. ('+allLines.length+' строк)…','');
+        nextStart = ep + 1;
+      }
+    }
+
+    const total=JOURNAL.lines.length;
+    const tpInfo = isPDF ? (' · стр. '+(j0.total_pages||1)) : '';
+    setUploadStatus('✓ Распознано '+total+' строк (skipped '+skipped+')'+tpInfo,'ok');
   }catch(e){
     setUploadStatus('✗ Сеть/сервер: '+e.message,'err');
   }finally{

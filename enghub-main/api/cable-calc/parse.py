@@ -9,32 +9,21 @@ Content-Type: multipart/form-data
   insulation (optional) — PVC | XLPE  (default PVC)
   method (optional) — A1..G  (default C)
   ambient_temp_c (optional) — float  (default 30)
+  start_page (optional) — int 1-based, начальная страница для PDF (default 1)
+  end_page (optional) — int 1-based, конечная страница для PDF (включительно)
+  row_num_start (optional) — int, стартовая нумерация строк (для склейки батчей)
 
 Ответ:
 {
   "ok": true,
   "source_file": "...",
+  "total_pages": 32,            # сколько всего страниц в PDF
+  "start_page": 1, "end_page": 3,  # фактически обработанный диапазон (echo)
   "parsed_count": 12,
   "skipped_count": 0,
   "warnings": [...],
-  "lines": [
-    {
-      "row_num": 1,
-      "cable_id": "...",
-      "cable_name": "...",
-      "from_point": "...",
-      "to_point": "...",
-      "cable_mark": "АВВГнг",
-      "section_str": "4x16",
-      "section_mm2": 16.0,
-      "zero_section_mm2": 0,
-      "length_m": 50,
-      "i_allowable_a": 84.0,        # для справки
-      "status": "OK" | "WARN" | "UNKNOWN",
-      "note": "..."
-    },
-    ...
-  ]
+  "lines": [ ... ],
+  "ok_count": ..., "warn_count": ..., "defaults": {...}
 }
 """
 import json
@@ -54,7 +43,6 @@ from parsers import parse_file  # noqa: E402
 
 
 def _parse_multipart(body: bytes, content_type: str):
-    """Очень простой multipart парсер. Возвращает (fields_dict, filename, file_bytes)."""
     m = re.search(r'boundary=(?:"([^"]+)"|([^;\s]+))', content_type)
     if not m:
         return {}, None, None
@@ -98,9 +86,6 @@ def _parse_multipart(body: bytes, content_type: str):
 
 
 def _verify_row(row, defaults: dict) -> dict:
-    """Базовая верификация: достаём I_доп для секции/метода/материала и сравниваем с ожидаемым током.
-       В кабельном журнале обычно нет мощности — поэтому возвращаем справочно I_доп.
-       Статус UNKNOWN если нет данных, OK если строка распознана."""
     note = ""
     status = "UNKNOWN"
     i_allow = 0.0
@@ -122,17 +107,17 @@ def _verify_row(row, defaults: dict) -> dict:
             iz0 = _get_iz0(inp, row.section_mm2)
             if iz0 is None:
                 status = "WARN"
-                note = f"Сечение {row.section_mm2} мм² нет в таблицах для метода {inp.method}/{inp.material}/{inp.insulation}"
+                note = "Сечение " + str(row.section_mm2) + " мм² нет в таблицах"
             else:
                 k_t = _get_k_temp(inp)
                 k_g = _get_k_group(inp)
                 k_s = _get_k_soil(inp)
                 i_allow = round(iz0 * k_t * k_g * k_s, 1)
                 status = "OK"
-                note = f"I_доп = {i_allow} А (с поправками)"
+                note = "I_доп = " + str(i_allow) + " А (с поправками)"
         except Exception as e:
             status = "WARN"
-            note = f"Ошибка проверки: {e}"
+            note = "Ошибка проверки: " + str(e)
     else:
         if row.cable_mark:
             status = "WARN"
@@ -164,6 +149,15 @@ def _row_to_dict(row, verification: dict) -> dict:
     }
 
 
+def _to_int(val, default=None):
+    if val is None or val == "":
+        return default
+    try:
+        return int(float(val))
+    except Exception:
+        return default
+
+
 class handler(BaseHTTPRequestHandler):
     def _send_json(self, status: int, payload):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -183,8 +177,9 @@ class handler(BaseHTTPRequestHandler):
         self._send_json(200, {
             "ok": True,
             "service": "cable-calc/parse",
-            "version": "1.0",
+            "version": "1.1",
             "accepts": ["xlsx", "xlsm", "pdf", "docx"],
+            "features": ["page-range", "total-pages-echo"],
         })
 
     def do_POST(self):
@@ -200,15 +195,20 @@ class handler(BaseHTTPRequestHandler):
 
             ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
             if ext not in ("xlsx", "xls", "xlsm", "pdf", "docx", "doc"):
-                return self._send_json(400, {"error": f"Неподдерживаемый формат: .{ext}"})
+                return self._send_json(400, {"error": "Неподдерживаемый формат: ." + ext})
+
+            start_page = _to_int(fields.get("start_page"), None)
+            end_page = _to_int(fields.get("end_page"), None)
+            row_num_start = _to_int(fields.get("row_num_start"), 1) or 1
 
             tmp_dir = tempfile.gettempdir()
-            tmp_path = os.path.join(tmp_dir, f"cc_upload_{os.getpid()}_{filename}")
+            tmp_path = os.path.join(tmp_dir, "cc_upload_" + str(os.getpid()) + "_" + filename)
             try:
                 with open(tmp_path, "wb") as f:
                     f.write(file_bytes)
 
-                pr = parse_file(tmp_path)
+                pr = parse_file(tmp_path, start_page=start_page,
+                                end_page=end_page, row_num_start=row_num_start)
             finally:
                 try:
                     os.remove(tmp_path)
@@ -234,9 +234,16 @@ class handler(BaseHTTPRequestHandler):
                 elif v["status"] == "WARN":
                     warn_cnt += 1
 
+            # Эхо фактически обработанного диапазона
+            effective_start = start_page if start_page else 1
+            effective_end = end_page if end_page else pr.total_pages
+
             self._send_json(200, {
                 "ok": True,
                 "source_file": pr.source_file,
+                "total_pages": pr.total_pages,
+                "start_page": effective_start,
+                "end_page": effective_end,
                 "parsed_count": pr.parsed_count,
                 "skipped_count": pr.skipped_count,
                 "warnings": list(pr.warnings),
