@@ -1,5 +1,5 @@
 // In-memory state for dialog contexts.
-// Key: chatId (string), Value: { messages: Array, files: Array<string>, updatedAt: number }
+// Key: chatId (string), Value: { messages, files, lang, flagShown, updatedAt }
 
 const conversations = new Map();
 const TTL_MS = 60 * 60 * 1000; // 60 minutes — intake briefs can take a while
@@ -30,6 +30,29 @@ export function addFile(chatId, fileUrl) {
   entry.files = [...(entry.files || []), fileUrl];
   entry.updatedAt = Date.now();
   conversations.set(key, entry);
+}
+
+export function setLang(chatId, lang) {
+  const key = String(chatId);
+  const entry = conversations.get(key) || { messages: [], files: [] };
+  const langChanged = entry.lang !== lang;
+  entry.lang = lang;
+  // When the language changes (or is set for the first time) — show the flag
+  // on the next reply.
+  if (langChanged) entry.flagShown = false;
+  entry.updatedAt = Date.now();
+  conversations.set(key, entry);
+}
+
+export function consumeFlag(chatId) {
+  const key = String(chatId);
+  const entry = conversations.get(key);
+  if (!entry) return false;
+  if (entry.flagShown) return false;
+  entry.flagShown = true;
+  entry.updatedAt = Date.now();
+  conversations.set(key, entry);
+  return true;
 }
 
 // Periodic cleanup

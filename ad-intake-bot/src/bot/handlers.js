@@ -1,4 +1,4 @@
-import { chat } from "../services/openai.js";
+import { chat, detectLang } from "../services/openai.js";
 import { transcribeVoice } from "../services/whisper.js";
 import {
   upsertConversation,
@@ -9,7 +9,15 @@ import {
   getOrdersByStatus,
   getOrdersToday,
 } from "../services/supabase.js";
-import { getContext, setContext, clearContext, addFile } from "../utils/state.js";
+import {
+  getContext,
+  setContext,
+  clearContext,
+  addFile,
+  setLang,
+  consumeFlag,
+} from "../utils/state.js";
+import { getLangMeta } from "./prompts.js";
 
 const MANAGER_CHAT_ID = String(process.env.MANAGER_CHAT_ID);
 
@@ -44,10 +52,10 @@ export function registerHandlers(bot) {
 export async function handleStart(ctx) {
   clearContext(ctx.chat.id);
   await ctx.reply(
-    "Здравствуйте! 👋\n\n" +
-    "Я помогу оформить заказ на рекламу.\n" +
-    "Расскажите, что нужно — текстом, голосом или пришлите макет/фото.\n\n" +
-    "Я задам пару уточнений и передам бриф менеджеру."
+    "👋 Здравствуйте! Сәлеметсіз бе! Hello!\n\n" +
+    "Пишите на любом удобном языке — отвечу на нём же.\n\n" +
+    "Я помогу оформить заказ на рекламу. Расскажите что нужно — " +
+    "текстом, голосом или пришлите макет/фото."
   );
 }
 
@@ -82,12 +90,13 @@ export async function handleText(ctx) {
 export async function handleVoice(ctx) {
   try {
     await ctx.sendChatAction("typing");
-    const text = await transcribeVoice(ctx);
+    const existing = getContext(ctx.chat.id);
+    const text = await transcribeVoice(ctx, existing?.lang);
     if (!text) {
       await ctx.reply("Не получилось распознать голос, попробуйте ещё раз или напишите текстом 🙏");
       return;
     }
-    await ctx.reply(`🎙 Слышу: ${text}`);
+    await ctx.reply(`🎙 ${text}`);
     await processUserMessage(ctx, text);
   } catch (err) {
     console.error("Voice error:", err.message);
@@ -132,12 +141,34 @@ async function processUserMessage(ctx, userMessage) {
   const chatId = ctx.chat.id;
   const userId = ctx.from.id;
 
-  let entry = getContext(chatId) || { messages: [], files: [] };
+  let entry = getContext(chatId) || { messages: [], files: [], lang: null, flagShown: false };
   entry.messages = [...entry.messages, { role: "user", content: userMessage }];
+
+  // Detect language: if not yet set, detect from first message; otherwise
+  // re-detect on every text turn so we can react if the client switches.
+  const isFileNote = /^\[файл прикреплён:/.test(userMessage);
+  let lang = entry.lang;
+  if (!isFileNote) {
+    try {
+      const detected = await detectLang(userMessage);
+      if (!entry.lang || entry.lang !== detected) {
+        // Switch language (or set initial)
+        entry.lang = detected;
+        entry.flagShown = false;
+      }
+      lang = entry.lang;
+    } catch (err) {
+      console.error("detectLang error:", err.message);
+    }
+  }
+  if (!lang) lang = "ru";
+  entry.lang = lang;
+  setContext(chatId, entry);
+  setLang(chatId, lang);
 
   try {
     await ctx.sendChatAction("typing");
-    const result = await chat(entry.messages);
+    const result = await chat(entry.messages, lang);
 
     if (result.type === "function") {
       // LLM confirmed all collected — save the order
@@ -145,7 +176,15 @@ async function processUserMessage(ctx, userMessage) {
       return;
     }
 
-    const reply = result.content || "...";
+    let reply = result.content || "...";
+
+    // Prefix flag on the first reply of a new language (not on every message —
+    // would be too noisy).
+    const meta = getLangMeta(lang);
+    if (consumeFlag(chatId)) {
+      reply = `${meta.flag} ${reply}`;
+    }
+
     entry.messages = [...entry.messages, { role: "assistant", content: reply }];
     setContext(chatId, entry);
 
@@ -155,6 +194,7 @@ async function processUserMessage(ctx, userMessage) {
       telegramChatId: chatId,
       history: entry.messages,
       files: entry.files,
+      lang,
       status: "active",
     }).catch((err) => console.error("Conversation upsert failed:", err.message));
 
@@ -168,6 +208,7 @@ async function processUserMessage(ctx, userMessage) {
 async function finalizeOrder(ctx, entry, args) {
   const chatId = ctx.chat.id;
   const userId = ctx.from.id;
+  const lang = entry.lang || "ru";
 
   try {
     // Save conversation as completed first to get id
@@ -176,6 +217,7 @@ async function finalizeOrder(ctx, entry, args) {
       telegramChatId: chatId,
       history: entry.messages,
       files: entry.files,
+      lang,
       status: "completed",
     });
 
@@ -185,21 +227,23 @@ async function finalizeOrder(ctx, entry, args) {
       telegramChatId: chatId,
       data: args,
       files: entry.files,
+      lang,
     });
 
     await completeConversation(conversation.id);
     clearContext(chatId);
 
-    // Confirm to client
+    // Confirm to client (in their language)
     const short = order.id.substring(0, 8);
-    await ctx.reply(
-      `✅ Заявка №${short} принята!\n\n` +
-      "Менеджер свяжется с вами в ближайшее время.\n" +
-      "Если что-то добавить — просто напишите."
-    );
+    const confirm = {
+      ru: `✅ Заявка №${short} принята!\n\nМенеджер свяжется с вами в ближайшее время.\nЕсли что-то добавить — просто напишите.`,
+      kk: `✅ №${short} өтінім қабылданды!\n\nМенеджер жақын арада сізбен байланысады.\nҚосымша мәлімет болса — жазыңыз.`,
+      en: `✅ Request #${short} accepted!\n\nA manager will get back to you shortly.\nIf you'd like to add anything — just send a message.`,
+    }[lang] || `✅ Заявка №${short} принята!`;
+    await ctx.reply(confirm);
 
     // Forward to manager
-    await notifyManager(ctx, order);
+    await notifyManager(ctx, order, lang);
   } catch (err) {
     console.error("Finalize error:", err.message);
     await ctx.reply("Заявку записал, но возникла техническая ошибка при сохранении. Менеджер всё равно увидит ваше обращение.");
@@ -213,10 +257,11 @@ async function finalizeOrder(ctx, entry, args) {
   }
 }
 
-async function notifyManager(ctx, order) {
+async function notifyManager(ctx, order, lang = "ru") {
   const username = ctx.from?.username ? `@${ctx.from.username}` : `id:${ctx.from?.id}`;
+  const meta = getLangMeta(lang);
   const lines = [
-    `🆕 Новая заявка №${order.id.substring(0, 8)}`,
+    `🆕 Новая заявка №${order.id.substring(0, 8)} [${meta.badge}]`,
     ``,
     `🎯 Услуга: ${order.service_type || "—"}`,
     `📝 ${order.description || "—"}`,

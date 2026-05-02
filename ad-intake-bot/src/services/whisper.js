@@ -11,7 +11,14 @@ if (typeof globalThis.File === "undefined") {
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export async function transcribeVoice(ctx) {
+/**
+ * Transcribe a voice/audio message.
+ *
+ * @param {object} ctx - Telegraf context
+ * @param {string|null|undefined} lang - optional language hint: "ru" | "kk" | "en"
+ *   If omitted, Whisper auto-detects (slightly less accurate).
+ */
+export async function transcribeVoice(ctx, lang) {
   const voice = ctx.message.voice || ctx.message.audio;
   if (!voice) return null;
 
@@ -27,11 +34,15 @@ export async function transcribeVoice(ctx) {
 
   try {
     fs.writeFileSync(tmpPath, buffer);
-    const transcription = await openai.audio.transcriptions.create({
+    const params = {
       model: "whisper-1",
       file: fs.createReadStream(tmpPath),
-      language: "ru",
-    });
+    };
+    // Whisper accepts ISO-639-1 codes. ru/kk/en are all supported.
+    if (lang === "ru" || lang === "kk" || lang === "en") {
+      params.language = lang;
+    }
+    const transcription = await openai.audio.transcriptions.create(params);
     return transcription.text;
   } finally {
     try { fs.unlinkSync(tmpPath); } catch { /* ignore */ }

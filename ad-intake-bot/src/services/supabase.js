@@ -4,7 +4,7 @@ export const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPAB
 
 // ─── Conversations ───────────────────────────────────────────────────────────
 
-export async function upsertConversation({ telegramUserId, telegramChatId, history, files = [], status = "active" }) {
+export async function upsertConversation({ telegramUserId, telegramChatId, history, files = [], lang = null, status = "active" }) {
   // Find active conversation for this chat
   const { data: existing } = await supabase
     .from("conversations")
@@ -16,14 +16,16 @@ export async function upsertConversation({ telegramUserId, telegramChatId, histo
     .maybeSingle();
 
   if (existing) {
+    const update = {
+      history,
+      files,
+      status,
+      updated_at: new Date().toISOString(),
+    };
+    if (lang) update.lang = lang;
     const { data, error } = await supabase
       .from("conversations")
-      .update({
-        history,
-        files,
-        status,
-        updated_at: new Date().toISOString(),
-      })
+      .update(update)
       .eq("id", existing.id)
       .select()
       .single();
@@ -31,15 +33,17 @@ export async function upsertConversation({ telegramUserId, telegramChatId, histo
     return data;
   }
 
+  const insert = {
+    telegram_user_id: String(telegramUserId),
+    telegram_chat_id: String(telegramChatId),
+    history,
+    files,
+    status,
+  };
+  if (lang) insert.lang = lang;
   const { data, error } = await supabase
     .from("conversations")
-    .insert({
-      telegram_user_id: String(telegramUserId),
-      telegram_chat_id: String(telegramChatId),
-      history,
-      files,
-      status,
-    })
+    .insert(insert)
     .select()
     .single();
   if (error) throw new Error(`Conversation insert failed: ${error.message}`);
@@ -56,12 +60,12 @@ export async function completeConversation(conversationId) {
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
 
-export async function saveOrder({ conversationId, telegramUserId, telegramChatId, data, files = [] }) {
+export async function saveOrder({ conversationId, telegramUserId, telegramChatId, data, files = [], lang = null }) {
   const row = {
     conversation_id: conversationId || null,
     telegram_user_id: String(telegramUserId),
     telegram_chat_id: String(telegramChatId),
-    json_data: data,
+    json_data: { ...data, lang: lang || data.lang || null },
     service_type: data.service_type || null,
     description: data.description || null,
     size: data.size || null,
@@ -73,6 +77,7 @@ export async function saveOrder({ conversationId, telegramUserId, telegramChatId
     files: files.length ? files : (data.files || []),
     status: "new",
   };
+  if (lang) row.lang = lang;
 
   const { data: order, error } = await supabase
     .from("orders")
