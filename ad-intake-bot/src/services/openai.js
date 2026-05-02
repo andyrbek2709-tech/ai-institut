@@ -4,6 +4,7 @@ import { SERVICE_TYPES } from "../bot/scenarios.js";
 import { EXTRACT_SYSTEM, buildExtractUserMessage } from "../bot/extractPrompt.js";
 import { normalizeToSchema, makeEmptyOrder } from "../bot/orderSchema.js";
 import { ASSIST_SYSTEM, buildAssistUserMessage } from "../bot/managerAssistPrompt.js";
+import { PROPOSAL_SYSTEM, buildProposalUserMessage } from "../bot/proposalPrompt.js";
 import { TEACH_EXTRACT_SYSTEM, buildTeachExtractUserMessage } from "../bot/teachExtractPrompt.js";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -406,6 +407,41 @@ export async function assistManagerReply({ orderData = {}, history = [], lang = 
     return null;
   }
 }
+
+/**
+ * Сгенерировать коммерческое предложение (КП) клиенту по данным заявки.
+ * Использует knowledge_base context (если передан) как ориентир по ценам/материалам.
+ *
+ * @param {object} p
+ * @param {object} p.orderData
+ * @param {Array}  p.history
+ * @param {string} p.lang  "ru" | "kk" | "en"
+ * @param {string} p.knowledgeContext
+ * @returns {Promise<string|null>}
+ */
+export async function generateProposal({ orderData = {}, history = [], lang = "ru", knowledgeContext = "" } = {}) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: PROPOSAL_SYSTEM },
+        {
+          role: "user",
+          content: buildProposalUserMessage({ orderData, history, lang, knowledgeContext }),
+        },
+      ],
+      temperature: 0.6,
+      max_tokens: 600,
+    });
+    const txt = response.choices?.[0]?.message?.content?.trim();
+    if (!txt) return null;
+    return txt.replace(/^["«]|["»]$/g, "").trim();
+  } catch (err) {
+    console.error("generateProposal failed:", err.message);
+    return null;
+  }
+}
+
 
 /**
  * Извлечь структурированную запись knowledge_base из заметки менеджера.

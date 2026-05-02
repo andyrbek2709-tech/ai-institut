@@ -102,6 +102,42 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
+// ─── Proposal Drafts (КП) ────────────────────────────────────────────────────
+// In-memory store черновиков КП — менеджер ревьюит и жмёт Send/Edit/Cancel.
+// key: msgId (number), value: { leadId, text, lang, createdAt }
+// TTL: 30 минут.
+
+const proposalDrafts = new Map();
+const PROPOSAL_TTL_MS = 30 * 60 * 1000;
+
+export function setProposalDraft(msgId, draft) {
+  proposalDrafts.set(Number(msgId), { ...draft, createdAt: Date.now() });
+}
+
+export function getProposalDraft(msgId) {
+  const key = Number(msgId);
+  const entry = proposalDrafts.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.createdAt > PROPOSAL_TTL_MS) {
+    proposalDrafts.delete(key);
+    return null;
+  }
+  return entry;
+}
+
+export function deleteProposalDraft(msgId) {
+  proposalDrafts.delete(Number(msgId));
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of proposalDrafts) {
+    if (now - entry.createdAt > PROPOSAL_TTL_MS) {
+      proposalDrafts.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
 // ─── Manager-only state (для /teach и подобных команд) ───────────────────────
 // Хранит ожидаемое состояние менеджера, например awaiting_teach_input.
 // key: managerChatId (string), value: { state, payload, createdAt }

@@ -1,4 +1,4 @@
-import { chat, detectLang, describeImage, extractPartialBrief, classifyServiceTypeLLM, extractData, mergeData, missingRequiredFields, assistManagerReply, extractTeachStructured } from "../services/openai.js";
+import { chat, detectLang, describeImage, extractPartialBrief, classifyServiceTypeLLM, extractData, mergeData, missingRequiredFields, assistManagerReply, extractTeachStructured, generateProposal } from "../services/openai.js";
 import { transcribeVoice } from "../services/whisper.js";
 import {
   upsertConversation,
@@ -31,6 +31,9 @@ import {
   setAssistDraft,
   getAssistDraft,
   deleteAssistDraft,
+  setProposalDraft,
+  getProposalDraft,
+  deleteProposalDraft,
   setManagerState,
   getManagerState,
   clearManagerState,
@@ -40,6 +43,7 @@ import {
   listKnowledge,
   deleteKnowledge,
   getKnowledgeById,
+  searchKnowledge,
   KB_CATEGORIES,
 } from "../services/knowledgeBase.js";
 import { getLangMeta, CONTACT_REASK } from "./prompts.js";
@@ -63,6 +67,11 @@ let _bot = null;
 // key = managerChatId (string), value = { leadId, promptMessageId }
 const pendingClarify = new Map();
 
+// In-memory state для proposal-flow: менеджер жмёт «✏️ Изменить» у КП —
+// перехватываем его следующее сообщение (reply на ForceReply).
+// key = managerChatId (string), value = { leadId, promptMessageId }
+const pendingProposalEdit = new Map();
+
 export function registerHandlers(bot) {
   _bot = bot;
 
@@ -79,6 +88,7 @@ export function registerHandlers(bot) {
   bot.command("leads", ownerOnly(handleLeadsCommand));
   bot.command("reply", ownerOnly(handleReplyCommand));
   bot.command("assist", ownerOnly(handleAssistCommand));
+  bot.command("proposal", ownerOnly(handleProposalCommand));
   bot.command("teach", ownerOnly(handleTeachCommand));
   bot.command("knowledge", ownerOnly(handleKnowledgeCommand));
   bot.command("help", handleHelp);
@@ -141,6 +151,17 @@ export async function handleText(ctx) {
     if (pc && replyToId && replyToId === pc.promptMessageId) {
       pendingClarify.delete(MANAGER_CHAT_ID);
       await sendManagerReplyToClient(ctx, pc.leadId, userMessage);
+      return;
+    }
+  }
+
+  // ─── Proposal-flow: менеджер ввёл свою версию КП после «✏️ Изменить» ──
+  if (String(ctx.chat?.id) === MANAGER_CHAT_ID) {
+    const pe = pendingProposalEdit.get(MANAGER_CHAT_ID);
+    const replyToId2 = ctx.message?.reply_to_message?.message_id;
+    if (pe && replyToId2 && replyToId2 === pe.promptMessageId) {
+      pendingProposalEdit.delete(MANAGER_CHAT_ID);
+      await sendManagerProposalToClient(ctx, pe.leadId, userMessage);
       return;
     }
   }
@@ -676,8 +697,11 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null,
   // Если лид не создался — fallback на старые order-кнопки.
   const keyboard = lead ? {
     inline_keyboard: [
-      [{ text: "🎯 Взять в работу", callback_data: `lead:take:${lead.id}` }],
-      [{ text: "💬 Уточнить",       callback_data: `lead:clarify:${lead.id}` }],
+      [
+        { text: "🎯 Взять",    callback_data: `lead:take:${lead.id}` },
+        { text: "💬 Уточнить", callback_data: `lead:clarify:${lead.id}` },
+        { text: "📄 КП",       callback_data: `lead:proposal:${lead.id}` },
+      ],
       [
         { text: "✓ Закрыть",   callback_data: `lead:close:${lead.id}` },
         { text: "✗ Отклонить", callback_data: `lead:reject:${lead.id}` },
@@ -714,7 +738,12 @@ async function handleCallback(ctx) {
     return handleAssistCallback(ctx, data, chatId);
   }
 
-  // Lead-callbacks: lead:take:N, lead:clarify:N, lead:close:N, lead:reject:N, lead:open:N
+  // Proposal callbacks: proposal:send:<leadId>:<msgId>, proposal:edit:<leadId>, proposal:cancel:<msgId>
+  if (data.startsWith("proposal:")) {
+    return handleProposalCallback(ctx, data, chatId);
+  }
+
+  // Lead-callbacks: lead:take:N, lead:clarify:N, lead:close:N, lead:reject:N, lead:open:N, lead:proposal:N
   if (data.startsWith("lead:")) {
     return handleLeadCallback(ctx, data, chatId);
   }
@@ -806,6 +835,12 @@ async function handleLeadCallback(ctx, data, chatId) {
     if (action === "clarify") {
       await ctx.answerCbQuery("Готовлю вариант ответа…").catch(() => {});
       await proposeAssistReply(ctx, leadId, lead);
+      return;
+    }
+
+    if (action === "proposal") {
+      await ctx.answerCbQuery("Генерирую КП…").catch(() => {});
+      await proposeProposalDraft(ctx, leadId, lead);
       return;
     }
 
@@ -1457,4 +1492,214 @@ async function handleKbCallback(ctx, data, chatId) {
   }
 
   await ctx.answerCbQuery("Неизвестное действие").catch(() => {});
+}
+
+// ─── Commercial Proposal (КП) ────────────────────────────────────────────────
+//
+// /proposal <leadId>           — менеджер вручную просит сгенерировать КП
+// callback lead:proposal:<id>  — кнопка «📄 КП» в уведомлении о новом лиде
+// callback proposal:send|edit|cancel — действия с draft'ом КП
+//
+// Ничего НЕ отправляется клиенту автоматически — только после нажатия «✉ Отправить».
+
+/**
+ * Сгенерировать КП и предложить менеджеру в чат с кнопками Send/Edit/Cancel.
+ * draft сохраняется в proposalDrafts(msgId) с TTL 30 мин.
+ */
+async function proposeProposalDraft(ctx, leadId, leadPreloaded = null) {
+  try {
+    const lead = leadPreloaded || (await getLeadById(leadId));
+    if (!lead) {
+      await ctx.telegram.sendMessage(MANAGER_CHAT_ID, `Лид #${leadId} не найден.`).catch(() => {});
+      return;
+    }
+
+    const orderData = lead.data || {};
+    let history = [];
+    let lang = lead.data?.lang || "ru";
+    if (lead.conversation_id) {
+      const h = await getConversationHistoryForLead(lead.conversation_id, 10);
+      history = Array.isArray(h?.history) ? h.history : [];
+      if (h?.lang) lang = h.lang;
+    }
+    const lastUserMessage = lastClientMessage(history);
+
+    // RAG-lite: knowledge_base context — для подстановки цен/материалов как ориентир.
+    let knowledgeContext = "";
+    try {
+      knowledgeContext = await buildKnowledgeContext({
+        lastUserMessage: lastUserMessage || orderData?.description || orderData?.type || "",
+        orderData,
+        lang,
+      });
+    } catch (err) {
+      console.error("[proposal] buildKnowledgeContext failed:", err.message);
+    }
+
+    const text = await generateProposal({ orderData, history, lang, knowledgeContext });
+
+    if (!text) {
+      await ctx.telegram.sendMessage(
+        MANAGER_CHAT_ID,
+        `⚠️ Не удалось сгенерировать КП для лида #${leadId}.\n` +
+        `Можно сгенерировать заново: /proposal ${leadId}`
+      ).catch(() => {});
+      return;
+    }
+
+    // Шаг 1: отправить с временным разметом, msgId ещё не известен.
+    const sent = await ctx.telegram.sendMessage(
+      MANAGER_CHAT_ID,
+      `💼 КП для лида #${leadId}:\n\n«${text}»`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "✉ Отправить клиенту", callback_data: `proposal:send:${leadId}:0` },
+              { text: "✏️ Изменить",         callback_data: `proposal:edit:${leadId}` },
+              { text: "✗ Отмена",            callback_data: `proposal:cancel:0` },
+            ],
+          ],
+        },
+      }
+    );
+
+    const msgId = sent.message_id;
+    setProposalDraft(msgId, { leadId, text, lang });
+
+    // Шаг 2: переприклеить кнопки с актуальным msgId, чтобы send/cancel брали draft по нему.
+    await ctx.telegram.editMessageReplyMarkup(MANAGER_CHAT_ID, msgId, undefined, {
+      inline_keyboard: [
+        [
+          { text: "✉ Отправить клиенту", callback_data: `proposal:send:${leadId}:${msgId}` },
+          { text: "✏️ Изменить",         callback_data: `proposal:edit:${leadId}` },
+          { text: "✗ Отмена",            callback_data: `proposal:cancel:${msgId}` },
+        ],
+      ],
+    }).catch(() => {});
+  } catch (err) {
+    console.error("proposeProposalDraft error:", err.message);
+    await ctx.telegram.sendMessage(MANAGER_CHAT_ID, `⚠️ Ошибка генерации КП: ${err.message}`).catch(() => {});
+  }
+}
+
+/**
+ * Обработка proposal:* callback'ов.
+ *   proposal:send:<leadId>:<msgId>  — отправить draft клиенту
+ *   proposal:edit:<leadId>          — открыть ForceReply, менеджер пишет свой текст КП
+ *   proposal:cancel:<msgId>         — отбой, удалить кнопки и draft
+ */
+async function handleProposalCallback(ctx, data, chatId) {
+  const parts = data.split(":");
+  const action = parts[1];
+  const msgId = ctx.callbackQuery.message?.message_id;
+
+  try {
+    if (action === "send") {
+      const leadId = parseInt(parts[2], 10);
+      const draftMsgId = parseInt(parts[3], 10) || msgId;
+      const draft = getProposalDraft(draftMsgId);
+      if (!draft || draft.leadId !== leadId) {
+        await ctx.answerCbQuery("Черновик устарел. Сгенерируйте КП заново.").catch(() => {});
+        if (msgId) {
+          await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+        }
+        return;
+      }
+      await sendManagerProposalToClient(ctx, leadId, draft.text);
+      deleteProposalDraft(draftMsgId);
+      await ctx.answerCbQuery("КП отправлено клиенту").catch(() => {});
+      if (msgId) {
+        await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+      }
+      return;
+    }
+
+    if (action === "edit") {
+      const leadId = parseInt(parts[2], 10);
+      // Снять кнопки у предложения, чтобы не зависало.
+      if (msgId) {
+        await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+        deleteProposalDraft(msgId);
+      }
+      const sent = await ctx.telegram.sendMessage(
+        chatId,
+        `✏️ Введите свой вариант КП для клиента по лиду #${leadId}:`,
+        { reply_markup: { force_reply: true, selective: true } }
+      );
+      pendingProposalEdit.set(MANAGER_CHAT_ID, { leadId, promptMessageId: sent.message_id });
+      await ctx.answerCbQuery("Ответьте на это сообщение").catch(() => {});
+      return;
+    }
+
+    if (action === "cancel") {
+      const draftMsgId = parseInt(parts[2], 10) || msgId;
+      if (draftMsgId) deleteProposalDraft(draftMsgId);
+      if (msgId) {
+        await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+      }
+      await ctx.answerCbQuery("Отменено").catch(() => {});
+      return;
+    }
+
+    await ctx.answerCbQuery("Неизвестное действие").catch(() => {});
+  } catch (err) {
+    console.error("handleProposalCallback error:", err.message);
+    await ctx.answerCbQuery(`Ошибка: ${err.message}`).catch(() => {});
+  }
+}
+
+/**
+ * /proposal <leadId> — менеджер запрашивает генерацию КП.
+ */
+async function handleProposalCommand(ctx) {
+  const raw = (ctx.message?.text || "").replace(/^\/proposal(@\w+)?\s*/, "").trim();
+  const m = raw.match(/^(\d+)\s*$/);
+  if (!m) {
+    await ctx.reply("Использование: /proposal <ID лида>\nПример: /proposal 12");
+    return;
+  }
+  const leadId = parseInt(m[1], 10);
+  await proposeProposalDraft(ctx, leadId);
+}
+
+/**
+ * Отправить КП клиенту от имени менеджера (после нажатия «✉ Отправить» или ручного edit).
+ * Дописывает в conversation history, переводит лид в in_progress если был new.
+ */
+async function sendManagerProposalToClient(ctx, leadId, proposalText) {
+  try {
+    const lead = await getLeadById(leadId);
+    if (!lead) {
+      await ctx.reply(`Лид #${leadId} не найден.`);
+      return;
+    }
+    if (!lead.telegram_chat_id) {
+      await ctx.reply(`У лида #${leadId} нет chat_id клиента.`);
+      return;
+    }
+
+    const cLang = lead.data?.lang || "ru";
+    const header = {
+      ru: "💼 Коммерческое предложение:",
+      kk: "💼 Коммерциялық ұсыныс:",
+      en: "💼 Commercial proposal:",
+    }[cLang] || "💼 Коммерческое предложение:";
+
+    const msg = `${header}\n\n${proposalText}`;
+    await _bot.telegram.sendMessage(String(lead.telegram_chat_id), msg);
+
+    if (lead.conversation_id) {
+      await appendConversationMessage(lead.conversation_id, "manager", `[КП] ${proposalText}`);
+    }
+
+    if (lead.status === "new") {
+      await updateLead(leadId, { status: "in_progress", assigned_to: Number(ctx.from.id) });
+    }
+
+    await ctx.reply(`✓ КП отправлено клиенту по лиду #${leadId}.`);
+  } catch (err) {
+    console.error("sendManagerProposalToClient error:", err.message);
+    await ctx.reply(`Ошибка отправки КП: ${err.message}`);
+  }
 }
