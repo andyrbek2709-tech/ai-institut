@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { buildSystemPrompt, SAVE_ORDER_FUNCTION } from "../bot/prompts.js";
+import { SERVICE_TYPES } from "../bot/scenarios.js";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -9,12 +10,11 @@ const TOOLS = [{ type: "function", function: SAVE_ORDER_FUNCTION }];
  * Send message to OpenAI with tool calling.
  * Returns either { type: "text", content: string } or { type: "function", args: object }
  *
- * @param {Array} messages - dialog messages
- * @param {string} lang - detected user language code: "ru" | "kk" | "en"
- * @param {object} extras - optional runtime context: { collected, currentStep }
+ * @param {Array} messages
+ * @param {string} lang  "ru" | "kk" | "en"
+ * @param {object} extras { collected, currentStep, serviceCode, currentQuestion }
  */
 export async function chat(messages, lang = "ru", extras = {}) {
-  // Trim history sent to LLM to last 20 messages (safety against runaway context).
   const trimmed = messages.length > 20 ? messages.slice(-20) : messages;
 
   const response = await openai.chat.completions.create({
@@ -41,8 +41,7 @@ export async function chat(messages, lang = "ru", extras = {}) {
 }
 
 /**
- * Detect language of a message. Returns one of: "ru" | "kk" | "en".
- * Falls back to "ru" on error.
+ * Detect language. Returns "ru" | "kk" | "en". Falls back to "ru".
  */
 export async function detectLang(text) {
   if (!text || !text.trim()) return "ru";
@@ -72,11 +71,53 @@ export async function detectLang(text) {
 }
 
 /**
- * Describe an image using OpenAI Vision (gpt-4o-mini accepts image_url).
- * Used to give the LLM context about uploaded photos/mockups.
- *
- * @param {string} imageUrl - public URL or data URL of the image
- * @param {string} lang - user language for the description (ru/kk/en)
+ * LLM-classify service_type when keyword match fails.
+ * Returns one of SERVICE_TYPES, or null if uncertain.
+ */
+export async function classifyServiceTypeLLM(text) {
+  if (!text || !text.trim()) return null;
+  const codes = SERVICE_TYPES.join("|");
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            'Classify the user message into one of these advertising service categories. ' +
+            'Reply with EXACTLY one of the codes (in Russian Cyrillic, lowercase) and nothing else: ' +
+            codes + '. ' +
+            'If you are NOT confident — reply with the literal word: unknown. ' +
+            'Categories meaning:\n' +
+            '- вывеска: storefront sign, lightbox, fascia sign\n' +
+            '- баннер: banner, vinyl/fabric banner, banner-stand\n' +
+            '- наклейки: stickers, decals, vinyl labels\n' +
+            '- футболки: t-shirts, polo, hoodies, apparel printing\n' +
+            '- полиграфия: business cards, flyers, brochures, leaflets, booklets\n' +
+            '- сувенирка: branded gifts (mugs, pens, notebooks, lanyards)\n' +
+            '- другое: video, SMM, contextual ads, web design, anything else',
+        },
+        { role: "user", content: text.slice(0, 600) },
+      ],
+      temperature: 0,
+      max_tokens: 8,
+    });
+    const raw = (response.choices[0].message.content || "").trim().toLowerCase();
+    if (SERVICE_TYPES.includes(raw)) return raw;
+    if (raw.startsWith("unknown") || raw.startsWith("неизвест")) return null;
+    // Иногда LLM может слегка переформулировать — сопоставим стартом
+    for (const code of SERVICE_TYPES) {
+      if (raw.startsWith(code)) return code;
+    }
+    return null;
+  } catch (err) {
+    console.error("classifyServiceTypeLLM failed:", err.message);
+    return null;
+  }
+}
+
+/**
+ * Describe an image using OpenAI Vision.
  */
 export async function describeImage(imageUrl, lang = "ru") {
   const instruction = {
@@ -118,11 +159,7 @@ export async function describeImage(imageUrl, lang = "ru") {
 
 /**
  * Extract partial brief fields the client has explicitly mentioned in the dialog.
- * Returns a small JSON with fields like service_type, location, size, content,
- * design, deadline, contact, etc. Empty/unknown fields are omitted.
- *
- * Cheap call (low max_tokens, JSON mode). Used only when there are enough
- * messages to extract from.
+ * Returns a small JSON. Empty/unknown fields are omitted.
  */
 export async function extractPartialBrief(messages) {
   if (!Array.isArray(messages) || messages.length < 2) return {};
@@ -140,7 +177,9 @@ export async function extractPartialBrief(messages) {
           content:
             'Extract advertising brief fields the CLIENT has explicitly mentioned. ' +
             'Return ONLY a JSON object with any of these fields when known: ' +
-            'service_type, description, location, size, quantity, content, design, deadline, budget, contact. ' +
+            'service_type, description, location, size, quantity, content, design, lighting, ' +
+            'where_use, shape, material, sizes, print_type, type, paper_type, item, ' +
+            'deadline, budget, contact. ' +
             'Omit fields that the client has not stated. Do NOT invent values. ' +
             'For "design": value "есть макет" if the client attached a mockup/photo/sketch (look for [файл прикреплён] or vision: "...макет..."), otherwise "нужен макет" only if explicitly said. ' +
             'Output strictly a single JSON object with no extra text.',
@@ -148,12 +187,11 @@ export async function extractPartialBrief(messages) {
         { role: "user", content: transcript },
       ],
       temperature: 0,
-      max_tokens: 250,
+      max_tokens: 350,
       response_format: { type: "json_object" },
     });
     const raw = response.choices[0].message.content || "{}";
     const parsed = JSON.parse(raw);
-    // Drop empty/null fields just in case.
     const cleaned = {};
     for (const [k, v] of Object.entries(parsed)) {
       if (v == null) continue;

@@ -1,4 +1,4 @@
-import { chat, detectLang, describeImage, extractPartialBrief } from "../services/openai.js";
+import { chat, detectLang, describeImage, extractPartialBrief, classifyServiceTypeLLM } from "../services/openai.js";
 import { transcribeVoice } from "../services/whisper.js";
 import {
   upsertConversation,
@@ -18,6 +18,14 @@ import {
   consumeFlag,
 } from "../utils/state.js";
 import { getLangMeta, CONTACT_REASK } from "./prompts.js";
+import {
+  keywordClassify,
+  normalizeServiceType,
+  carryOverFields,
+  nextStepFor,
+  SCENARIOS,
+} from "./scenarios.js";
+import { getQuestion } from "./questions.js";
 
 const MANAGER_CHAT_ID = String(process.env.MANAGER_CHAT_ID);
 
@@ -28,7 +36,7 @@ export function registerHandlers(bot) {
 
   bot.start(handleStart);
 
-  // Manager-only commands (registered before bot.on("text") — Telegraf runs middleware in order)
+  // Manager-only commands
   const ownerOnly = (fn) => (ctx) => {
     if (String(ctx.chat?.id) !== MANAGER_CHAT_ID) return;
     return fn(ctx);
@@ -82,9 +90,6 @@ async function handleReset(ctx) {
 // ─── Text / Voice / Files ────────────────────────────────────────────────────
 
 export async function handleText(ctx) {
-  // NOTE: manager guard removed — when manager tests the bot in their own chat,
-  // plain text MUST trigger the dialog. Manager-specific actions are commands
-  // (/new, /active, /today) and inline buttons — those are routed before bot.on("text").
   const userMessage = ctx.message.text?.trim();
   if (!userMessage) return;
   await processUserMessage(ctx, userMessage);
@@ -111,7 +116,6 @@ export async function handleFile(ctx) {
   try {
     let fileId, label, isImage = false, mime = null;
     if (ctx.message.photo) {
-      // Largest photo size last
       const photos = ctx.message.photo;
       fileId = photos[photos.length - 1].file_id;
       label = "фото";
@@ -133,13 +137,10 @@ export async function handleFile(ctx) {
     const existing = getContext(ctx.chat.id);
     const lang = existing?.lang || "ru";
 
-    // Vision: if image, ask GPT-4o-mini to describe it.
     let vision = null;
     if (isImage) {
       try {
         await ctx.sendChatAction("typing");
-        // Download bytes and pass as data URL — avoids leaking bot token to OpenAI
-        // and works regardless of Telegram CDN policy.
         const dataUrl = await fetchAsDataUrl(link.href, mime || "image/jpeg");
         vision = await describeImage(dataUrl, lang);
       } catch (err) {
@@ -150,7 +151,6 @@ export async function handleFile(ctx) {
     const visionPart = vision ? ` | vision: "${vision.replace(/"/g, "'")}"` : "";
     const systemNote = `[файл прикреплён: ${link.href}${visionPart}${caption ? ` | подпись: ${caption}` : ""}]`;
 
-    // Continue dialog with file context as a system-like user message
     const message = caption ? `${caption}\n\n${systemNote}` : systemNote;
     await ctx.reply(`Принял ${label} 👍`);
     await processUserMessage(ctx, message);
@@ -160,7 +160,6 @@ export async function handleFile(ctx) {
   }
 }
 
-// Helper: download a URL and return a base64 data URL (used for OpenAI Vision).
 async function fetchAsDataUrl(url, mime = "image/jpeg") {
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`Download failed: ${resp.status}`);
@@ -168,40 +167,29 @@ async function fetchAsDataUrl(url, mime = "image/jpeg") {
   return `data:${mime};base64,${buf.toString("base64")}`;
 }
 
-// ─── Core LLM loop ───────────────────────────────────────────────────────────
+// ─── Service-type classifier (kw match → LLM fallback) ───────────────────────
 
-// Determine which field to collect next based on what's already known.
-function determineNextStep(collected = {}) {
-  if (!collected || typeof collected !== "object") return null;
-
-  const has = (k) => {
-    const v = collected[k];
-    return v != null && String(v).trim() !== "";
-  };
-
-  if (!has("service_type")) return "service_type";
-
-  const st = String(collected.service_type || "").toLowerCase();
-  const isSignage = /(вывеск|нар(уж|ыж)|баннер|outdoor|sign|жарнам|маңдайш|bilbord|билборд)/i.test(st);
-
-  if (isSignage) {
-    if (!has("location")) return "location";
-    if (!has("size")) return "size";
-    if (!has("content") && !has("description")) return "content";
-    if (!has("design")) return "design";
-    if (!has("deadline")) return "deadline";
-    if (!has("contact")) return "contact";
-    return "confirm";
+async function resolveServiceCode({ collected, allMessagesText }) {
+  // 1) Если LLM уже извлёк service_type — нормализуем по ключевым словам.
+  if (collected && collected.service_type) {
+    const k = keywordClassify(collected.service_type) || normalizeServiceType(collected.service_type);
+    if (k) return k;
   }
-
-  if (!has("description")) return "description";
-  if (!has("deadline")) return "deadline";
-  if (!has("contact")) return "contact";
-  return "confirm";
+  // 2) Keyword-match на полном тексте диалога (быстро, бесплатно).
+  const kw = keywordClassify(allMessagesText);
+  if (kw) return kw;
+  // 3) LLM fallback (gpt-4o-mini, дёшево). Может вернуть null — тогда останется не определён.
+  try {
+    const llm = await classifyServiceTypeLLM(allMessagesText);
+    if (llm) return llm;
+  } catch (err) {
+    console.error("classifyServiceTypeLLM threw:", err.message);
+  }
+  return null;
 }
 
-// Split a bot reply into [reaction, mainQuestion] using "||" delimiter.
-// If the reply has no "||", returns [text] as a single message.
+// ─── Reply helpers ───────────────────────────────────────────────────────────
+
 function splitReply(text) {
   if (!text) return [];
   const idx = text.indexOf("||");
@@ -215,9 +203,6 @@ function splitReply(text) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Validate contact value: must be 5+ chars AND contain at least one of:
-// digit (phone), "@" (handle/email), or "." (email).
-// "этот / здесь / тут / Telegram / здесь в телеге" → invalid (signal: substitute later).
 function isValidContact(contact) {
   if (!contact) return false;
   const c = String(contact).trim();
@@ -235,22 +220,28 @@ function isPlaceholderContact(contact) {
       || c === "this telegram";
 }
 
+// ─── Core LLM loop ───────────────────────────────────────────────────────────
+
 async function processUserMessage(ctx, userMessage) {
   const chatId = ctx.chat.id;
   const userId = ctx.from.id;
 
-  let entry = getContext(chatId) || { messages: [], files: [], lang: null, flagShown: false };
+  let entry = getContext(chatId) || {
+    messages: [],
+    files: [],
+    lang: null,
+    flagShown: false,
+    serviceCode: null,
+  };
   entry.messages = [...entry.messages, { role: "user", content: userMessage }];
 
-  // Detect language: if not yet set, detect from first message; otherwise
-  // re-detect on every text turn so we can react if the client switches.
+  // Detect language
   const isFileNote = /^\[файл прикреплён:/.test(userMessage);
   let lang = entry.lang;
   if (!isFileNote) {
     try {
       const detected = await detectLang(userMessage);
       if (!entry.lang || entry.lang !== detected) {
-        // Switch language (or set initial)
         entry.lang = detected;
         entry.flagShown = false;
       }
@@ -267,49 +258,80 @@ async function processUserMessage(ctx, userMessage) {
   try {
     await ctx.sendChatAction("typing");
 
-    // Build runtime context: extract partial brief + determine next step.
-    // Skip extraction on the very first turn (saves a call).
+    // ─── Extract partial brief + classify service type ─────────────────────
     let collected = {};
     let currentStep = null;
+    let currentQuestion = null;
+    let serviceCode = entry.serviceCode || null;
+
     if (entry.messages.length >= 2) {
       try {
         collected = await extractPartialBrief(entry.messages);
       } catch (err) {
         console.error("extractPartialBrief threw:", err.message);
       }
-      // If files have been attached — design field is "есть макет" by default.
+      // Если есть прикреплённые файлы — design = "есть макет".
       if ((entry.files || []).length > 0 && !collected.design) {
         collected.design = "есть макет";
       }
-      currentStep = determineNextStep(collected);
+
+      // Classify / re-classify
+      const userText = entry.messages
+        .filter((m) => m.role === "user")
+        .map((m) => m.content || "")
+        .join(" ")
+        .slice(0, 4000);
+      const newCode = await resolveServiceCode({ collected, allMessagesText: userText });
+
+      if (newCode && newCode !== serviceCode) {
+        if (serviceCode) {
+          // Сменился тип — переносим общие поля, остальное обнуляем (LLM соберёт заново).
+          const carry = carryOverFields(collected);
+          collected = { ...carry };
+        }
+        serviceCode = newCode;
+      }
+      entry.serviceCode = serviceCode;
+
+      // Перезатираем service_type в collected на нормализованный код,
+      // чтобы UI/save_order писали единообразно ("вывеска" / "баннер" / ...).
+      if (serviceCode) collected.service_type = serviceCode;
+
+      currentStep = nextStepFor(collected, serviceCode);
+      currentQuestion = getQuestion(lang, currentStep);
     }
 
-    // Last 10 messages for the LLM (in addition to system prompt).
+    setContext(chatId, entry);
+
     const lastMsgs = entry.messages.slice(-10);
 
-    const result = await chat(lastMsgs, lang, { collected, currentStep });
+    const result = await chat(lastMsgs, lang, {
+      collected,
+      currentStep,
+      serviceCode,
+      currentQuestion,
+    });
 
     if (result.type === "function") {
-      // LLM confirmed all collected — save the order
+      // Если LLM вызвал save_order, но service_type у него «сырой» — нормализуем.
+      if (result.args && serviceCode) {
+        const norm = normalizeServiceType(result.args.service_type) || serviceCode;
+        result.args.service_type = norm;
+      }
       await finalizeOrder(ctx, entry, result.args);
       return;
     }
 
     let reply = result.content || "...";
 
-    // Prefix flag on the first reply of a new language (not on every message —
-    // would be too noisy).
     const meta = getLangMeta(lang);
     const flagShown = consumeFlag(chatId);
 
-    // Split reply into [reaction, mainQuestion] using "||".
     const parts = splitReply(reply);
 
-    // Save the assistant's full reply (joined) to history for LLM continuity.
     entry.messages = [...entry.messages, { role: "assistant", content: parts.join(" ") }];
     setContext(chatId, entry);
 
-    // Persist running conversation snapshot to Supabase (best-effort)
     upsertConversation({
       telegramUserId: userId,
       telegramChatId: chatId,
@@ -319,7 +341,6 @@ async function processUserMessage(ctx, userMessage) {
       status: "active",
     }).catch((err) => console.error("Conversation upsert failed:", err.message));
 
-    // Send as separate Telegram messages with a small delay (more human feel).
     if (parts.length === 2) {
       const first = flagShown ? `${meta.flag} ${parts[0]}` : parts[0];
       await ctx.reply(first);
@@ -337,7 +358,8 @@ async function processUserMessage(ctx, userMessage) {
   }
 }
 
-// Build telegram-fallback contact string for the user when contact is ambiguous.
+// ─── Finalize ────────────────────────────────────────────────────────────────
+
 function buildTelegramFallbackContact(ctx) {
   const u = ctx.from?.username;
   if (u) return `@${u}`;
@@ -351,10 +373,6 @@ async function finalizeOrder(ctx, entry, args) {
   const userId = ctx.from.id;
   const lang = entry.lang || "ru";
 
-  // ─── Contact validation / fallback ──────────────────────────────────────
-  // If contact is empty / placeholder ("этот", "тут", "Telegram") — substitute
-  // user's @username or tg://user?id=. If still missing AND clearly invalid —
-  // re-ask once instead of saving.
   const fallback = buildTelegramFallbackContact(ctx);
   if (isPlaceholderContact(args.contact) || (!args.contact && fallback)) {
     if (fallback) args.contact = fallback;
@@ -363,16 +381,13 @@ async function finalizeOrder(ctx, entry, args) {
     if (fallback) {
       args.contact = fallback;
     } else {
-      // Re-ask once; do NOT save an invalid order.
       const reask = CONTACT_REASK[lang] || CONTACT_REASK.ru;
       await ctx.reply(reask);
-      // Drop the LLM's tentative save_order from history so it can re-ask cleanly.
       return;
     }
   }
 
   try {
-    // Save conversation as completed first to get id
     const conversation = await upsertConversation({
       telegramUserId: userId,
       telegramChatId: chatId,
@@ -394,7 +409,6 @@ async function finalizeOrder(ctx, entry, args) {
     await completeConversation(conversation.id);
     clearContext(chatId);
 
-    // Confirm to client (in their language)
     const short = order.id.substring(0, 8);
     const confirm = {
       ru: `✅ Заявка №${short} принята!\n\nМенеджер свяжется с вами в ближайшее время.\nЕсли что-то добавить — просто напишите.`,
@@ -403,12 +417,10 @@ async function finalizeOrder(ctx, entry, args) {
     }[lang] || `✅ Заявка №${short} принята!`;
     await ctx.reply(confirm);
 
-    // Forward to manager
-    await notifyManager(ctx, order, lang);
+    await notifyManager(ctx, order, lang, args);
   } catch (err) {
     console.error("Finalize error:", err.message);
     await ctx.reply("Заявку записал, но возникла техническая ошибка при сохранении. Менеджер всё равно увидит ваше обращение.");
-    // Best-effort: tell manager raw
     try {
       await _bot.telegram.sendMessage(
         MANAGER_CHAT_ID,
@@ -418,7 +430,7 @@ async function finalizeOrder(ctx, entry, args) {
   }
 }
 
-async function notifyManager(ctx, order, lang = "ru") {
+async function notifyManager(ctx, order, lang = "ru", rawArgs = {}) {
   const username = ctx.from?.username ? `@${ctx.from.username}` : `id:${ctx.from?.id}`;
   const meta = getLangMeta(lang);
   const lines = [
@@ -429,6 +441,23 @@ async function notifyManager(ctx, order, lang = "ru") {
   ];
   if (order.size) lines.push(`📐 Размер: ${order.size}`);
   if (order.quantity) lines.push(`🔢 Кол-во: ${order.quantity}`);
+  // Дополнительные поля сценария — если есть в rawArgs (БД их пока не персистит отдельными колонками).
+  const extras = [
+    ["📍 Где",     rawArgs.location],
+    ["💡 Подсветка", rawArgs.lighting],
+    ["🏷 Использование", rawArgs.where_use],
+    ["⚪ Форма",    rawArgs.shape],
+    ["✨ Материал", rawArgs.material],
+    ["👕 Размеры",  rawArgs.sizes],
+    ["🖨 Технология", rawArgs.print_type],
+    ["📄 Бумага",   rawArgs.paper_type],
+    ["🎁 Изделие",  rawArgs.item],
+    ["🎨 Содержание", rawArgs.content],
+    ["🖼 Макет",    rawArgs.design],
+  ];
+  for (const [label, val] of extras) {
+    if (val && String(val).trim()) lines.push(`${label}: ${val}`);
+  }
   lines.push(`📅 Срок: ${order.deadline || "—"}`);
   if (order.budget) lines.push(`💰 Бюджет: ${order.budget}`);
   lines.push(`📞 Контакт: ${order.contact || "—"}`);
@@ -445,13 +474,12 @@ async function notifyManager(ctx, order, lang = "ru") {
 
   await _bot.telegram.sendMessage(MANAGER_CHAT_ID, lines.join("\n"), { reply_markup: keyboard });
 
-  // Forward attached files
   for (const url of order.files || []) {
     await _bot.telegram.sendMessage(MANAGER_CHAT_ID, `📎 ${url}`).catch(() => {});
   }
 }
 
-// ─── Manager callbacks (accept/reject) ───────────────────────────────────────
+// ─── Manager callbacks ───────────────────────────────────────────────────────
 
 async function handleCallback(ctx) {
   const data = ctx.callbackQuery?.data;
