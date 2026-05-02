@@ -397,7 +397,8 @@ async function processUserMessage(ctx, userMessage) {
       files: entry.files,
       lang,
       status: "active",
-      metadata: { order: entry.orderData || null },
+      metadata: { order: entry.orderData || null, followup_level: 0 },
+      lastUserMessageAt: new Date().toISOString(),
     }).catch((err) => console.error("Conversation upsert failed:", err.message));
 
     if (parts.length === 2) {

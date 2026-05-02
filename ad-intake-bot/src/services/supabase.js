@@ -4,11 +4,11 @@ export const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPAB
 
 // ─── Conversations ───────────────────────────────────────────────────────────
 
-export async function upsertConversation({ telegramUserId, telegramChatId, history, files = [], lang = null, status = "active", metadata = null }) {
+export async function upsertConversation({ telegramUserId, telegramChatId, history, files = [], lang = null, status = "active", metadata = null, lastUserMessageAt = null }) {
   // Find active conversation for this chat
   const { data: existing } = await supabase
     .from("conversations")
-    .select("id")
+    .select("id, metadata")
     .eq("telegram_chat_id", String(telegramChatId))
     .eq("status", "active")
     .order("created_at", { ascending: false })
@@ -23,7 +23,16 @@ export async function upsertConversation({ telegramUserId, telegramChatId, histo
       updated_at: new Date().toISOString(),
     };
     if (lang) update.lang = lang;
-    if (metadata && typeof metadata === "object") update.metadata = metadata;
+    if (metadata && typeof metadata === "object") {
+      const existingMeta = existing.metadata && typeof existing.metadata === "object" ? existing.metadata : {};
+      const merged = { ...existingMeta, ...metadata };
+      // followups[] — лог отправленных напоминаний; сохраняем, если caller не передал явно.
+      if (metadata.followups === undefined && Array.isArray(existingMeta.followups)) {
+        merged.followups = existingMeta.followups;
+      }
+      update.metadata = merged;
+    }
+    if (lastUserMessageAt) update.last_user_message_at = lastUserMessageAt;
     const { data, error } = await supabase
       .from("conversations")
       .update(update)
@@ -31,10 +40,13 @@ export async function upsertConversation({ telegramUserId, telegramChatId, histo
       .select()
       .single();
     if (error) {
-      // Если колонки metadata ещё нет в БД — повторим без неё, не валим бот.
-      if (/metadata/.test(error.message) && update.metadata) {
-        delete update.metadata;
-        const retry = await supabase.from("conversations").update(update).eq("id", existing.id).select().single();
+      // Если колонки metadata / last_user_message_at ещё нет в БД — повторим без них, не валим бот.
+      const cleaned = { ...update };
+      let dropped = false;
+      if (/metadata/.test(error.message) && cleaned.metadata) { delete cleaned.metadata; dropped = true; }
+      if (/last_user_message_at/.test(error.message) && cleaned.last_user_message_at) { delete cleaned.last_user_message_at; dropped = true; }
+      if (dropped) {
+        const retry = await supabase.from("conversations").update(cleaned).eq("id", existing.id).select().single();
         if (retry.error) throw new Error(`Conversation update failed: ${retry.error.message}`);
         return retry.data;
       }
@@ -52,15 +64,19 @@ export async function upsertConversation({ telegramUserId, telegramChatId, histo
   };
   if (lang) insert.lang = lang;
   if (metadata && typeof metadata === "object") insert.metadata = metadata;
+  if (lastUserMessageAt) insert.last_user_message_at = lastUserMessageAt;
   const { data, error } = await supabase
     .from("conversations")
     .insert(insert)
     .select()
     .single();
   if (error) {
-    if (/metadata/.test(error.message) && insert.metadata) {
-      delete insert.metadata;
-      const retry = await supabase.from("conversations").insert(insert).select().single();
+    const cleaned = { ...insert };
+    let dropped = false;
+    if (/metadata/.test(error.message) && cleaned.metadata) { delete cleaned.metadata; dropped = true; }
+    if (/last_user_message_at/.test(error.message) && cleaned.last_user_message_at) { delete cleaned.last_user_message_at; dropped = true; }
+    if (dropped) {
+      const retry = await supabase.from("conversations").insert(cleaned).select().single();
       if (retry.error) throw new Error(`Conversation insert failed: ${retry.error.message}`);
       return retry.data;
     }
@@ -75,6 +91,57 @@ export async function completeConversation(conversationId) {
     .update({ status: "completed", updated_at: new Date().toISOString() })
     .eq("id", conversationId);
   if (error) throw new Error(`Conversation complete failed: ${error.message}`);
+}
+
+// ─── Follow-up scheduler helpers ─────────────────────────────────────────────
+//
+// Активные диалоги с last_user_message_at <= cutoff. Сам шедулер фильтрует уровень
+// и интервал в JS — здесь только грубая выборка, чтобы не тянуть всю таблицу.
+
+export async function getActiveConversationsForFollowup(cutoffISO) {
+  const { data, error } = await supabase
+    .from("conversations")
+    .select("id, telegram_chat_id, telegram_user_id, lang, status, metadata, last_user_message_at, updated_at")
+    .eq("status", "active")
+    .not("last_user_message_at", "is", null)
+    .lte("last_user_message_at", cutoffISO)
+    .order("last_user_message_at", { ascending: true })
+    .limit(200);
+  if (error) {
+    // Если колонки last_user_message_at ещё нет — просто молчим, чтобы scheduler не падал.
+    if (/last_user_message_at/.test(error.message)) return [];
+    throw new Error(`Followup query failed: ${error.message}`);
+  }
+  return data || [];
+}
+
+// Записываем в metadata новый followup_level и пушим запись в metadata.followups[].
+export async function updateConversationFollowup(conversationId, { level, sentAt, prevMetadata = {} }) {
+  const followups = Array.isArray(prevMetadata.followups) ? prevMetadata.followups.slice() : [];
+  followups.push({ level, sent_at: sentAt });
+  const newMeta = { ...prevMetadata, followup_level: level, followups };
+  const { error } = await supabase
+    .from("conversations")
+    .update({ metadata: newMeta, updated_at: new Date().toISOString() })
+    .eq("id", conversationId);
+  if (error) throw new Error(`Followup metadata update failed: ${error.message}`);
+}
+
+// Проверка: есть ли по этому диалогу уже lead с assigned_to / closed / rejected — тогда не дёргаем клиента.
+export async function getLeadStateForConversation(conversationId) {
+  const { data, error } = await supabase
+    .from("leads")
+    .select("id, status, assigned_to")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    // Если таблицы leads нет (старый деплой) — считаем что лида нет.
+    if (/leads/.test(error.message)) return null;
+    throw new Error(`Lead state query failed: ${error.message}`);
+  }
+  return data || null;
 }
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
