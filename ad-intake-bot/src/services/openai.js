@@ -319,6 +319,22 @@ export function mergeData(existing = {}, delta = {}) {
       merged.files = [...prev, ...append];
       continue;
     }
+    if (k === "extras" && Array.isArray(v)) {
+      const prev = Array.isArray(merged.extras) ? merged.extras : [];
+      const seen = new Set(prev.map((x) => String(x).toLowerCase().trim()));
+      const append = [];
+      for (const e of v) {
+        if (e == null) continue;
+        const s = String(e).trim();
+        if (!s) continue;
+        const key = s.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        append.push(s);
+      }
+      merged.extras = [...prev, ...append];
+      continue;
+    }
 
     if (typeof v === "boolean") {
       merged[k] = v;

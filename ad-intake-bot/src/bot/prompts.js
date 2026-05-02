@@ -204,7 +204,7 @@ export function buildSystemPrompt(lang = "ru", extras = {}) {
   const meta = LANG_META[lang] || LANG_META.ru;
   let prompt = SYSTEM_PROMPT_BASE.replace("{LANG_NAME}", meta.name);
 
-  const { collected, currentStep, serviceCode, currentQuestion } = extras || {};
+  const { collected, currentStep, serviceCode, currentQuestion, upsellPromptBlock } = extras || {};
   const hasCollected = collected && typeof collected === "object" && Object.keys(collected).length > 0;
   if (hasCollected || currentStep || serviceCode || currentQuestion) {
     const lines = ["", "====================", "РАНТАЙМ-КОНТЕКСТ", "===================="];
@@ -226,6 +226,10 @@ export function buildSystemPrompt(lang = "ru", extras = {}) {
       }
     }
     prompt += "\n" + lines.join("\n");
+  }
+
+  if (upsellPromptBlock && typeof upsellPromptBlock === "string" && upsellPromptBlock.trim()) {
+    prompt += "\n\n====================\n" + upsellPromptBlock.trim() + "\n====================";
   }
 
   return prompt;
@@ -321,6 +325,11 @@ export const SAVE_ORDER_FUNCTION = {
       design: {
         type: "string",
         description: "Макет: 'есть макет' если клиент прислал готовый, 'нужен макет' если делать с нуля",
+      },
+      extras: {
+        type: "array",
+        items: { type: "string" },
+        description: "Доп.услуги (upsell/cross-sell), на которые клиент согласился: краткие id или метки (например, lighting, mount, eyelets, lamination). Опционально.",
       },
     },
     required: ["service_type", "description", "deadline", "contact"],

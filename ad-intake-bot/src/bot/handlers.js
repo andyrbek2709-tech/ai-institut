@@ -53,6 +53,7 @@ import {
 import { getQuestion } from "./questions.js";
 import { makeEmptyOrder, normalizeToSchema, REQUIRED_FIELDS } from "./orderSchema.js";
 import { buildKnowledgeContext } from "./promptContext.js";
+import { shouldTriggerUpsell, buildUpsellPromptBlock, UPSELL_MAP } from "./upsell.js";
 
 const MANAGER_CHAT_ID = String(process.env.MANAGER_CHAT_ID);
 
@@ -300,8 +301,10 @@ async function processUserMessage(ctx, userMessage) {
     flagShown: false,
     serviceCode: null,
     orderData: makeEmptyOrder(),
+    upsellShown: false,
   };
   if (!entry.orderData) entry.orderData = makeEmptyOrder();
+  if (typeof entry.upsellShown !== "boolean") entry.upsellShown = false;
   entry.messages = [...entry.messages, { role: "user", content: userMessage }];
 
   // Detect language
@@ -406,12 +409,35 @@ async function processUserMessage(ctx, userMessage) {
       console.error("buildKnowledgeContext failed:", err.message);
     }
 
+    // ─── Upsell / cross-sell trigger ────────────────────────────
+    // Один раз за диалог, после того как тип услуги определён и
+    // собрано минимум 2 поля сценария — мягко предлагаем доп.услуги.
+    let upsellPromptBlock = "";
+    let upsellAboutToShow = false;
+    try {
+      const scenarioSteps = serviceCode ? (SCENARIOS[serviceCode] || []) : [];
+      upsellAboutToShow = shouldTriggerUpsell({
+        serviceCode,
+        orderData: entry.orderData,
+        upsellShown: entry.upsellShown,
+        scenarioSteps,
+        currentStep,
+      });
+      if (upsellAboutToShow) {
+        upsellPromptBlock = buildUpsellPromptBlock(serviceCode, lang) || "";
+        console.log(`[upsell] chat=${chatId} trigger service=${serviceCode} step=${currentStep}`);
+      }
+    } catch (err) {
+      console.error("upsell trigger failed:", err.message);
+    }
+
     const result = await chat(lastMsgs, lang, {
       collected,
       currentStep,
       serviceCode,
       currentQuestion,
       knowledgeContext,
+      upsellPromptBlock,
     });
 
     if (result.type === "function") {
@@ -425,6 +451,11 @@ async function processUserMessage(ctx, userMessage) {
     }
 
     let reply = result.content || "...";
+
+    // Если в этой реплике мы попросили LLM произнести upsell — фиксируем флаг.
+    if (upsellAboutToShow) {
+      entry.upsellShown = true;
+    }
 
     const meta = getLangMeta(lang);
     const flagShown = consumeFlag(chatId);
@@ -573,7 +604,7 @@ async function finalizeOrder(ctx, entry, args) {
     }[lang] || `✅ Заявка №${short} принята!`;
     await ctx.reply(confirm);
 
-    await notifyManager(ctx, order, lang, args, lead);
+    await notifyManager(ctx, order, lang, args, lead, entry.orderData);
   } catch (err) {
     console.error("Finalize error:", err.message);
     await ctx.reply("Заявку записал, но возникла техническая ошибка при сохранении. Менеджер всё равно увидит ваше обращение.");
@@ -586,7 +617,7 @@ async function finalizeOrder(ctx, entry, args) {
   }
 }
 
-async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null) {
+async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null, orderData = null) {
   const username = ctx.from?.username ? `@${ctx.from.username}` : `id:${ctx.from?.id}`;
   const meta = getLangMeta(lang);
   const score = lead?.lead_score ?? 50;
@@ -616,6 +647,24 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null)
   ];
   for (const [label, val] of extras) {
     if (val && String(val).trim()) lines.push(`${label}: ${val}`);
+  }
+  // Допуслуги (upsell/cross-sell): orderData.extras → "➕ Допы: ...".
+  // Если orderData не передали (на всякий случай) — fallback на rawArgs.extras / order.extras.
+  const extrasArr =
+    (orderData && Array.isArray(orderData.extras) && orderData.extras) ||
+    (Array.isArray(rawArgs.extras) && rawArgs.extras) ||
+    (Array.isArray(order.extras) && order.extras) ||
+    [];
+  if (extrasArr.length > 0) {
+    const labels = extrasArr.map((id) => {
+      // Если id из UPSELL_MAP — заменим на ru-метку, иначе оставим как есть.
+      for (const opts of Object.values(UPSELL_MAP)) {
+        const found = opts.find((o) => o.id === id);
+        if (found) return found.label;
+      }
+      return String(id);
+    });
+    lines.push(`➕ Допы: ${labels.join(", ")}`);
   }
   lines.push(`📅 Срок: ${order.deadline || "—"}`);
   if (order.budget) lines.push(`💰 Бюджет: ${order.budget}`);

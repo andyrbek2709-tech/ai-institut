@@ -27,6 +27,7 @@ export const ORDER_SCHEMA = {
   contact: null,              // контакт
   description: null,          // общее описание (для "другое")
   files: [],                  // ссылки на загруженные файлы
+  extras: [],                 // upsell/cross-sell: массив id допуслуг (lighting, mount, ...) или меток
 };
 
 // Алиасы legacy-имён, которые встречаются в старом extractPartialBrief
@@ -59,6 +60,7 @@ export function makeEmptyOrder() {
   return {
     ...ORDER_SCHEMA,
     files: [],
+    extras: [],
   };
 }
 
