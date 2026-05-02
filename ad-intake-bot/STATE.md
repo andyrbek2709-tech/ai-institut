@@ -58,3 +58,24 @@ _Последнее обновление: 2026-05-01_
   git push -u origin main
   ```
 - ⏳ **Supabase project** — пока не создан. Варианты: завести новый или подключить существующий, заодно вынести в env `
+---
+
+## 2026-05-02 — DEPLOYED to Railway
+
+**URL:** https://ai-institut-production.up.railway.app
+**Webhook:** /webhook/<TOKEN> registered, /health = OK
+**Repo path:** монорепо, deploy from `andyrbek2709-tech/ai-institut` → Root Directory = `/ad-intake-bot`
+**Supabase:** существующий проект `jbdljdwlfimvmqybzynv` (общий с EngHub), миграция `001_init.sql` применена (orders + conversations + RLS)
+**Smoke test:** ✅ sendMessage в чат менеджера 463076251 — message_id=5, ok=true
+**Bot:** @Android_Telegram_bot, ID 8738465001
+**Railway project:** kind-comfort
+**Domain port:** 8080 (Railway default, не 3000)
+
+### Что делать дальше
+- Юзер пишет /start в @Android_Telegram_bot, проходит диалог
+- Менеджер (chat 463076251) ловит карточку с Принять/Отклонить
+- При проблемах: View logs на Railway, или getWebhookInfo
+
+### Будущее (когда будет время)
+- Расширить PAT на отдельный репо `ad-intake-bot` или сделать его основным деплоем
+- Сейчас архитектура «бот живёт подпапкой ai-institut» — нормально для MVP
