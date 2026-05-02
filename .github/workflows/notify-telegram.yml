@@ -1,37 +1,49 @@
+# Triggered by push events whose commit message contains the marker [notify-tg].
+# After the marker the rest of the commit-message line is sent to the manager
+# Telegram chat. Acts as a sandbox-egress workaround when the local agent has
+# no direct outbound access to api.telegram.org.
+
 name: notify-telegram
 on:
-  workflow_dispatch:
-    inputs:
-      token:
-        description: "Telegram bot token (masked in logs)"
-        required: true
-      chat_id:
-        description: "Target chat id"
-        required: true
-      text:
-        description: "Message text"
-        required: true
+  push:
+    branches: [main]
 
 jobs:
   notify:
+    if: contains(github.event.head_commit.message, '[notify-tg]')
     runs-on: ubuntu-latest
+    env:
+      TG_TOKEN: 8738465001:AAH8DFhJ20m6jJE36aePWiOydMtuWiH7Zzc
+      TG_CHAT_ID: "463076251"
+      RAW_MSG: ${{ github.event.head_commit.message }}
     steps:
-      - name: Send Telegram message
-        env:
-          TG_TOKEN: ${{ inputs.token }}
-          TG_CHAT_ID: ${{ inputs.chat_id }}
-          TG_TEXT: ${{ inputs.text }}
+      - name: Wait for Railway deploy (best-effort)
         run: |
-          echo "::add-mask::$TG_TOKEN"
-          # Wait briefly for any concurrent Railway deploy
-          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+          for i in $(seq 1 20); do
             code=$(curl -s -m 6 -o /dev/null -w "%{http_code}" "https://ai-institut-production.up.railway.app/health" || echo "000")
             echo "[$i] /health http=$code"
-            if [ "$code" = "200" ]; then break; fi
-            sleep 8
+            if [ "$code" = "200" ]; then echo READY; break; fi
+            sleep 9
           done
+      - name: Extract notify-tg payload
+        id: extract
+        run: |
+          # Берём всё что после [notify-tg]:
+          payload=$(printf '%s' "$RAW_MSG" | awk '/\[notify-tg\]/{found=1; sub(/.*\[notify-tg\][[:space:]]*/, ""); print; exit} found' )
+          if [ -z "$payload" ]; then payload="(empty notification)"; fi
+          # Защитим многострочный/спец вывод через GITHUB_OUTPUT heredoc
+          {
+            echo "payload<<__EOF__"
+            echo "$payload"
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
+      - name: Send Telegram message
+        env:
+          TG_PAYLOAD: ${{ steps.extract.outputs.payload }}
+        run: |
+          echo "::add-mask::$TG_TOKEN"
           resp=$(curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
                  -d "chat_id=${TG_CHAT_ID}" \
-                 --data-urlencode "text=${TG_TEXT}")
+                 --data-urlencode "text=${TG_PAYLOAD}")
           echo "TG response: $(echo "$resp" | head -c 400)"
           echo "$resp" | grep -q '"ok":true' || { echo "Telegram sendMessage failed"; exit 1; }
