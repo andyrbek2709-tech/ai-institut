@@ -16,14 +16,23 @@ const TOOLS = [{ type: "function", function: SAVE_ORDER_FUNCTION }];
  *
  * @param {Array} messages
  * @param {string} lang  "ru" | "kk" | "en"
- * @param {object} extras { collected, currentStep, serviceCode, currentQuestion }
+ * @param {object} extras { collected, currentStep, serviceCode, currentQuestion, knowledgeContext }
  */
 export async function chat(messages, lang = "ru", extras = {}) {
   const trimmed = messages.length > 20 ? messages.slice(-20) : messages;
 
+  // Базовый system prompt + (опционально) подмешанный блок БАЗЫ ЗНАНИЙ.
+  // knowledgeContext формируется в src/bot/promptContext.js (RAG-lite full-text).
+  let systemPrompt = buildSystemPrompt(lang, extras);
+  const kb =
+    extras && typeof extras.knowledgeContext === "string" ? extras.knowledgeContext.trim() : "";
+  if (kb) {
+    systemPrompt += "\n\n====================\n" + kb + "\n====================";
+  }
+
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "system", content: buildSystemPrompt(lang, extras) }, ...trimmed],
+    messages: [{ role: "system", content: systemPrompt }, ...trimmed],
     tools: TOOLS,
     tool_choice: "auto",
     temperature: 0.4,

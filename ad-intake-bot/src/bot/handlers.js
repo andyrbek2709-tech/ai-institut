@@ -52,6 +52,7 @@ import {
 } from "./scenarios.js";
 import { getQuestion } from "./questions.js";
 import { makeEmptyOrder, normalizeToSchema, REQUIRED_FIELDS } from "./orderSchema.js";
+import { buildKnowledgeContext } from "./promptContext.js";
 
 const MANAGER_CHAT_ID = String(process.env.MANAGER_CHAT_ID);
 
@@ -387,11 +388,30 @@ async function processUserMessage(ctx, userMessage) {
 
     const lastMsgs = entry.messages.slice(-10);
 
+    // RAG-lite: подмешиваем релевантные записи knowledge_base в system prompt.
+    // Дёшево: один Supabase-запрос (full-text + tags fallback). Если 0 — "" и flow без изменений.
+    let knowledgeContext = "";
+    try {
+      knowledgeContext = await buildKnowledgeContext({
+        lastUserMessage: userMessage,
+        orderData: entry.orderData,
+        lang,
+      });
+      if (knowledgeContext) {
+        console.log(
+          `[knowledgeContext] chat=${chatId} added ${knowledgeContext.split("\n").length} lines`
+        );
+      }
+    } catch (err) {
+      console.error("buildKnowledgeContext failed:", err.message);
+    }
+
     const result = await chat(lastMsgs, lang, {
       collected,
       currentStep,
       serviceCode,
       currentQuestion,
+      knowledgeContext,
     });
 
     if (result.type === "function") {
