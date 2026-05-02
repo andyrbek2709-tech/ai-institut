@@ -1,4 +1,4 @@
-import { chat, detectLang, describeImage, extractPartialBrief, classifyServiceTypeLLM, extractData, mergeData, missingRequiredFields, assistManagerReply } from "../services/openai.js";
+import { chat, detectLang, describeImage, extractPartialBrief, classifyServiceTypeLLM, extractData, mergeData, missingRequiredFields, assistManagerReply, extractTeachStructured } from "../services/openai.js";
 import { transcribeVoice } from "../services/whisper.js";
 import {
   upsertConversation,
@@ -12,7 +12,6 @@ import {
 import {
   createLead,
   getLeadById,
-  getActiveLeadByChatId,
   updateLead,
   getLeadsByStatus,
   getLeadsByTier,
@@ -32,7 +31,17 @@ import {
   setAssistDraft,
   getAssistDraft,
   deleteAssistDraft,
+  setManagerState,
+  getManagerState,
+  clearManagerState,
 } from "../utils/state.js";
+import {
+  addKnowledge,
+  listKnowledge,
+  deleteKnowledge,
+  getKnowledgeById,
+  KB_CATEGORIES,
+} from "../services/knowledgeBase.js";
 import { getLangMeta, CONTACT_REASK } from "./prompts.js";
 import {
   keywordClassify,
@@ -68,6 +77,8 @@ export function registerHandlers(bot) {
   bot.command("leads", ownerOnly(handleLeadsCommand));
   bot.command("reply", ownerOnly(handleReplyCommand));
   bot.command("assist", ownerOnly(handleAssistCommand));
+  bot.command("teach", ownerOnly(handleTeachCommand));
+  bot.command("knowledge", ownerOnly(handleKnowledgeCommand));
   bot.command("help", handleHelp);
   bot.command("reset", handleReset);
 
@@ -108,37 +119,8 @@ async function handleHelp(ctx) {
 
 async function handleReset(ctx) {
   clearContext(ctx.chat.id);
+  if (String(ctx.chat?.id) === MANAGER_CHAT_ID) clearManagerState(ctx.chat.id);
   await ctx.reply("Окей, начнём заново 🔄\n\nРасскажите, что за заказ?");
-}
-
-// ─── Post-finalize forward: после оформления заявки клиентский чат
-//     ведёт менеджер. Любые сообщения клиента форвардим в MANAGER_CHAT_ID
-//     с префиксом «📨 Клиент #<leadId>», LLM не дёргаем. ───────────────────
-async function forwardCompletedClientMessage(ctx, text) {
-  try {
-    const chatId = ctx.chat?.id;
-    if (!chatId) return false;
-    if (String(chatId) === MANAGER_CHAT_ID) return false;
-    const lead = await getActiveLeadByChatId(chatId);
-    if (!lead) return false;
-
-    const leadShort = String(lead.id).substring(0, 8);
-    const username = ctx.from?.username
-      ? `@${ctx.from.username}`
-      : `id${ctx.from?.id ?? ""}`;
-    const header = `📨 Клиент #${leadShort} (${username}, chat ${chatId}):`;
-    const body = String(text || "").trim();
-    await _bot.telegram.sendMessage(MANAGER_CHAT_ID, `${header}\n${body}`);
-
-    if (lead.conversation_id) {
-      try { await appendConversationMessage(lead.conversation_id, "user", body); }
-      catch (e) { console.error("appendConversationMessage(post-finalize) failed:", e.message); }
-    }
-    return true;
-  } catch (err) {
-    console.error("forwardCompletedClientMessage error:", err.message);
-    return false;
-  }
 }
 
 // ─── Text / Voice / Files ────────────────────────────────────────────────────
@@ -146,6 +128,9 @@ async function forwardCompletedClientMessage(ctx, text) {
 export async function handleText(ctx) {
   const userMessage = ctx.message.text?.trim();
   if (!userMessage) return;
+
+  // ─── Manager teach-mode: ждём заметку для knowledge_base ───────────────
+  if (await maybeHandleManagerTeachInput(ctx, userMessage)) return;
 
   // ─── Clarify-flow: менеджер ответил на ForceReply от lead:clarify ──────
   if (String(ctx.chat?.id) === MANAGER_CHAT_ID) {
@@ -157,9 +142,6 @@ export async function handleText(ctx) {
       return;
     }
   }
-
-  // После finalize ведёт менеджер — форвардим, не запускаем LLM заново.
-  if (await forwardCompletedClientMessage(ctx, userMessage)) return;
 
   await processUserMessage(ctx, userMessage);
 }
@@ -173,8 +155,10 @@ export async function handleVoice(ctx) {
       await ctx.reply("Не получилось распознать голос, попробуйте ещё раз или напишите текстом 🙏");
       return;
     }
-    // После finalize: голосовой текст уходит менеджеру, не в LLM.
-    if (await forwardCompletedClientMessage(ctx, `🎙 ${text}`)) return;
+
+    // ─── Manager teach-mode: голосовая заметка для knowledge_base ─────────
+    if (await maybeHandleManagerTeachInput(ctx, text)) return;
+
     // (voice echo removed — speak content directly)
     await processUserMessage(ctx, text);
   } catch (err) {
@@ -202,18 +186,6 @@ export async function handleFile(ctx) {
     }
 
     const link = await ctx.telegram.getFileLink(fileId);
-
-    // После finalize: файлы тоже отдаём менеджеру, без LLM-цикла.
-    {
-      const caption0 = ctx.message.caption?.trim();
-      const fwdMsg = `📎 ${label}: ${link.href}${caption0 ? `\nподпись: ${caption0}` : ""}`;
-      if (await forwardCompletedClientMessage(ctx, fwdMsg)) {
-        try { addFile(ctx.chat.id, link.href); } catch { /* ignore */ }
-        await ctx.reply("Принял, передал менеджеру 👍");
-        return;
-      }
-    }
-
     addFile(ctx.chat.id, link.href);
 
     const caption = ctx.message.caption?.trim();
@@ -676,6 +648,11 @@ async function handleCallback(ctx) {
   // Lead-callbacks: lead:take:N, lead:clarify:N, lead:close:N, lead:reject:N, lead:open:N
   if (data.startsWith("lead:")) {
     return handleLeadCallback(ctx, data, chatId);
+  }
+
+  // Knowledge-base callbacks: kb:delete:N
+  if (data.startsWith("kb:")) {
+    return handleKbCallback(ctx, data, chatId);
   }
 
   // Legacy order-callbacks: accept:UUID, reject:UUID
@@ -1240,4 +1217,175 @@ async function handleAssistCommand(ctx) {
   }
   const leadId = parseInt(m[1], 10);
   await proposeAssistReply(ctx, leadId);
+}
+
+// ─── Knowledge base: /teach, /knowledge, kb:delete ───────────────────────────
+//
+// Менеджер обучает бота — пишет «материал/услуга/правило/цена/совет», LLM
+// извлекает структуру, бот сохраняет в knowledge_base. Команды доступны
+// ТОЛЬКО менеджеру (защита через ownerOnly при регистрации).
+
+function kbCategoryLabel(cat) {
+  switch (cat) {
+    case "material": return "📦 материал";
+    case "service":  return "🛠 услуга";
+    case "rule":     return "📋 правило";
+    case "price":    return "💰 цена";
+    case "tip":      return "💡 совет";
+    default:         return cat || "—";
+  }
+}
+
+function kbFormatLine(rec) {
+  const head = `#${rec.id} ${kbCategoryLabel(rec.category)} ${rec.name}`;
+  const price = rec.price !== null && rec.price !== undefined ? ` — ${Number(rec.price).toLocaleString("ru-RU")} ₸` : "";
+  const desc = rec.description ? ` — ${String(rec.description).slice(0, 60)}${rec.description.length > 60 ? "…" : ""}` : "";
+  return `${head}${price}${desc}`;
+}
+
+async function handleTeachCommand(ctx) {
+  setManagerState(ctx.chat.id, "awaiting_teach_input");
+  await ctx.reply(
+    "🧠 Жду текст для базы знаний (категория автоматом). Можно несколько строк, можно голосовым.\n\n" +
+    "Например: «Холст 380 г/м² для широкоформатной печати, цена 2500 тг/м², хорошо для билбордов и баннеров на улице».\n\n" +
+    "Чтобы отменить — /reset."
+  );
+}
+
+async function handleKnowledgeCommand(ctx) {
+  // /knowledge или /knowledge <category>
+  const text = ctx.message?.text?.trim() || "";
+  const parts = text.split(/\s+/);
+  const filter = parts[1] && KB_CATEGORIES.includes(parts[1].toLowerCase()) ? parts[1].toLowerCase() : null;
+
+  let records;
+  try {
+    records = await listKnowledge({ category: filter, limit: 20 });
+  } catch (err) {
+    console.error("listKnowledge failed:", err.message);
+    await ctx.reply(`❌ Ошибка чтения базы знаний: ${err.message}`);
+    return;
+  }
+
+  if (!records.length) {
+    await ctx.reply(
+      filter
+        ? `📚 База знаний (${kbCategoryLabel(filter)}) пуста. Добавьте через /teach.`
+        : "📚 База знаний пуста. Добавьте через /teach."
+    );
+    return;
+  }
+
+  const header = filter
+    ? `📚 База знаний — ${kbCategoryLabel(filter)} (последние ${records.length})`
+    : `📚 База знаний (последние ${records.length})\nФильтры: /knowledge material | service | rule | price | tip`;
+  await ctx.reply(header);
+
+  // Каждую запись — отдельным сообщением с кнопкой Удалить.
+  for (const rec of records) {
+    await ctx.telegram.sendMessage(ctx.chat.id, kbFormatLine(rec), {
+      reply_markup: {
+        inline_keyboard: [[{ text: "🗑 Удалить", callback_data: `kb:delete:${rec.id}` }]],
+      },
+    }).catch((e) => console.error("kb list send failed:", e.message));
+  }
+}
+
+/**
+ * Если менеджер в состоянии awaiting_teach_input — обрабатываем входящий
+ * текст/транскрипт как заметку для базы знаний и возвращаем true.
+ * Иначе возвращаем false (пусть идёт обычная диалоговая логика).
+ */
+async function maybeHandleManagerTeachInput(ctx, text) {
+  if (String(ctx.chat?.id) !== MANAGER_CHAT_ID) return false;
+  const ms = getManagerState(ctx.chat.id);
+  if (!ms || ms.state !== "awaiting_teach_input") return false;
+
+  // Сразу гасим состояние — даже если упадёт, не зацикливаемся.
+  clearManagerState(ctx.chat.id);
+
+  await ctx.sendChatAction("typing").catch(() => {});
+
+  let extracted;
+  try {
+    extracted = await extractTeachStructured(text);
+  } catch (err) {
+    console.error("extractTeachStructured threw:", err.message);
+    await ctx.reply(`❌ Не получилось разобрать заметку: ${err.message}`);
+    return true;
+  }
+
+  if (!extracted) {
+    await ctx.reply("❌ Не получилось извлечь структуру из заметки. Попробуйте сформулировать конкретнее.");
+    return true;
+  }
+
+  let saved;
+  try {
+    saved = await addKnowledge({
+      category: extracted.category,
+      name: extracted.name,
+      price: extracted.price,
+      description: extracted.description,
+      tags: extracted.tags,
+      createdByChatId: ctx.chat.id,
+    });
+  } catch (err) {
+    console.error("addKnowledge failed:", err.message);
+    await ctx.reply(`❌ Ошибка сохранения: ${err.message}`);
+    return true;
+  }
+
+  const tagsLine = (saved.tags || []).length ? `\n🏷 ${saved.tags.join(", ")}` : "";
+  const priceLine = saved.price !== null && saved.price !== undefined
+    ? `\n💰 ${Number(saved.price).toLocaleString("ru-RU")} ₸`
+    : "";
+  await ctx.reply(
+    `Сохранил 👍 [${kbCategoryLabel(saved.category)}] ${saved.name}${priceLine}${tagsLine}\n\n` +
+    `📝 ${saved.description}\n\n` +
+    `id #${saved.id} — удалить: /knowledge`
+  );
+  return true;
+}
+
+async function handleKbCallback(ctx, data, chatId) {
+  const parts = data.split(":"); // kb:delete:<id>
+  const action = parts[1];
+  const id = parseInt(parts[2], 10);
+  const msgId = ctx.callbackQuery.message?.message_id;
+
+  if (!action || !id) {
+    await ctx.answerCbQuery("Неверные данные").catch(() => {});
+    return;
+  }
+
+  if (action === "delete") {
+    try {
+      const rec = await getKnowledgeById(id);
+      if (!rec) {
+        await ctx.answerCbQuery("Уже удалено").catch(() => {});
+        if (msgId) await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+        return;
+      }
+      await deleteKnowledge(id);
+      await ctx.answerCbQuery("Удалено").catch(() => {});
+      if (msgId) {
+        await ctx.telegram.editMessageText(
+          chatId,
+          msgId,
+          undefined,
+          `🗑 #${rec.id} ${kbCategoryLabel(rec.category)} ${rec.name} — удалено`,
+          { reply_markup: { inline_keyboard: [] } }
+        ).catch(async () => {
+          await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+        });
+      }
+    } catch (err) {
+      console.error("kb delete failed:", err.message);
+      await ctx.answerCbQuery(`Ошибка: ${err.message}`).catch(() => {});
+    }
+    return;
+  }
+
+  await ctx.answerCbQuery("Неизвестное действие").catch(() => {});
 }

@@ -4,6 +4,7 @@ import { SERVICE_TYPES } from "../bot/scenarios.js";
 import { EXTRACT_SYSTEM, buildExtractUserMessage } from "../bot/extractPrompt.js";
 import { normalizeToSchema, makeEmptyOrder } from "../bot/orderSchema.js";
 import { ASSIST_SYSTEM, buildAssistUserMessage } from "../bot/managerAssistPrompt.js";
+import { TEACH_EXTRACT_SYSTEM, buildTeachExtractUserMessage } from "../bot/teachExtractPrompt.js";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -377,6 +378,53 @@ export async function assistManagerReply({ orderData = {}, history = [], lang = 
     return txt.replace(/^["«]|["»]$/g, "").trim();
   } catch (err) {
     console.error("assistManagerReply failed:", err.message);
+    return null;
+  }
+}
+
+/**
+ * Извлечь структурированную запись knowledge_base из заметки менеджера.
+ * Возвращает {category, name, price, description, tags} либо null при ошибке.
+ *
+ * @param {string} text  raw text (или транскрипт голосового)
+ */
+export async function extractTeachStructured(text) {
+  if (!text || !text.trim()) return null;
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: TEACH_EXTRACT_SYSTEM },
+        { role: "user", content: buildTeachExtractUserMessage(text) },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 500,
+    });
+    const raw = response.choices?.[0]?.message?.content?.trim();
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+
+    // Валидация / нормализация на уровне сервиса knowledgeBase, здесь
+    // только базовая защита от мусора.
+    const category = String(parsed.category || "").toLowerCase().trim();
+    const name = String(parsed.name || "").trim();
+    const description = String(parsed.description || "").trim();
+    let price = parsed.price;
+    if (price === "" || price === undefined) price = null;
+    if (price !== null && !Number.isFinite(Number(price))) price = null;
+    const tags = Array.isArray(parsed.tags) ? parsed.tags.map((t) => String(t)).filter(Boolean) : [];
+
+    if (!name && !description) return null;
+    return {
+      category: category || "tip",
+      name: name || description.slice(0, 40),
+      price: price === null ? null : Number(price),
+      description: description || name,
+      tags,
+    };
+  } catch (err) {
+    console.error("extractTeachStructured failed:", err.message);
     return null;
   }
 }

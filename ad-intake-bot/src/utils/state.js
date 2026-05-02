@@ -101,3 +101,39 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000);
+
+// ─── Manager-only state (для /teach и подобных команд) ───────────────────────
+// Хранит ожидаемое состояние менеджера, например awaiting_teach_input.
+// key: managerChatId (string), value: { state, payload, createdAt }
+// TTL: 10 минут — менеджер должен успеть наговорить заметку.
+
+const managerStates = new Map();
+const MANAGER_STATE_TTL_MS = 10 * 60 * 1000;
+
+export function setManagerState(chatId, state, payload = null) {
+  managerStates.set(String(chatId), { state, payload, createdAt: Date.now() });
+}
+
+export function getManagerState(chatId) {
+  const key = String(chatId);
+  const entry = managerStates.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.createdAt > MANAGER_STATE_TTL_MS) {
+    managerStates.delete(key);
+    return null;
+  }
+  return entry;
+}
+
+export function clearManagerState(chatId) {
+  managerStates.delete(String(chatId));
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of managerStates) {
+    if (now - entry.createdAt > MANAGER_STATE_TTL_MS) {
+      managerStates.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
