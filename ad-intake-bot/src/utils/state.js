@@ -64,3 +64,40 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000);
+
+// ─── Manager Assist drafts ───────────────────────────────────────────────────
+// In-memory store предложенных AI-ответов менеджеру.
+// key: msgId (number), value: { leadId, text, lang, createdAt }
+// TTL: 30 минут.
+
+const assistDrafts = new Map();
+const ASSIST_TTL_MS = 30 * 60 * 1000;
+
+export function setAssistDraft(msgId, draft) {
+  assistDrafts.set(Number(msgId), { ...draft, createdAt: Date.now() });
+}
+
+export function getAssistDraft(msgId) {
+  const key = Number(msgId);
+  const entry = assistDrafts.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.createdAt > ASSIST_TTL_MS) {
+    assistDrafts.delete(key);
+    return null;
+  }
+  return entry;
+}
+
+export function deleteAssistDraft(msgId) {
+  assistDrafts.delete(Number(msgId));
+}
+
+// Periodic cleanup
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of assistDrafts) {
+    if (now - entry.createdAt > ASSIST_TTL_MS) {
+      assistDrafts.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);

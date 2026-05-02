@@ -1,4 +1,4 @@
-import { chat, detectLang, describeImage, extractPartialBrief, classifyServiceTypeLLM, extractData, mergeData, missingRequiredFields } from "../services/openai.js";
+import { chat, detectLang, describeImage, extractPartialBrief, classifyServiceTypeLLM, extractData, mergeData, missingRequiredFields, assistManagerReply } from "../services/openai.js";
 import { transcribeVoice } from "../services/whisper.js";
 import {
   upsertConversation,
@@ -28,6 +28,9 @@ import {
   addFile,
   setLang,
   consumeFlag,
+  setAssistDraft,
+  getAssistDraft,
+  deleteAssistDraft,
 } from "../utils/state.js";
 import { getLangMeta, CONTACT_REASK } from "./prompts.js";
 import {
@@ -63,6 +66,7 @@ export function registerHandlers(bot) {
   bot.command("today", ownerOnly(handleOwnerToday));
   bot.command("leads", ownerOnly(handleLeadsCommand));
   bot.command("reply", ownerOnly(handleReplyCommand));
+  bot.command("assist", ownerOnly(handleAssistCommand));
   bot.command("help", handleHelp);
   bot.command("reset", handleReset);
 
@@ -616,6 +620,11 @@ async function handleCallback(ctx) {
     return;
   }
 
+  // Manager-Assist callbacks: assist:send:<leadId>:<msgId>, assist:edit:<leadId>, assist:cancel:<msgId>
+  if (data.startsWith("assist:")) {
+    return handleAssistCallback(ctx, data, chatId);
+  }
+
   // Lead-callbacks: lead:take:N, lead:clarify:N, lead:close:N, lead:reject:N, lead:open:N
   if (data.startsWith("lead:")) {
     return handleLeadCallback(ctx, data, chatId);
@@ -701,13 +710,8 @@ async function handleLeadCallback(ctx, data, chatId) {
     }
 
     if (action === "clarify") {
-      const sent = await ctx.telegram.sendMessage(
-        chatId,
-        `💬 Введите сообщение клиенту по заявке #${leadId}:`,
-        { reply_markup: { force_reply: true, selective: true } }
-      );
-      pendingClarify.set(MANAGER_CHAT_ID, { leadId, promptMessageId: sent.message_id });
-      await ctx.answerCbQuery("Ответьте на это сообщение").catch(() => {});
+      await ctx.answerCbQuery("Готовлю вариант ответа…").catch(() => {});
+      await proposeAssistReply(ctx, leadId, lead);
       return;
     }
 
@@ -1009,4 +1013,183 @@ async function handleOwnerToday(ctx) {
     console.error("Today error:", err.message);
     await ctx.reply(`Ошибка: ${err.message}`);
   }
+}
+
+// ─── Manager Assist (AI-помощник: предлагает текст ответа клиенту) ───────────
+
+/**
+ * Достать последнее сообщение клиента из истории разговора (role === "user").
+ */
+function lastClientMessage(history) {
+  if (!Array.isArray(history)) return "";
+  for (let i = history.length - 1; i >= 0; i--) {
+    const m = history[i];
+    if (m && m.role === "user" && m.content) return String(m.content);
+  }
+  // Fallback — последнее любое
+  const last = history[history.length - 1];
+  return last && last.content ? String(last.content) : "";
+}
+
+/**
+ * Сгенерировать AI-предложение и отправить менеджеру с кнопками
+ * [✉ Отправить] [✏️ Изменить] [✗ Отмена].
+ *
+ * @param {*} ctx — Telegraf ctx
+ * @param {number} leadId
+ * @param {object} [leadPreloaded] — если уже подгружен, не дёргаем БД повторно
+ */
+async function proposeAssistReply(ctx, leadId, leadPreloaded = null) {
+  try {
+    const lead = leadPreloaded || (await getLeadById(leadId));
+    if (!lead) {
+      await ctx.telegram.sendMessage(MANAGER_CHAT_ID, `Лид #${leadId} не найден.`).catch(() => {});
+      return;
+    }
+
+    // lead.data — это плоский объект с полями orderData (type/size/contact/...) + lang/order_id/username
+    const orderData = lead.data || {};
+    let history = [];
+    let lang = lead.data?.lang || "ru";
+    if (lead.conversation_id) {
+      const h = await getConversationHistoryForLead(lead.conversation_id, 10);
+      history = Array.isArray(h?.history) ? h.history : [];
+      if (h?.lang) lang = h.lang;
+    }
+    const lastUserMessage = lastClientMessage(history);
+
+    const text = await assistManagerReply({
+      orderData,
+      history,
+      lang,
+      lastUserMessage,
+    });
+
+    if (!text) {
+      await ctx.telegram.sendMessage(
+        MANAGER_CHAT_ID,
+        `⚠️ Не удалось сгенерировать вариант ответа для лида #${leadId}. ` +
+        `Можно написать вручную: /reply ${leadId} <текст>`
+      ).catch(() => {});
+      return;
+    }
+
+    // Пока msgId не известен — отправим без кнопок, потом отредактируем
+    // (чтобы вшить в callback_data сам msgId, а не накапливать вторичный поиск).
+    // Шаг 1: шлём с временным разметом без msgId — кнопки edit/cancel уже работают.
+    const sent = await ctx.telegram.sendMessage(
+      MANAGER_CHAT_ID,
+      `💡 Вариант ответа клиенту #${leadId}:\n\n«${text}»`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "✉ Отправить",  callback_data: `assist:send:${leadId}:0` },
+              { text: "✏️ Изменить",  callback_data: `assist:edit:${leadId}` },
+              { text: "✗ Отмена",     callback_data: `assist:cancel:0` },
+            ],
+          ],
+        },
+      }
+    );
+
+    // Сохраняем драфт по msgId (то, что прилетит в send-callback).
+    const msgId = sent.message_id;
+    setAssistDraft(msgId, { leadId, text, lang });
+
+    // Шаг 2: пере-приклеиваем кнопки с актуальным msgId, чтобы send брал draft по нему.
+    await ctx.telegram.editMessageReplyMarkup(MANAGER_CHAT_ID, msgId, undefined, {
+      inline_keyboard: [
+        [
+          { text: "✉ Отправить",  callback_data: `assist:send:${leadId}:${msgId}` },
+          { text: "✏️ Изменить",  callback_data: `assist:edit:${leadId}` },
+          { text: "✗ Отмена",     callback_data: `assist:cancel:${msgId}` },
+        ],
+      ],
+    }).catch(() => {});
+  } catch (err) {
+    console.error("proposeAssistReply error:", err.message);
+    await ctx.telegram.sendMessage(MANAGER_CHAT_ID, `⚠️ Ошибка ассистента: ${err.message}`).catch(() => {});
+  }
+}
+
+/**
+ * Обработка assist:* callback'ов.
+ * Форматы:
+ *   assist:send:<leadId>:<msgId>  — отправить сохранённый текст клиенту
+ *   assist:edit:<leadId>          — открыть ForceReply, менеджер пишет свой текст
+ *   assist:cancel:<msgId>         — отбой, удалить кнопки и draft
+ */
+async function handleAssistCallback(ctx, data, chatId) {
+  const parts = data.split(":");
+  const action = parts[1];
+  const msgId = ctx.callbackQuery.message?.message_id;
+
+  try {
+    if (action === "send") {
+      const leadId = parseInt(parts[2], 10);
+      const draftMsgId = parseInt(parts[3], 10) || msgId;
+      const draft = getAssistDraft(draftMsgId);
+      if (!draft || draft.leadId !== leadId) {
+        await ctx.answerCbQuery("Черновик устарел. Сгенерируйте заново.").catch(() => {});
+        if (msgId) {
+          await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+        }
+        return;
+      }
+      await sendManagerReplyToClient(ctx, leadId, draft.text);
+      deleteAssistDraft(draftMsgId);
+      await ctx.answerCbQuery("Отправлено клиенту").catch(() => {});
+      if (msgId) {
+        await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+      }
+      return;
+    }
+
+    if (action === "edit") {
+      const leadId = parseInt(parts[2], 10);
+      // Снимаем кнопки у предложения, чтобы не зависало.
+      if (msgId) {
+        await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+        deleteAssistDraft(msgId);
+      }
+      const sent = await ctx.telegram.sendMessage(
+        chatId,
+        `✏️ Введите свой вариант ответа клиенту по заявке #${leadId}:`,
+        { reply_markup: { force_reply: true, selective: true } }
+      );
+      pendingClarify.set(MANAGER_CHAT_ID, { leadId, promptMessageId: sent.message_id });
+      await ctx.answerCbQuery("Ответьте на это сообщение").catch(() => {});
+      return;
+    }
+
+    if (action === "cancel") {
+      const draftMsgId = parseInt(parts[2], 10) || msgId;
+      if (draftMsgId) deleteAssistDraft(draftMsgId);
+      if (msgId) {
+        await ctx.telegram.editMessageReplyMarkup(chatId, msgId, undefined, { inline_keyboard: [] }).catch(() => {});
+      }
+      await ctx.answerCbQuery("Отменено").catch(() => {});
+      return;
+    }
+
+    await ctx.answerCbQuery("Неизвестное действие").catch(() => {});
+  } catch (err) {
+    console.error("handleAssistCallback error:", err.message);
+    await ctx.answerCbQuery(`Ошибка: ${err.message}`).catch(() => {});
+  }
+}
+
+/**
+ * /assist <leadId> — менеджер вручную просит AI предложить ответ.
+ */
+async function handleAssistCommand(ctx) {
+  const raw = (ctx.message?.text || "").replace(/^\/assist(@\w+)?\s*/, "").trim();
+  const m = raw.match(/^(\d+)\s*$/);
+  if (!m) {
+    await ctx.reply("Использование: /assist <ID лида>\nПример: /assist 12");
+    return;
+  }
+  const leadId = parseInt(m[1], 10);
+  await proposeAssistReply(ctx, leadId);
 }

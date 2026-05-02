@@ -3,6 +3,7 @@ import { buildSystemPrompt, SAVE_ORDER_FUNCTION } from "../bot/prompts.js";
 import { SERVICE_TYPES } from "../bot/scenarios.js";
 import { EXTRACT_SYSTEM, buildExtractUserMessage } from "../bot/extractPrompt.js";
 import { normalizeToSchema, makeEmptyOrder } from "../bot/orderSchema.js";
+import { ASSIST_SYSTEM, buildAssistUserMessage } from "../bot/managerAssistPrompt.js";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -341,4 +342,41 @@ export function missingRequiredFields(orderData, requiredFields = ["type", "size
     if (v == null || (typeof v === "string" && !v.trim())) missing.push(f);
   }
   return missing;
+}
+
+// ─── Manager Assist ───────────────────────────────────────────────────────
+
+/**
+ * Сгенерировать предложение текста ответа клиенту от лица менеджера.
+ * Возвращает строку (1-3 предложения) или null при ошибке.
+ *
+ * @param {object} p
+ * @param {object} p.orderData
+ * @param {Array}  p.history
+ * @param {string} p.lang  "ru" | "kk" | "en"
+ * @param {string} p.lastUserMessage
+ * @returns {Promise<string|null>}
+ */
+export async function assistManagerReply({ orderData = {}, history = [], lang = "ru", lastUserMessage = "" } = {}) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: ASSIST_SYSTEM },
+        {
+          role: "user",
+          content: buildAssistUserMessage({ orderData, history, lang, lastUserMessage }),
+        },
+      ],
+      temperature: 0.5,
+      max_tokens: 220,
+    });
+    const txt = response.choices?.[0]?.message?.content?.trim();
+    if (!txt) return null;
+    // Срезаем кавычки если LLM их всё-таки добавил.
+    return txt.replace(/^["«]|["»]$/g, "").trim();
+  } catch (err) {
+    console.error("assistManagerReply failed:", err.message);
+    return null;
+  }
 }
