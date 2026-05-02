@@ -1,0 +1,37 @@
+name: notify-telegram
+on:
+  workflow_dispatch:
+    inputs:
+      token:
+        description: "Telegram bot token (masked in logs)"
+        required: true
+      chat_id:
+        description: "Target chat id"
+        required: true
+      text:
+        description: "Message text"
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram message
+        env:
+          TG_TOKEN: ${{ inputs.token }}
+          TG_CHAT_ID: ${{ inputs.chat_id }}
+          TG_TEXT: ${{ inputs.text }}
+        run: |
+          echo "::add-mask::$TG_TOKEN"
+          # Wait briefly for any concurrent Railway deploy
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            code=$(curl -s -m 6 -o /dev/null -w "%{http_code}" "https://ai-institut-production.up.railway.app/health" || echo "000")
+            echo "[$i] /health http=$code"
+            if [ "$code" = "200" ]; then break; fi
+            sleep 8
+          done
+          resp=$(curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+                 -d "chat_id=${TG_CHAT_ID}" \
+                 --data-urlencode "text=${TG_TEXT}")
+          echo "TG response: $(echo "$resp" | head -c 400)"
+          echo "$resp" | grep -q '"ok":true' || { echo "Telegram sendMessage failed"; exit 1; }
