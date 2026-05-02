@@ -1,4 +1,4 @@
-import { chat, detectLang } from "../services/openai.js";
+import { chat, detectLang, describeImage, extractPartialBrief } from "../services/openai.js";
 import { transcribeVoice } from "../services/whisper.js";
 import {
   upsertConversation,
@@ -17,7 +17,7 @@ import {
   setLang,
   consumeFlag,
 } from "../utils/state.js";
-import { getLangMeta } from "./prompts.js";
+import { getLangMeta, CONTACT_REASK } from "./prompts.js";
 
 const MANAGER_CHAT_ID = String(process.env.MANAGER_CHAT_ID);
 
@@ -52,10 +52,13 @@ export function registerHandlers(bot) {
 export async function handleStart(ctx) {
   clearContext(ctx.chat.id);
   await ctx.reply(
-    "👋 Здравствуйте! Сәлеметсіз бе! Hello!\n\n" +
-    "Пишите на любом удобном языке — отвечу на нём же.\n\n" +
-    "Я помогу оформить заказ на рекламу. Расскажите что нужно — " +
-    "текстом, голосом или пришлите макет/фото."
+    "👋 Сәлеметсіз бе!\n" +
+    "Қалаған тіліңізде жаза беріңіз — сол тілде жауап беремін.\n" +
+    "Жарнамаға тапсырыс беруге көмектесемін. Не керек екенін айтыңыз — мәтінмен, дауыспен немесе макетті/фотоны жіберіңіз.\n\n" +
+    "—\n\n" +
+    "👋 Здравствуйте!\n" +
+    "Пишите на любом удобном языке — отвечу на нём же.\n" +
+    "Я помогу оформить заказ на рекламу. Расскажите что нужно — текстом, голосом или пришлите макет/фото."
   );
 }
 
@@ -106,15 +109,19 @@ export async function handleVoice(ctx) {
 
 export async function handleFile(ctx) {
   try {
-    let fileId, label;
+    let fileId, label, isImage = false, mime = null;
     if (ctx.message.photo) {
       // Largest photo size last
       const photos = ctx.message.photo;
       fileId = photos[photos.length - 1].file_id;
       label = "фото";
+      isImage = true;
+      mime = "image/jpeg";
     } else if (ctx.message.document) {
       fileId = ctx.message.document.file_id;
       label = ctx.message.document.file_name || "документ";
+      mime = ctx.message.document.mime_type || null;
+      if (mime && mime.startsWith("image/")) isImage = true;
     } else {
       return;
     }
@@ -123,7 +130,25 @@ export async function handleFile(ctx) {
     addFile(ctx.chat.id, link.href);
 
     const caption = ctx.message.caption?.trim();
-    const systemNote = `[файл прикреплён: ${link.href}${caption ? ` | подпись: ${caption}` : ""}]`;
+    const existing = getContext(ctx.chat.id);
+    const lang = existing?.lang || "ru";
+
+    // Vision: if image, ask GPT-4o-mini to describe it.
+    let vision = null;
+    if (isImage) {
+      try {
+        await ctx.sendChatAction("typing");
+        // Download bytes and pass as data URL — avoids leaking bot token to OpenAI
+        // and works regardless of Telegram CDN policy.
+        const dataUrl = await fetchAsDataUrl(link.href, mime || "image/jpeg");
+        vision = await describeImage(dataUrl, lang);
+      } catch (err) {
+        console.error("Vision fetch/describe error:", err.message);
+      }
+    }
+
+    const visionPart = vision ? ` | vision: "${vision.replace(/"/g, "'")}"` : "";
+    const systemNote = `[файл прикреплён: ${link.href}${visionPart}${caption ? ` | подпись: ${caption}` : ""}]`;
 
     // Continue dialog with file context as a system-like user message
     const message = caption ? `${caption}\n\n${systemNote}` : systemNote;
@@ -135,7 +160,80 @@ export async function handleFile(ctx) {
   }
 }
 
+// Helper: download a URL and return a base64 data URL (used for OpenAI Vision).
+async function fetchAsDataUrl(url, mime = "image/jpeg") {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`Download failed: ${resp.status}`);
+  const buf = Buffer.from(await resp.arrayBuffer());
+  return `data:${mime};base64,${buf.toString("base64")}`;
+}
+
 // ─── Core LLM loop ───────────────────────────────────────────────────────────
+
+// Determine which field to collect next based on what's already known.
+function determineNextStep(collected = {}) {
+  if (!collected || typeof collected !== "object") return null;
+
+  const has = (k) => {
+    const v = collected[k];
+    return v != null && String(v).trim() !== "";
+  };
+
+  if (!has("service_type")) return "service_type";
+
+  const st = String(collected.service_type || "").toLowerCase();
+  const isSignage = /(вывеск|нар(уж|ыж)|баннер|outdoor|sign|жарнам|маңдайш|bilbord|билборд)/i.test(st);
+
+  if (isSignage) {
+    if (!has("location")) return "location";
+    if (!has("size")) return "size";
+    if (!has("content") && !has("description")) return "content";
+    if (!has("design")) return "design";
+    if (!has("deadline")) return "deadline";
+    if (!has("contact")) return "contact";
+    return "confirm";
+  }
+
+  if (!has("description")) return "description";
+  if (!has("deadline")) return "deadline";
+  if (!has("contact")) return "contact";
+  return "confirm";
+}
+
+// Split a bot reply into [reaction, mainQuestion] using "||" delimiter.
+// If the reply has no "||", returns [text] as a single message.
+function splitReply(text) {
+  if (!text) return [];
+  const idx = text.indexOf("||");
+  if (idx === -1) return [text.trim()];
+  const reaction = text.substring(0, idx).trim();
+  const main = text.substring(idx + 2).trim();
+  if (!reaction) return [main];
+  if (!main) return [reaction];
+  return [reaction, main];
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Validate contact value: must be 5+ chars AND contain at least one of:
+// digit (phone), "@" (handle/email), or "." (email).
+// "этот / здесь / тут / Telegram / здесь в телеге" → invalid (signal: substitute later).
+function isValidContact(contact) {
+  if (!contact) return false;
+  const c = String(contact).trim();
+  if (c.length < 5) return false;
+  return /\d/.test(c) || c.includes("@") || c.includes(".");
+}
+
+function isPlaceholderContact(contact) {
+  if (!contact) return false;
+  const c = String(contact).toLowerCase().trim();
+  return /^(этот|тут|здесь|сюда|telegram|тг|телег|осында|осы жерде|here|in telegram|telegram-да)\b/.test(c)
+      || c === "telegram"
+      || c === "telegram-да"
+      || c === "осы telegram"
+      || c === "this telegram";
+}
 
 async function processUserMessage(ctx, userMessage) {
   const chatId = ctx.chat.id;
@@ -168,7 +266,28 @@ async function processUserMessage(ctx, userMessage) {
 
   try {
     await ctx.sendChatAction("typing");
-    const result = await chat(entry.messages, lang);
+
+    // Build runtime context: extract partial brief + determine next step.
+    // Skip extraction on the very first turn (saves a call).
+    let collected = {};
+    let currentStep = null;
+    if (entry.messages.length >= 2) {
+      try {
+        collected = await extractPartialBrief(entry.messages);
+      } catch (err) {
+        console.error("extractPartialBrief threw:", err.message);
+      }
+      // If files have been attached — design field is "есть макет" by default.
+      if ((entry.files || []).length > 0 && !collected.design) {
+        collected.design = "есть макет";
+      }
+      currentStep = determineNextStep(collected);
+    }
+
+    // Last 10 messages for the LLM (in addition to system prompt).
+    const lastMsgs = entry.messages.slice(-10);
+
+    const result = await chat(lastMsgs, lang, { collected, currentStep });
 
     if (result.type === "function") {
       // LLM confirmed all collected — save the order
@@ -181,11 +300,13 @@ async function processUserMessage(ctx, userMessage) {
     // Prefix flag on the first reply of a new language (not on every message —
     // would be too noisy).
     const meta = getLangMeta(lang);
-    if (consumeFlag(chatId)) {
-      reply = `${meta.flag} ${reply}`;
-    }
+    const flagShown = consumeFlag(chatId);
 
-    entry.messages = [...entry.messages, { role: "assistant", content: reply }];
+    // Split reply into [reaction, mainQuestion] using "||".
+    const parts = splitReply(reply);
+
+    // Save the assistant's full reply (joined) to history for LLM continuity.
+    entry.messages = [...entry.messages, { role: "assistant", content: parts.join(" ") }];
     setContext(chatId, entry);
 
     // Persist running conversation snapshot to Supabase (best-effort)
@@ -198,17 +319,57 @@ async function processUserMessage(ctx, userMessage) {
       status: "active",
     }).catch((err) => console.error("Conversation upsert failed:", err.message));
 
-    await ctx.reply(reply);
+    // Send as separate Telegram messages with a small delay (more human feel).
+    if (parts.length === 2) {
+      const first = flagShown ? `${meta.flag} ${parts[0]}` : parts[0];
+      await ctx.reply(first);
+      await sleep(420);
+      await ctx.sendChatAction("typing").catch(() => {});
+      await sleep(80);
+      await ctx.reply(parts[1]);
+    } else {
+      const single = flagShown ? `${meta.flag} ${parts[0]}` : parts[0];
+      await ctx.reply(single);
+    }
   } catch (err) {
     console.error("LLM error:", err.message);
     await ctx.reply("Что-то пошло не так на моей стороне. Попробуйте ещё раз через минуту 🙏");
   }
 }
 
+// Build telegram-fallback contact string for the user when contact is ambiguous.
+function buildTelegramFallbackContact(ctx) {
+  const u = ctx.from?.username;
+  if (u) return `@${u}`;
+  const id = ctx.from?.id;
+  if (id) return `tg://user?id=${id}`;
+  return null;
+}
+
 async function finalizeOrder(ctx, entry, args) {
   const chatId = ctx.chat.id;
   const userId = ctx.from.id;
   const lang = entry.lang || "ru";
+
+  // ─── Contact validation / fallback ──────────────────────────────────────
+  // If contact is empty / placeholder ("этот", "тут", "Telegram") — substitute
+  // user's @username or tg://user?id=. If still missing AND clearly invalid —
+  // re-ask once instead of saving.
+  const fallback = buildTelegramFallbackContact(ctx);
+  if (isPlaceholderContact(args.contact) || (!args.contact && fallback)) {
+    if (fallback) args.contact = fallback;
+  }
+  if (!isValidContact(args.contact)) {
+    if (fallback) {
+      args.contact = fallback;
+    } else {
+      // Re-ask once; do NOT save an invalid order.
+      const reask = CONTACT_REASK[lang] || CONTACT_REASK.ru;
+      await ctx.reply(reask);
+      // Drop the LLM's tentative save_order from history so it can re-ask cleanly.
+      return;
+    }
+  }
 
   try {
     // Save conversation as completed first to get id
