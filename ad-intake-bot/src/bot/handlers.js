@@ -71,17 +71,15 @@ async function handleReset(ctx) {
 // ─── Text / Voice / Files ────────────────────────────────────────────────────
 
 export async function handleText(ctx) {
-  if (String(ctx.chat?.id) === MANAGER_CHAT_ID) {
-    // Manager's plain text in own chat: ignore by default to avoid LLM noise
-    return;
-  }
+  // NOTE: manager guard removed — when manager tests the bot in their own chat,
+  // plain text MUST trigger the dialog. Manager-specific actions are commands
+  // (/new, /active, /today) and inline buttons — those are routed before bot.on("text").
   const userMessage = ctx.message.text?.trim();
   if (!userMessage) return;
   await processUserMessage(ctx, userMessage);
 }
 
 export async function handleVoice(ctx) {
-  if (String(ctx.chat?.id) === MANAGER_CHAT_ID) return;
   try {
     await ctx.sendChatAction("typing");
     const text = await transcribeVoice(ctx);
@@ -98,7 +96,6 @@ export async function handleVoice(ctx) {
 }
 
 export async function handleFile(ctx) {
-  if (String(ctx.chat?.id) === MANAGER_CHAT_ID) return;
   try {
     let fileId, label;
     if (ctx.message.photo) {
