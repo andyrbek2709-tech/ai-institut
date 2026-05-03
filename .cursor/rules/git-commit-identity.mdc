@@ -1,0 +1,11 @@
+---
+description: Git author email for commits (Vercel deploy policy)
+alwaysApply: true
+---
+
+# Git identity for this repo
+
+- **Author/committer email:** `andyrbek2709@gmail.com` — must match the GitHub account linked to Vercel, or deployments are **Blocked**.
+- **Do not use:** `andreyfuture27@gmail.com` (wrong account; breaks Vercel).
+- **Name:** `Andrey` (or team convention from `CLAUDE.md`).
+- Before committing from automation, ensure `git config user.email` / global config is **andyrbek2709@gmail.com**.
