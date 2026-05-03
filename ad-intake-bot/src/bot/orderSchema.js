@@ -76,3 +76,70 @@ export function normalizeToSchema(raw = {}) {
   }
   return out;
 }
+
+/**
+ * Merge delta в существующий orderData по правилам:
+ *  - null/undefined в delta — пропускаем (не затираем)
+ *  - files: append (de-dup), всегда массив
+ *  - extras: append (de-dup по lower-case строке)
+ *  - boolean — обновляется всегда
+ *  - более длинная строка в delta побеждает
+ *
+ * Никогда не бросает; возвращает новый объект.
+ */
+export function mergeData(existing = {}, delta = {}) {
+  const base = existing && typeof existing === "object" ? existing : {};
+  const merged = { ...makeEmptyOrder(), ...base };
+  if (!delta || typeof delta !== "object") return merged;
+
+  for (const [k, v] of Object.entries(delta)) {
+    if (v === null || v === undefined) continue;
+
+    if (k === "files" && Array.isArray(v)) {
+      const prev = Array.isArray(merged.files) ? merged.files : [];
+      const seen = new Set(prev);
+      const append = [];
+      for (const f of v) {
+        if (typeof f !== "string") continue;
+        if (seen.has(f)) continue;
+        seen.add(f);
+        append.push(f);
+      }
+      merged.files = [...prev, ...append];
+      continue;
+    }
+    if (k === "extras" && Array.isArray(v)) {
+      const prev = Array.isArray(merged.extras) ? merged.extras : [];
+      const seen = new Set(prev.map((x) => String(x).toLowerCase().trim()));
+      const append = [];
+      for (const e of v) {
+        if (e == null) continue;
+        const s = String(e).trim();
+        if (!s) continue;
+        const low = s.toLowerCase();
+        if (seen.has(low)) continue;
+        seen.add(low);
+        append.push(s);
+      }
+      merged.extras = [...prev, ...append];
+      continue;
+    }
+
+    if (typeof v === "boolean") {
+      merged[k] = v;
+      continue;
+    }
+
+    const existingVal = merged[k];
+    if (existingVal === null || existingVal === undefined || existingVal === "") {
+      merged[k] = v;
+      continue;
+    }
+
+    if (String(v).length > String(existingVal).length) {
+      merged[k] = v;
+      continue;
+    }
+  }
+  return merged;
+}

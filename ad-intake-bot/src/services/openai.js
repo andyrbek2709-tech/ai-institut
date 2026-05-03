@@ -3,7 +3,8 @@ import { franc } from "franc-min";
 import { buildSystemPrompt, SAVE_ORDER_FUNCTION } from "../bot/prompts.js";
 import { SERVICE_TYPES } from "../bot/scenarios.js";
 import { EXTRACT_SYSTEM, buildExtractUserMessage } from "../bot/extractPrompt.js";
-import { normalizeToSchema, makeEmptyOrder } from "../bot/orderSchema.js";
+import { normalizeToSchema } from "../bot/orderSchema.js";
+export { mergeData } from "../bot/orderSchema.js";
 import { ASSIST_SYSTEM, buildAssistUserMessage } from "../bot/managerAssistPrompt.js";
 import { PROPOSAL_SYSTEM, buildProposalUserMessage } from "../bot/proposalPrompt.js";
 import { TEACH_EXTRACT_SYSTEM, buildTeachExtractUserMessage } from "../bot/teachExtractPrompt.js";
@@ -380,76 +381,6 @@ function stripEmpty(obj) {
     out[k] = v;
   }
   return out;
-}
-
-/**
- * Merge delta в существующий orderData по правилам:
- *  - null/undefined в delta — пропускаем (не затираем)
- *  - files: append (de-dup), всегда массив
- *  - boolean — обновляется всегда (явно сказано true/false)
- *  - existing пустое → берём delta
- *  - delta более длинная (точнее) → берём delta
- *
- * Никогда не бросает; возвращает новый объект.
- */
-export function mergeData(existing = {}, delta = {}) {
-  const base = existing && typeof existing === "object" ? existing : {};
-  const merged = { ...makeEmptyOrder(), ...base };
-  if (!delta || typeof delta !== "object") return merged;
-
-  for (const [k, v] of Object.entries(delta)) {
-    if (v === null || v === undefined) continue;
-
-    if (k === "files" && Array.isArray(v)) {
-      const prev = Array.isArray(merged.files) ? merged.files : [];
-      const seen = new Set(prev);
-      const append = [];
-      for (const f of v) {
-        if (typeof f !== "string") continue;
-        if (seen.has(f)) continue;
-        seen.add(f);
-        append.push(f);
-      }
-      merged.files = [...prev, ...append];
-      continue;
-    }
-    if (k === "extras" && Array.isArray(v)) {
-      const prev = Array.isArray(merged.extras) ? merged.extras : [];
-      const seen = new Set(prev.map((x) => String(x).toLowerCase().trim()));
-      const append = [];
-      for (const e of v) {
-        if (e == null) continue;
-        const s = String(e).trim();
-        if (!s) continue;
-        const key = s.toLowerCase();
-        if (seen.has(key)) continue;
-        seen.add(key);
-        append.push(s);
-      }
-      merged.extras = [...prev, ...append];
-      continue;
-    }
-
-    if (typeof v === "boolean") {
-      merged[k] = v;
-      continue;
-    }
-
-    const existingVal = merged[k];
-    if (existingVal === null || existingVal === undefined || existingVal === "") {
-      merged[k] = v;
-      continue;
-    }
-
-    // Более длинное / точное значение — берём.
-    if (String(v).length > String(existingVal).length) {
-      merged[k] = v;
-      continue;
-    }
-
-    // Иначе оставляем существующее.
-  }
-  return merged;
 }
 
 /**
