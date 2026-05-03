@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Запуск пайплайна",
+  "current_step": "Парсинг источников",
   "progress_pct": 0,
   "items_processed": 0,
-  "items_total": 0,
-  "updated_at": "2026-05-03T07:51:26Z",
-  "started_at": "2026-05-02T07:23:18Z"
+  "items_total": 9,
+  "updated_at": "2026-05-03T07:51:28Z",
+  "started_at": "2026-05-03T07:51:28Z"
 }
