@@ -6,6 +6,10 @@ _Последнее обновление: 2026-05-03_
 
 - Логотип `assets/vformate-logo.png` в приветствии `/start` (подпись kk/ru/en), конфиг `src/config/agency.js`, правки `prompts.js` и строк в уведомлении лида / help / reset.
 
+## 2026-05-03 — /reset + лиды UI
+
+- Пустая активная беседа не тянет историю из лида; `/reset` снова kk+ru; менеджеру клавиатура быстрых команд `/leads`.
+
 ## Что сделано
 
 - ✅ Каркас на базе Nurmak: `src/index.js`, `src/bot/handlers.js`, `src/bot/prompts.js`, `src/services/{openai,whisper,supabase}.js`, `src/utils/state.js`

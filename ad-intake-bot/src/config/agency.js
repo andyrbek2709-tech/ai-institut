@@ -43,3 +43,30 @@ export function buildStartWelcomeText() {
     "Шаблоны: /templates",
   ].join("\n");
 }
+
+/** Текст после /reset — kk + ru, как раньше, с пометкой рекламного агентства (без фото). */
+export function buildResetWelcomeText() {
+  return [
+    `🏢 ${AGENCY_NAME} — жарнама агенттігі / рекламное агентство`,
+    "",
+    "👋 Сәлеметсіз бе!",
+    "Бәрін нөлден бастаймыз. Не керек екенін айтыңыз — бірнеше позицияны «және» арқылы бірден жазуға болады.",
+    "",
+    "—",
+    "",
+    "👋 Здравствуйте!",
+    "Окей, начнём заново. Расскажите, что нужно сделать — можно сразу несколько позиций через «и».",
+  ].join("\n");
+}
+
+/** Клавиатура менеджера: нажатие = отправка текста команды в чат. */
+export function getManagerLeadsKeyboardMarkup() {
+  return {
+    keyboard: [
+      [{ text: "/leads" }, { text: "/leads new" }],
+      [{ text: "/leads in_progress" }, { text: "/leads hot" }],
+      [{ text: "/stats" }],
+    ],
+    resize_keyboard: true,
+  };
+}

@@ -82,7 +82,13 @@ import {
 import { buildKnowledgeContext } from "./promptContext.js";
 import { shouldTriggerUpsell, buildUpsellPromptBlock, UPSELL_MAP } from "./upsell.js";
 import { getManagerChatId } from "../config/tenants.js";
-import { AGENCY_NAME, buildStartWelcomeText, resolveAgencyLogoPath } from "../config/agency.js";
+import {
+  AGENCY_NAME,
+  buildStartWelcomeText,
+  buildResetWelcomeText,
+  getManagerLeadsKeyboardMarkup,
+  resolveAgencyLogoPath,
+} from "../config/agency.js";
 import fs from "fs";
 import { exportLeadToAllIntegrations } from "../services/crmExport.js";
 import { extractTextFromPdfBuffer } from "../services/fileExtract.js";
@@ -180,32 +186,52 @@ function intakeMetadata(entry) {
 async function hydrateClientContextFromDb(chatId) {
   try {
     const conv = await getActiveConversationByChatId(chatId);
-    if (conv && Array.isArray(conv.history) && conv.history.length > 0) {
-      const meta = conv.metadata || {};
-      const row = {
-        messages: [...conv.history],
-        files: conv.files || [],
+    if (conv && Array.isArray(conv.history)) {
+      if (conv.history.length > 0) {
+        const meta = conv.metadata || {};
+        const row = {
+          messages: [...conv.history],
+          files: conv.files || [],
+          lang: conv.lang || null,
+          flagShown: true,
+          serviceCode: meta.service_code || null,
+          orderData: makeEmptyOrder(),
+          upsellShown: false,
+          pendingFinalize: meta.pending_finalize || null,
+        };
+        if (meta.order && typeof meta.order === "object") {
+          row.orderData = mergeData(makeEmptyOrder(), meta.order);
+        }
+        ensureIntake(row);
+        if (meta.intake_state && typeof meta.intake_state === "object") {
+          if (Array.isArray(meta.intake_state.servicesQueue))
+            row.intake.servicesQueue = meta.intake_state.servicesQueue;
+          if (Number.isInteger(meta.intake_state.idx)) row.intake.idx = meta.intake_state.idx;
+          if (meta.intake_state.perService && typeof meta.intake_state.perService === "object")
+            row.intake.perService = { ...meta.intake_state.perService };
+        }
+        if (meta.service_code) row.serviceCode = meta.service_code;
+        setContext(chatId, row);
+        return row;
+      }
+      // Активная запись есть, но история пустая (типично после /reset): НЕ подтягивать старый диалог из лида —
+      // иначе /start снова показывает «незавершённый заказ».
+      const rowFresh = {
+        messages: [],
+        files: Array.isArray(conv.files) ? conv.files : [],
         lang: conv.lang || null,
         flagShown: true,
-        serviceCode: meta.service_code || null,
+        serviceCode: null,
         orderData: makeEmptyOrder(),
         upsellShown: false,
-        pendingFinalize: meta.pending_finalize || null,
+        pendingFinalize: null,
       };
-      if (meta.order && typeof meta.order === "object") {
-        row.orderData = mergeData(makeEmptyOrder(), meta.order);
-      }
-      ensureIntake(row);
-      if (meta.intake_state && typeof meta.intake_state === "object") {
-        if (Array.isArray(meta.intake_state.servicesQueue))
-          row.intake.servicesQueue = meta.intake_state.servicesQueue;
-        if (Number.isInteger(meta.intake_state.idx)) row.intake.idx = meta.intake_state.idx;
-        if (meta.intake_state.perService && typeof meta.intake_state.perService === "object")
-          row.intake.perService = { ...meta.intake_state.perService };
-      }
-      if (meta.service_code) row.serviceCode = meta.service_code;
-      setContext(chatId, row);
-      return row;
+      ensureIntake(rowFresh);
+      rowFresh.intake.servicesQueue = [];
+      rowFresh.intake.idx = 0;
+      rowFresh.intake.perService = {};
+      setContext(chatId, rowFresh);
+      return rowFresh;
     }
 
     // Если активного intake-диалога уже нет (после finalize), но есть активный лид,
@@ -325,11 +351,18 @@ async function tryManagerRelayForward(ctx) {
 export async function handleStart(ctx) {
   const chat = ctx.chat;
   if ((chat?.type === "group" || chat?.type === "supergroup") && isManagerOperationsChat(ctx)) {
-    if (managerCommandAllowed(ctx)) await ctx.reply("Команды менеджера: /leads, /stats, /reply …");
+    if (managerCommandAllowed(ctx)) {
+      await ctx.reply("Команды менеджера: /leads, /stats, /reply … Кнопки ниже — быстрый ввод команд.", {
+        reply_markup: getManagerLeadsKeyboardMarkup(),
+      });
+    }
     return;
   }
   if (chat?.type === "private" && managerCommandAllowed(ctx) && hasManagerUserAllowlist()) {
-    await ctx.reply("Вы в списке менеджеров: intake тут отключён. Используйте /leads, /stats в рабочем чате или сюда те же команды.");
+    await ctx.reply(
+      "Вы в списке менеджеров: intake в личке отключён. Лиды и ответы клиентам — через кнопки ниже или текстом: /leads, /stats, /reply …",
+      { reply_markup: getManagerLeadsKeyboardMarkup() }
+    );
     return;
   }
 
@@ -342,9 +375,11 @@ export async function handleStart(ctx) {
       !restored.pendingFinalize
     ) {
       await ctx.reply(
-        `🏢 ${AGENCY_NAME} — у вас уже есть незавершённый заказ, продолжим с того же места.\n` +
-          "Если нужно начать с чистого листа — отправьте /reset.\n\n" +
-          "Коротко допишите или уточните, что нужно."
+        `🏢 ${AGENCY_NAME} — жарнама агенттігі / рекламное агентство\n\n` +
+          "Сізде аяқталмаған тапсырыс бар — сол жерден жалғастырамыз.\n" +
+          "У вас уже есть незавершённый заказ — продолжим с того же места.\n\n" +
+          "Таза бастау үшін /reset жіберіңіз · Если нужно с чистого листа — отправьте /reset.\n\n" +
+          "Қысқаша жазыңыз немесе нақтылаңыз · Коротко допишите или уточните, что нужно."
       );
       return;
     }
@@ -380,8 +415,9 @@ async function handleHelp(ctx) {
   ];
   if (mgr) {
     lines.push("", "Менеджер: /stats — сводка по диалогам и заказам в БД.");
+    lines.push("", "Кнопки снизу — быстрый ввод /leads …");
   }
-  await ctx.reply(lines.join("\n"));
+  await ctx.reply(lines.join("\n"), mgr ? { reply_markup: getManagerLeadsKeyboardMarkup() } : undefined);
 }
 
 async function handleReset(ctx) {
@@ -398,9 +434,7 @@ async function handleReset(ctx) {
       status: "active",
       metadata: { order: null, intake_state: { servicesQueue: [], idx: 0, perService: {} }, pending_finalize: null },
     }).catch(() => {});
-  await ctx.reply(
-    `${AGENCY_NAME} — окей, начнём заново. Расскажите, что нужно сделать — можно сразу несколько позиций через «и».`
-  );
+  await ctx.reply(buildResetWelcomeText());
 }
 
 // ─── Text / Voice / Files ────────────────────────────────────────────────────
@@ -1920,8 +1954,10 @@ async function sendLeadsSummary(ctx) {
       `🔵 COLD: ${s.by_tier.cold}`,
       ``,
       `Команды: /leads new, /leads in_progress, /leads hot, /leads <ID>`,
+      ``,
+      `Кнопки снизу дублируют команды — можно нажать вместо ввода.`,
     ];
-    await ctx.reply(lines.join("\n"));
+    await ctx.reply(lines.join("\n"), { reply_markup: getManagerLeadsKeyboardMarkup() });
   } catch (err) {
     await ctx.reply(`Ошибка сводки: ${err.message}`);
   }
