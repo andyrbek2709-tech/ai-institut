@@ -92,6 +92,7 @@ import {
   ensureIntake,
   extractServicesQueueFromText,
   orderCarryForward,
+  resetServiceSlotFields,
   snapshotForService,
   formatClientBrief,
   isAffirmative,
@@ -910,15 +911,34 @@ function buildComboArgsFromSnapshots(toolArgs, snapshots) {
 
 function mergeSnapshotsOrderData(snaps) {
   if (!snaps?.length) return makeEmptyOrder();
-  const last = snaps[snaps.length - 1];
-  const base = mergeData(makeEmptyOrder(), { ...last });
-  base.multi_services = snaps;
-  base.description = snaps
+  let acc = makeEmptyOrder();
+  for (const s of snaps) {
+    acc = mergeData(acc, mergeData(makeEmptyOrder(), normalizeToSchema(s)));
+  }
+  acc.multi_services = snaps;
+  acc.description = snaps
     .map((s) => `${s.service_type || s.type}: ${s.description || s.content || ""}`.trim())
     .join(" · ");
-  base.type =
-    snaps.length > 1 ? "другое" : (snaps[0].service_type || snaps[0].type || base.type);
-  return base;
+  acc.type =
+    snaps.length > 1 ? "другое" : (snaps[0].service_type || snaps[0].type || acc.type);
+  return acc;
+}
+
+/** Для валидации перед сохранением: берём обязательные поля с любой позиции мультизаказа. */
+function crossFieldsForMultiFinalize(snaps, od, args) {
+  const pick = (getter) => {
+    for (let i = snaps.length - 1; i >= 0; i--) {
+      const v = getter(snaps[i]);
+      if (v != null && String(v).trim()) return v;
+    }
+    return null;
+  };
+  return {
+    type: od.type || args.service_type || (snaps.length > 1 ? "другое" : pick((s) => s.type || s.service_type)),
+    size: od.size || args.size || pick((s) => s.size),
+    deadline: od.deadline || args.deadline || pick((s) => s.deadline),
+    contact: od.contact || args.contact || pick((s) => s.contact),
+  };
 }
 
 /**
@@ -1027,7 +1047,7 @@ async function interceptSaveOrderIntent(
       intake.idx += 1;
       const nextCode = queue[intake.idx];
       entry.serviceCode = nextCode;
-      entry.orderData = orderCarryForward(slotSnap);
+      entry.orderData = resetServiceSlotFields(orderCarryForward(slotSnap));
       entry.orderData.type = nextCode;
       const trRu = `Одну позицию («${slotKey}») сохранила — перехожу к «${nextCode}». По ней начнём с объёма или с того, что на печати?`;
       const tr = {
@@ -1058,18 +1078,20 @@ async function interceptSaveOrderIntent(
     }));
 
     const comboArgs = buildComboArgsFromSnapshots(args, snapshots);
-    const briefLines = snapshots.map((s) => ({
-      ...s,
-      type: s.service_type || s.type,
-    }));
-    const briefText = formatClientBrief(lang, briefLines);
-
-    entry.pendingFinalize = {
-      args: comboArgs,
-      finalizeOpts: { multiServiceSnapshots: snapshots },
-    };
-    entry.messages = [...entry.messages, { role: "assistant", content: briefText }];
-    await persistAfter(briefText);
+    /** Не просим третье «да» сводным брифом — лиды сразу после последней услуги. */
+    entry.pendingFinalize = null;
+    setContext(chatId, entry);
+    upsertConversation({
+      telegramUserId: userId,
+      telegramChatId: chatId,
+      history: entry.messages,
+      files: entry.files,
+      lang,
+      status: "active",
+      metadata: intakeMetadata(entry),
+      lastUserMessageAt: new Date().toISOString(),
+    }).catch((e) => console.error("[upsert]", e.message));
+    await finalizeOrder(ctx, entry, comboArgs, { multiServiceSnapshots: snapshots });
     return true;
   }
 
@@ -1104,14 +1126,14 @@ async function finalizeOrder(ctx, entry, rawArgs, finalizeOpts = {}) {
   // ─── Final required-fields validation (formal schema source-of-truth) ─────
   try {
     const od = aggregatedOrder || {};
-    // Если LLM в args что-то прислал, а в orderData этого ещё нет — подмешаем,
-    // чтобы валидатор увидел свежие данные (LLM иногда extract'ит быстрее, чем extractData).
-    const cross = {
-      type: od.type || args.service_type || null,
-      size: od.size || args.size || null,
-      deadline: od.deadline || args.deadline || null,
-      contact: od.contact || args.contact || null,
-    };
+    const cross = snaps?.length
+      ? crossFieldsForMultiFinalize(snaps, od, args)
+      : {
+          type: od.type || args.service_type || null,
+          size: od.size || args.size || null,
+          deadline: od.deadline || args.deadline || null,
+          contact: od.contact || args.contact || null,
+        };
     const missing = missingRequiredFields(cross, REQUIRED_FIELDS);
     // contact обработаем ниже (есть отдельная reask-логика)
     const missingNoContact = missing.filter((f) => f !== "contact");

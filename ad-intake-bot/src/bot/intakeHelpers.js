@@ -21,17 +21,58 @@ export function ensureIntake(entry) {
   return entry.intake;
 }
 
-const AFFIRM = {
-  ru: /^(да|ага|верно|всё\s*верно|все\s*верно|окей|ок|подтверждаю|согласен|согласна|подходит|давай\s*так)\b/u,
-  kk: /^(иә|жа|рас|болады|рахмет\s*сонда|келісемін)\b/u,
-  en: /^(yes|yep|yeah|ok|okay|sure|confirmed|looks good|correct)\b/i,
+/**
+ * JS `\b` не работает с кириллицей — старые регэкспы никогда не матчили «да».
+ * Считаем подтверждением только целое сообщение (или фраза + пунктуация/эмодзи),
+ * чтобы «да, но визитки 300» не уходило в финализацию.
+ */
+const AFFIRM_PHRASES = {
+  ru: [
+    "да",
+    "ага",
+    "верно",
+    "всё верно",
+    "все верно",
+    "окей",
+    "ок",
+    "подтверждаю",
+    "согласен",
+    "согласна",
+    "подходит",
+    "давай так",
+  ],
+  kk: ["иә", "жа", "рас", "болады", "рахмет сонда", "келісемін"],
+  en: ["yes", "yep", "yeah", "ok", "okay", "sure", "confirmed", "looks good", "correct"],
 };
 
+function normalizeAffirmMessage(text) {
+  return String(text || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^[\s👍👌✅]+/gu, "")
+    .replace(/[\s.,!?;:…"""''„«»\-—]+$/gu, "")
+    .trim();
+}
+
+function isAffirmPhraseMatch(t, phrase) {
+  if (t === phrase) return true;
+  if (!t.startsWith(phrase)) return false;
+  const rest = t.slice(phrase.length).trim();
+  if (!rest) return true;
+  return /^[\s.,!?;:…"""''„«»\-—👍👌✅♥]+$/u.test(rest);
+}
+
 export function isAffirmative(lang, text) {
-  const t = String(text || "").trim().toLowerCase();
+  const raw = String(text || "").trim().toLowerCase();
+  if (!raw) return false;
+  if (/^\+1(?:$|[\s.,!?👍✅])/u.test(raw)) return true;
+  const t = normalizeAffirmMessage(text);
   if (!t) return false;
-  const re = AFFIRM[lang] || AFFIRM.ru;
-  return re.test(t) || /^\+1\b/.test(t);
+  const list = AFFIRM_PHRASES[lang] || AFFIRM_PHRASES.ru;
+  for (const phrase of list) {
+    if (isAffirmPhraseMatch(t, phrase)) return true;
+  }
+  return false;
 }
 
 /** Грубо: несколько услуг из фразы «наклейки и футболки». */
@@ -52,6 +93,32 @@ export function extractServicesQueueFromText(text) {
     }
   }
   return out.length >= 2 ? out : [];
+}
+
+/** Сбрасываем поля, специфичные для предыдущей позиции — иначе объём/размер «прилипают» к следующей услуге. */
+const SERVICE_SLOT_RESET_KEYS = [
+  "size",
+  "sizes",
+  "quantity",
+  "content",
+  "lighting",
+  "where_use",
+  "shape",
+  "material",
+  "print_type",
+  "paper_type",
+  "item",
+  "needs_measurement",
+];
+
+export function resetServiceSlotFields(order) {
+  const o = order && typeof order === "object" ? { ...order } : makeEmptyOrder();
+  for (const k of SERVICE_SLOT_RESET_KEYS) {
+    if (k === "needs_measurement") o[k] = false;
+    else o[k] = null;
+  }
+  o.extras = [];
+  return o;
 }
 
 /** Перенос между услугами: дедлайн, контакт, общее описание, бюджет, макет, файлы. */
