@@ -4,6 +4,23 @@ export const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPAB
 
 // ─── Conversations ───────────────────────────────────────────────────────────
 
+/** Активный диалог по chat_id клиента (приват). */
+export async function getActiveConversationByChatId(telegramChatId) {
+  const { data, error } = await supabase
+    .from("conversations")
+    .select("id, telegram_user_id, history, files, lang, metadata, status, updated_at")
+    .eq("telegram_chat_id", String(telegramChatId))
+    .eq("status", "active")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    if (/column|does not exist/i.test(error.message)) return null;
+    throw new Error(error.message);
+  }
+  return data || null;
+}
+
 export async function upsertConversation({ telegramUserId, telegramChatId, history, files = [], lang = null, status = "active", metadata = null, lastUserMessageAt = null }) {
   // Find active conversation for this chat
   const { data: existing } = await supabase

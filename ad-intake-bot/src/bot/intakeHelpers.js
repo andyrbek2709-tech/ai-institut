@@ -1,0 +1,107 @@
+import { SERVICE_TYPES, keywordClassify, normalizeServiceType } from "./scenarios.js";
+import { makeEmptyOrder, PORTABLE_FIELDS, mergeData, normalizeToSchema } from "./orderSchema.js";
+
+export function emptyIntakeState() {
+  return {
+    /** @type {string[]} */
+    servicesQueue: [],
+    /** индекс текущей услуги в очереди */
+    idx: 0,
+    /** @type {Record<string, object>} слоты услуга → частичный снимок заказа */
+    perService: {},
+  };
+}
+
+/** Нормализует поле intake в записи диалога. */
+export function ensureIntake(entry) {
+  if (!entry.intake || typeof entry.intake !== "object") entry.intake = emptyIntakeState();
+  if (!Array.isArray(entry.intake.servicesQueue)) entry.intake.servicesQueue = [];
+  if (typeof entry.intake.idx !== "number" || entry.intake.idx < 0) entry.intake.idx = 0;
+  if (!entry.intake.perService || typeof entry.intake.perService !== "object") entry.intake.perService = {};
+  return entry.intake;
+}
+
+const AFFIRM = {
+  ru: /^(да|ага|верно|всё\s*верно|все\s*верно|окей|ок|подтверждаю|согласен|согласна|подходит|давай\s*так)\b/u,
+  kk: /^(иә|жа|рас|болады|рахмет\s*сонда|келісемін)\b/u,
+  en: /^(yes|yep|yeah|ok|okay|sure|confirmed|looks good|correct)\b/i,
+};
+
+export function isAffirmative(lang, text) {
+  const t = String(text || "").trim().toLowerCase();
+  if (!t) return false;
+  const re = AFFIRM[lang] || AFFIRM.ru;
+  return re.test(t) || /^\+1\b/.test(t);
+}
+
+/** Грубо: несколько услуг из фразы «наклейки и футболки». */
+export function extractServicesQueueFromText(text) {
+  if (!text || !text.trim()) return [];
+  const parts = String(text).split(/\s+(?:и|\+|,)\s+|(?:,)\s*/i).map((x) => x.trim()).filter(Boolean);
+  const out = [];
+  const seen = new Set();
+  for (const chunk of parts) {
+    let code = keywordClassify(chunk);
+    if (!code) {
+      const n = normalizeServiceType(chunk);
+      if (n && SERVICE_TYPES.includes(n)) code = n;
+    }
+    if (code && !seen.has(code)) {
+      seen.add(code);
+      out.push(code);
+    }
+  }
+  return out.length >= 2 ? out : [];
+}
+
+/** Перенос между услугами: дедлайн, контакт, общее описание, бюджет, макет, файлы. */
+export function orderCarryForward(prevOrder) {
+  const base = makeEmptyOrder();
+  if (!prevOrder || typeof prevOrder !== "object") return base;
+  for (const f of PORTABLE_FIELDS) {
+    const v = prevOrder[f];
+    if (v != null && (typeof v !== "string" || v.trim())) base[f] = v;
+  }
+  if (Array.isArray(prevOrder.files) && prevOrder.files.length) {
+    base.files = [...prevOrder.files];
+  }
+  return base;
+}
+
+/** Объединяет args LLM и orderData для снимка по текущей услуге. */
+export function snapshotForService(orderData, args) {
+  const normArgs = normalizeToSchema(args || {});
+  return mergeData(mergeData(makeEmptyOrder(), orderData || makeEmptyOrder()), normArgs);
+}
+
+/** Текст брифа для клиента перед подтверждением (одна или несколько услуг). */
+export function formatClientBrief(lang, payloads) {
+  const list = Array.isArray(payloads) ? payloads : [payloads];
+  const hdr = {
+    ru: "📋 Проверьте заявку:",
+    kk: "📋 Өтінімді тексеріңіз:",
+    en: "📋 Please confirm your request:",
+  }[lang] || "📋 Проверьте заявку:";
+  const lines = [hdr, ""];
+  let i = 0;
+  for (const od of list) {
+    i += 1;
+    const title = list.length > 1 ? `#${i} ` : "";
+    lines.push(`${title}${od.type || od.service_type || "—"}`.trim());
+    if (od.description) lines.push(`📝 ${od.description}`);
+    if (od.content) lines.push(`🎯 ${od.content}`);
+    if (od.size) lines.push(`📐 ${od.size}`);
+    if (od.quantity) lines.push(`🔢 ${od.quantity}`);
+    if (od.deadline) lines.push(`📅 ${od.deadline}`);
+    if (od.contact) lines.push(`📞 ${od.contact}`);
+    if (od.budget) lines.push(`💰 ${od.budget}`);
+    lines.push("");
+  }
+  const footer = {
+    ru: 'Если всё так — напишите «да». Если что-то не так — поправьте одним сообщением.',
+    kk: 'Дұрыс болса — «иә» жазыңыз. Түзету болса — бір хабарлама менен жазыңыз.',
+    en: 'If everything is correct — reply «yes». If not — fix it in one message.',
+  }[lang] || 'Если всё так — напишите «да».';
+  lines.push(footer);
+  return lines.join("\n").trim();
+}

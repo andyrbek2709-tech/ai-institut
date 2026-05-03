@@ -2,6 +2,7 @@ import {
   chat,
   detectLang,
   describeImage,
+  classifyImageForIntake,
   extractPartialBrief,
   classifyServiceTypeLLM,
   extractData,
@@ -22,6 +23,7 @@ import {
   getOrdersByStatus,
   getOrdersToday,
   getAnalyticsSnapshot,
+  getActiveConversationByChatId,
 } from "../services/supabase.js";
 import {
   createLead,
@@ -69,16 +71,41 @@ import {
   SCENARIOS,
 } from "./scenarios.js";
 import { getQuestion } from "./questions.js";
-import { makeEmptyOrder, normalizeToSchema, REQUIRED_FIELDS } from "./orderSchema.js";
+import {
+  makeEmptyOrder,
+  normalizeToSchema,
+  REQUIRED_FIELDS,
+} from "./orderSchema.js";
 import { buildKnowledgeContext } from "./promptContext.js";
 import { shouldTriggerUpsell, buildUpsellPromptBlock, UPSELL_MAP } from "./upsell.js";
 import { getManagerChatId } from "../config/tenants.js";
 import { exportLeadToAllIntegrations } from "../services/crmExport.js";
 import { extractTextFromPdfBuffer } from "../services/fileExtract.js";
 import { ORDER_TEMPLATES, getTemplateById } from "./templatesCatalog.js";
-
+import { isManagerUserId, hasManagerUserAllowlist } from "../config/roles.js";
+import {
+  setManagerReplyMode,
+  getManagerReplyMode,
+  clearManagerReplyMode,
+} from "../utils/managerRelay.js";
+import {
+  ensureIntake,
+  extractServicesQueueFromText,
+  orderCarryForward,
+  snapshotForService,
+  formatClientBrief,
+  isAffirmative,
+} from "./intakeHelpers.js";
 
 let _bot = null;
+
+/** Доступ к менеджерским slash-командам. */
+function managerCommandAllowed(ctx) {
+  const fromId = ctx.from?.id;
+  if (fromId == null) return false;
+  if (hasManagerUserAllowlist()) return isManagerUserId(fromId);
+  return String(ctx.chat?.id) === getManagerChatId();
+}
 
 // In-memory state для clarify-flow: ждём ответа менеджера на ForceReply.
 // key = managerChatId (string), value = { leadId, promptMessageId }
@@ -94,9 +121,9 @@ export function registerHandlers(bot) {
 
   bot.start(handleStart);
 
-  // Manager-only commands
-  const ownerOnly = (fn) => (ctx) => {
-    if (String(ctx.chat?.id) !== getManagerChatId()) return;
+  // Manager-only commands (по whitelist user id или legacy: канал группы менеджеров).
+  const ownerOnly = (fn) => async (ctx) => {
+    if (!managerCommandAllowed(ctx)) return;
     return fn(ctx);
   };
   bot.command("new", ownerOnly((ctx) => handleOwnerList(ctx, "new", "🆕 Новые заявки")));
@@ -121,24 +148,143 @@ export function registerHandlers(bot) {
   bot.on("callback_query", handleCallback);
 }
 
+function isManagerOperationsChat(ctx) {
+  return String(ctx.chat?.id) === getManagerChatId();
+}
+
+function isClientPrivateChat(ctx) {
+  return ctx.chat?.type === "private";
+}
+
+function intakeMetadata(entry) {
+  if (!entry) return {};
+  const intake = ensureIntake(entry);
+  return {
+    order: entry.orderData || null,
+    service_code: entry.serviceCode || null,
+    intake_state: {
+      servicesQueue: intake.servicesQueue,
+      idx: intake.idx,
+      perService: intake.perService,
+    },
+    pending_finalize: entry.pendingFinalize || null,
+  };
+}
+
+async function hydrateClientContextFromDb(chatId) {
+  try {
+    const conv = await getActiveConversationByChatId(chatId);
+    if (!conv || !Array.isArray(conv.history) || conv.history.length === 0) return null;
+    const meta = conv.metadata || {};
+    const row = {
+      messages: [...conv.history],
+      files: conv.files || [],
+      lang: conv.lang || null,
+      flagShown: true,
+      serviceCode: meta.service_code || null,
+      orderData: makeEmptyOrder(),
+      upsellShown: false,
+      pendingFinalize: meta.pending_finalize || null,
+    };
+    if (meta.order && typeof meta.order === "object") {
+      row.orderData = mergeData(makeEmptyOrder(), meta.order);
+    }
+    ensureIntake(row);
+    if (meta.intake_state && typeof meta.intake_state === "object") {
+      if (Array.isArray(meta.intake_state.servicesQueue))
+        row.intake.servicesQueue = meta.intake_state.servicesQueue;
+      if (Number.isInteger(meta.intake_state.idx)) row.intake.idx = meta.intake_state.idx;
+      if (meta.intake_state.perService && typeof meta.intake_state.perService === "object")
+        row.intake.perService = { ...meta.intake_state.perService };
+    }
+    if (meta.service_code) row.serviceCode = meta.service_code;
+    setContext(chatId, row);
+    return row;
+  } catch (e) {
+    console.error("[hydrate]", e.message);
+    return null;
+  }
+}
+
+/**
+ * Режим relay: одно сообщение менеджера → клиенту (копия медиа как есть).
+ */
+async function tryManagerRelayForward(ctx) {
+  const rel = getManagerReplyMode(ctx.from.id);
+  if (!rel || !managerCommandAllowed(ctx)) return false;
+  try {
+    const lead = await getLeadById(rel.leadId);
+    if (!lead?.telegram_chat_id) {
+      await ctx.reply(`Лид #${rel.leadId} не найден или без chat_id клиента.`);
+      clearManagerReplyMode(ctx.from.id);
+      return true;
+    }
+    const to = String(lead.telegram_chat_id);
+    const mid = ctx.message?.message_id;
+    if (mid) {
+      await ctx.telegram.copyMessage(to, ctx.chat.id, mid);
+    }
+    if (lead.conversation_id && ctx.message?.text) {
+      await appendConversationMessage(lead.conversation_id, "manager", ctx.message.text);
+    }
+    if (lead.status === "new") {
+      await updateLead(rel.leadId, { status: "in_progress", assigned_to: Number(ctx.from.id) });
+    }
+    clearManagerReplyMode(ctx.from.id);
+    await ctx.reply(`✓ Сообщение передано клиенту (лид #${rel.leadId}).`);
+  } catch (e) {
+    console.error("[relay]", e.message);
+    await ctx.reply(`Не удалось переслать: ${e.message}`);
+    clearManagerReplyMode(ctx.from.id);
+  }
+  return true;
+}
+
 // ─── /start, /help, /reset ───────────────────────────────────────────────────
 
 export async function handleStart(ctx) {
+  const chat = ctx.chat;
+  if ((chat?.type === "group" || chat?.type === "supergroup") && isManagerOperationsChat(ctx)) {
+    if (managerCommandAllowed(ctx)) await ctx.reply("Команды менеджера: /leads, /stats, /reply …");
+    return;
+  }
+  if (chat?.type === "private" && managerCommandAllowed(ctx) && hasManagerUserAllowlist()) {
+    await ctx.reply("Вы в списке менеджеров: intake тут отключён. Используйте /leads, /stats в рабочем чате или сюда те же команды.");
+    return;
+  }
+
+  try {
+    const restored = await hydrateClientContextFromDb(chat.id);
+    if (
+      restored &&
+      Array.isArray(restored.messages) &&
+      restored.messages.length >= 2 &&
+      !restored.pendingFinalize
+    ) {
+      await ctx.reply(
+        "У вас уже есть незавершённый заказ — продолжим с того же места.\n" +
+          "Если нужно начать с чистого листа — отправьте /reset.\n\n" +
+          "Коротко допишите или уточните, что нужно."
+      );
+      return;
+    }
+  } catch { /* ignore */ }
+
   clearContext(ctx.chat.id);
   await ctx.reply(
     "👋 Сәлеметсіз бе!\n" +
-    "Қалаған тіліңізде жаза беріңіз — сол тілде жауап беремін.\n" +
-    "Жарнамаға тапсырыс беруге көмектесемін. Не керек екенін айтыңыз — мәтінмен, дауыспен немесе макетті/фотоны жіберіңіз.\n\n" +
-    "—\n\n" +
-    "👋 Здравствуйте!\n" +
-    "Пишите на любом удобном языке — отвечу на нём же.\n" +
-    "Я помогу оформить заказ на рекламу. Расскажите что нужно — текстом, голосом или пришлите макет/фото.\n\n" +
-    "Шаблоны: /templates"
+      "Қалаған тіліңізде жаза беріңіз — сол тілде жауап беремін.\n" +
+      "Жарнамаға тапсырыс беруге көмектесемін. Не керек екенін айтыңыз — мәтінмен, дауыспен немесе макетті/фотоны жіберіңіз.\n\n" +
+      "—\n\n" +
+      "👋 Здравствуйте!\n" +
+      "Пишите на любом удобном языке — отвечу на нём же.\n" +
+      "Помогу оформить заказ на рекламу — текстом, голосом или с макетом/фото.\n\n" +
+      "Шаблоны: /templates"
   );
 }
 
 async function handleHelp(ctx) {
-  const mgr = String(ctx.chat?.id) === getManagerChatId();
+  const mgr = isManagerOperationsChat(ctx) || (isClientPrivateChat(ctx) && managerCommandAllowed(ctx) && hasManagerUserAllowlist());
   const lines = [
     "📖 Команды",
     "",
@@ -157,21 +303,69 @@ async function handleHelp(ctx) {
 
 async function handleReset(ctx) {
   clearContext(ctx.chat.id);
+  clearManagerReplyMode(ctx.from.id);
   if (String(ctx.chat?.id) === getManagerChatId()) clearManagerState(ctx.chat.id);
-  await ctx.reply("Окей, начнём заново 🔄\n\nРасскажите, что за заказ?");
+  if (isClientPrivateChat(ctx))
+    upsertConversation({
+      telegramUserId: ctx.from.id,
+      telegramChatId: ctx.chat.id,
+      history: [],
+      files: [],
+      lang: null,
+      status: "active",
+      metadata: { order: null, intake_state: { servicesQueue: [], idx: 0, perService: {} }, pending_finalize: null },
+    }).catch(() => {});
+  await ctx.reply("Окей, начнём заново. Расскажите, что нужно сделать — можно сразу несколько позиций через «и».");
 }
 
 // ─── Text / Voice / Files ────────────────────────────────────────────────────
+
+async function maybeResolvePendingBrief(ctx, userMessage) {
+  if (!isClientPrivateChat(ctx)) return false;
+
+  let entry = getContext(ctx.chat.id);
+  if (!entry) {
+    await hydrateClientContextFromDb(ctx.chat.id).catch(() => {});
+    entry = getContext(ctx.chat.id);
+  }
+  const pf = entry?.pendingFinalize;
+  if (!pf || typeof pf !== "object") return false;
+
+  const lang = entry.lang || "ru";
+
+  if (!isAffirmative(lang, userMessage)) {
+    entry.pendingFinalize = null;
+    setContext(ctx.chat.id, entry);
+    upsertConversation({
+      telegramUserId: ctx.from.id,
+      telegramChatId: ctx.chat.id,
+      history: entry.messages,
+      files: entry.files,
+      lang,
+      status: "active",
+      metadata: intakeMetadata(entry),
+      lastUserMessageAt: new Date().toISOString(),
+    }).catch(() => {});
+    return false;
+  }
+
+  entry.messages = [...(entry.messages || []), { role: "user", content: userMessage }];
+  entry.pendingFinalize = null;
+  setContext(ctx.chat.id, entry);
+  await finalizeOrder(ctx, entry, pf.args || {}, pf.finalizeOpts || {});
+  return true;
+}
 
 export async function handleText(ctx) {
   const userMessage = ctx.message.text?.trim();
   if (!userMessage) return;
 
-  // ─── Manager teach-mode: ждём заметку для knowledge_base ───────────────
-  if (await maybeHandleManagerTeachInput(ctx, userMessage)) return;
+  const chat = ctx.chat;
+  const inMgrGroup =
+    (chat?.type === "group" || chat?.type === "supergroup") && isManagerOperationsChat(ctx);
 
-  // ─── Clarify-flow: менеджер ответил на ForceReply от lead:clarify ──────
-  if (String(ctx.chat?.id) === getManagerChatId()) {
+  if (inMgrGroup) {
+    if (await maybeHandleManagerTeachInput(ctx, userMessage)) return;
     const pc = pendingClarify.get(getManagerChatId());
     const replyToId = ctx.message?.reply_to_message?.message_id;
     if (pc && replyToId && replyToId === pc.promptMessageId) {
@@ -179,10 +373,6 @@ export async function handleText(ctx) {
       await sendManagerReplyToClient(ctx, pc.leadId, userMessage);
       return;
     }
-  }
-
-  // ─── Proposal-flow: менеджер ввёл свою версию КП после «✏️ Изменить» ──
-  if (String(ctx.chat?.id) === getManagerChatId()) {
     const pe = pendingProposalEdit.get(getManagerChatId());
     const replyToId2 = ctx.message?.reply_to_message?.message_id;
     if (pe && replyToId2 && replyToId2 === pe.promptMessageId) {
@@ -190,34 +380,89 @@ export async function handleText(ctx) {
       await sendManagerProposalToClient(ctx, pe.leadId, userMessage);
       return;
     }
+    if (await tryManagerRelayForward(ctx)) return;
+    return;
   }
+
+  if (isClientPrivateChat(ctx) && managerCommandAllowed(ctx) && hasManagerUserAllowlist()) {
+    if (await maybeHandleManagerTeachInput(ctx, userMessage)) return;
+    if (await tryManagerRelayForward(ctx)) return;
+    await ctx.reply(
+      "Вы менеджер — сбор заказов в этом чате отключён. После «Уточнить» пришлите одно сообщение для клиента, либо /leads, /reply …"
+    );
+    return;
+  }
+
+  if (await maybeHandleManagerTeachInput(ctx, userMessage)) return;
+
+  if (!getContext(ctx.chat.id)) await hydrateClientContextFromDb(ctx.chat.id).catch(() => {});
+
+  if (await maybeResolvePendingBrief(ctx, userMessage)) return;
 
   await processUserMessage(ctx, userMessage);
 }
 
 export async function handleVoice(ctx) {
   try {
+    const chat = ctx.chat;
+    const inMgrGroup =
+      (chat?.type === "group" || chat?.type === "supergroup") && isManagerOperationsChat(ctx);
+    const privMgr =
+      isClientPrivateChat(ctx) && managerCommandAllowed(ctx) && hasManagerUserAllowlist();
+
+    if (inMgrGroup || privMgr) {
+      if (await tryManagerRelayForward(ctx)) return;
+    }
+
     await ctx.sendChatAction("typing");
     const existing = getContext(ctx.chat.id);
     const text = await transcribeVoice(ctx, existing?.lang);
     if (!text) {
-      await ctx.reply("Не получилось распознать голос, попробуйте ещё раз или напишите текстом 🙏");
+      await ctx.reply("Не получилось распознать голос, попробуйте ещё раз или напишите текстом.");
       return;
     }
 
-    // ─── Manager teach-mode: голосовая заметка для knowledge_base ─────────
-    if (await maybeHandleManagerTeachInput(ctx, text)) return;
+    if (inMgrGroup) {
+      if (await maybeHandleManagerTeachInput(ctx, text)) return;
+      return;
+    }
 
-    // (voice echo removed — speak content directly)
+    if (privMgr) {
+      if (await maybeHandleManagerTeachInput(ctx, text)) return;
+      await ctx.reply("Здесь голосом заявки не собираем — /leads или /reply как текстом.");
+      return;
+    }
+
+    if (!getContext(ctx.chat.id)) await hydrateClientContextFromDb(ctx.chat.id).catch(() => {});
+
+    if (await maybeResolvePendingBrief(ctx, text)) return;
+
     await processUserMessage(ctx, text);
   } catch (err) {
     console.error("Voice error:", err.message);
-    await ctx.reply("Не получилось обработать голос. Напишите текстом, пожалуйста 🙏");
+    await ctx.reply("Не получилось обработать голос. Напишите текстом, пожалуйста.");
   }
 }
 
 export async function handleFile(ctx) {
   try {
+    const chat = ctx.chat;
+    const inMgrGroup =
+      (chat?.type === "group" || chat?.type === "supergroup") && isManagerOperationsChat(ctx);
+    const privMgr =
+      isClientPrivateChat(ctx) && managerCommandAllowed(ctx) && hasManagerUserAllowlist();
+
+    if (inMgrGroup || privMgr) {
+      if (await tryManagerRelayForward(ctx)) return;
+    }
+    if (inMgrGroup) return;
+    if (privMgr) {
+      await ctx.reply("Файлы к заявке не через этот чат — операторский канал используйте «Уточнить» или /reply.");
+      return;
+    }
+
+    if (!getContext(ctx.chat.id)) await hydrateClientContextFromDb(ctx.chat.id).catch(() => {});
+
     let fileId, label, isImage = false, mime = null;
     if (ctx.message.photo) {
       const photos = ctx.message.photo;
@@ -238,8 +483,8 @@ export async function handleFile(ctx) {
     addFile(ctx.chat.id, link.href);
 
     const caption = ctx.message.caption?.trim();
-    const existing = getContext(ctx.chat.id);
-    const lang = existing?.lang || "ru";
+    let existing = getContext(ctx.chat.id);
+    let lang = existing?.lang || "ru";
 
     const lowerName = (label || "").toLowerCase();
     const mimeStr = (mime || "").toLowerCase();
@@ -275,10 +520,28 @@ export async function handleFile(ctx) {
     }
 
     let vision = null;
+    let imageIntent = "";
     if (isImage) {
       try {
         await ctx.sendChatAction("typing");
         const dataUrl = await fetchAsDataUrl(link.href, mime || "image/jpeg");
+
+        try {
+          const cls = await classifyImageForIntake(dataUrl, lang);
+          const kind = cls?.kind || "unclear";
+          imageIntent = ` | image_kind: "${kind}"`;
+          if (kind === "casual_photo") {
+            const casualMsg = {
+              ru: "Похоже на обычное фото, не чертёж. Хотите опереться на него как на референс или лучше прислать отдельно логотип/готовый макет?",
+              kk: "Кәделігі фото сияқты көрінеді. Оны негіз ретінде пайдаланамыз ба әлде логотип/макетті бөлек жіберіп тұрған жөн бе?",
+              en: "This looks like a casual photo rather than artwork. Want to use it as a loose reference—or send a proper logo/mockup?",
+            };
+            await ctx.reply(casualMsg[lang] || casualMsg.ru).catch(() => {});
+          }
+        } catch (e) {
+          console.warn("[cls image]", e.message);
+        }
+
         vision = await describeImage(dataUrl, lang);
       } catch (err) {
         console.error("Vision fetch/describe error:", err.message);
@@ -293,16 +556,23 @@ export async function handleFile(ctx) {
       pdfPart = ` | pdf_text_empty: yes (скан или графический PDF без слоя текста)`;
       await ctx
         .reply(
-          "Этот PDF без текстового слоя — часто так у сканов. Опишите заказ текстом или пришлите фото макета 👍"
+          "Этот PDF без текстового слоя (часто так у сканов). Если можно — пара строк текстом или фото того, что напечатать."
         )
         .catch(() => {});
     } else if (isPsdAi) {
       pdfPart = " | note: \"PSD/AI/EPS — автоматический разбор недоступен; файл в заявке\"";
     }
-    const systemNote = `[файл прикреплён: ${link.href}${visionPart}${pdfPart}${caption ? ` | подпись: ${caption}` : ""}]`;
+    const systemNote =
+      `[файл прикреплён: ${link.href}${visionPart}${imageIntent}${pdfPart}` +
+      (caption ? ` | подпись: ${caption}` : "");
 
     const message = caption ? `${caption}\n\n${systemNote}` : systemNote;
-    await ctx.reply(`Принял ${label} 👍`);
+    const ack = {
+      ru: label === "фото" ? "Увидела картинку, учитываю её в описании заказа." : "Файл получила, уже в вашей заявке.",
+      kk: label === "фото" ? "Суретті көрдім, тапсырыста ескере аламын." : "Файл қабылдадым.",
+      en: label === "фото" ? "Got the image — I’ll fold it into the brief." : "File received and attached.",
+    };
+    await ctx.reply(ack[lang] || ack.ru);
     await processUserMessage(ctx, message);
   } catch (err) {
     console.error("File error:", err.message);
@@ -389,6 +659,21 @@ async function processUserMessage(ctx, userMessage) {
   if (typeof entry.upsellShown !== "boolean") entry.upsellShown = false;
   entry.messages = [...entry.messages, { role: "user", content: userMessage }];
 
+  const intake = ensureIntake(entry);
+  const nonFileUserMsgs = entry.messages.filter(
+    (m) => m.role === "user" && !String(m.content || "").startsWith("[файл прикреплён:")
+  ).length;
+  if (nonFileUserMsgs <= 3 && intake.servicesQueue.length === 0 && !entry.pendingFinalize) {
+    const rawQ = extractServicesQueueFromText(userMessage.replace(/\[файл прикреплён:[\s\S]*/gi, ""));
+    if (rawQ.length >= 2) {
+      intake.servicesQueue = rawQ;
+      intake.idx = 0;
+      intake.perService = {};
+      entry.serviceCode = rawQ[0];
+      entry.orderData.type = rawQ[0];
+    }
+  }
+
   // Detect language
   const isFileNote = /^\[файл прикреплён:/.test(userMessage);
   let lang = entry.lang;
@@ -460,6 +745,13 @@ async function processUserMessage(ctx, userMessage) {
         serviceCode = newCode;
       }
       entry.serviceCode = serviceCode;
+      if (intake.servicesQueue.length) {
+        const forced = intake.servicesQueue[intake.idx];
+        if (forced) {
+          serviceCode = forced;
+          entry.serviceCode = forced;
+        }
+      }
 
       // Перезатираем service_type в collected на нормализованный код,
       // чтобы UI/save_order писали единообразно ("вывеска" / "баннер" / ...).
@@ -523,13 +815,20 @@ async function processUserMessage(ctx, userMessage) {
     });
 
     if (result.type === "function") {
-      // Если LLM вызвал save_order, но service_type у него «сырой» — нормализуем.
       if (result.args && serviceCode) {
         const norm = normalizeServiceType(result.args.service_type) || serviceCode;
         result.args.service_type = norm;
       }
-      await finalizeOrder(ctx, entry, result.args);
-      return;
+      const stopped = await interceptSaveOrderIntent(
+        ctx,
+        entry,
+        chatId,
+        userId,
+        lang,
+        result.args || {},
+        serviceCode
+      );
+      if (stopped) return;
     }
 
     let reply = result.content || "...";
@@ -554,7 +853,7 @@ async function processUserMessage(ctx, userMessage) {
       files: entry.files,
       lang,
       status: "active",
-      metadata: { order: entry.orderData || null, followup_level: 0 },
+      metadata: intakeMetadata(entry),
       lastUserMessageAt: new Date().toISOString(),
     }).catch((err) => console.error("Conversation upsert failed:", err.message));
 
@@ -585,17 +884,210 @@ function buildTelegramFallbackContact(ctx) {
   return null;
 }
 
-async function finalizeOrder(ctx, entry, args) {
+/** Аргументы save_order после объединения нескольких услуг. */
+function buildComboArgsFromSnapshots(toolArgs, snapshots) {
+  if (!snapshots?.length) return { ...(toolArgs || {}) };
+  const primary = snapshots[0];
+  const last = snapshots[snapshots.length - 1];
+  const multi = snapshots.length > 1;
+  return {
+    ...primary,
+    ...(toolArgs || {}),
+    service_type: multi ? "другое" : primary.service_type || primary.type || toolArgs?.service_type,
+    description: multi
+      ? snapshots
+          .map(
+            (s) =>
+              `${s.service_type || s.type || "—"}: ${s.description || s.content || "—"}`.trim()
+          )
+          .join(" · ")
+      : toolArgs?.description || primary.description || primary.content,
+    deadline: last.deadline || toolArgs?.deadline || primary.deadline,
+    contact: last.contact || toolArgs?.contact || primary.contact,
+    multi_services: snapshots,
+  };
+}
+
+function mergeSnapshotsOrderData(snaps) {
+  if (!snaps?.length) return makeEmptyOrder();
+  const last = snaps[snaps.length - 1];
+  const base = mergeData(makeEmptyOrder(), { ...last });
+  base.multi_services = snaps;
+  base.description = snaps
+    .map((s) => `${s.service_type || s.type}: ${s.description || s.content || ""}`.trim())
+    .join(" · ");
+  base.type =
+    snaps.length > 1 ? "другое" : (snaps[0].service_type || snaps[0].type || base.type);
+  return base;
+}
+
+/**
+ * После вызова save_order у LLM: валидация, мультислоты, показ финального брифа клиенту (без лида до «да»).
+ */
+async function interceptSaveOrderIntent(
+  ctx,
+  entry,
+  chatId,
+  userId,
+  lang,
+  rawArgs,
+  serviceCodeFromCtx
+) {
+  const intake = ensureIntake(entry);
+  const args = { ...(rawArgs || {}) };
+
+  if (serviceCodeFromCtx) {
+    args.service_type = normalizeServiceType(args.service_type) || serviceCodeFromCtx;
+  }
+
+  const mergedFlat = snapshotForService(entry.orderData, args);
+  const curCode =
+    normalizeServiceType(args.service_type) || entry.serviceCode || mergedFlat.type || "другое";
+
+  const merged = { ...mergedFlat, type: mergedFlat.type || curCode };
+
+  const cross = {
+    type: merged.type || curCode,
+    size: merged.size || args.size,
+    deadline: merged.deadline || args.deadline,
+    contact: merged.contact || args.contact,
+  };
+
+  const missing = missingRequiredFields(cross, REQUIRED_FIELDS);
+  const missingNoContact = missing.filter((f) => f !== "contact");
+  if (missingNoContact.length > 0) {
+    const first = missingNoContact[0];
+    const stepKey = first === "type" ? "service_type" : first;
+    const q = getQuestion(lang, stepKey) || getQuestion(lang, "service_type");
+    if (q) await ctx.reply(q);
+    return true;
+  }
+
+  let contact = args.contact;
+  const fallback = buildTelegramFallbackContact(ctx);
+  if (isPlaceholderContact(contact) || (!contact && fallback)) {
+    contact = fallback || contact;
+  }
+  args.contact = contact;
+  merged.contact = contact;
+
+  if (!isValidContact(contact)) {
+    if (fallback && !contact) args.contact = fallback;
+    contact = args.contact;
+  }
+  if (!isValidContact(contact)) {
+    await ctx.reply(CONTACT_REASK[lang] || CONTACT_REASK.ru);
+    return true;
+  }
+
+  const queue = intake.servicesQueue;
+
+  const persistAfter = async (briefTextLine) => {
+    setContext(chatId, entry);
+    await ctx.reply(briefTextLine).catch(() => {});
+    upsertConversation({
+      telegramUserId: userId,
+      telegramChatId: chatId,
+      history: entry.messages,
+      files: entry.files,
+      lang,
+      status: "active",
+      metadata: intakeMetadata(entry),
+      lastUserMessageAt: new Date().toISOString(),
+    }).catch((e) => console.error("[upsert]", e.message));
+  };
+
+  if (queue.length >= 2) {
+    const slotKey = queue[intake.idx] || curCode;
+    const slotSnap = {
+      ...merged,
+      type: slotKey,
+      service_type: slotKey,
+      contact: args.contact,
+    };
+    intake.perService[slotKey] = slotSnap;
+
+    if (intake.idx < queue.length - 1) {
+      intake.idx += 1;
+      const nextCode = queue[intake.idx];
+      entry.serviceCode = nextCode;
+      entry.orderData = orderCarryForward(slotSnap);
+      entry.orderData.type = nextCode;
+      const trRu = `Одну позицию («${slotKey}») сохранила — перехожу к «${nextCode}». По ней начнём с объёма или с того, что на печати?`;
+      const tr = {
+        ru: trRu,
+        kk: `Бір бөлікті («${slotKey}») жаздым — келесі «${nextCode}»: көлем ме, өлшем ме, немесе басылымда не болуы керек?`,
+        en: `Saved «${slotKey}». Now «${nextCode}» — start with qty/size or artwork?`,
+      }[lang] || trRu;
+      entry.messages = [...entry.messages, { role: "assistant", content: tr }];
+      setContext(chatId, entry);
+      await ctx.reply(tr);
+      upsertConversation({
+        telegramUserId: userId,
+        telegramChatId: chatId,
+        history: entry.messages,
+        files: entry.files,
+        lang,
+        status: "active",
+        metadata: intakeMetadata(entry),
+        lastUserMessageAt: new Date().toISOString(),
+      }).catch((e) => console.error("[upsert]", e.message));
+      return true;
+    }
+
+    const snapshots = queue.map((code) => ({
+      ...(intake.perService[code] || {}),
+      type: code,
+      service_type: code,
+    }));
+
+    const comboArgs = buildComboArgsFromSnapshots(args, snapshots);
+    const briefLines = snapshots.map((s) => ({
+      ...s,
+      type: s.service_type || s.type,
+    }));
+    const briefText = formatClientBrief(lang, briefLines);
+
+    entry.pendingFinalize = {
+      args: comboArgs,
+      finalizeOpts: { multiServiceSnapshots: snapshots },
+    };
+    entry.messages = [...entry.messages, { role: "assistant", content: briefText }];
+    await persistAfter(briefText);
+    return true;
+  }
+
+  const singleSnap = {
+    ...merged,
+    type: curCode,
+    service_type: curCode,
+    contact: args.contact,
+  };
+  const comboArgs = buildComboArgsFromSnapshots(args, [singleSnap]);
+  const briefText = formatClientBrief(lang, [singleSnap]);
+
+  entry.pendingFinalize = {
+    args: comboArgs,
+    finalizeOpts: { multiServiceSnapshots: [singleSnap] },
+  };
+  entry.messages = [...entry.messages, { role: "assistant", content: briefText }];
+  await persistAfter(briefText);
+  return true;
+}
+
+async function finalizeOrder(ctx, entry, rawArgs, finalizeOpts = {}) {
+  const args = { ...(rawArgs || {}) };
+  const snaps = finalizeOpts.multiServiceSnapshots;
+  const aggregatedOrder = snaps?.length
+    ? mergeSnapshotsOrderData(snaps)
+    : mergeData(makeEmptyOrder(), entry.orderData || {});
   const chatId = ctx.chat.id;
   const userId = ctx.from.id;
   const lang = entry.lang || "ru";
 
   // ─── Final required-fields validation (formal schema source-of-truth) ─────
-  // entry.orderData собран через extractData/mergeData по ходу диалога.
-  // Если LLM вызвал save_order, но обязательные поля пустые — задаём вопрос
-  // на нужном языке вместо сохранения.
   try {
-    const od = entry.orderData || {};
+    const od = aggregatedOrder || {};
     // Если LLM в args что-то прислал, а в orderData этого ещё нет — подмешаем,
     // чтобы валидатор увидел свежие данные (LLM иногда extract'ит быстрее, чем extractData).
     const cross = {
@@ -643,12 +1135,19 @@ async function finalizeOrder(ctx, entry, args) {
       files: entry.files,
       lang,
       status: "completed",
-      metadata: { order: entry.orderData || null },
+      metadata: {
+        order: aggregatedOrder || null,
+        intake_state: { servicesQueue: [], idx: 0, perService: {} },
+        pending_finalize: null,
+      },
     });
 
-    // Подмешиваем формальный orderData в args — попадёт в orders.json_data.
-    const enrichedArgs = { ...args, order_data: entry.orderData || null };
-    console.log(`[finalize] chat=${chatId} args=`, JSON.stringify(args), "orderData=", JSON.stringify(entry.orderData));
+    const enrichedArgs = {
+      ...args,
+      order_data: aggregatedOrder || null,
+      multi_services: snaps || args.multi_services,
+    };
+    console.log(`[finalize] chat=${chatId} args=`, JSON.stringify(enrichedArgs), "agg=", JSON.stringify(aggregatedOrder));
     const order = await saveOrder({
       conversationId: conversation.id,
       telegramUserId: userId,
@@ -661,13 +1160,19 @@ async function finalizeOrder(ctx, entry, args) {
     // ─── CRM: создаём лида со score ────────────────────────────────────────
     let lead = null;
     try {
-      const score = calcLeadScore({ orderData: entry.orderData, files: entry.files });
+      const score = calcLeadScore({ orderData: aggregatedOrder, files: entry.files });
       lead = await createLead({
         conversationId: conversation.id,
         orderId: order.id,
         telegramUserId: userId,
         telegramChatId: chatId,
-        data: { ...(entry.orderData || {}), order_id: order.id, lang, username: ctx.from?.username || null },
+        data: {
+          ...(aggregatedOrder || {}),
+          order_id: order.id,
+          lang,
+          username: ctx.from?.username || null,
+          multi_services: snaps || null,
+        },
         leadScore: score,
       });
       console.log(`[lead] created id=${lead.id} score=${score} order=${order.id.substring(0,8)}`);
@@ -675,7 +1180,7 @@ async function finalizeOrder(ctx, entry, args) {
       console.error("Lead creation failed:", err.message);
     }
 
-    const orderDataSnapshot = { ...(entry.orderData || makeEmptyOrder()) };
+    const orderDataSnapshot = { ...(aggregatedOrder || makeEmptyOrder()) };
 
     await completeConversation(conversation.id);
     clearContext(chatId);
@@ -702,7 +1207,7 @@ async function finalizeOrder(ctx, entry, args) {
       console.error("[estimatePriceHint]", e.message);
     }
 
-    await notifyManager(ctx, order, lang, args, lead, orderDataSnapshot);
+    await notifyManager(ctx, order, lang, enrichedArgs, lead, orderDataSnapshot);
   } catch (err) {
     console.error("Finalize error:", err.message);
     await ctx.reply("Заявку записал, но возникла техническая ошибка при сохранении. Менеджер всё равно увидит ваше обращение.");
@@ -722,12 +1227,25 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null,
   const badge = scoreBadge(score);
   const headerId = lead ? `#${lead.id}` : `№${order.id.substring(0, 8)}`;
 
+  const rawJson = order?.json_data;
+  const multiSnap =
+    rawArgs.multi_services ||
+    orderData?.multi_services ||
+    (Array.isArray(rawJson?.multi_services) ? rawJson.multi_services : null);
+
   const lines = [
     `🆕 Новый лид ${headerId} [${meta.badge}] ${badge} (${score})`,
     ``,
     `🎯 Услуга: ${order.service_type || "—"}`,
     `📝 ${order.description || "—"}`,
   ];
+  if (Array.isArray(multiSnap) && multiSnap.length > 1) {
+    lines.push("", `🧩 Позиций в заявке: ${multiSnap.length}`);
+    multiSnap.forEach((s, i) => {
+      lines.push(`  ${i + 1}) ${s.service_type || s.type || "—"} — ${s.description || s.content || "…"}`);
+    });
+    lines.push("");
+  }
   if (order.size) lines.push(`📐 Размер: ${order.size}`);
   if (order.quantity) lines.push(`🔢 Кол-во: ${order.quantity}`);
   const extras = [
@@ -852,6 +1370,7 @@ async function handleOwnerStats(ctx) {
 
 async function handleTemplatesCommand(ctx) {
   if (String(ctx.chat?.id) === getManagerChatId()) return;
+  if (isClientPrivateChat(ctx) && managerCommandAllowed(ctx) && hasManagerUserAllowlist()) return;
   const keyboard = {
     inline_keyboard: ORDER_TEMPLATES.map((t) => [{ text: t.title, callback_data: `tpl:${t.id}` }]),
   };
@@ -897,6 +1416,10 @@ async function handleCallback(ctx) {
   const chatId = String(ctx.callbackQuery.message?.chat?.id);
   if (chatId !== getManagerChatId()) {
     await ctx.answerCbQuery("Только менеджер").catch(() => {});
+    return;
+  }
+  if (!managerCommandAllowed(ctx)) {
+    await ctx.answerCbQuery("Нужны права менеджера").catch(() => {});
     return;
   }
 
@@ -1000,8 +1523,12 @@ async function handleLeadCallback(ctx, data, chatId) {
     }
 
     if (action === "clarify") {
-      await ctx.answerCbQuery("Готовлю вариант ответа…").catch(() => {});
-      await proposeAssistReply(ctx, leadId, lead);
+      await ctx.answerCbQuery().catch(() => {});
+      setManagerReplyMode(ctx.from.id, leadId);
+      await ctx.telegram.sendMessage(
+        chatId,
+        `💬 Ответ клиенту по лиду #${leadId}.\nОдно следующее сообщение (текст, голос или фото) будет переслано клиенту, затем режим выключится.\nПодсказка: AI-черновик — команда /assist ${leadId}`
+      );
       return;
     }
 

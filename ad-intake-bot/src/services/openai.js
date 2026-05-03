@@ -219,6 +219,52 @@ export async function describeImage(imageUrl, lang = "ru") {
 }
 
 /**
+ * Классификация изображения для intake (не отказ клиенту, а мягкое уточнение).
+ * @returns {Promise<{kind:'logo'|'mockup'|'casual_photo'|'unclear', note?: string}|null>}
+ */
+export async function classifyImageForIntake(imageUrl, lang = "ru") {
+  const system = [
+    'You classify ONE image for a print/signage agency intake.',
+    'Reply with ONLY a JSON object: {"kind":"<one>","note":"<short russian reason>"}',
+    'kind must be exactly one of: logo — isolated logo/wordmark;',
+    'mockup — artwork ready for printing, layout, sketch;',
+    'casual_photo — everyday photo, selfie, unrelated scene, screenshot of chat;',
+    'unclear — cannot tell.',
+    'Use Russian in "note" only.',
+  ].join(" ");
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: system },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Classify for advertising brief." },
+            { type: "image_url", image_url: { url: imageUrl } },
+          ],
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+      max_tokens: 120,
+    });
+    const raw = response.choices?.[0]?.message?.content;
+    const j = JSON.parse(raw || "{}");
+    const kind = String(j.kind || "unclear");
+    const allowed = new Set(["logo", "mockup", "casual_photo", "unclear"]);
+    return {
+      kind: allowed.has(kind) ? kind : "unclear",
+      note: typeof j.note === "string" ? j.note.slice(0, 200) : "",
+    };
+  } catch (err) {
+    console.error("classifyImageForIntake failed:", err.message);
+    return null;
+  }
+}
+
+/**
  * Extract partial brief fields the client has explicitly mentioned in the dialog.
  * Returns a small JSON. Empty/unknown fields are omitted.
  */

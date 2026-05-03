@@ -17,10 +17,13 @@ Telegram-бот для рекламного агентства: брифы (на
 |------|------------|
 | `index.js` | `getMe()` → tenant, Express/webhook или long-polling |
 | `config/tenants.js` | `TENANTS_JSON`: username бота → `manager_chat_id` |
-| `bot/handlers.js` | Сообщения, финализация, менеджер, КП, CRM, шаблоны |
+| `config/roles.js` | Роль менеджера по `MANAGER_TELEGRAM_USER_IDS` |
+| `utils/managerRelay.js` | Одно сообщение менеджера → клиенту после «Уточнить» |
+| `bot/handlers.js` | Сообщения, финализация, multi-услуги, бриф+«да», менеджер, КП, CRM |
+| `bot/intakeHelpers.js` | Очередь услуг, бриф, «да», merge снимков |
 | `bot/templatesCatalog.js` | Шаблоны заказов + callback `tpl:*` |
 | `bot/prompts.js`, `scenarios.js`, … | Промпты и сценарии |
-| `services/openai.js` | Чат, `detectLang`, `estimatePriceHint`, КП |
+| `services/openai.js` | Чат, `detectLang`, Vision, классификация фото под бриф, `estimatePriceHint`, КП |
 | `services/whisper.js` | Транскрипция + отраслевой prompt |
 | `services/supabase.js` | БД + `getAnalyticsSnapshot()` |
 | `services/crmExport.js` | Webhook JSON + amoCRM + `exportLeadToAllIntegrations` |
@@ -30,8 +33,9 @@ Telegram-бот для рекламного агентства: брифы (на
 ## Запуск локально
 
 1. `cp .env.example .env` — обязательно: `BOT_TOKEN`, `OPENAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `MANAGER_CHAT_ID`.
-2. Опционально: `TENANTS_JSON`, `CRM_WEBHOOK_URL`, `AMOCRM_*`, `WEBHOOK_DOMAIN` (пусто = long-polling).
-3. `npm install` → `npm start` (или `npm run dev`).
+2. Рекомендуется: **`MANAGER_TELEGRAM_USER_IDS`** — Telegram user id менеджеров через запятую (роль «менеджер» в личке с ботом; без списка сохраняется старое правило по группе).
+3. Опционально: `TENANTS_JSON`, `CRM_WEBHOOK_URL`, `AMOCRM_*`, `WEBHOOK_DOMAIN` (пусто = long-polling).
+4. `npm install` → `npm start` (или `npm run dev`).
 
 Миграции: Supabase SQL Editor → файлы в `supabase/migrations/`.
 
@@ -39,8 +43,10 @@ Telegram-бот для рекламного агентства: брифы (на
 
 **Клиент:** `/start`, `/reset`, `/help`, **`/templates`** (шаблоны).
 
-**Менеджер** (чат из `MANAGER_CHAT_ID` или из `TENANTS_JSON` для данного бота):  
-`/new`, `/active`, `/today`, `/leads`, `/reply`, `/assist`, `/proposal`, **`/stats`**, `/teach`, `/knowledge`, кнопки по лидам и КП.
+**Менеджер** (чат из `MANAGER_CHAT_ID` или из `TENANTS_JSON` для данного бота; команды может ограничивать whitelist `MANAGER_TELEGRAM_USER_IDS`):  
+`/new`, `/active`, `/today`, `/leads`, `/reply`, `/assist`, `/proposal`, **`/stats`**, `/teach`, `/knowledge`, кнопки по лидам и КП. Кнопка **«Уточнить»** переводит в режим: **одно** следующее сообщение (текст/голос/фото) пересылается клиенту.
+
+**Клиент:** после согласования брифа бот показывает итог и ждёт **«да»**; в одном обращении можно несколько услуг через «и» (наклейки и футболки) — последовательный сбор, одна заявка.
 
 ## Деплой (Railway)
 
