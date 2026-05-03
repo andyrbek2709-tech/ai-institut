@@ -1,61 +1,108 @@
-# Ad Intake Bot
+# Ad Intake Bot — Telegram-бот приёма заявок (рекламное агентство)
 
-Telegram-бот для рекламного агентства: брифы (наружка, баннеры, SMM, печать и т.д.) через **текст**, **голос** (Whisper + отраслевой `prompt`), **фото** (Vision), **PDF** (извлечение текста, подсказка при скане), **шаблоны** `/templates`. Диалог ведёт **GPT-4o-mini** с tool-calling; заявки в **Supabase**, лиды и кнопки — **мини-CRM** в Telegram; опционально **КП**, **оценка вилки цены** после заявки, **экспорт в CRM** (webhook и/или amoCRM).
+Бот для **приёма брифов** от клиентов агентства (в продакшене — бренд **vformate**): диалог на **русском и казахском** (и других языках по желанию клиента), текст, **голос** (Whisper), **фото** (Vision), **PDF** (извлечение текста), опционально **шаблоны заказов** (`/templates`). Ответы ведёт **LLM** (конфигурируемый провайдер, см. `services/openai.js`) с function-calling; данные — **Supabase**; для менеджеров — **мини-CRM в Telegram** (лиды, статусы, ответы клиенту).
+
+**Кому отдавать документ:** этот файл + **`STATE.md`** в этой же папке. В **`STATE.md`** — журнал изменений по датам и технические детали; здесь — цельная картина «что это» и «что умеет».
+
+---
+
+## Репозиторий и деплой
+
+| Что | Где |
+|-----|-----|
+| Код в монорепо | `andyrbek2709-tech/ai-institut`, каталог **`ad-intake-bot/`** |
+| Прод (типично) | **Railway**: сервис Node, root = `ad-intake-bot`, публичный URL в **`WEBHOOK_DOMAIN`** → `setWebhook` |
+| База | **Supabase** (Postgres): диалоги, заказы, лиды, опционально knowledge |
+
+Локально: Node **20+**, `cp .env.example .env`, заполнить секреты (имена переменных — в `.env.example`), `npm install` → `npm start` или `npm run dev`. Миграции SQL — в **`supabase/migrations/`** (применять в Supabase в нужном порядке для вашего проекта).
+
+---
+
+## Что уже реализовано (функционал)
+
+### Клиент (личка с ботом)
+
+- **`/start`** — логотип (компактный PNG для чата, см. `assets/README.md` и `npm run build:telegram-logo`) + короткая подпись; затем текст приветствия **kk + ru** (одинаковая структура: приветствие «компания в …», блок про язык и оформление заказа). Строка про шаблоны **в приветствии не дублируется** — шаблоны доступны через **`/help`** и команду **`/templates`**.
+- **`/reset`** — сброс контекста и активной беседы в БД (пустая история); приветствие kk+ru без фото.
+- **`/help`** — команды и подсказки.
+- Сбор брифа по сценариям (тип услуги, размеры, срок, контакт, файлы и т.д.), многоязычность, подтверждение заявки («да» / финал).
+- **Голос** → транскрипция; **фото** → анализ под бриф; **документы/PDF** — извлечение текста где возможно.
+- Несколько услуг в одном обращении (очередь услуг), одна заявка по итогу — по логике `handlers.js` / intake helpers.
+
+### Менеджеры (рабочий чат и/или whitelist)
+
+- Уведомления о новой заявке с кнопками (**взять в работу**, **уточнить**, закрыть / отклонить и т.д.), лиды в таблице **`leads`**, скоринг, статусы.
+- Команды: **`/leads`**, **`/stats`**, **`/reply`**, relay после «Уточнить», напоминание если лид долго в **`new`** (env **`MANAGER_LEAD_ACTION_NUDGE_MS`**).
+- Reply-клавиатура быстрых команд **`/leads`** … после **`/start`**/**`/help`** в рабочем чате (для пользователей из **`MANAGER_TELEGRAM_USER_IDS`**), где настроено.
+- Экспорт в внешнюю CRM (webhook / amoCRM) — при наличии env, см. `services/crmExport.js`.
+
+### Технические исправления, важные для UX
+
+- После **`/reset`** пустая активная беседа **не** подтягивает старый диалог из лида при следующем **`/start`** (гидратация в `handlers.js`).
+- Логотип в Telegram: учёт масштабирования клиентом (широкий холст, trim), см. скрипт сборки и `src/config/agency.js`.
+- У превью в **`/start`** отключено развёртывание ссылок в тексте (**`link_preview_options`**) там, где задано в коде.
+
+### Бренд и копирайт
+
+- Имя агентства и пути к лого: **`src/config/agency.js`** (`AGENCY_NAME`, `resolveAgencyLogoPath`, тексты приветствий и подписи к фото).
+
+---
 
 ## Стек
 
-- Node.js 20+ (ESM)
-- Telegraf, Express (webhook на Railway)
-- OpenAI GPT-4o-mini, Whisper-1, Vision
-- `franc-min` — ускоренный детект ru/kk/en на длинных фразах
-- `pdf-parse` — текст из цифровых PDF
-- Supabase (Postgres): conversations, orders, leads, knowledge_base
+- **Node.js** (ESM), **Telegraf**, **Express** (webhook).
+- **OpenAI API** (чат, при необходимости Vision / Whisper — см. актуальный код `openai.js`, `whisper.js`).
+- **Supabase** (`@supabase/supabase-js`).
+- **`pdf-parse`**, **`franc-min`** (подсказка языка), прочее — см. **`package.json`**.
 
-## Структура `src/`
+---
+
+## Структура `src/` (кратко)
 
 | Путь | Назначение |
 |------|------------|
-| `index.js` | `getMe()` → tenant, Express/webhook или long-polling |
-| `config/tenants.js` | `TENANTS_JSON`: username бота → `manager_chat_id` |
-| `config/roles.js` | Роль менеджера по `MANAGER_TELEGRAM_USER_IDS` |
-| `utils/managerRelay.js` | Одно сообщение менеджера → клиенту после «Уточнить» |
-| `bot/handlers.js` | Сообщения, финализация, multi-услуги, бриф+«да», менеджер, КП, CRM |
-| `bot/intakeHelpers.js` | Очередь услуг, бриф, «да», merge снимков |
-| `bot/templatesCatalog.js` | Шаблоны заказов + callback `tpl:*` |
-| `bot/prompts.js`, `scenarios.js`, … | Промпты и сценарии |
-| `services/openai.js` | Чат, `detectLang`, Vision, классификация фото под бриф, `estimatePriceHint`, КП |
-| `services/whisper.js` | Транскрипция + отраслевой prompt |
-| `services/supabase.js` | БД + `getAnalyticsSnapshot()` |
-| `services/crmExport.js` | Webhook JSON + amoCRM + `exportLeadToAllIntegrations` |
-| `services/fileExtract.js` | PDF → текст |
-| `services/leads.js` | Лиды, scoring |
+| `index.js` | Запуск: tenant, Express + webhook или long-polling |
+| `config/agency.js` | Бренд vformate, тексты `/start`, пути к лого |
+| `config/tenants.js` | `TENANTS_JSON`: бот → чат менеджера |
+| `config/roles.js` | Менеджеры: `MANAGER_TELEGRAM_USER_IDS` |
+| `bot/handlers.js` | Основная логика сообщений, /start, лиды, relay, финализация |
+| `bot/prompts.js`, `scenarios.js`, `questions.js`, `orderSchema.js` | Промпты, сценарии, вопросы, схема заказа |
+| `bot/templatesCatalog.js` | Шаблоны заказов, callback `tpl:*` |
+| `bot/managerLeadNudge.js` | Напоминание менеджеру по «висящему» лиду |
+| `services/openai.js` | LLM, детект языка, извлечение данных, КП и т.д. |
+| `services/leads.js` | CRUD лидов, история, скоринг |
+| `services/supabase.js` | БД |
+| `services/crmExport.js` | Внешние CRM |
+| `scripts/build-telegram-logo.mjs` | Сборка компактного лого для чата (devDependency **sharp**) |
 
-## Запуск локально
+---
 
-1. `cp .env.example .env` — обязательно: `BOT_TOKEN`, `OPENAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `MANAGER_CHAT_ID`.
-2. Рекомендуется: **`MANAGER_TELEGRAM_USER_IDS`** — Telegram user id менеджеров через запятую (роль «менеджер» в личке с ботом; без списка сохраняется старое правило по группе).
-3. Опционально: `TENANTS_JSON`, `CRM_WEBHOOK_URL`, `AMOCRM_*`, `WEBHOOK_DOMAIN` (пусто = long-polling).
-4. `npm install` → `npm start` (или `npm run dev`).
+## Переменные окружения
 
-Миграции: Supabase SQL Editor → файлы в `supabase/migrations/`.
+Полный список с комментариями — **`/.env.example`**. Обязательные для работы: **`BOT_TOKEN`**, **`OPENAI_API_KEY`** (или настройки альтернативного LLM, если вы их ввели), **`SUPABASE_URL`**, **`SUPABASE_KEY`**, **`MANAGER_CHAT_ID`**. Остальное — по необходимости (CRM, webhook, лого, тенанты, nudge).
 
-## Команды
+Секреты в README не копировать.
 
-**Клиент:** `/start`, `/reset`, `/help`, **`/templates`** (шаблоны).
+---
 
-**Менеджер** (чат из `MANAGER_CHAT_ID` или из `TENANTS_JSON` для данного бота; команды может ограничивать whitelist `MANAGER_TELEGRAM_USER_IDS`):  
-`/new`, `/active`, `/today`, `/leads`, `/reply`, `/assist`, `/proposal`, **`/stats`**, `/teach`, `/knowledge`, кнопки по лидам и КП. Кнопка **«Уточнить»** переводит в режим: **одно** следующее сообщение (текст/голос/фото) пересылается клиенту.
+## Что сейчас «в документации», а не в коде
 
-**Клиент:** после согласования брифа бот показывает итог и ждёт **«да»**; в одном обращении можно несколько услуг через «и» (наклейки и футболки) — последовательный сбор, одна заявка.
+- Живой журнал правок по дням — **`STATE.md`** (в этой папке). Там же исторические заметки про деплой, smoke-тесты, старые фиксы; при расхождении с кодом **приоритет у кода**, журнал стоит обновить.
+- Корневой **`../STATE.md`** монорепо — общий след по EngHub и этому боту; для вопросов только про бота достаточно **`ad-intake-bot/README.md`** + **`ad-intake-bot/STATE.md`**.
 
-## Деплой (Railway)
+---
 
-Сервис Node, env из `.env.example`, публичный URL в `WEBHOOK_DOMAIN` — бот сам вызовет `setWebhook`.
+## Полезные команды
 
-## Поля брифа
+```bash
+npm install
+npm start              # прод-режим
+npm run dev            # watch
+npm run build:telegram-logo   # пересобрать vformate-logo-telegram.png из vformate-logo.png (нужен sharp из devDependencies)
+```
 
-Обязательные для финала: `type`, `size`, `deadline`, `contact` (см. `orderSchema.js`). Плюс извлечённые сценарием поля.
+---
 
-## Статус и журнал
+## Контакты продукта
 
-См. [STATE.md](STATE.md) в каталоге бота и корневой [STATE.md](../STATE.md) репозитория.
+Логика и тексты заточены под **рекламное агентство** (вывески, полиграфия, наружка и т.д.). Сайт заказчика для справки: [vformate.kz](https://vformate.kz/).
