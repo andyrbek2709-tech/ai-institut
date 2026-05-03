@@ -82,6 +82,8 @@ import {
 import { buildKnowledgeContext } from "./promptContext.js";
 import { shouldTriggerUpsell, buildUpsellPromptBlock, UPSELL_MAP } from "./upsell.js";
 import { getManagerChatId } from "../config/tenants.js";
+import { AGENCY_NAME, buildStartWelcomeText, resolveAgencyLogoPath } from "../config/agency.js";
+import fs from "fs";
 import { exportLeadToAllIntegrations } from "../services/crmExport.js";
 import { extractTextFromPdfBuffer } from "../services/fileExtract.js";
 import { ORDER_TEMPLATES, getTemplateById } from "./templatesCatalog.js";
@@ -340,7 +342,7 @@ export async function handleStart(ctx) {
       !restored.pendingFinalize
     ) {
       await ctx.reply(
-        "У вас уже есть незавершённый заказ — продолжим с того же места.\n" +
+        `🏢 ${AGENCY_NAME} — у вас уже есть незавершённый заказ, продолжим с того же места.\n` +
           "Если нужно начать с чистого листа — отправьте /reset.\n\n" +
           "Коротко допишите или уточните, что нужно."
       );
@@ -349,21 +351,24 @@ export async function handleStart(ctx) {
   } catch { /* ignore */ }
 
   clearContext(ctx.chat.id);
-  await ctx.reply(
-    "👋 Сәлеметсіз бе!\n" +
-      "Қалаған тіліңізде жаза беріңіз — сол тілде жауап беремін.\n" +
-      "Жарнамаға тапсырыс беруге көмектесемін. Не керек екенін айтыңыз — мәтінмен, дауыспен немесе макетті/фотоны жіберіңіз.\n\n" +
-      "—\n\n" +
-      "👋 Здравствуйте!\n" +
-      "Пишите на любом удобном языке — отвечу на нём же.\n" +
-      "Помогу оформить заказ на рекламу — текстом, голосом или с макетом/фото.\n\n" +
-      "Шаблоны: /templates"
-  );
+  const welcome = buildStartWelcomeText();
+  const logoPath = resolveAgencyLogoPath();
+  if (logoPath) {
+    try {
+      await ctx.replyWithPhoto({ source: fs.createReadStream(logoPath) }, { caption: welcome });
+      return;
+    } catch (e) {
+      console.error("[start] logo send failed:", e.message);
+    }
+  }
+  await ctx.reply(welcome);
 }
 
 async function handleHelp(ctx) {
   const mgr = isManagerOperationsChat(ctx) || (isClientPrivateChat(ctx) && managerCommandAllowed(ctx) && hasManagerUserAllowlist());
   const lines = [
+    `🏢 ${AGENCY_NAME} — рекламное агентство`,
+    "",
     "📖 Команды",
     "",
     "/start — начать новый заказ",
@@ -393,7 +398,9 @@ async function handleReset(ctx) {
       status: "active",
       metadata: { order: null, intake_state: { servicesQueue: [], idx: 0, perService: {} }, pending_finalize: null },
     }).catch(() => {});
-  await ctx.reply("Окей, начнём заново. Расскажите, что нужно сделать — можно сразу несколько позиций через «и».");
+  await ctx.reply(
+    `${AGENCY_NAME} — окей, начнём заново. Расскажите, что нужно сделать — можно сразу несколько позиций через «и».`
+  );
 }
 
 // ─── Text / Voice / Files ────────────────────────────────────────────────────
@@ -1464,6 +1471,7 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null,
     (Array.isArray(rawJson?.multi_services) ? rawJson.multi_services : null);
 
   const lines = [
+    `🏢 ${AGENCY_NAME}`,
     `🆕 Новый лид ${headerId} [${meta.badge}] ${badge} (${score})`,
     ``,
     `🎯 Услуга: ${order.service_type || "—"}`,
