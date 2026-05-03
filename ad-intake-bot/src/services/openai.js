@@ -521,11 +521,20 @@ export async function polishRelayForClient(raw, lang = "ru") {
   const draft = String(raw || "").trim();
   if (!draft) return "";
   const langLabel = lang === "kk" ? "қазақша" : lang === "en" ? "in English" : "по-русски";
+  const cleanedRaw = draft
+    .replace(/^(?:скажи|передай|напиши|сообщи)\s+клиент[ауе]?[:,]?\s*/i, "")
+    .replace(/^(?:tell|say to|inform|ask)\s+the\s+client[:,]?\s*/i, "")
+    .trim();
+  const hasKeyAssetWord = (s) =>
+    /(логотип|logo|макет|mockup|файл|file|документ|document|срок|deadline|недел|week)/i.test(
+      String(s || "")
+    );
   const system = [
     `Rewrite the following manager note into ONE short polite message TO THE CLIENT ${langLabel} (max 3 sentences).`,
     "Rules:",
     "- Use first person plural (we / мы / біз).",
     "- Remove internal instructions: tell the client, say to the client, say that, скажи клиенту, передай клиенту, нужно сказать, etc.",
+    "- Keep key business nouns from input (e.g., logo/file/mockup/deadline/quantity). Do not drop the requested object.",
     "- Do not quote yourself giving instructions; keep only facts useful for the client (dates, constraints, next steps).",
     "- Light politeness (извините/спасибо) only if natural.",
     "- No prefix \"Manager\" / \"Менеджер\".",
@@ -544,10 +553,15 @@ export async function polishRelayForClient(raw, lang = "ru") {
     const out = normalizeAssistantTextContent(response.choices?.[0]?.message)
       .replace(/^["«]|["»]$/g, "")
       .trim();
-    return out || draft;
+    if (!out) return cleanedRaw || draft;
+    // Защита от «съедания» сущности: если в исходнике явно был объект (логотип/файл/срок),
+    // а модель его потеряла, используем безопасный очищенный вариант.
+    if (hasKeyAssetWord(cleanedRaw) && !hasKeyAssetWord(out)) return cleanedRaw || draft;
+    if (out.length < 12 && cleanedRaw.length > out.length + 8) return cleanedRaw || draft;
+    return out;
   } catch (err) {
     console.error("polishRelayForClient failed:", err.message);
-    return draft;
+    return cleanedRaw || draft;
   }
 }
 

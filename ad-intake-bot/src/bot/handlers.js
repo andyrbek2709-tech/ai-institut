@@ -562,6 +562,38 @@ export async function handleFile(ctx) {
     const caption = ctx.message.caption?.trim();
     let existing = getContext(ctx.chat.id);
     let lang = existing?.lang || "ru";
+    let activeLead = null;
+    try {
+      activeLead = await getActiveLeadByChatId(ctx.chat.id);
+    } catch (err) {
+      console.warn("[file activeLead]", err.message);
+    }
+
+    if (activeLead && shouldBypassClientFileAnalysis(existing)) {
+      const managerChatId = getManagerChatId();
+      const leadId = activeLead.id;
+      const managerNote = [
+        `📎 Клиент прислал файл по лиду #${leadId}.`,
+        caption ? `Подпись клиента: ${caption}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      await ctx.telegram.sendMessage(managerChatId, managerNote).catch(() => {});
+      await ctx.telegram.copyMessage(managerChatId, ctx.chat.id, ctx.message.message_id).catch(() => {});
+      if (activeLead.conversation_id) {
+        const logText = caption
+          ? `[файл отправлен менеджеру по запросу] ${caption}`
+          : "[файл отправлен менеджеру по запросу менеджера]";
+        await appendConversationMessage(activeLead.conversation_id, "user", logText);
+      }
+      const passAck = {
+        ru: "Приняла, передала файл менеджеру.",
+        kk: "Қабылдадым, файлды менеджерге жібердім.",
+        en: "Got it, I forwarded the file to the manager.",
+      };
+      await ctx.reply(passAck[lang] || passAck.ru);
+      return;
+    }
 
     const lowerName = (label || "").toLowerCase();
     const mimeStr = (mime || "").toLowerCase();
@@ -715,6 +747,36 @@ function isPlaceholderContact(contact) {
       || c === "telegram-да"
       || c === "осы telegram"
       || c === "this telegram";
+}
+
+function isManagerAskingForAsset(text) {
+  const t = String(text || "").toLowerCase();
+  if (!t) return false;
+  const hasAction = /(пришл|отправ|скинь|прикреп|attach|send|upload|share)/i.test(t);
+  const hasAsset = /(логотип|logo|макет|mockup|файл|file|документ|document|картин|image|изображ)/i.test(t);
+  return hasAction && hasAsset;
+}
+
+function shouldBypassClientFileAnalysis(existing) {
+  if (!existing || !Array.isArray(existing.messages) || existing.messages.length === 0) return false;
+  const msgs = existing.messages;
+  let managerIdx = -1;
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    if (msgs[i]?.role === "manager") {
+      managerIdx = i;
+      break;
+    }
+  }
+  if (managerIdx < 0) return false;
+  if (!isManagerAskingForAsset(msgs[managerIdx]?.content || "")) return false;
+  for (let i = managerIdx + 1; i < msgs.length; i++) {
+    const m = msgs[i];
+    if (m?.role !== "user") continue;
+    const txt = String(m.content || "");
+    if (!txt || txt.startsWith("[файл прикреплён:")) continue;
+    return false;
+  }
+  return true;
 }
 
 // ─── Core LLM loop ───────────────────────────────────────────────────────────
