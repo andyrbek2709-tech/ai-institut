@@ -40,11 +40,26 @@ def _ocr_page(page, lang: str = "rus+eng") -> str:
         return ""
     try:
         import pytesseract as _pt
-        img = page.to_image(resolution=200).original
+        from PIL import ImageEnhance
+
+        img = page.to_image(resolution=300).original
+
+        enhancer = ImageEnhance.Contrast(img)
+        img = enhancer.enhance(1.5)
+        enhancer = ImageEnhance.Sharpness(img)
+        img = enhancer.enhance(2.0)
+
         try:
-            return _pt.image_to_string(img, lang=lang, config="--psm 6")
+            result = _pt.image_to_string(img, lang=lang, config="--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ВВГПКуАБГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя.,-–—()[] ")
+            if result.strip():
+                return result
         except Exception:
-            return _pt.image_to_string(img, lang="eng", config="--psm 6")
+            pass
+
+        try:
+            return _pt.image_to_string(img, lang="rus", config="--psm 3")
+        except Exception:
+            return _pt.image_to_string(img, lang="eng", config="--psm 3")
     except Exception:
         return ""
 
@@ -56,36 +71,45 @@ def _row_from_cells(cells: List[str], row_num: int) -> Optional[CableJournalRow]
 
     row = CableJournalRow(row_num=row_num, source_line=" | ".join(cells))
 
-    for cell in cells:
-        if not cell:
+    cleaned_cells = [clean_ocr(c) if c else "" for c in cells]
+
+    for cleaned in cleaned_cells:
+        if not cleaned:
             continue
-        c = clean_ocr(cell)
 
         if not row.cable_mark:
-            mark = parse_cable_mark(c)
+            mark = parse_cable_mark(cleaned)
             if mark:
                 row.cable_mark = mark
+                continue
 
         if not row.section_str:
-            phases, s, zs, raw = parse_section(c)
-            if raw:
+            phases, s, zs, raw = parse_section(cleaned)
+            if raw and s > 0:
                 row.phases = phases
                 row.section_mm2 = s
                 row.zero_section_mm2 = zs
                 row.section_str = raw
+                continue
 
         if row.length_m == 0.0:
-            length = parse_length(c)
-            if length:
+            length = parse_length(cleaned)
+            if length > 0:
                 row.length_m = length
+                continue
 
-        if parse_voltage(c) != 0.4:
-            row.voltage_kv = parse_voltage(c)
+        voltage = parse_voltage(cleaned)
+        if voltage != 0.4 and row.voltage_kv == 0.4:
+            row.voltage_kv = voltage
+            continue
 
-    for cell in cells:
-        if cell and cell.strip():
-            row.cable_id = cell.strip()[:40]
-            break
+    if not row.cable_id:
+        for cell in cells:
+            if cell and cell.strip():
+                potential_id = cell.strip()[:50]
+                if not any(x in potential_id.lower() for x in ['кв', 'мм', 'м ']):
+                    row.cable_id = potential_id
+                    break
 
     if not row.cable_mark and not row.section_str and row.length_m == 0:
         return None
