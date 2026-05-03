@@ -2,6 +2,10 @@
 
 _Последнее обновление: 2026-05-03_
 
+## 2026-05-03 — лого для чата (52px)
+
+- `vformate-logo-telegram.png` + `npm run build:telegram-logo`; `resolveAgencyLogoPath` предпочитает его.
+
 ## 2026-05-03 — /start: лого + kk/ru «в формате»
 
 - Сначала фото `assets/vformate-logo.png` с короткой подписью, затем текст kk+ru («Бұл/Эта компания — в формате»); без английского блока.

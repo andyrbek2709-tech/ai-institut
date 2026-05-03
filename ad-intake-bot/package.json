@@ -9,7 +9,8 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "build:telegram-logo": "node scripts/build-telegram-logo.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",
@@ -19,5 +20,8 @@
     "openai": "^6.34.0",
     "pdf-parse": "^1.1.1",
     "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.1"
   }
 }

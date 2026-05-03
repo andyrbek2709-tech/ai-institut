@@ -8,12 +8,22 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const AGENCY_NAME = "vformate";
 
 /**
+ * Целевая высота компактного лого (px) при сборке `npm run build:telegram-logo`.
+ * В Telegram у `sendPhoto` нет CSS-высоты: превью ≈ по пикселям файла; ~52px ≈ две строки текста в чате.
+ */
+export const TELEGRAM_LOGO_MAX_HEIGHT_PX = 52;
+
+/**
  * Путь к PNG/JPG логотипа для приветствия /start.
- * AGENCY_LOGO_PATH — абсолютный путь на сервере; иначе используется встроенный assets/vformate-logo.png.
+ * 1) `AGENCY_LOGO_PATH` — явный абсолютный путь на сервере (если задан и файл есть).
+ * 2) `assets/vformate-logo-telegram.png` — компактная версия для чата (предпочтительно).
+ * 3) `assets/vformate-logo.png` — полноразмерный fallback.
  */
 export function resolveAgencyLogoPath() {
   const envPath = process.env.AGENCY_LOGO_PATH?.trim();
   if (envPath && fs.existsSync(envPath)) return envPath;
+  const compact = path.join(__dirname, "../../assets/vformate-logo-telegram.png");
+  if (fs.existsSync(compact)) return compact;
   const builtIn = path.join(__dirname, "../../assets/vformate-logo.png");
   if (fs.existsSync(builtIn)) return builtIn;
   return null;
