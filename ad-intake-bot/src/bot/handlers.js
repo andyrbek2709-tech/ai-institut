@@ -9,6 +9,7 @@ import {
   mergeData,
   missingRequiredFields,
   assistManagerReply,
+  polishRelayForClient,
   extractTeachStructured,
   generateProposal,
   estimatePriceHint,
@@ -244,7 +245,8 @@ async function hydrateClientContextFromDb(chatId) {
 
 /**
  * Режим relay после «Уточнить»: текст и голос клиенту как сообщение от менеджера;
- * голос транскрибируется и пишется в историю диалога. Остальное — copyMessage как раньше.
+ * голос транскрибируется, текст перефразируется под клиента (без «скажи клиенту…»), пишется в историю.
+ * Остальное — copyMessage как раньше.
  */
 async function tryManagerRelayForward(ctx) {
   const rel = getManagerReplyMode(ctx.from.id);
@@ -280,10 +282,14 @@ async function tryManagerRelayForward(ctx) {
         );
         return true;
       }
-      relayLogText = text;
-      await _bot.telegram.sendMessage(to, `${prefix} ${text}`);
+      await ctx.sendChatAction("typing").catch(() => {});
+      const polishedVoice = ((await polishRelayForClient(text, cLang)) || text).trim();
+      relayLogText = polishedVoice || text;
+      await _bot.telegram.sendMessage(to, `${prefix} ${relayLogText}`);
     } else if (ctx.message?.text?.trim()) {
-      relayLogText = ctx.message.text.trim();
+      const rawText = ctx.message.text.trim();
+      await ctx.sendChatAction("typing").catch(() => {});
+      relayLogText = ((await polishRelayForClient(rawText, cLang)) || rawText).trim() || rawText;
       await _bot.telegram.sendMessage(to, `${prefix} ${relayLogText}`);
     } else {
       const mid = ctx.message?.message_id;
@@ -1636,7 +1642,7 @@ async function handleLeadCallback(ctx, data, chatId) {
       await ctx.telegram.sendMessage(
         chatId,
         `💬 Ответ клиенту по лиду #${leadId}.\n` +
-          `Одно следующее сообщение: текст уйдёт как есть с пометкой «Менеджер:», голос — распознаю и отправлю текстом клиенту, фото/файлы — как копию.\n` +
+          `Одно следующее сообщение: текст или голос — перефразирую во вежливое сообщение клиенту с пометкой «Менеджер:»; фото/файлы — как копию.\n` +
           `Режим выключится после отправки.\n` +
           `Подсказка: AI-черновик — /assist ${leadId}`
       );
@@ -1712,12 +1718,14 @@ async function sendManagerReplyToClient(ctx, leadId, text) {
 
     const cLang = lead.data?.lang || "ru";
     const prefix = { ru: "Менеджер:", kk: "Менеджер:", en: "Manager:" }[cLang] || "Менеджер:";
-    const msg = `${prefix} ${text}`;
+    await ctx.sendChatAction("typing").catch(() => {});
+    const polished = ((await polishRelayForClient(text, cLang)) || text).trim() || text;
+    const msg = `${prefix} ${polished}`;
 
     await _bot.telegram.sendMessage(String(lead.telegram_chat_id), msg);
 
     if (lead.conversation_id) {
-      await appendConversationMessage(lead.conversation_id, "manager", text);
+      await appendConversationMessage(lead.conversation_id, "manager", polished);
     }
 
     await ctx.reply(`✓ Отправлено клиенту по лиду #${leadId}.`);

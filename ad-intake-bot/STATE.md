@@ -60,6 +60,13 @@ _Последнее обновление: 2026-05-01_
 - ⏳ **Supabase project** — пока не создан. Варианты: завести новый или подключить существующий, заодно вынести в env `
 ---
 
+## 2026-05-03 — FIX: relay менеджера + LLM после «Уточнить»
+
+- **Симптом:** транскрипт голоса менеджера уходил клиенту дословно («скажи клиенту…»); после ответа клиента (в т.ч. голосом) — «Что-то пошло не так».
+- **Причины:** (1) не было перефразирования под клиента; (2) в `conversations.history` роль `manager` попадала в `chat.completions` как невалидная роль.
+- **Исправление:** `polishRelayForClient` в relay и `/reply`; `normalizeDialogForLlm` перед вызовом LLM; подсказка в UI «Уточнить».
+- **Файлы:** `src/services/openai.js`, `src/bot/handlers.js`.
+
 ## 2026-05-02 — DEPLOYED to Railway
 
 **URL:** https://ai-institut-production.up.railway.app

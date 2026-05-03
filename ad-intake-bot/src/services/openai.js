@@ -17,6 +17,49 @@ const LLM_MODEL = process.env.LLM_MODEL || "deepseek-v4-flash";
 
 const TOOLS = [{ type: "function", function: SAVE_ORDER_FUNCTION }];
 
+/** Нормализация content из chat.completions (строка / массив частей; DeepSeek иногда отдаёт нестандартно). */
+function normalizeAssistantTextContent(msg) {
+  if (!msg) return "";
+  const c = msg.content;
+  if (c == null) return "";
+  if (typeof c === "string") return c.trim();
+  if (Array.isArray(c)) {
+    const parts = [];
+    for (const part of c) {
+      if (typeof part === "string") parts.push(part);
+      else if (part && typeof part === "object" && typeof part.text === "string") parts.push(part.text);
+    }
+    return parts.join("").trim();
+  }
+  return String(c).trim();
+}
+
+/**
+ * История из Supabase может содержать role "manager" (relay после «Уточнить»).
+ * Chat Completions принимает только user|assistant|system|tool — иначе провайдер падает.
+ */
+export function normalizeDialogForLlm(messages) {
+  if (!Array.isArray(messages)) return [];
+  const out = [];
+  for (const m of messages) {
+    if (!m) continue;
+    const content = String(m.content ?? "").trim();
+    if (!content) continue;
+    if (m.role === "user" || m.role === "assistant") {
+      out.push({ role: m.role, content });
+      continue;
+    }
+    if (m.role === "manager") {
+      const looksPrefixed = /^(менеджер|manager)\s*:/i.test(content);
+      out.push({
+        role: "assistant",
+        content: looksPrefixed ? content : `Менеджер: ${content}`,
+      });
+    }
+  }
+  return out;
+}
+
 /**
  * Send message to OpenAI with tool calling.
  * Returns either { type: "text", content: string } or { type: "function", args: object }
@@ -26,7 +69,15 @@ const TOOLS = [{ type: "function", function: SAVE_ORDER_FUNCTION }];
  * @param {object} extras { collected, currentStep, serviceCode, currentQuestion, knowledgeContext }
  */
 export async function chat(messages, lang = "ru", extras = {}) {
-  const trimmed = messages.length > 20 ? messages.slice(-20) : messages;
+  const slice = messages.length > 20 ? messages.slice(-20) : messages;
+  const trimmed = normalizeDialogForLlm(slice);
+  if (!trimmed.length) {
+    return {
+      type: "text",
+      content:
+        "Извините, не вижу контекста сообщения. Напишите ещё раз коротко, что нужно, или отправьте /start.",
+    };
+  }
 
   // Базовый system prompt + (опционально) подмешанный блок БАЗЫ ЗНАНИЙ.
   // knowledgeContext формируется в src/bot/promptContext.js (RAG-lite full-text).
@@ -49,15 +100,41 @@ export async function chat(messages, lang = "ru", extras = {}) {
 
   if (msg.tool_calls && msg.tool_calls.length > 0) {
     const call = msg.tool_calls[0];
-    if (call.function.name === "save_order") {
+    const fn = call?.function?.name || call?.name;
+    let rawArgs = call?.function?.arguments;
+    if (rawArgs == null) rawArgs = "{}";
+    if (typeof rawArgs !== "string") {
+      try {
+        rawArgs = JSON.stringify(rawArgs);
+      } catch {
+        rawArgs = "{}";
+      }
+    }
+    let args = {};
+    try {
+      args = JSON.parse(rawArgs || "{}");
+    } catch (e) {
+      console.error("[chat] save_order JSON parse:", e.message, String(rawArgs).slice(0, 200));
+      const fallback = normalizeAssistantTextContent(msg);
       return {
-        type: "function",
-        args: JSON.parse(call.function.arguments),
+        type: "text",
+        content:
+          fallback ||
+          "Извините, не получилось оформить ответ технически. Напишите, пожалуйста, ещё раз коротко, что нужно.",
       };
+    }
+    if (fn === "save_order") {
+      return { type: "function", args };
     }
   }
 
-  return { type: "text", content: msg.content };
+  const body = normalizeAssistantTextContent(msg);
+  return {
+    type: "text",
+    content:
+      body ||
+      "Извините, сейчас не смогла сформулировать ответ. Напишите ещё раз или одним предложением уточните запрос.",
+  };
 }
 
 const FRANC_TO_BOT_LANG = {
@@ -94,7 +171,7 @@ export async function detectLang(text) {
       temperature: 0,
       max_tokens: 4,
     });
-    const raw = (response.choices[0].message.content || "").trim().toLowerCase();
+    const raw = normalizeAssistantTextContent(response.choices[0].message).toLowerCase();
     if (raw.startsWith("kk") || raw.startsWith("kz")) return "kk";
     if (raw.startsWith("en")) return "en";
     if (raw.startsWith("ru")) return "ru";
@@ -128,7 +205,7 @@ export async function estimatePriceHint(orderData = {}, lang = "ru", knowledgeCo
       temperature: 0.35,
       max_tokens: 220,
     });
-    const txt = response.choices?.[0]?.message?.content?.trim();
+    const txt = normalizeAssistantTextContent(response.choices?.[0]?.message);
     return txt || null;
   } catch (err) {
     console.error("estimatePriceHint failed:", err.message);
@@ -168,7 +245,7 @@ export async function classifyServiceTypeLLM(text) {
       temperature: 0,
       max_tokens: 8,
     });
-    const raw = (response.choices[0].message.content || "").trim().toLowerCase();
+    const raw = normalizeAssistantTextContent(response.choices[0].message).toLowerCase();
     if (SERVICE_TYPES.includes(raw)) return raw;
     if (raw.startsWith("unknown") || raw.startsWith("неизвест")) return null;
     // Иногда LLM может слегка переформулировать — сопоставим стартом
@@ -216,7 +293,7 @@ export async function describeImage(imageUrl, lang = "ru") {
       temperature: 0.2,
       max_tokens: 200,
     });
-    return (response.choices[0].message.content || "").trim() || null;
+    return normalizeAssistantTextContent(response.choices[0].message) || null;
   } catch (err) {
     console.error("Vision describeImage failed:", err.message);
     return null;
@@ -255,7 +332,7 @@ export async function classifyImageForIntake(imageUrl, lang = "ru") {
       temperature: 0.1,
       max_tokens: 120,
     });
-    const raw = response.choices?.[0]?.message?.content;
+    const raw = normalizeAssistantTextContent(response.choices?.[0]?.message);
     const j = JSON.parse(raw || "{}");
     const kind = String(j.kind || "unclear");
     const allowed = new Set(["logo", "mockup", "casual_photo", "unclear"]);
@@ -302,7 +379,7 @@ export async function extractPartialBrief(messages) {
       max_tokens: 350,
       response_format: { type: "json_object" },
     });
-    const raw = response.choices[0].message.content || "{}";
+    const raw = normalizeAssistantTextContent(response.choices[0].message) || "{}";
     const parsed = JSON.parse(raw);
     const cleaned = {};
     for (const [k, v] of Object.entries(parsed)) {
@@ -348,7 +425,7 @@ export async function extractData(userMessage, currentData = {}, lang = "ru") {
       max_tokens: 350,
       response_format: { type: "json_object" },
     });
-    const raw = response.choices[0].message.content || "{}";
+    const raw = normalizeAssistantTextContent(response.choices[0].message) || "{}";
     let parsed;
     try {
       parsed = JSON.parse(raw);
@@ -426,13 +503,51 @@ export async function assistManagerReply({ orderData = {}, history = [], lang = 
       temperature: 0.5,
       max_tokens: 220,
     });
-    const txt = response.choices?.[0]?.message?.content?.trim();
+    const txt = normalizeAssistantTextContent(response.choices?.[0]?.message);
     if (!txt) return null;
     // Срезаем кавычки если LLM их всё-таки добавил.
     return txt.replace(/^["«]|["»]$/g, "").trim();
   } catch (err) {
     console.error("assistManagerReply failed:", err.message);
     return null;
+  }
+}
+
+/**
+ * Перефразировать черновик менеджера (часто после Whisper) в вежливое сообщение КЛИЕНТУ,
+ * без мета-формулировок «скажи клиенту / tell the client».
+ */
+export async function polishRelayForClient(raw, lang = "ru") {
+  const draft = String(raw || "").trim();
+  if (!draft) return "";
+  const langLabel = lang === "kk" ? "қазақша" : lang === "en" ? "in English" : "по-русски";
+  const system = [
+    `Rewrite the following manager note into ONE short polite message TO THE CLIENT ${langLabel} (max 3 sentences).`,
+    "Rules:",
+    "- Use first person plural (we / мы / біз).",
+    "- Remove internal instructions: tell the client, say to the client, say that, скажи клиенту, передай клиенту, нужно сказать, etc.",
+    "- Do not quote yourself giving instructions; keep only facts useful for the client (dates, constraints, next steps).",
+    "- Light politeness (извините/спасибо) only if natural.",
+    "- No prefix \"Manager\" / \"Менеджер\".",
+    "- Output only the final message body, no labels or quotes.",
+  ].join("\n");
+  try {
+    const response = await openai.chat.completions.create({
+      model: LLM_MODEL,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: draft.slice(0, 1200) },
+      ],
+      temperature: 0.25,
+      max_tokens: 220,
+    });
+    const out = normalizeAssistantTextContent(response.choices?.[0]?.message)
+      .replace(/^["«]|["»]$/g, "")
+      .trim();
+    return out || draft;
+  } catch (err) {
+    console.error("polishRelayForClient failed:", err.message);
+    return draft;
   }
 }
 
@@ -461,7 +576,7 @@ export async function generateProposal({ orderData = {}, history = [], lang = "r
       temperature: 0.6,
       max_tokens: 600,
     });
-    const txt = response.choices?.[0]?.message?.content?.trim();
+    const txt = normalizeAssistantTextContent(response.choices?.[0]?.message);
     if (!txt) return null;
     return txt.replace(/^["«]|["»]$/g, "").trim();
   } catch (err) {
