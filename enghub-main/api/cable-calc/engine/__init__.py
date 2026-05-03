@@ -1,6 +1,7 @@
 from .calc import select_section, check_section, calc_max_load, CableInput, SourceParams, CableResult
 from .calculation_engine import CalculationEngine
 from .validation_engine import ValidationEngine
+from .reverse_calculator import ReverseCalculator, ReverseCalculationResult
 
 __all__ = [
     # Основные функции расчета
@@ -14,4 +15,7 @@ __all__ = [
     # Новые слои (Фаза 1)
     'CalculationEngine',
     'ValidationEngine',
+    # Фаза 3
+    'ReverseCalculator',
+    'ReverseCalculationResult',
 ]
