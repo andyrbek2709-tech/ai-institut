@@ -5,6 +5,9 @@ node_modules/
 build/
 .vercel
 scripts/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
 *.bundle
 *.ps1
 screenshots/
