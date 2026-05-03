@@ -26,6 +26,9 @@
     "api/cable-calc/parse.py": {
       "maxDuration": 60
     },
+    "api/cable-calc/calc.py": {
+      "maxDuration": 60
+    },
     "api/cable-calc/reverse.py": {
       "maxDuration": 60
     }
