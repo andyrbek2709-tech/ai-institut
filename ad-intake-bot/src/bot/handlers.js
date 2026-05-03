@@ -28,6 +28,7 @@ import {
 import {
   createLead,
   getLeadById,
+  getActiveLeadByChatId,
   updateLead,
   getLeadsByStatus,
   getLeadsByTier,
@@ -175,30 +176,64 @@ function intakeMetadata(entry) {
 async function hydrateClientContextFromDb(chatId) {
   try {
     const conv = await getActiveConversationByChatId(chatId);
-    if (!conv || !Array.isArray(conv.history) || conv.history.length === 0) return null;
-    const meta = conv.metadata || {};
+    if (conv && Array.isArray(conv.history) && conv.history.length > 0) {
+      const meta = conv.metadata || {};
+      const row = {
+        messages: [...conv.history],
+        files: conv.files || [],
+        lang: conv.lang || null,
+        flagShown: true,
+        serviceCode: meta.service_code || null,
+        orderData: makeEmptyOrder(),
+        upsellShown: false,
+        pendingFinalize: meta.pending_finalize || null,
+      };
+      if (meta.order && typeof meta.order === "object") {
+        row.orderData = mergeData(makeEmptyOrder(), meta.order);
+      }
+      ensureIntake(row);
+      if (meta.intake_state && typeof meta.intake_state === "object") {
+        if (Array.isArray(meta.intake_state.servicesQueue))
+          row.intake.servicesQueue = meta.intake_state.servicesQueue;
+        if (Number.isInteger(meta.intake_state.idx)) row.intake.idx = meta.intake_state.idx;
+        if (meta.intake_state.perService && typeof meta.intake_state.perService === "object")
+          row.intake.perService = { ...meta.intake_state.perService };
+      }
+      if (meta.service_code) row.serviceCode = meta.service_code;
+      setContext(chatId, row);
+      return row;
+    }
+
+    // Если активного intake-диалога уже нет (после finalize), но есть активный лид,
+    // восстанавливаем контекст из лида, чтобы ответы клиента после «Уточнить»
+    // не теряли связь с заказом.
+    const activeLead = await getActiveLeadByChatId(chatId);
+    if (!activeLead) return null;
+
+    const leadData = activeLead.data && typeof activeLead.data === "object" ? activeLead.data : {};
+    const seedOrder = mergeData(
+      makeEmptyOrder(),
+      leadData.order_data && typeof leadData.order_data === "object" ? leadData.order_data : leadData
+    );
+    const resumedHistory = activeLead.conversation_id
+      ? (await getConversationHistoryForLead(activeLead.conversation_id, 24)).history
+      : [];
+
     const row = {
-      messages: [...conv.history],
-      files: conv.files || [],
-      lang: conv.lang || null,
+      messages: Array.isArray(resumedHistory) ? resumedHistory : [],
+      files: Array.isArray(seedOrder.files) ? seedOrder.files : [],
+      lang: leadData.lang || "ru",
       flagShown: true,
-      serviceCode: meta.service_code || null,
-      orderData: makeEmptyOrder(),
-      upsellShown: false,
-      pendingFinalize: meta.pending_finalize || null,
+      serviceCode: normalizeServiceType(seedOrder.type) || null,
+      orderData: seedOrder,
+      upsellShown: true,
+      pendingFinalize: null,
     };
-    if (meta.order && typeof meta.order === "object") {
-      row.orderData = mergeData(makeEmptyOrder(), meta.order);
-    }
     ensureIntake(row);
-    if (meta.intake_state && typeof meta.intake_state === "object") {
-      if (Array.isArray(meta.intake_state.servicesQueue))
-        row.intake.servicesQueue = meta.intake_state.servicesQueue;
-      if (Number.isInteger(meta.intake_state.idx)) row.intake.idx = meta.intake_state.idx;
-      if (meta.intake_state.perService && typeof meta.intake_state.perService === "object")
-        row.intake.perService = { ...meta.intake_state.perService };
-    }
-    if (meta.service_code) row.serviceCode = meta.service_code;
+    row.intake.servicesQueue = [];
+    row.intake.idx = 0;
+    row.intake.perService = {};
+
     setContext(chatId, row);
     return row;
   } catch (e) {
@@ -225,8 +260,13 @@ async function tryManagerRelayForward(ctx) {
     if (mid) {
       await ctx.telegram.copyMessage(to, ctx.chat.id, mid);
     }
-    if (lead.conversation_id && ctx.message?.text) {
-      await appendConversationMessage(lead.conversation_id, "manager", ctx.message.text);
+    if (lead.conversation_id) {
+      const relayLogText = ctx.message?.text
+        || (ctx.message?.voice ? "[manager relay voice]" : null)
+        || (ctx.message?.photo ? "[manager relay photo]" : null)
+        || (ctx.message?.document ? "[manager relay document]" : null)
+        || "[manager relay message]";
+      await appendConversationMessage(lead.conversation_id, "manager", relayLogText);
     }
     if (lead.status === "new") {
       await updateLead(rel.leadId, { status: "in_progress", assigned_to: Number(ctx.from.id) });
