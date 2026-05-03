@@ -1,7 +1,10 @@
 /**
- * PNG для sendPhoto: Telegram тянет фото на ширину чата, поэтому «маленькая высота файла»
- * даёт огромную картинку на экране. Делаем широкий холст с логотипом по центру —
- * визуальная высота ≈ CANVAS_H * (ширина_чата / CANVAS_W).
+ * PNG для sendPhoto: Telegram масштабирует фото по ширине пузыря.
+ * Экранная высота ≈ file_h * (ширина_чата / file_w) — поэтому широкий холст с низким file_h.
+ *
+ * Уменьшаем «белые поля»: trim по краям (прозрачность / однотонные поля), минимальные pad,
+ * динамическая ширина холста под целевую экранную высоту.
+ * Чёткость: даунскейл в два прохода с умеренным sharpen.
  *
  * Источник: assets/vformate-logo.png → assets/vformate-logo-telegram.png
  */
@@ -15,12 +18,14 @@ const root = path.join(__dirname, "..");
 const src = path.join(root, "assets", "vformate-logo.png");
 const dst = path.join(root, "assets", "vformate-logo-telegram.png");
 
-/** Ширина холста (px): больше → ниже превью на экране при той же высоте холста. */
-const CANVAS_W = Number(process.env.TELEGRAM_LOGO_CANVAS_W || 400);
-/** Высота холста (px): при ширине чата ~340px экранная высота ≈ CANVAS_H * 340 / CANVAS_W (~40px). */
-const CANVAS_H = Number(process.env.TELEGRAM_LOGO_CANVAS_H || 48);
-/** Макс. высота самого логотипа внутри холста (без плющивания, fit inside). */
-const INNER_MAX_H = Number(process.env.TELEGRAM_LOGO_INNER_MAX_H || 36);
+const INNER_MAX_H = Number(process.env.TELEGRAM_LOGO_INNER_MAX_H || 32);
+/** Ориентир ширины чата (px) для расчёта ширины холста. */
+const REF_CHAT_W = Number(process.env.TELEGRAM_LOGO_REF_CHAT_W || 340);
+/** Желаемая экранная высота превью (px), обычно ~28–34. */
+const TARGET_SCREEN_H = Number(process.env.TELEGRAM_LOGO_TARGET_SCREEN_H || 28);
+const PAD_X = Number(process.env.TELEGRAM_LOGO_PAD_X || 6);
+const PAD_Y = Number(process.env.TELEGRAM_LOGO_PAD_Y || 2);
+const TRIM_THRESHOLD = Number(process.env.TELEGRAM_LOGO_TRIM_THRESHOLD || 14);
 
 if (!fs.existsSync(src)) {
   console.error("Missing source:", src);
@@ -32,22 +37,49 @@ if (!meta.width || !meta.height) {
   console.error("Could not read image dimensions");
   process.exit(1);
 }
-console.log("Source", meta.width, "x", meta.height, "→ canvas", CANVAS_W, "x", CANVAS_H, "inner max h", INNER_MAX_H);
 
-const innerBuf = await sharp(src)
+// Два прохода: чуть крупнее, затем до целевой высоты — мягче края.
+const upscaled = await sharp(src)
   .resize({
-    height: INNER_MAX_H,
-    width: Math.floor(CANVAS_W * 0.92),
+    height: Math.min(INNER_MAX_H * 2, meta.height),
     fit: "inside",
     withoutEnlargement: false,
   })
+  .resize({
+    height: INNER_MAX_H,
+    fit: "inside",
+  })
   .ensureAlpha()
+  .sharpen({ sigma: 0.35, m1: 0.8, m2: 0.3 })
   .png()
   .toBuffer({ resolveWithObject: true });
 
-const { data, info } = innerBuf;
-const left = Math.max(0, Math.floor((CANVAS_W - info.width) / 2));
-const top = Math.max(0, Math.floor((CANVAS_H - info.height) / 2));
+let data = upscaled.data;
+let w = upscaled.info.width;
+let h = upscaled.info.height;
+
+try {
+  const trimmed = await sharp(data)
+    .trim({ threshold: TRIM_THRESHOLD })
+    .toBuffer({ resolveWithObject: true });
+  if (trimmed.info.width > 8 && trimmed.info.height > 4) {
+    data = trimmed.data;
+    w = trimmed.info.width;
+    h = trimmed.info.height;
+  }
+} catch {
+  /* оставляем без trim */
+}
+
+const CANVAS_H = h + PAD_Y * 2;
+const minW = w + PAD_X * 2;
+const aspectW = Math.ceil((CANVAS_H * REF_CHAT_W) / TARGET_SCREEN_H);
+const CANVAS_W = Math.max(minW, aspectW);
+
+const left = Math.floor((CANVAS_W - w) / 2);
+const top = Math.floor((CANVAS_H - h) / 2);
+
+console.log("Source", meta.width, "x", meta.height, "→ logo", w, "x", h, "canvas", CANVAS_W, "x", CANVAS_H);
 
 await sharp({
   create: {
@@ -58,14 +90,10 @@ await sharp({
   },
 })
   .composite([{ input: data, left, top }])
-  .png({ compressionLevel: 9 })
+  .png({ compressionLevel: 7 })
   .toFile(dst);
 
 const out = fs.statSync(dst);
 const dim = await sharp(dst).metadata();
-console.log("Wrote", dst, dim.width, "x", dim.height, `(${out.size} bytes)`);
-console.log(
-  "On ~340px chat width, preview height ≈",
-  Math.round((CANVAS_H * 340) / CANVAS_W),
-  "px"
-);
+const est = Math.round((CANVAS_H * REF_CHAT_W) / CANVAS_W);
+console.log("Wrote", dst, dim.width, "x", dim.height, `(${out.size} bytes), est. screen h ~${est}px @${REF_CHAT_W}px wide`);
