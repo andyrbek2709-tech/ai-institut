@@ -2,9 +2,13 @@
 
 _Последнее обновление: 2026-05-03_
 
+## 2026-05-03 — /start: лого + kk/ru «в формате»
+
+- Сначала фото `assets/vformate-logo.png` с короткой подписью, затем текст kk+ru («Бұл/Эта компания — в формате»); без английского блока.
+
 ## 2026-05-03 — брендинг vformate
 
-- Логотип `assets/vformate-logo.png` в приветствии `/start` (подпись kk/ru/en), конфиг `src/config/agency.js`, правки `prompts.js` и строк в уведомлении лида / help / reset.
+- Логотип `assets/vformate-logo.png` в приветствии `/start`, конфиг `src/config/agency.js`, правки `prompts.js` и строк в уведомлении лида / help / reset.
 
 ## 2026-05-03 — /reset + лиды UI
 

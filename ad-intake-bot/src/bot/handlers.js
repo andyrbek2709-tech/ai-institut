@@ -84,7 +84,9 @@ import { shouldTriggerUpsell, buildUpsellPromptBlock, UPSELL_MAP } from "./upsel
 import { getManagerChatId } from "../config/tenants.js";
 import {
   AGENCY_NAME,
-  buildStartWelcomeText,
+  buildStartPhotoCaption,
+  buildStartWelcomeBody,
+  buildStartWelcomeFallbackText,
   buildResetWelcomeText,
   getManagerLeadsKeyboardMarkup,
   resolveAgencyLogoPath,
@@ -386,17 +388,21 @@ export async function handleStart(ctx) {
   } catch { /* ignore */ }
 
   clearContext(ctx.chat.id);
-  const welcome = buildStartWelcomeText();
+  const welcomeBody = buildStartWelcomeBody();
   const logoPath = resolveAgencyLogoPath();
   if (logoPath) {
     try {
-      await ctx.replyWithPhoto({ source: fs.createReadStream(logoPath) }, { caption: welcome });
+      await ctx.replyWithPhoto(
+        { source: fs.createReadStream(logoPath) },
+        { caption: buildStartPhotoCaption() }
+      );
+      await ctx.reply(welcomeBody);
       return;
     } catch (e) {
       console.error("[start] logo send failed:", e.message);
     }
   }
-  await ctx.reply(welcome);
+  await ctx.reply(buildStartWelcomeFallbackText());
 }
 
 async function handleHelp(ctx) {
