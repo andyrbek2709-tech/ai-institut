@@ -147,6 +147,14 @@ export async function updateLead(id, patch) {
   return data;
 }
 
+/** Поверхностное слияние в `leads.data` (JSONB), без потери остальных ключей. */
+export async function mergeLeadData(leadId, partial) {
+  const lead = await getLeadById(leadId);
+  const prev = lead.data && typeof lead.data === "object" && !Array.isArray(lead.data) ? lead.data : {};
+  const data = { ...prev, ...partial };
+  return updateLead(leadId, { data });
+}
+
 export async function getLeadsByStatus(status, limit = 10) {
   const { data, error } = await supabase
     .from("leads")

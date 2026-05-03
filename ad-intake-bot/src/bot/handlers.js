@@ -39,6 +39,7 @@ import {
   calcLeadScore,
   scoreBadge,
 } from "../services/leads.js";
+import { scheduleManagerLeadActionNudge } from "./managerLeadNudge.js";
 import {
   getContext,
   setContext,
@@ -1569,6 +1570,7 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null,
       console.error("[crm export]", e.message);
       await _bot.telegram.sendMessage(getManagerChatId(), `⚠️ CRM export: ${e.message}`).catch(() => {});
     }
+    scheduleManagerLeadActionNudge(_bot, lead.id);
   }
 }
 
