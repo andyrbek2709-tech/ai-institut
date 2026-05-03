@@ -3,6 +3,7 @@ import express from "express";
 import { Telegraf } from "telegraf";
 import { registerHandlers } from "./bot/handlers.js";
 import { startFollowupScheduler } from "./bot/followup.js";
+import { setBotUsernameForTenants, getManagerChatId } from "./config/tenants.js";
 
 const required = ["BOT_TOKEN", "OPENAI_API_KEY", "SUPABASE_URL", "SUPABASE_KEY", "MANAGER_CHAT_ID"];
 for (const key of required) {
@@ -13,10 +14,14 @@ for (const key of required) {
 }
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
-const PORT = process.env.PORT || 3000;
+const me = await bot.telegram.getMe();
+setBotUsernameForTenants(me.username);
+console.log(`[boot] @${me.username} → manager_chat=${getManagerChatId()}`);
 
 registerHandlers(bot);
 startFollowupScheduler(bot);
+
+const PORT = process.env.PORT || 3000;
 
 if (process.env.WEBHOOK_DOMAIN) {
   const app = express();

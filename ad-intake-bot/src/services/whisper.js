@@ -11,6 +11,11 @@ if (typeof globalThis.File === "undefined") {
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+/** Подсказка Whisper: отраслевые термины (улучшает распознавание жаргона рекламы). */
+const WHISPER_AD_VOCAB =
+  "баннер, баннеры, supply, programmatic, охваты, CPM, CTR, креатив, оффер, лендинг, ретаргет, roll-up, " +
+  "полиграфия, вывеска, stretch, наружка, SMM, контекст, флаер, листовка, сувенирка, брендирование";
+
 /**
  * Transcribe a voice/audio message.
  *
@@ -37,6 +42,7 @@ export async function transcribeVoice(ctx, lang) {
     const params = {
       model: "whisper-1",
       file: fs.createReadStream(tmpPath),
+      prompt: WHISPER_AD_VOCAB.slice(0, 200),
     };
     // Whisper accepts ISO-639-1 codes. ru/kk/en are all supported.
     if (lang === "ru" || lang === "kk" || lang === "en") {

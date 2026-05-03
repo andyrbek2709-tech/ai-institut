@@ -208,3 +208,34 @@ export async function getOrdersToday() {
   if (error) throw new Error(error.message);
   return data || [];
 }
+
+/** Сводка для /stats: диалоги по статусу, заказы, топ услуг (до 8000 строк каждой таблицы). */
+export async function getAnalyticsSnapshot() {
+  const { data: conv, error: e1 } = await supabase.from("conversations").select("status").limit(8000);
+  if (e1) throw new Error(e1.message);
+  const { data: ord, error: e2 } = await supabase.from("orders").select("status,service_type").limit(8000);
+  if (e2) throw new Error(e2.message);
+  const byConv = {};
+  for (const r of conv || []) {
+    const s = r.status || "unknown";
+    byConv[s] = (byConv[s] || 0) + 1;
+  }
+  const byOrd = {};
+  const byService = {};
+  for (const r of ord || []) {
+    const st = r.status || "unknown";
+    byOrd[st] = (byOrd[st] || 0) + 1;
+    const svc = r.service_type || "—";
+    byService[svc] = (byService[svc] || 0) + 1;
+  }
+  const topServices = Object.entries(byService)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12);
+  return {
+    conversationsByStatus: byConv,
+    ordersByStatus: byOrd,
+    ordersTotal: (ord || []).length,
+    conversationsTotal: (conv || []).length,
+    topServices,
+  };
+}

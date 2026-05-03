@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { franc } from "franc-min";
 import { buildSystemPrompt, SAVE_ORDER_FUNCTION } from "../bot/prompts.js";
 import { SERVICE_TYPES } from "../bot/scenarios.js";
 import { EXTRACT_SYSTEM, buildExtractUserMessage } from "../bot/extractPrompt.js";
@@ -54,11 +55,26 @@ export async function chat(messages, lang = "ru", extras = {}) {
   return { type: "text", content: msg.content };
 }
 
+const FRANC_TO_BOT_LANG = {
+  rus: "ru", bel: "ru", ukr: "ru", mhr: "ru", mkd: "ru", srp: "ru", orv: "ru",
+  kaz: "kk", kir: "kk",
+  eng: "en", sco: "en", jam: "en",
+};
+
 /**
- * Detect language. Returns "ru" | "kk" | "en". Falls back to "ru".
+ * Detect language: franc-min на фразах 6–800 символов, иначе / при und — LLM.
+ * Returns "ru" | "kk" | "en".
  */
 export async function detectLang(text) {
   if (!text || !text.trim()) return "ru";
+  const t = text.trim();
+  if (t.length >= 6 && t.length <= 800) {
+    const iso3 = franc(t, { minLength: 3 });
+    if (iso3 && iso3 !== "und") {
+      const mapped = FRANC_TO_BOT_LANG[iso3];
+      if (mapped) return mapped;
+    }
+  }
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -66,9 +82,9 @@ export async function detectLang(text) {
         {
           role: "system",
           content:
-            'Determine the language of the user message. Reply with exactly one of three codes and nothing else: "ru" (Russian), "kk" (Kazakh), "en" (English). Only the code.',
+            'Determine the language of the user message. Reply with exactly one of three codes and nothing else: "ru" (Russian), "kk" (Kazakh), "en" (English). Only the code. If mixed, pick dominant.',
         },
-        { role: "user", content: text.slice(0, 500) },
+        { role: "user", content: t.slice(0, 500) },
       ],
       temperature: 0,
       max_tokens: 4,
@@ -81,6 +97,37 @@ export async function detectLang(text) {
   } catch (err) {
     console.error("Lang detect failed:", err.message);
     return "ru";
+  }
+}
+
+/**
+ * Ориентировочная вилка цены (KZT) по заявке + база знаний. Короткий абзац для клиента.
+ */
+export async function estimatePriceHint(orderData = {}, lang = "ru", knowledgeContext = "") {
+  const langHint =
+    lang === "kk" ? "Қазақ тілінде" : lang === "en" ? "In English" : "По-русски";
+  const payload = JSON.stringify(orderData || {}, null, 0).slice(0, 2800);
+  const kb = (knowledgeContext || "").trim().slice(0, 4500);
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            `${langHint}: дай ОДИН короткий абзац — ориентировочный диапазон цены в тенге (₸) для типографии/рекламы по заявке. ` +
+            "Используй блок знаний как ориентир; если данных мало — скажи что нужны уточнения. Без markdown, без таблиц.",
+        },
+        { role: "user", content: `База (фрагмент):\n${kb || "(пусто)"}\n\nЗаявка JSON:\n${payload}` },
+      ],
+      temperature: 0.35,
+      max_tokens: 220,
+    });
+    const txt = response.choices?.[0]?.message?.content?.trim();
+    return txt || null;
+  } catch (err) {
+    console.error("estimatePriceHint failed:", err.message);
+    return null;
   }
 }
 

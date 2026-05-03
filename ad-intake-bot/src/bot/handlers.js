@@ -1,4 +1,17 @@
-import { chat, detectLang, describeImage, extractPartialBrief, classifyServiceTypeLLM, extractData, mergeData, missingRequiredFields, assistManagerReply, extractTeachStructured, generateProposal } from "../services/openai.js";
+import {
+  chat,
+  detectLang,
+  describeImage,
+  extractPartialBrief,
+  classifyServiceTypeLLM,
+  extractData,
+  mergeData,
+  missingRequiredFields,
+  assistManagerReply,
+  extractTeachStructured,
+  generateProposal,
+  estimatePriceHint,
+} from "../services/openai.js";
 import { transcribeVoice } from "../services/whisper.js";
 import {
   upsertConversation,
@@ -8,6 +21,7 @@ import {
   updateOrderStatus,
   getOrdersByStatus,
   getOrdersToday,
+  getAnalyticsSnapshot,
 } from "../services/supabase.js";
 import {
   createLead,
@@ -58,8 +72,11 @@ import { getQuestion } from "./questions.js";
 import { makeEmptyOrder, normalizeToSchema, REQUIRED_FIELDS } from "./orderSchema.js";
 import { buildKnowledgeContext } from "./promptContext.js";
 import { shouldTriggerUpsell, buildUpsellPromptBlock, UPSELL_MAP } from "./upsell.js";
+import { getManagerChatId } from "../config/tenants.js";
+import { pushLeadToExternalCrm } from "../services/crmExport.js";
+import { extractTextFromPdfBuffer } from "../services/fileExtract.js";
+import { ORDER_TEMPLATES, getTemplateById } from "./templatesCatalog.js";
 
-const MANAGER_CHAT_ID = String(process.env.MANAGER_CHAT_ID);
 
 let _bot = null;
 
@@ -79,7 +96,7 @@ export function registerHandlers(bot) {
 
   // Manager-only commands
   const ownerOnly = (fn) => (ctx) => {
-    if (String(ctx.chat?.id) !== MANAGER_CHAT_ID) return;
+    if (String(ctx.chat?.id) !== getManagerChatId()) return;
     return fn(ctx);
   };
   bot.command("new", ownerOnly((ctx) => handleOwnerList(ctx, "new", "🆕 Новые заявки")));
@@ -89,6 +106,8 @@ export function registerHandlers(bot) {
   bot.command("reply", ownerOnly(handleReplyCommand));
   bot.command("assist", ownerOnly(handleAssistCommand));
   bot.command("proposal", ownerOnly(handleProposalCommand));
+  bot.command("stats", ownerOnly(handleOwnerStats));
+  bot.command("templates", handleTemplatesCommand);
   bot.command("teach", ownerOnly(handleTeachCommand));
   bot.command("knowledge", ownerOnly(handleKnowledgeCommand));
   bot.command("help", handleHelp);
@@ -113,25 +132,32 @@ export async function handleStart(ctx) {
     "—\n\n" +
     "👋 Здравствуйте!\n" +
     "Пишите на любом удобном языке — отвечу на нём же.\n" +
-    "Я помогу оформить заказ на рекламу. Расскажите что нужно — текстом, голосом или пришлите макет/фото."
+    "Я помогу оформить заказ на рекламу. Расскажите что нужно — текстом, голосом или пришлите макет/фото.\n\n" +
+    "Шаблоны: /templates"
   );
 }
 
 async function handleHelp(ctx) {
-  await ctx.reply([
+  const mgr = String(ctx.chat?.id) === getManagerChatId();
+  const lines = [
     "📖 Команды",
     "",
     "/start — начать новый заказ",
     "/reset — сбросить текущий диалог",
     "/help — помощь",
+    "/templates — шаблоны типовых заказов (кнопки)",
     "",
-    "Можно писать текстом, наговаривать голосом или присылать макеты.",
-  ].join("\n"));
+    "Можно писать текстом, наговаривать голосом или присылать макеты (в т.ч. PDF — бот вытащит текст, если он в слое).",
+  ];
+  if (mgr) {
+    lines.push("", "Менеджер: /stats — сводка по диалогам и заказам в БД.");
+  }
+  await ctx.reply(lines.join("\n"));
 }
 
 async function handleReset(ctx) {
   clearContext(ctx.chat.id);
-  if (String(ctx.chat?.id) === MANAGER_CHAT_ID) clearManagerState(ctx.chat.id);
+  if (String(ctx.chat?.id) === getManagerChatId()) clearManagerState(ctx.chat.id);
   await ctx.reply("Окей, начнём заново 🔄\n\nРасскажите, что за заказ?");
 }
 
@@ -145,22 +171,22 @@ export async function handleText(ctx) {
   if (await maybeHandleManagerTeachInput(ctx, userMessage)) return;
 
   // ─── Clarify-flow: менеджер ответил на ForceReply от lead:clarify ──────
-  if (String(ctx.chat?.id) === MANAGER_CHAT_ID) {
-    const pc = pendingClarify.get(MANAGER_CHAT_ID);
+  if (String(ctx.chat?.id) === getManagerChatId()) {
+    const pc = pendingClarify.get(getManagerChatId());
     const replyToId = ctx.message?.reply_to_message?.message_id;
     if (pc && replyToId && replyToId === pc.promptMessageId) {
-      pendingClarify.delete(MANAGER_CHAT_ID);
+      pendingClarify.delete(getManagerChatId());
       await sendManagerReplyToClient(ctx, pc.leadId, userMessage);
       return;
     }
   }
 
   // ─── Proposal-flow: менеджер ввёл свою версию КП после «✏️ Изменить» ──
-  if (String(ctx.chat?.id) === MANAGER_CHAT_ID) {
-    const pe = pendingProposalEdit.get(MANAGER_CHAT_ID);
+  if (String(ctx.chat?.id) === getManagerChatId()) {
+    const pe = pendingProposalEdit.get(getManagerChatId());
     const replyToId2 = ctx.message?.reply_to_message?.message_id;
     if (pe && replyToId2 && replyToId2 === pe.promptMessageId) {
-      pendingProposalEdit.delete(MANAGER_CHAT_ID);
+      pendingProposalEdit.delete(getManagerChatId());
       await sendManagerProposalToClient(ctx, pe.leadId, userMessage);
       return;
     }
@@ -215,6 +241,28 @@ export async function handleFile(ctx) {
     const existing = getContext(ctx.chat.id);
     const lang = existing?.lang || "ru";
 
+    const lowerName = (label || "").toLowerCase();
+    const mimeStr = (mime || "").toLowerCase();
+    const isPdf = mimeStr === "application/pdf" || lowerName.endsWith(".pdf");
+    const isPsdAi =
+      /\.(psd|ai|eps)$/i.test(lowerName) ||
+      mimeStr.includes("postscript") ||
+      mimeStr === "image/vnd.adobe.photoshop";
+
+    let pdfText = "";
+    if (ctx.message.document && isPdf && !isImage) {
+      try {
+        await ctx.sendChatAction("typing");
+        const resp = await fetch(link.href);
+        if (resp.ok) {
+          const buf = Buffer.from(await resp.arrayBuffer());
+          pdfText = await extractTextFromPdfBuffer(buf);
+        }
+      } catch (err) {
+        console.error("PDF extract:", err.message);
+      }
+    }
+
     // Подмешиваем файл в формальный orderData: files += url;
     // design = "есть макет" если ещё не задан явно.
     if (existing) {
@@ -238,7 +286,12 @@ export async function handleFile(ctx) {
     }
 
     const visionPart = vision ? ` | vision: "${vision.replace(/"/g, "'")}"` : "";
-    const systemNote = `[файл прикреплён: ${link.href}${visionPart}${caption ? ` | подпись: ${caption}` : ""}]`;
+    const pdfPart = pdfText
+      ? ` | pdf_excerpt: "${pdfText.slice(0, 4000).replace(/"/g, "'")}"`
+      : isPsdAi
+        ? ` | note: "PSD/AI/EPS — автоматический разбор недоступен; файл в заявке"`
+        : "";
+    const systemNote = `[файл прикреплён: ${link.href}${visionPart}${pdfPart}${caption ? ` | подпись: ${caption}` : ""}]`;
 
     const message = caption ? `${caption}\n\n${systemNote}` : systemNote;
     await ctx.reply(`Принял ${label} 👍`);
@@ -614,6 +667,8 @@ async function finalizeOrder(ctx, entry, args) {
       console.error("Lead creation failed:", err.message);
     }
 
+    const orderDataSnapshot = { ...(entry.orderData || makeEmptyOrder()) };
+
     await completeConversation(conversation.id);
     clearContext(chatId);
 
@@ -625,13 +680,27 @@ async function finalizeOrder(ctx, entry, args) {
     }[lang] || `✅ Заявка №${short} принята!`;
     await ctx.reply(confirm);
 
-    await notifyManager(ctx, order, lang, args, lead, entry.orderData);
+    try {
+      const kc = await buildKnowledgeContext({
+        lastUserMessage: "",
+        orderData: orderDataSnapshot,
+        lang,
+      });
+      const hint = await estimatePriceHint(orderDataSnapshot, lang, kc);
+      if (hint && hint.length > 15) {
+        await ctx.reply(`💡 Ориентир по бюджету (не оферта): ${hint}`);
+      }
+    } catch (e) {
+      console.error("[estimatePriceHint]", e.message);
+    }
+
+    await notifyManager(ctx, order, lang, args, lead, orderDataSnapshot);
   } catch (err) {
     console.error("Finalize error:", err.message);
     await ctx.reply("Заявку записал, но возникла техническая ошибка при сохранении. Менеджер всё равно увидит ваше обращение.");
     try {
       await _bot.telegram.sendMessage(
-        MANAGER_CHAT_ID,
+        getManagerChatId(),
         `⚠️ Ошибка сохранения заявки от @${ctx.from?.username || ctx.from?.id}: ${err.message}\n\nДанные:\n${JSON.stringify(args, null, 2)}`
       );
     } catch { /* ignore */ }
@@ -714,11 +783,91 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null,
     ]],
   };
 
-  await _bot.telegram.sendMessage(MANAGER_CHAT_ID, lines.join("\n"), { reply_markup: keyboard });
+  await _bot.telegram.sendMessage(getManagerChatId(), lines.join("\n"), { reply_markup: keyboard });
 
   for (const url of order.files || []) {
-    await _bot.telegram.sendMessage(MANAGER_CHAT_ID, `📎 ${url}`).catch(() => {});
+    await _bot.telegram.sendMessage(getManagerChatId(), `📎 ${url}`).catch(() => {});
   }
+
+  if (lead) {
+    try {
+      await pushLeadToExternalCrm({
+        lead_id: lead.id,
+        order_id: order.id,
+        service_type: order.service_type,
+        description: order.description,
+        contact: order.contact,
+        username: ctx.from?.username || null,
+        lang,
+        telegram_chat_id: String(ctx.chat?.id),
+        files: order.files || [],
+      });
+    } catch (e) {
+      console.error("[crm export]", e.message);
+      await _bot.telegram.sendMessage(getManagerChatId(), `⚠️ CRM export: ${e.message}`).catch(() => {});
+    }
+  }
+}
+
+async function handleOwnerStats(ctx) {
+  try {
+    const snap = await getAnalyticsSnapshot();
+    const cLines = Object.entries(snap.conversationsByStatus).map(([k, v]) => `  ${k}: ${v}`);
+    const oLines = Object.entries(snap.ordersByStatus).map(([k, v]) => `  ${k}: ${v}`);
+    const top = snap.topServices.map(([s, n]) => `  ${s}: ${n}`).join("\n");
+    await ctx.reply(
+      [
+        "📊 Сводка (до 8000 строк / таблица)",
+        "",
+        "Диалоги:",
+        ...cLines,
+        "",
+        "Заказы:",
+        ...oLines,
+        "",
+        `Всего заказов: ${snap.ordersTotal} · диалогов: ${snap.conversationsTotal}`,
+        "",
+        "Топ услуг:",
+        top || "  —",
+      ].join("\n")
+    );
+  } catch (e) {
+    await ctx.reply(`Ошибка /stats: ${e.message}`);
+  }
+}
+
+async function handleTemplatesCommand(ctx) {
+  if (String(ctx.chat?.id) === getManagerChatId()) return;
+  const keyboard = {
+    inline_keyboard: ORDER_TEMPLATES.map((t) => [{ text: t.title, callback_data: `tpl:${t.id}` }]),
+  };
+  await ctx.reply("Шаблон — черновик полей заявки. Потом всё можно изменить текстом 👇", { reply_markup: keyboard });
+}
+
+async function handleTemplatePick(ctx, data) {
+  if (String(ctx.callbackQuery.message.chat.id) === getManagerChatId()) {
+    await ctx.answerCbQuery("Шаблоны — в чате с ботом как клиент").catch(() => {});
+    return;
+  }
+  const id = data.slice(4);
+  const tpl = getTemplateById(id);
+  await ctx.answerCbQuery(tpl ? "Ок" : "Нет такого").catch(() => {});
+  if (!tpl) return;
+  const chatId = ctx.callbackQuery.message.chat.id;
+  let entry = getContext(chatId) || {
+    messages: [],
+    files: [],
+    lang: "ru",
+    flagShown: false,
+    serviceCode: null,
+    orderData: makeEmptyOrder(),
+    upsellShown: false,
+  };
+  if (!entry.orderData) entry.orderData = makeEmptyOrder();
+  entry.orderData = mergeData(entry.orderData, normalizeToSchema(tpl.preset));
+  entry.messages = [...(entry.messages || []), { role: "user", content: `[шаблон: ${tpl.id}]` }];
+  setContext(chatId, entry);
+  await ctx.reply(`Шаблон «${tpl.title}» подставлен. Дополните срок, контакт и детали.`);
 }
 
 // ─── Manager callbacks ───────────────────────────────────────────────────────
@@ -727,8 +876,12 @@ async function handleCallback(ctx) {
   const data = ctx.callbackQuery?.data;
   if (!data) return;
 
+  if (data.startsWith("tpl:")) {
+    return handleTemplatePick(ctx, data);
+  }
+
   const chatId = String(ctx.callbackQuery.message?.chat?.id);
-  if (chatId !== MANAGER_CHAT_ID) {
+  if (chatId !== getManagerChatId()) {
     await ctx.answerCbQuery("Только менеджер").catch(() => {});
     return;
   }
@@ -1172,7 +1325,7 @@ async function proposeAssistReply(ctx, leadId, leadPreloaded = null) {
   try {
     const lead = leadPreloaded || (await getLeadById(leadId));
     if (!lead) {
-      await ctx.telegram.sendMessage(MANAGER_CHAT_ID, `Лид #${leadId} не найден.`).catch(() => {});
+      await ctx.telegram.sendMessage(getManagerChatId(), `Лид #${leadId} не найден.`).catch(() => {});
       return;
     }
 
@@ -1196,7 +1349,7 @@ async function proposeAssistReply(ctx, leadId, leadPreloaded = null) {
 
     if (!text) {
       await ctx.telegram.sendMessage(
-        MANAGER_CHAT_ID,
+        getManagerChatId(),
         `⚠️ Не удалось сгенерировать вариант ответа для лида #${leadId}. ` +
         `Можно написать вручную: /reply ${leadId} <текст>`
       ).catch(() => {});
@@ -1207,7 +1360,7 @@ async function proposeAssistReply(ctx, leadId, leadPreloaded = null) {
     // (чтобы вшить в callback_data сам msgId, а не накапливать вторичный поиск).
     // Шаг 1: шлём с временным разметом без msgId — кнопки edit/cancel уже работают.
     const sent = await ctx.telegram.sendMessage(
-      MANAGER_CHAT_ID,
+      getManagerChatId(),
       `💡 Вариант ответа клиенту #${leadId}:\n\n«${text}»`,
       {
         reply_markup: {
@@ -1227,7 +1380,7 @@ async function proposeAssistReply(ctx, leadId, leadPreloaded = null) {
     setAssistDraft(msgId, { leadId, text, lang });
 
     // Шаг 2: пере-приклеиваем кнопки с актуальным msgId, чтобы send брал draft по нему.
-    await ctx.telegram.editMessageReplyMarkup(MANAGER_CHAT_ID, msgId, undefined, {
+    await ctx.telegram.editMessageReplyMarkup(getManagerChatId(), msgId, undefined, {
       inline_keyboard: [
         [
           { text: "✉ Отправить",  callback_data: `assist:send:${leadId}:${msgId}` },
@@ -1238,7 +1391,7 @@ async function proposeAssistReply(ctx, leadId, leadPreloaded = null) {
     }).catch(() => {});
   } catch (err) {
     console.error("proposeAssistReply error:", err.message);
-    await ctx.telegram.sendMessage(MANAGER_CHAT_ID, `⚠️ Ошибка ассистента: ${err.message}`).catch(() => {});
+    await ctx.telegram.sendMessage(getManagerChatId(), `⚠️ Ошибка ассистента: ${err.message}`).catch(() => {});
   }
 }
 
@@ -1287,7 +1440,7 @@ async function handleAssistCallback(ctx, data, chatId) {
         `✏️ Введите свой вариант ответа клиенту по заявке #${leadId}:`,
         { reply_markup: { force_reply: true, selective: true } }
       );
-      pendingClarify.set(MANAGER_CHAT_ID, { leadId, promptMessageId: sent.message_id });
+      pendingClarify.set(getManagerChatId(), { leadId, promptMessageId: sent.message_id });
       await ctx.answerCbQuery("Ответьте на это сообщение").catch(() => {});
       return;
     }
@@ -1401,7 +1554,7 @@ async function handleKnowledgeCommand(ctx) {
  * Иначе возвращаем false (пусть идёт обычная диалоговая логика).
  */
 async function maybeHandleManagerTeachInput(ctx, text) {
-  if (String(ctx.chat?.id) !== MANAGER_CHAT_ID) return false;
+  if (String(ctx.chat?.id) !== getManagerChatId()) return false;
   const ms = getManagerState(ctx.chat.id);
   if (!ms || ms.state !== "awaiting_teach_input") return false;
 
@@ -1510,7 +1663,7 @@ async function proposeProposalDraft(ctx, leadId, leadPreloaded = null) {
   try {
     const lead = leadPreloaded || (await getLeadById(leadId));
     if (!lead) {
-      await ctx.telegram.sendMessage(MANAGER_CHAT_ID, `Лид #${leadId} не найден.`).catch(() => {});
+      await ctx.telegram.sendMessage(getManagerChatId(), `Лид #${leadId} не найден.`).catch(() => {});
       return;
     }
 
@@ -1540,7 +1693,7 @@ async function proposeProposalDraft(ctx, leadId, leadPreloaded = null) {
 
     if (!text) {
       await ctx.telegram.sendMessage(
-        MANAGER_CHAT_ID,
+        getManagerChatId(),
         `⚠️ Не удалось сгенерировать КП для лида #${leadId}.\n` +
         `Можно сгенерировать заново: /proposal ${leadId}`
       ).catch(() => {});
@@ -1549,7 +1702,7 @@ async function proposeProposalDraft(ctx, leadId, leadPreloaded = null) {
 
     // Шаг 1: отправить с временным разметом, msgId ещё не известен.
     const sent = await ctx.telegram.sendMessage(
-      MANAGER_CHAT_ID,
+      getManagerChatId(),
       `💼 КП для лида #${leadId}:\n\n«${text}»`,
       {
         reply_markup: {
@@ -1568,7 +1721,7 @@ async function proposeProposalDraft(ctx, leadId, leadPreloaded = null) {
     setProposalDraft(msgId, { leadId, text, lang });
 
     // Шаг 2: переприклеить кнопки с актуальным msgId, чтобы send/cancel брали draft по нему.
-    await ctx.telegram.editMessageReplyMarkup(MANAGER_CHAT_ID, msgId, undefined, {
+    await ctx.telegram.editMessageReplyMarkup(getManagerChatId(), msgId, undefined, {
       inline_keyboard: [
         [
           { text: "✉ Отправить клиенту", callback_data: `proposal:send:${leadId}:${msgId}` },
@@ -1579,7 +1732,7 @@ async function proposeProposalDraft(ctx, leadId, leadPreloaded = null) {
     }).catch(() => {});
   } catch (err) {
     console.error("proposeProposalDraft error:", err.message);
-    await ctx.telegram.sendMessage(MANAGER_CHAT_ID, `⚠️ Ошибка генерации КП: ${err.message}`).catch(() => {});
+    await ctx.telegram.sendMessage(getManagerChatId(), `⚠️ Ошибка генерации КП: ${err.message}`).catch(() => {});
   }
 }
 
@@ -1627,7 +1780,7 @@ async function handleProposalCallback(ctx, data, chatId) {
         `✏️ Введите свой вариант КП для клиента по лиду #${leadId}:`,
         { reply_markup: { force_reply: true, selective: true } }
       );
-      pendingProposalEdit.set(MANAGER_CHAT_ID, { leadId, promptMessageId: sent.message_id });
+      pendingProposalEdit.set(getManagerChatId(), { leadId, promptMessageId: sent.message_id });
       await ctx.answerCbQuery("Ответьте на это сообщение").catch(() => {});
       return;
     }
