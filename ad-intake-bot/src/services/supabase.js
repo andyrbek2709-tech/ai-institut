@@ -231,11 +231,28 @@ export async function getAnalyticsSnapshot() {
   const topServices = Object.entries(byService)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 12);
+
+  const dayStart = new Date();
+  dayStart.setUTCHours(0, 0, 0, 0);
+  const iso = dayStart.toISOString();
+  const { count: ordersTodayUtc, error: e3 } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", iso);
+  if (e3) throw new Error(e3.message);
+  const { count: convTodayUtc, error: e4 } = await supabase
+    .from("conversations")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", iso);
+  if (e4) throw new Error(e4.message);
+
   return {
     conversationsByStatus: byConv,
     ordersByStatus: byOrd,
     ordersTotal: (ord || []).length,
     conversationsTotal: (conv || []).length,
     topServices,
+    ordersTodayUtc: ordersTodayUtc ?? 0,
+    conversationsCreatedTodayUtc: convTodayUtc ?? 0,
   };
 }

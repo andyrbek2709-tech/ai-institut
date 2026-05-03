@@ -73,7 +73,7 @@ import { makeEmptyOrder, normalizeToSchema, REQUIRED_FIELDS } from "./orderSchem
 import { buildKnowledgeContext } from "./promptContext.js";
 import { shouldTriggerUpsell, buildUpsellPromptBlock, UPSELL_MAP } from "./upsell.js";
 import { getManagerChatId } from "../config/tenants.js";
-import { pushLeadToExternalCrm } from "../services/crmExport.js";
+import { exportLeadToAllIntegrations } from "../services/crmExport.js";
 import { extractTextFromPdfBuffer } from "../services/fileExtract.js";
 import { ORDER_TEMPLATES, getTemplateById } from "./templatesCatalog.js";
 
@@ -286,11 +286,19 @@ export async function handleFile(ctx) {
     }
 
     const visionPart = vision ? ` | vision: "${vision.replace(/"/g, "'")}"` : "";
-    const pdfPart = pdfText
-      ? ` | pdf_excerpt: "${pdfText.slice(0, 4000).replace(/"/g, "'")}"`
-      : isPsdAi
-        ? ` | note: "PSD/AI/EPS — автоматический разбор недоступен; файл в заявке"`
-        : "";
+    let pdfPart = "";
+    if (pdfText) {
+      pdfPart = ` | pdf_excerpt: "${pdfText.slice(0, 4000).replace(/"/g, "'")}"`;
+    } else if (isPdf && !isImage) {
+      pdfPart = ` | pdf_text_empty: yes (скан или графический PDF без слоя текста)`;
+      await ctx
+        .reply(
+          "Этот PDF без текстового слоя — часто так у сканов. Опишите заказ текстом или пришлите фото макета 👍"
+        )
+        .catch(() => {});
+    } else if (isPsdAi) {
+      pdfPart = " | note: \"PSD/AI/EPS — автоматический разбор недоступен; файл в заявке\"";
+    }
     const systemNote = `[файл прикреплён: ${link.href}${visionPart}${pdfPart}${caption ? ` | подпись: ${caption}` : ""}]`;
 
     const message = caption ? `${caption}\n\n${systemNote}` : systemNote;
@@ -791,7 +799,7 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null,
 
   if (lead) {
     try {
-      await pushLeadToExternalCrm({
+      const crm = await exportLeadToAllIntegrations({
         lead_id: lead.id,
         order_id: order.id,
         service_type: order.service_type,
@@ -802,6 +810,10 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null,
         telegram_chat_id: String(ctx.chat?.id),
         files: order.files || [],
       });
+      if (crm.errors?.length) {
+        console.error("[crm]", crm.errors.join("; "));
+        await _bot.telegram.sendMessage(getManagerChatId(), `⚠️ CRM: ${crm.errors.join("; ")}`).catch(() => {});
+      }
     } catch (e) {
       console.error("[crm export]", e.message);
       await _bot.telegram.sendMessage(getManagerChatId(), `⚠️ CRM export: ${e.message}`).catch(() => {});
@@ -818,6 +830,8 @@ async function handleOwnerStats(ctx) {
     await ctx.reply(
       [
         "📊 Сводка (до 8000 строк / таблица)",
+        "",
+        `Сегодня (UTC с 00:00): заказов ${snap.ordersTodayUtc}, новых диалогов ${snap.conversationsCreatedTodayUtc}`,
         "",
         "Диалоги:",
         ...cLines,
