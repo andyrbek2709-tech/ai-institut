@@ -2,6 +2,8 @@
 
 Один файл со всем, что относится к **работе** Telegram-бота приёма заявок рекламного агентства (бренд **vformate** в конфиге). Журнал правок по датам — в **`STATE.md`**. Краткий обзор для людей — в **`README.md`**.
 
+**Актуальный прод (Railway, отдельный Supabase под бота, синхронизация env, логи):** [`docs/PRODUCTION_CURRENT.md`](docs/PRODUCTION_CURRENT.md).
+
 ---
 
 ## 1. Дерево каталога (важное)
@@ -18,7 +20,9 @@ ad-intake-bot/
 │   ├── vformate-logo.png     # исходник лого
 │   └── vformate-logo-telegram.png  # сгенерированный компактный вариант для чата
 ├── scripts/
-│   └── build-telegram-logo.mjs     # sharp: trim + холст под Telegram (env см. assets/README)
+│   ├── build-telegram-logo.mjs     # sharp: trim + холст под Telegram (env см. assets/README)
+│   ├── dump-last-conversation.mjs  # npm run dump:last-conv
+│   └── export-conversation-by-lead.mjs  # npm run dump:transcript -- <lead_id> | chat <id>
 ├── supabase/migrations/      # SQL: схема conversations, orders, leads, …
 └── src/
     ├── index.js              # точка входа: env, Telegraf, webhook или polling, followup
@@ -27,7 +31,7 @@ ad-intake-bot/
     │   ├── tenants.js        # TENANTS_JSON → manager_chat_id по @username бота
     │   └── roles.js          # MANAGER_TELEGRAM_USER_IDS
     ├── bot/
-    │   ├── handlers.js       # основная логика: команды, текст, голос, файлы, лиды, relay
+    │   ├── handlers.js       # основная логика: команды, текст, голос, файлы, лиды, relay, /transcript
     │   ├── prompts.js      # system prompt, локализация
     │   ├── scenarios.js    # ветвление по типу услуги
     │   ├── questions.js    # тексты вопросов по шагам

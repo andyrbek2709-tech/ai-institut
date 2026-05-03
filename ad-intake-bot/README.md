@@ -2,7 +2,11 @@
 
 Бот для **приёма брифов** от клиентов агентства (в продакшене — бренд **vformate**): диалог на **русском и казахском** (и других языках по желанию клиента), текст, **голос** (Whisper), **фото** (Vision), **PDF** (извлечение текста), опционально **шаблоны заказов** (`/templates`). Ответы ведёт **LLM** (конфигурируемый провайдер, см. `services/openai.js`) с function-calling; данные — **Supabase**; для менеджеров — **мини-CRM в Telegram** (лиды, статусы, ответы клиенту).
 
+**Актуальный прод (Railway + отдельный Supabase, логи, синхронизация env):** **[`docs/PRODUCTION_CURRENT.md`](docs/PRODUCTION_CURRENT.md)** — сюда сведено то, что нельзя потерять при смене ПК.
+
 **Полная структура каталогов, потоки запуска, все переменные окружения и привязка к файлам:** **[`BOT_REFERENCE.md`](BOT_REFERENCE.md)** — один справочник «как всё устроено».
+
+**Логи диалогов (лид / chat_id, голос как текст):** **[`docs/CONVERSATION_LOGS.md`](docs/CONVERSATION_LOGS.md)** — `/transcript`, скрипты `npm run dump:transcript` / `dump:last-conv`.
 
 **Кому отдавать документ:** **`README.md`** (обзор) + **`BOT_REFERENCE.md`** (детали) + **`STATE.md`** (журнал по датам).
 
@@ -14,7 +18,7 @@
 |-----|-----|
 | Код в монорепо | `andyrbek2709-tech/ai-institut`, каталог **`ad-intake-bot/`** |
 | Прод (типично) | **Railway**: сервис Node, root = `ad-intake-bot`, публичный URL в **`WEBHOOK_DOMAIN`** → `setWebhook` |
-| База | **Supabase** (Postgres): диалоги, заказы, лиды, опционально knowledge |
+| База | **Supabase** (Postgres): диалоги, заказы, лиды, knowledge / RAG — см. **`docs/SUPABASE_DEDICATED_PROJECT.md`** и **`supabase/bundle_ad_intake_bot_schema.sql`** для нового пустого проекта |
 
 Локально: Node **20+**, `cp .env.example .env`, заполнить секреты (имена переменных — в `.env.example`), `npm install` → `npm start` или `npm run dev`. Миграции SQL — в **`supabase/migrations/`** (применять в Supabase в нужном порядке для вашего проекта).
 

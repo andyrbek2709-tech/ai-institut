@@ -1,6 +1,42 @@
 # AdIntakeBot — состояние
 
-_Последнее обновление: 2026-05-03_
+_Последнее обновление: 2026-05-04_
+
+## 2026-05-04 — Канон «куда смотрит прод» (`docs/PRODUCTION_CURRENT.md`)
+
+- Файл **`docs/PRODUCTION_CURRENT.md`:** Railway **kind-comfort** / **ai-institut**, Supabase только **`pbxzxwskhuzaojphkeet`**, отказ бота от **`jbdljdwlfimvmqybzynv`** в Railway, формат `.env`, **`npm run railway:sync-supabase`**, `/transcript` и дампы, напоминание про ротацию секретов при утечке в лог.
+- **`README.md`:** ссылка на этот файл первой строкой блока документации.
+
+## 2026-05-03 — Railway: SUPABASE на выделенный проект pbxzxwskhuzaojphkeet
+
+- В **Railway** сервиса `ai-institut` обновлены **`SUPABASE_URL`** / **`SUPABASE_KEY`** на новый Supabase (не `jbdljdwlfimvmqybzynv`).
+- **`scripts/sync-supabase-to-railway.mjs`**, **`npm run railway:sync-supabase`** — повторная подстановка из `.env` (Windows: `shell: true` для `railway.cmd`).
+- **`D:\\AdIntakeBot\\.env`** и **`ad-intake-bot/.env`** приведены к формату `KEY=value` для скриптов.
+
+## 2026-05-03 — /transcript + скрипт лога по лиду
+
+- **`/transcript`** (менеджер): полный `conversations.history` по id лида или `chat <telegram_chat_id>`.
+- **`supabase.js`:** `getLatestConversationByTelegramChatId`, `getConversationFullHistory`.
+- **`scripts/export-conversation-by-lead.mjs`**, **`npm run dump:transcript`** — вывод в консоль для разбора в Cursor.
+- **`docs/CONVERSATION_LOGS.md`:** как хранится голос (как текст user), что не трогаем другие Supabase-проекты.
+
+## 2026-05-03 — Отдельный Supabase под бота (bundle схемы)
+
+- **`supabase/bundle_ad_intake_bot_schema.sql`:** один файл 001…007 для пустого проекта (в т.ч. ref `pbxzxwskhuzaojphkeet`).
+- **`docs/SUPABASE_DEDICATED_PROJECT.md`:** шаги SQL Editor, env Railway, примечание про перенос данных.
+- **`.env.example`:** ссылка на бандл и док.
+
+## 2026-05-03 — «Да» после брифа: ложный мультисервис `другое + баннер` + дамп диалога
+
+- **`intakeHelpers.tryCollapseSpuriousOtherPlusServiceQueue`:** если очередь ровно из двух слотов и один — `другое`, второй — конкретный тип, и фактический тип диалога совпадает с этим типом — очередь сбрасывается; **`interceptSaveOrderIntent`** вызывает это перед веткой «да» → снова обычный `finalizeOrder` с «Заявка принята».
+- **`scripts/dump-last-conversation.mjs`**, **`npm run dump:last-conv`** — вывод последнего `conversations.history` в консоль (опционально аргумент `telegram_chat_id`).
+
+## 2026-05-03 — Knowledge RAG (`knowledge_items`)
+
+- Миграция **`supabase/migrations/007_knowledge_items.sql`**: таблица + `match_knowledge_items`; нужен `OPENAI_API_KEY` для эмбеддингов (`OPENAI_EMBEDDING_MODEL` опционально).
+- **`/teach`:** текст, голос (Whisper), в чате менеджеров — PDF / текстовые файлы; `extractKnowledge` → сохранение `content`, `structured_data`, `embedding`, `source`.
+- **«рассчитай»** в чате менеджеров: поиск по базе + ответ только по найденным `structured_data` (без выдуманных цен).
+- Диалог: **`promptContext.buildKnowledgeContext`** подмешивает до 3 записей в system prompt.
 
 ## 2026-05-03 — BOT_REFERENCE.md
 
