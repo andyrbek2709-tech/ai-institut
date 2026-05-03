@@ -9,7 +9,11 @@ import { ASSIST_SYSTEM, buildAssistUserMessage } from "../bot/managerAssistPromp
 import { PROPOSAL_SYSTEM, buildProposalUserMessage } from "../bot/proposalPrompt.js";
 import { TEACH_EXTRACT_SYSTEM, buildTeachExtractUserMessage } from "../bot/teachExtractPrompt.js";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.LLM_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: process.env.LLM_BASE_URL || "https://api.deepseek.com",
+});
+const LLM_MODEL = process.env.LLM_MODEL || "deepseek-chat";
 
 const TOOLS = [{ type: "function", function: SAVE_ORDER_FUNCTION }];
 
@@ -34,7 +38,7 @@ export async function chat(messages, lang = "ru", extras = {}) {
   }
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: LLM_MODEL,
     messages: [{ role: "system", content: systemPrompt }, ...trimmed],
     tools: TOOLS,
     tool_choice: "auto",
@@ -78,7 +82,7 @@ export async function detectLang(text) {
   }
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: LLM_MODEL,
       messages: [
         {
           role: "system",
@@ -111,7 +115,7 @@ export async function estimatePriceHint(orderData = {}, lang = "ru", knowledgeCo
   const kb = (knowledgeContext || "").trim().slice(0, 4500);
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: LLM_MODEL,
       messages: [
         {
           role: "system",
@@ -141,7 +145,7 @@ export async function classifyServiceTypeLLM(text) {
   const codes = SERVICE_TYPES.join("|");
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: LLM_MODEL,
       messages: [
         {
           role: "system",
@@ -199,7 +203,7 @@ export async function describeImage(imageUrl, lang = "ru") {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: LLM_MODEL,
       messages: [
         {
           role: "user",
@@ -236,7 +240,7 @@ export async function classifyImageForIntake(imageUrl, lang = "ru") {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: LLM_MODEL,
       messages: [
         { role: "system", content: system },
         {
@@ -278,7 +282,7 @@ export async function extractPartialBrief(messages) {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: LLM_MODEL,
       messages: [
         {
           role: "system",
@@ -329,7 +333,7 @@ export async function extractData(userMessage, currentData = {}, lang = "ru") {
   if (!userMessage || !String(userMessage).trim()) return {};
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: LLM_MODEL,
       messages: [
         { role: "system", content: EXTRACT_SYSTEM },
         {
@@ -411,7 +415,7 @@ export function missingRequiredFields(orderData, requiredFields = ["type", "size
 export async function assistManagerReply({ orderData = {}, history = [], lang = "ru", lastUserMessage = "" } = {}) {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: LLM_MODEL,
       messages: [
         { role: "system", content: ASSIST_SYSTEM },
         {
@@ -446,7 +450,7 @@ export async function assistManagerReply({ orderData = {}, history = [], lang = 
 export async function generateProposal({ orderData = {}, history = [], lang = "ru", knowledgeContext = "" } = {}) {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: LLM_MODEL,
       messages: [
         { role: "system", content: PROPOSAL_SYSTEM },
         {
@@ -477,7 +481,7 @@ export async function extractTeachStructured(text) {
   if (!text || !text.trim()) return null;
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: LLM_MODEL,
       messages: [
         { role: "system", content: TEACH_EXTRACT_SYSTEM },
         { role: "user", content: buildTeachExtractUserMessage(text) },
