@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Парсинг источников",
+  "current_step": "Источник 1/9: Hacker News",
   "progress_pct": 0,
   "items_processed": 0,
-  "items_total": 9,
-  "updated_at": "2026-05-03T07:51:28Z",
+  "items_total": 0,
+  "updated_at": "2026-05-03T07:51:29Z",
   "started_at": "2026-05-03T07:51:28Z"
 }
