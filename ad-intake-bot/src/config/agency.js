@@ -8,10 +8,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const AGENCY_NAME = "vformate";
 
 /**
- * Целевая высота компактного лого (px) при сборке `npm run build:telegram-logo`.
- * В Telegram у `sendPhoto` нет CSS-высоты: превью ≈ по пикселям файла; ~52px ≈ две строки текста в чате.
+ * Параметры сборки `npm run build:telegram-logo` (см. скрипт).
+ * Важно: Telegram масштабирует фото по **ширине** пузыря; узкий файл с малым `h`
+ * даёт огромную **экранную** высоту. Поэтому в репо — **широкий холст** + логотип по центру.
  */
-export const TELEGRAM_LOGO_MAX_HEIGHT_PX = 52;
+export const TELEGRAM_LOGO_CANVAS_W = 400;
+export const TELEGRAM_LOGO_CANVAS_H = 48;
+export const TELEGRAM_LOGO_INNER_MAX_H = 36;
 
 /**
  * Путь к PNG/JPG логотипа для приветствия /start.

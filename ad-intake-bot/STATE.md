@@ -2,9 +2,9 @@
 
 _Последнее обновление: 2026-05-03_
 
-## 2026-05-03 — лого для чата (52px)
+## 2026-05-03 — лого для чата (холст 400×48)
 
-- `vformate-logo-telegram.png` + `npm run build:telegram-logo`; `resolveAgencyLogoPath` предпочитает его.
+- `vformate-logo-telegram.png` — широкий холст, чтобы в ленте не раздувалось по высоте; `npm run build:telegram-logo`; `/start` с `link_preview_options.is_disabled`.
 
 ## 2026-05-03 — /start: лого + kk/ru «в формате»
 

@@ -392,17 +392,18 @@ export async function handleStart(ctx) {
   const logoPath = resolveAgencyLogoPath();
   if (logoPath) {
     try {
+      const noLinkPreview = { link_preview_options: { is_disabled: true } };
       await ctx.replyWithPhoto(
         { source: fs.createReadStream(logoPath) },
-        { caption: buildStartPhotoCaption() }
+        { caption: buildStartPhotoCaption(), ...noLinkPreview }
       );
-      await ctx.reply(welcomeBody);
+      await ctx.reply(welcomeBody, noLinkPreview);
       return;
     } catch (e) {
       console.error("[start] logo send failed:", e.message);
     }
   }
-  await ctx.reply(buildStartWelcomeFallbackText());
+  await ctx.reply(buildStartWelcomeFallbackText(), { link_preview_options: { is_disabled: true } });
 }
 
 async function handleHelp(ctx) {
