@@ -491,6 +491,31 @@ export async function handleVoice(ctx) {
       if (await tryManagerRelayForward(ctx)) return;
     }
 
+    const teachAwait =
+      inMgrGroup &&
+      managerCommandAllowed(ctx) &&
+      getManagerState(ctx.chat.id)?.state === "awaiting_teach_input";
+    if (inMgrGroup && managerCommandAllowed(ctx) && !getManagerReplyMode(ctx.from.id) && !teachAwait) {
+      await ctx
+        .reply(
+          "Голос клиенту не отправлен: сначала нажмите «💬 Уточнить» по этому лиду в этом чате, " +
+            "затем в течение 15 минут пришлите одно сообщение (голос или текст) — оно уйдёт клиенту. " +
+            "Или текстом: /reply <ID> <сообщение>."
+        )
+        .catch(() => {});
+      return;
+    }
+    if (privMgr && managerCommandAllowed(ctx) && !getManagerReplyMode(ctx.from.id)) {
+      await ctx
+        .reply(
+          "Голос клиенту: сначала в рабочем чате менеджеров нажмите «💬 Уточнить» по нужному лиду " +
+            "(режим ~15 минут, тот же ваш аккаунт), затем пришлите голос сюда в личку бота или в группу. " +
+            "Или отправьте текстом: /reply <ID> <текст>."
+        )
+        .catch(() => {});
+      return;
+    }
+
     await ctx.sendChatAction("typing");
     const existing = getContext(ctx.chat.id);
     const text = await transcribeVoice(ctx, existing?.lang);
@@ -506,7 +531,10 @@ export async function handleVoice(ctx) {
 
     if (privMgr) {
       if (await maybeHandleManagerTeachInput(ctx, text)) return;
-      await ctx.reply("Здесь голосом заявки не собираем — /leads или /reply как текстом.");
+      await ctx.reply(
+        "Голос здесь не уходит клиенту автоматически. Нажмите «💬 Уточнить» по лиду в рабочем чате, затем пришлите голос, " +
+          "или используйте /reply <ID> <текст>."
+      );
       return;
     }
 
@@ -1396,6 +1424,31 @@ async function finalizeOrder(ctx, entry, rawArgs, finalizeOpts = {}) {
   }
 }
 
+/**
+ * Клиентские файлы хранятся как URL вида https://api.telegram.org/file/bot…/file_N.ext
+ * — шлём менеджеру как фото/документ, чтобы открывалось в Telegram, а не «голая» ссылка.
+ */
+async function sendManagerTelegramFileUrl(bot, managerChatId, url) {
+  const u = String(url || "").trim();
+  if (!u) return;
+  const pathPart = u.split("?")[0].toLowerCase();
+  const looksImage = /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(pathPart);
+  try {
+    if (looksImage) {
+      await bot.telegram.sendPhoto(managerChatId, u);
+      return;
+    }
+    await bot.telegram.sendDocument(managerChatId, u);
+  } catch {
+    try {
+      if (looksImage) await bot.telegram.sendDocument(managerChatId, u);
+      else await bot.telegram.sendPhoto(managerChatId, u);
+    } catch {
+      await bot.telegram.sendMessage(managerChatId, `📎 ${u}`).catch(() => {});
+    }
+  }
+}
+
 async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null, orderData = null) {
   const username = ctx.from?.username ? `@${ctx.from.username}` : `id:${ctx.from?.id}`;
   const meta = getLangMeta(lang);
@@ -1487,8 +1540,12 @@ async function notifyManager(ctx, order, lang = "ru", rawArgs = {}, lead = null,
 
   await _bot.telegram.sendMessage(getManagerChatId(), lines.join("\n"), { reply_markup: keyboard });
 
+  const seenUrls = new Set();
   for (const url of order.files || []) {
-    await _bot.telegram.sendMessage(getManagerChatId(), `📎 ${url}`).catch(() => {});
+    const u = String(url || "").trim();
+    if (!u || seenUrls.has(u)) continue;
+    seenUrls.add(u);
+    await sendManagerTelegramFileUrl(_bot, getManagerChatId(), u);
   }
 
   if (lead) {
@@ -1705,7 +1762,7 @@ async function handleLeadCallback(ctx, data, chatId) {
         chatId,
         `💬 Ответ клиенту по лиду #${leadId}.\n` +
           `Одно следующее сообщение: текст или голос — перефразирую во вежливое сообщение клиенту с пометкой «Менеджер:»; фото/файлы — как копию.\n` +
-          `Режим выключится после отправки.\n` +
+          `Режим ~15 минут, выключится после отправки. Важно: без этого шага голос не считается ответом клиенту (в т.ч. в личке бота).\n` +
           `Подсказка: AI-черновик — /assist ${leadId}`
       );
       return;
