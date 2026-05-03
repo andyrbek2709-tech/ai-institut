@@ -234,8 +234,22 @@ table.btab tr:hover td{background:rgba(64,128,240,.08)}
         <select id="i_ins"><option value="XLPE" selected>XLPE (СПЭ)</option><option value="PVC">PVC (ПВХ)</option></select></div>
     </div>
   </div>
+  <div class="sec" id="reverse_sec" style="display:none">
+    <div class="sec-t">Обратный расчёт (поиск сечения)</div>
+    <div class="fl"><label class="lbl">Макс. ΔU <em>%</em> (опционально)</label><input id="rev_du_max" type="number" min="0.1" step="0.1" placeholder="5.0"></div>
+    <div class="gr2">
+      <div class="fl"><label class="lbl">Способ прокладки</label>
+        <select id="rev_meth"><option value="E" selected>Над землёй (E)</option><option value="D">Подземно (D)</option></select></div>
+      <div class="fl"><label class="lbl">Температура °C</label>
+        <select id="rev_T">
+          <option value="30">+30°C</option><option value="45" selected>+45°C</option><option value="55">+55°C</option><option value="60">+60°C</option>
+        </select>
+      </div>
+    </div>
+  </div>
   <div class="sec">
     <button class="btn-p" onclick="doCalc()">▶  РАССЧИТАТЬ (одиночный)</button>
+    <button class="btn-p" id="btn_reverse" onclick="doReverseCalc()" style="background:#a060f0;margin-top:6px">🔍  ОБРАТНЫЙ РАСЧЁТ</button>
     <button class="btn-s" id="btn_word" onclick="exportWord()" disabled>⬇  Экспорт технического отчёта (.docx)</button>
   </div>
 </aside>
@@ -836,6 +850,60 @@ g('i_file').addEventListener('change',()=>{
   if(f)setUploadStatus('Выбран: '+f.name+' ('+Math.round(f.size/1024)+' KB)','');
   else setUploadStatus('Файл не выбран','');
 });
+
+async function doReverseCalc(){
+  const P=+g('i_P').value,U=+g('i_U').value,cp=+g('i_cphi').value,L=+g('i_L').value;
+  const meth=g('i_meth').value,T=+g('i_T').value;
+  const mat=g('i_mat').value,ins=g('i_ins').value;
+  const phases = U >= 380 ? 3 : 1;
+  const du_max = parseFloat(g('rev_du_max').value) || 5.0;
+  if(!P||!L)return alert('Укажите мощность и длину кабеля');
+  try{
+    const r=await fetch('/api/cable-calc/reverse',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        power_kw:P/1000,phases,cos_phi:cp,length_m:L,
+        material:mat,insulation:ins,method:meth,
+        ambient_temp_c:T,delta_u_pct_max:du_max
+      })
+    });
+    if(!r.ok)throw new Error((await r.json()).error||r.statusText);
+    const j=await r.json();
+    const f=(n,d=2)=>n.toFixed(d);
+    const feed=g('i_feed').value||'—';
+    const ov=g('r_ov');ov.textContent=j.status==='OK'?'✓ Сечение найдено':'⚠ Проверьте результат';
+    ov.className='overall '+(j.status==='OK'?'pass':'fail');
+    g('r_flbl').textContent='Фидер: '+feed;
+    g('r1f').textContent=`Найденное сечение`;
+    g('r1v').textContent=j.section_mm2+' мм²';
+    g('r1s').textContent=`Материал: ${mat}, Изоляция: ${ins}`;
+    g('r2f').textContent=`Допустимый ток I_доп`;
+    g('r2v').textContent=f(j.i_allowable_a,1);
+    g('r2b').textContent='✓ Рассчитано';g('r2b').className='badge b-pass';
+    g('r3f').textContent=`Падение напряжения`;
+    g('r3v').textContent=f(j.delta_u_pct,2);g('r3a').textContent='%';
+    g('r3b').textContent=j.delta_u_pct<=du_max?'✓ В пределах':'⚠ Выше лимита';
+    g('r3b').className='badge '+(j.delta_u_pct<=du_max?'b-pass':'b-warn');
+    g('r4f').textContent=`Статус расчёта`;
+    g('r4v').textContent=j.status;
+    g('r4b').textContent='✓ ОК';g('r4b').className='badge b-pass';
+    g('rsI').innerHTML=`<span style="color:#20d060">${j.section_mm2}</span><span style="font-size:12px;color:#6080a0"> мм²</span>`;
+    g('rsIs').textContent='сечение';
+    g('rsV').innerHTML=`<span style="color:#20d060">${f(j.i_allowable_a,1)}</span><span style="font-size:12px;color:#6080a0"> А</span>`;
+    g('rsVs').textContent='допустимый ток';
+    g('rsS').innerHTML=`<span style="color:#20d060">${f(j.delta_u_pct,2)}</span><span style="font-size:12px;color:#6080a0"> %</span>`;
+    g('rsSs').textContent='падение напряжения';
+    const altText = j.alternatives && j.alternatives.length ?
+      'Альтернативы: '+j.alternatives.map(a=>`${a.section_mm2}мм²`).join(', ') :
+      'Альтернативы отсутствуют';
+    g('rsR').textContent=altText;
+    g('rsRn').textContent='✓ Обратный расчёт выполнен';
+    g('ph').style.display='none';g('rw').style.display='block';
+  }catch(e){
+    alert('Ошибка обратного расчёта: '+e.message);
+  }
+}
 </script>
 </body>
 </html>
