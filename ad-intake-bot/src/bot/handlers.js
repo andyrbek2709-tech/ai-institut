@@ -752,7 +752,7 @@ function isPlaceholderContact(contact) {
 function isManagerAskingForAsset(text) {
   const t = String(text || "").toLowerCase();
   if (!t) return false;
-  const hasAction = /(пришл|отправ|скинь|прикреп|attach|send|upload|share)/i.test(t);
+  const hasAction = /(пришл|отправ|скинь|прикреп|попрос|attach|send|upload|share)/i.test(t);
   const hasAsset = /(логотип|logo|макет|mockup|файл|file|документ|document|картин|image|изображ)/i.test(t);
   return hasAction && hasAsset;
 }

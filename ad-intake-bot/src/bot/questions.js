@@ -13,7 +13,8 @@ export const QUESTIONS = {
     location:    "Где будет вывеска — на улице или внутри помещения?",
     size:        "Примерно какой размер? Например, 1×2 метра, 3×6 метров.",
     content:     "Что должно быть написано или изображено? Текст, логотип, картинка?",
-    design:      "У вас есть готовый макет, или нужно его разработать?",
+    design:
+      "По макету: у вас уже есть готовый макет или логотип (можно прислать файлом/фото прямо сейчас), или нужна разработка с нуля?",
     lighting:    "Подсветка нужна или без подсветки?",
     where_use:   "Где будет использоваться баннер — на улице, в зале, на стенде?",
     quantity:    "Сколько штук нужно?",
@@ -34,7 +35,8 @@ export const QUESTIONS = {
     location:    "Маңдайша қайда болады — сыртта ма, ішкі жерде ме?",
     size:        "Шамамен өлшемі қандай? Мысалы, 1×2 метр, 3×6 метр.",
     content:     "Не жазылу керек немесе бейнелену керек? Мәтін, логотип, сурет пе?",
-    design:      "Дайын макет бар ма, әлде жасау керек пе?",
+    design:
+      "Макет бойынша: дайын макет немесе логотип бар ма (файл/фото жіберуге болады), әлде нөлден жасау керек пе?",
     lighting:    "Жарықтандыру керек пе, әлде онсыз ба?",
     where_use:   "Баннер қайда қолданылады — көшеде, залда, стендте ме?",
     quantity:    "Қанша дана керек?",
@@ -55,7 +57,8 @@ export const QUESTIONS = {
     location:    "Will the sign be outdoors or indoors?",
     size:        "What size approximately? For example, 1×2 meters, 3×6 meters.",
     content:     "What should it say or show — text, logo, an image?",
-    design:      "Do you have a ready design, or should we create it from scratch?",
+    design:
+      "About the artwork: do you already have a ready layout or logo (you can send a file/photo now), or should we design from scratch?",
     lighting:    "Do you need illumination, or no backlight?",
     where_use:   "Where will the banner be used — outdoors, indoor hall, on a stand?",
     quantity:    "How many do you need?",
