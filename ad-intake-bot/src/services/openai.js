@@ -13,7 +13,7 @@ const openai = new OpenAI({
   apiKey: process.env.LLM_API_KEY || process.env.OPENAI_API_KEY,
   baseURL: process.env.LLM_BASE_URL || "https://api.deepseek.com",
 });
-const LLM_MODEL = process.env.LLM_MODEL || "deepseek-chat";
+const LLM_MODEL = process.env.LLM_MODEL || "deepseek-v4-flash";
 
 const TOOLS = [{ type: "function", function: SAVE_ORDER_FUNCTION }];
 
