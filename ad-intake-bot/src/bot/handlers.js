@@ -982,6 +982,22 @@ async function interceptSaveOrderIntent(
 
   const queue = intake.servicesQueue;
 
+  /** Клиент уже ответил «да» текстом после брифа от LLM — не дублируем программный бриф, сразу в лид. */
+  const last = entry.messages[entry.messages.length - 1];
+  const userJustAffirmed =
+    last?.role === "user" && isAffirmative(lang, String(last.content || "").trim());
+  if (userJustAffirmed && queue.length < 2) {
+    const singleSnap = {
+      ...merged,
+      type: curCode,
+      service_type: curCode,
+      contact: args.contact,
+    };
+    const comboArgs = buildComboArgsFromSnapshots(args, [singleSnap]);
+    await finalizeOrder(ctx, entry, comboArgs, { multiServiceSnapshots: [singleSnap] });
+    return true;
+  }
+
   const persistAfter = async (briefTextLine) => {
     setContext(chatId, entry);
     await ctx.reply(briefTextLine).catch(() => {});
