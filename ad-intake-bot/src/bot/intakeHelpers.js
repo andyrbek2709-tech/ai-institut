@@ -45,8 +45,14 @@ const AFFIRM_PHRASES = {
   en: ["yes", "yep", "yeah", "ok", "okay", "sure", "confirmed", "looks good", "correct"],
 };
 
+/** Одно общее множество: язык диалога часто один, а клиент подтверждает другим (`lang` ошибочен или смешивает языки). */
+const ALL_AFFIRM_PHRASES = [...new Set(Object.values(AFFIRM_PHRASES).flat())].sort(
+  (a, b) => b.length - a.length
+);
+
 function normalizeAffirmMessage(text) {
   return String(text || "")
+    .normalize("NFKC")
     .trim()
     .toLowerCase()
     .replace(/^[\s👍👌✅]+/gu, "")
@@ -62,14 +68,17 @@ function isAffirmPhraseMatch(t, phrase) {
   return /^[\s.,!?;:…"""''„«»\-—👍👌✅♥]+$/u.test(rest);
 }
 
-export function isAffirmative(lang, text) {
-  const raw = String(text || "").trim().toLowerCase();
+/** @param {string} _lang сохранён для совместимости вызовов; список фраз языконезависимый (ru|kk|en). */
+export function isAffirmative(_lang, text) {
+  const raw = String(text || "")
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase();
   if (!raw) return false;
   if (/^\+1(?:$|[\s.,!?👍✅])/u.test(raw)) return true;
   const t = normalizeAffirmMessage(text);
   if (!t) return false;
-  const list = AFFIRM_PHRASES[lang] || AFFIRM_PHRASES.ru;
-  for (const phrase of list) {
+  for (const phrase of ALL_AFFIRM_PHRASES) {
     if (isAffirmPhraseMatch(t, phrase)) return true;
   }
   return false;
