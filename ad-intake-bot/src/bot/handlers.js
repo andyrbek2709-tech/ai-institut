@@ -243,7 +243,8 @@ async function hydrateClientContextFromDb(chatId) {
 }
 
 /**
- * Режим relay: одно сообщение менеджера → клиенту (копия медиа как есть).
+ * Режим relay после «Уточнить»: текст и голос клиенту как сообщение от менеджера;
+ * голос транскрибируется и пишется в историю диалога. Остальное — copyMessage как раньше.
  */
 async function tryManagerRelayForward(ctx) {
   const rel = getManagerReplyMode(ctx.from.id);
@@ -256,21 +257,50 @@ async function tryManagerRelayForward(ctx) {
       return true;
     }
     const to = String(lead.telegram_chat_id);
-    const mid = ctx.message?.message_id;
-    if (mid) {
-      await ctx.telegram.copyMessage(to, ctx.chat.id, mid);
+    const cLang = lead.data?.lang || "ru";
+    const prefix = { ru: "Менеджер:", kk: "Менеджер:", en: "Manager:" }[cLang] || "Менеджер:";
+
+    let relayLogText = null;
+
+    if (ctx.message?.voice || ctx.message?.audio) {
+      await ctx.sendChatAction("recording_voice").catch(() => {});
+      let text = "";
+      try {
+        text = ((await transcribeVoice(ctx, cLang)) || "").trim();
+      } catch (e) {
+        console.error("[relay transcribe]", e.message);
+        await ctx.reply(
+          "Не удалось распознать голос. Запишите ещё раз или отправьте текстом."
+        );
+        return true;
+      }
+      if (!text) {
+        await ctx.reply(
+          "Распознавание пустое. Повторите голос короче/громче или напишите текстом."
+        );
+        return true;
+      }
+      relayLogText = text;
+      await _bot.telegram.sendMessage(to, `${prefix} ${text}`);
+    } else if (ctx.message?.text?.trim()) {
+      relayLogText = ctx.message.text.trim();
+      await _bot.telegram.sendMessage(to, `${prefix} ${relayLogText}`);
+    } else {
+      const mid = ctx.message?.message_id;
+      if (mid) {
+        await ctx.telegram.copyMessage(to, ctx.chat.id, mid);
+      }
+      relayLogText =
+        (ctx.message?.caption && String(ctx.message.caption).trim()) ||
+        (ctx.message?.photo ? "[manager relay photo]" : null) ||
+        (ctx.message?.document ? `[manager relay: ${ctx.message.document.file_name || "document"}]` : null) ||
+        "[manager relay media]";
     }
-    if (lead.conversation_id) {
-      const relayLogText = ctx.message?.text
-        || (ctx.message?.voice ? "[manager relay voice]" : null)
-        || (ctx.message?.photo ? "[manager relay photo]" : null)
-        || (ctx.message?.document ? "[manager relay document]" : null)
-        || "[manager relay message]";
+
+    if (lead.conversation_id && relayLogText) {
       await appendConversationMessage(lead.conversation_id, "manager", relayLogText);
     }
-    if (lead.status === "new") {
-      await updateLead(rel.leadId, { status: "in_progress", assigned_to: Number(ctx.from.id) });
-    }
+
     clearManagerReplyMode(ctx.from.id);
     await ctx.reply(`✓ Сообщение передано клиенту (лид #${rel.leadId}).`);
   } catch (e) {
@@ -1605,7 +1635,10 @@ async function handleLeadCallback(ctx, data, chatId) {
       setManagerReplyMode(ctx.from.id, leadId);
       await ctx.telegram.sendMessage(
         chatId,
-        `💬 Ответ клиенту по лиду #${leadId}.\nОдно следующее сообщение (текст, голос или фото) будет переслано клиенту, затем режим выключится.\nПодсказка: AI-черновик — команда /assist ${leadId}`
+        `💬 Ответ клиенту по лиду #${leadId}.\n` +
+          `Одно следующее сообщение: текст уйдёт как есть с пометкой «Менеджер:», голос — распознаю и отправлю текстом клиенту, фото/файлы — как копию.\n` +
+          `Режим выключится после отправки.\n` +
+          `Подсказка: AI-черновик — /assist ${leadId}`
       );
       return;
     }
@@ -1685,10 +1718,6 @@ async function sendManagerReplyToClient(ctx, leadId, text) {
 
     if (lead.conversation_id) {
       await appendConversationMessage(lead.conversation_id, "manager", text);
-    }
-
-    if (lead.status === "new") {
-      await updateLead(leadId, { status: "in_progress", assigned_to: Number(ctx.from.id) });
     }
 
     await ctx.reply(`✓ Отправлено клиенту по лиду #${leadId}.`);
@@ -2437,7 +2466,7 @@ async function handleProposalCommand(ctx) {
 
 /**
  * Отправить КП клиенту от имени менеджера (после нажатия «✉ Отправить» или ручного edit).
- * Дописывает в conversation history, переводит лид в in_progress если был new.
+ * Дописывает в conversation history (статус лида только по кнопке «Взять»).
  */
 async function sendManagerProposalToClient(ctx, leadId, proposalText) {
   try {
@@ -2463,10 +2492,6 @@ async function sendManagerProposalToClient(ctx, leadId, proposalText) {
 
     if (lead.conversation_id) {
       await appendConversationMessage(lead.conversation_id, "manager", `[КП] ${proposalText}`);
-    }
-
-    if (lead.status === "new") {
-      await updateLead(leadId, { status: "in_progress", assigned_to: Number(ctx.from.id) });
     }
 
     await ctx.reply(`✓ КП отправлено клиенту по лиду #${leadId}.`);
