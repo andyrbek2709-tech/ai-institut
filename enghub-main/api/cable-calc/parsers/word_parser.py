@@ -7,9 +7,9 @@ from .pdf_parser import _row_from_cells
 from .utils import clean_ocr
 
 
-def parse_word(path: str) -> ParseResult:
+def parse_word(path: str, row_num_start: int = 1) -> ParseResult:
     result = ParseResult(source_file=os.path.basename(path))
-    row_num = 1
+    row_num = row_num_start
     doc = docx.Document(path)
 
     for table in doc.tables:

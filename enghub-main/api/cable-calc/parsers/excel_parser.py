@@ -84,9 +84,9 @@ def _row_heuristic(cells: list, row_num: int) -> Optional[CableJournalRow]:
     return _row_from_cells(cells_str, row_num)
 
 
-def parse_excel(path: str) -> ParseResult:
+def parse_excel(path: str, row_num_start: int = 1) -> ParseResult:
     result = ParseResult(source_file=os.path.basename(path))
-    row_num = 1
+    row_num = row_num_start
 
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     for sheet_name in wb.sheetnames:
