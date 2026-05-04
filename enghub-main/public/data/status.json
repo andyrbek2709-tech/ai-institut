@@ -1,9 +1,9 @@
 {
-  "status": "scraping",
-  "current_step": "Источник 9/9: SO answers (93 qs)",
-  "progress_pct": 88,
-  "items_processed": 811,
-  "items_total": 0,
-  "updated_at": "2026-05-04T08:22:19Z",
+  "status": "scraped",
+  "current_step": "Собрано 812 новых items",
+  "progress_pct": 100,
+  "items_processed": 812,
+  "items_total": 812,
+  "updated_at": "2026-05-04T08:22:23Z",
   "started_at": "2026-05-04T08:21:17Z"
 }
