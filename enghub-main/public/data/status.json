@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Источник 1/9: Hacker News",
-  "progress_pct": 0,
-  "items_processed": 0,
+  "current_step": "Источник 2/9: Habr (11 feeds)",
+  "progress_pct": 11,
+  "items_processed": 473,
   "items_total": 0,
-  "updated_at": "2026-05-04T08:21:18Z",
+  "updated_at": "2026-05-04T08:21:23Z",
   "started_at": "2026-05-04T08:21:17Z"
 }
