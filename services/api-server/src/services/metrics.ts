@@ -43,7 +43,8 @@ export async function recordMetric(data: MetricData): Promise<void> {
       logger.error('Failed to record metric:', error);
     }
   } catch (err) {
-    logger.error('Error recording metric:', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error('Error recording metric: ' + msg);
   }
 }
 
@@ -119,7 +120,8 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
       timestamp: new Date().toISOString(),
     };
   } catch (err) {
-    logger.error('Error in getMetricsSummary:', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error('Error in getMetricsSummary: ' + msg);
     return getDefaultMetrics();
   }
 }
