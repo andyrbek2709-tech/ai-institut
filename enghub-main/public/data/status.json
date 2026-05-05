@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Источник 2/9: Habr (11 feeds)",
-  "progress_pct": 11,
-  "items_processed": 475,
+  "current_step": "Источник 3/9: vc.ru (4 feeds)",
+  "progress_pct": 22,
+  "items_processed": 661,
   "items_total": 0,
-  "updated_at": "2026-05-05T07:58:14Z",
+  "updated_at": "2026-05-05T07:58:41Z",
   "started_at": "2026-05-05T07:58:07Z"
 }
