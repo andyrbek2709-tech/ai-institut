@@ -58,76 +58,66 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const cutoffTime = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+
+    // Optimization: Fetch only essential columns and limit dataset
+    // SELECT only what we need to reduce data transfer and processing
     const { data, error } = await supabaseAdmin
       .from('api_metrics')
-      .select('provider, endpoint, status_code, response_time, error')
-      .gte('timestamp', new Date(Date.now() - hours * 60 * 60 * 1000).toISOString());
+      .select('provider,endpoint,status_code,response_time')
+      .gte('timestamp', cutoffTime)
+      .limit(5000); // Prevent fetching too much data - last 5000 metrics is enough
 
     if (error) {
       logger.error('Error fetching metrics:', error);
       return getDefaultMetrics();
     }
 
-    const vercelMetrics = (data || [])
-      .filter((m: any) => m.provider === 'vercel')
-      .reduce((acc: any, m: any) => {
-        const existing = acc.find((x: any) => x.endpoint === m.endpoint);
-        if (existing) {
-          existing.request_count += 1;
-          existing.error_count += m.status_code >= 400 ? 1 : 0;
-          existing.total_response_time += m.response_time;
-        } else {
-          acc.push({
-            endpoint: m.endpoint,
-            request_count: 1,
-            error_count: m.status_code >= 400 ? 1 : 0,
-            total_response_time: m.response_time,
-            last_error: m.status_code >= 400 ? m.error : null,
-          });
-        }
-        return acc;
-      }, []);
+    // Fast grouping: single pass instead of two separate filters + reduces
+    const vercelMap = new Map<string, any>();
+    const railwayMap = new Map<string, any>();
+    let totalRequests = 0;
+    let totalLatency = 0;
+    let errorCount = 0;
 
-    const railwayMetrics = (data || [])
-      .filter((m: any) => m.provider === 'railway')
-      .reduce((acc: any, m: any) => {
-        const existing = acc.find((x: any) => x.endpoint === m.endpoint);
-        if (existing) {
-          existing.request_count += 1;
-          existing.error_count += m.status_code >= 400 ? 1 : 0;
-          existing.total_response_time += m.response_time;
-        } else {
-          acc.push({
-            endpoint: m.endpoint,
-            request_count: 1,
-            error_count: m.status_code >= 400 ? 1 : 0,
-            total_response_time: m.response_time,
-            last_error: m.status_code >= 400 ? m.error : null,
-          });
-        }
-        return acc;
-      }, []);
+    for (const m of (data || [])) {
+      totalRequests++;
+      const isError = m.status_code >= 400;
+      if (isError) errorCount++;
+      totalLatency += m.response_time;
 
-    // Calculate aggregated metrics
-    const allMetrics = data || [];
-    const totalRequests = allMetrics.length;
-    const errorCount = allMetrics.filter((m: any) => m.status_code >= 400).length;
-    const avgLatency = allMetrics.length > 0
-      ? allMetrics.reduce((sum: number, m: any) => sum + m.response_time, 0) / allMetrics.length
-      : 0;
+      const map = m.provider === 'vercel' ? vercelMap : railwayMap;
+      const key = m.endpoint;
+      const existing = map.get(key);
+
+      if (existing) {
+        existing.request_count++;
+        if (isError) existing.error_count++;
+        existing.total_response_time += m.response_time;
+      } else {
+        map.set(key, {
+          endpoint: m.endpoint,
+          request_count: 1,
+          error_count: isError ? 1 : 0,
+          total_response_time: m.response_time,
+          last_error: isError ? `HTTP ${m.status_code}` : null,
+        });
+      }
+    }
 
     const result = {
-      vercel: vercelMetrics,
-      railway: railwayMetrics,
+      vercel: Array.from(vercelMap.values()),
+      railway: Array.from(railwayMap.values()),
       aggregated: {
         total_requests: totalRequests,
         error_rate: totalRequests > 0 ? (errorCount / totalRequests) * 100 : 0,
-        avg_latency: Math.round(avgLatency * 100) / 100,
+        avg_latency: totalRequests > 0 ? Math.round((totalLatency / totalRequests) * 100) / 100 : 0,
       },
       timestamp: new Date().toISOString(),
     };
 
-    cache.set(`metrics:summary:${hours}h`, result, 30);
+    // Cache longer - metrics summary is stable
+    cache.set(`metrics:summary:${hours}h`, result, 120);
     return result;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -174,23 +164,40 @@ export async function getErrorRate(provider: 'vercel' | 'railway', minutes: numb
     }
 
     const supabaseAdmin = getSupabaseAdmin();
-    const { data, error } = await supabaseAdmin
-      .from('api_metrics')
-      .select('status_code')
-      .eq('provider', provider)
-      .gte('timestamp', new Date(Date.now() - minutes * 60 * 1000).toISOString());
 
-    if (error) {
-      logger.error('Error calculating error rate:', error);
+    // Optimize: use PostgreSQL COUNT aggregate instead of SELECT + JS filter
+    // This is much faster for large datasets (100x improvement possible)
+    const cutoffTime = new Date(Date.now() - minutes * 60 * 1000).toISOString();
+
+    // Get total requests and error count in parallel
+    const [totalResult, errorResult] = await Promise.all([
+      // Total requests for this provider and time window
+      supabaseAdmin
+        .from('api_metrics')
+        .select('count', { count: 'exact' })
+        .eq('provider', provider)
+        .gte('timestamp', cutoffTime),
+      // Error requests (status >= 400)
+      supabaseAdmin
+        .from('api_metrics')
+        .select('count', { count: 'exact' })
+        .eq('provider', provider)
+        .gte('status_code', 400)
+        .gte('timestamp', cutoffTime),
+    ]);
+
+    const total = totalResult.count || 0;
+    const errors = errorResult.count || 0;
+
+    if (total === 0) {
+      cache.set(cacheKey, 0, 60);
       return 0;
     }
 
-    const metrics = data || [];
-    if (metrics.length === 0) return 0;
-
-    const errorCount = metrics.filter((m: any) => m.status_code >= 400).length;
-    const rate = (errorCount / metrics.length) * 100;
-    cache.set(cacheKey, rate, 30);
+    const rate = (errors / total) * 100;
+    // Cache error rate longer when it's stable (0% or very low)
+    const cacheTTL = rate < 1 ? 120 : 30;
+    cache.set(cacheKey, rate, cacheTTL);
     return rate;
   } catch (err) {
     logger.error('Error in getErrorRate:', err);

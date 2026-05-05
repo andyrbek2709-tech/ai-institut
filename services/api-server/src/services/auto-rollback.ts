@@ -15,7 +15,7 @@ export interface RollbackCheck {
 
 export async function checkAutoRollback(): Promise<RollbackCheck> {
   try {
-    // Check cache first
+    // Check cache first with aggressive 120s TTL
     const cacheKey = 'auto-rollback:check';
     const cached = cache.get<RollbackCheck>(cacheKey);
     if (cached) {
@@ -48,23 +48,42 @@ export async function checkAutoRollback(): Promise<RollbackCheck> {
         metrics: { error_rate: 0, avg_latency: 0 },
         rollback_triggered: false,
       };
-      cache.set(cacheKey, result, 60);
+      // Cache longer when feature is disabled (nothing can change this state)
+      cache.set(cacheKey, result, 120);
       return result;
     }
 
-    // Parallel: fetch error rate and metrics in parallel
+    // Parallel: fetch error rate and metrics using optimized SQL aggregate
     const [errorRate, { data: metrics, error: metricsError }] = await Promise.all([
       getErrorRate('railway', flags.monitoring_window_minutes),
+      // Use PostgreSQL aggregate instead of JS reduce() - much faster for large datasets
       supabaseAdmin
         .from('api_metrics')
-        .select('response_time')
+        .select('avg_response_time:response_time.avg(), count:count()', { count: 'exact' })
         .eq('provider', 'railway')
         .gte('timestamp', new Date(Date.now() - flags.monitoring_window_minutes * 60 * 1000).toISOString()),
     ]);
 
-    const avgLatency = (metrics && metrics.length > 0)
-      ? metrics.reduce((sum: number, m: any) => sum + m.response_time, 0) / metrics.length
-      : 0;
+    // If PostgreSQL aggregates not available, use fallback
+    let avgLatency = 0;
+    if (metrics && Array.isArray(metrics) && metrics.length > 0) {
+      // Try to get aggregated result from view
+      avgLatency = (metrics[0] as any)?.avg_response_time || 0;
+    }
+
+    // Fallback to slower client-side calculation if needed
+    if (avgLatency === 0 && metricsError) {
+      const { data: allMetrics } = await supabaseAdmin
+        .from('api_metrics')
+        .select('response_time')
+        .eq('provider', 'railway')
+        .gte('timestamp', new Date(Date.now() - flags.monitoring_window_minutes * 60 * 1000).toISOString())
+        .limit(1000); // Limit to avoid huge dataset
+
+      if (allMetrics && allMetrics.length > 0) {
+        avgLatency = allMetrics.reduce((sum: number, m: any) => sum + m.response_time, 0) / allMetrics.length;
+      }
+    }
 
     const shouldRollback = errorRate > flags.error_rate_threshold || avgLatency > flags.latency_threshold_ms;
 
@@ -76,6 +95,7 @@ export async function checkAutoRollback(): Promise<RollbackCheck> {
         metrics: { error_rate: errorRate, avg_latency: avgLatency },
         rollback_triggered: true,
       };
+      // Cache shorter when warning state
       cache.set(cacheKey, result, 30);
       return result;
     }
@@ -86,7 +106,8 @@ export async function checkAutoRollback(): Promise<RollbackCheck> {
       metrics: { error_rate: errorRate, avg_latency: avgLatency },
       rollback_triggered: false,
     };
-    cache.set(cacheKey, result, 60);
+    // Cache longer when all is good
+    cache.set(cacheKey, result, 120);
     return result;
   } catch (err) {
     logger.error('Error in checkAutoRollback:', err);

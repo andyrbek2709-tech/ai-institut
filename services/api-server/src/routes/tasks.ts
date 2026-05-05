@@ -39,12 +39,13 @@ router.get('/tasks/:projectId', async (req: Request, res: Response) => {
     const tasks = await listRecords<TaskRecord>('tasks', {
       filters: { 'project_id': `eq.${projectId}` },
       order: 'id',
-      limit: 500,
+      limit: 200, // Reduce from 500 to 200 - most projects don't have >200 tasks
       token,
       select: 'id,project_id,name,status,priority,assigned_to,created_at,deadline,rework_count',
     });
 
-    cache.set(cacheKey, tasks, 30);
+    // Increase cache TTL from 30s to 60s - tasks don't change frequently
+    cache.set(cacheKey, tasks, 60);
     res.json(tasks);
   } catch (err) {
     if (err instanceof ApiError) throw err;
