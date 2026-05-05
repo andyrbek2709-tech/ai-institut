@@ -1,8 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { env } from './environment.js';
 
-let adminClient: ReturnType<typeof createClient> | null = null;
-let anonClient: ReturnType<typeof createClient> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let adminClient: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let anonClient: any = null;
 
 export function getSupabaseAdmin() {
   if (!adminClient) {
@@ -15,7 +17,7 @@ export function getSupabaseAdmin() {
           persistSession: false,
         },
       }
-    );
+    ) as any;
   }
   return adminClient;
 }
@@ -25,7 +27,7 @@ export function getSupabaseAnon() {
     anonClient = createClient(
       env.SUPABASE_URL,
       env.SUPABASE_ANON_KEY
-    );
+    ) as any;
   }
   return anonClient;
 }
