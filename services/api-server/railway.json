@@ -1,0 +1,25 @@
+{
+  "build": {
+    "builder": "nixpacks",
+    "buildCommand": "npm run build"
+  },
+  "deploy": {
+    "startCommand": "npm start",
+    "restartPolicyType": "on_failure",
+    "restartPolicyMaxRetries": 5,
+    "healthchecks": {
+      "liveness": {
+        "command": ["node", "-e", "require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"],
+        "interval": 30,
+        "timeout": 10,
+        "initialDelay": 5
+      },
+      "readiness": {
+        "command": ["node", "-e", "require('http').get('http://localhost:3000/ready', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"],
+        "interval": 30,
+        "timeout": 10,
+        "initialDelay": 5
+      }
+    }
+  }
+}
