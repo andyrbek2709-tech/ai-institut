@@ -27,22 +27,14 @@ async function getAccessToken(): Promise<string> {
 
 /**
  * Resolve the full URL for a request
- * Vercel: relative URLs
- * Railway: prepend base URL
+ * All traffic now goes through Railway
  */
 function resolveUrl(path: string): string {
-  const provider = getApiProvider();
-
-  if (provider === 'railway') {
-    const baseUrl = getApiBaseUrl();
-    if (path.startsWith('http')) {
-      return path; // Absolute URL
-    }
-    return `${baseUrl}${path}`;
+  const baseUrl = getApiBaseUrl();
+  if (path.startsWith('http')) {
+    return path; // Absolute URL
   }
-
-  // Vercel: use relative URLs
-  return path;
+  return `${baseUrl}${path}`;
 }
 
 /**
