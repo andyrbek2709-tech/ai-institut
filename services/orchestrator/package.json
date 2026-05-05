@@ -1,0 +1,28 @@
+{
+  "name": "enghub-orchestrator",
+  "version": "1.0.0",
+  "description": "Event-driven orchestration service for EngHub platform",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "lint": "eslint src/**/*.ts",
+    "test": "jest"
+  },
+  "dependencies": {
+    "ioredis": "^5.3.2",
+    "@supabase/supabase-js": "^2.38.0",
+    "pino": "^8.16.2",
+    "pino-pretty": "^10.2.3",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "@types/node": "^20.5.0",
+    "ts-node": "^10.9.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
