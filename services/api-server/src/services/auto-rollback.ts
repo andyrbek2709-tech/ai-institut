@@ -105,7 +105,7 @@ export async function executeAutoRollback(
     // Update feature_flags
     const { error: updateError } = await supabaseAdmin
       .from('feature_flags')
-      .update({ rollout_percentage: 0 })
+      .update({ rollout_percentage: 0 } as any)
       .eq('flag_name', 'api_railway_rollout');
 
     if (updateError) {
@@ -124,7 +124,7 @@ export async function executeAutoRollback(
           trigger_reason: reason,
           error_rate: errorRate,
           avg_latency: avgLatency,
-        },
+        } as any,
       ]);
 
     if (logError) {

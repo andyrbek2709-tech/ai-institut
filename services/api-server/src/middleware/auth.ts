@@ -46,11 +46,12 @@ export async function authMiddleware(
       .eq('supabase_uid', user.id)
       .single();
 
+    const ud = userData as any;
     req.user = {
       id: user.id,
       email: user.email || '',
-      role: userData?.role,
-      full_name: userData?.full_name,
+      role: ud?.role,
+      full_name: ud?.full_name,
       supabase_uid: user.id,
     };
 

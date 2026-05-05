@@ -37,7 +37,7 @@ export async function recordMetric(data: MetricData): Promise<void> {
     const supabaseAdmin = getSupabaseAdmin();
     const { error } = await supabaseAdmin
       .from('api_metrics')
-      .insert([data]) as any;
+      .insert([data as any]);
 
     if (error) {
       logger.error('Failed to record metric:', error);

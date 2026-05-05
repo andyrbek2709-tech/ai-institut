@@ -66,7 +66,7 @@ export async function proxyRequest<T = any>(
     const contentType = response.headers.get('content-type');
 
     if (contentType?.includes('application/json')) {
-      responseData = await response.json();
+      responseData = await response.json() as T;
     } else {
       responseData = (await response.text()) as T;
     }
