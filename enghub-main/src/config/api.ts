@@ -1,31 +1,25 @@
 /**
  * API Configuration
- * Controls which backend is used: Vercel (default) or Railway
+ * Controls which backend is used: Vercel or Railway
+ *
+ * Selection logic:
+ * 1. Check overrides (localStorage, query param, force flag)
+ * 2. Use stable hash distribution based on rollout percentage
+ * 3. Return provider + reason for logging/monitoring
  */
 
 export type ApiProvider = 'vercel' | 'railway';
 
-interface ApiConfig {
+export interface ApiConfig {
   provider: ApiProvider;
   baseUrl: string;
   supabaseUrl: string;
   supabaseAnonKey: string;
+  reason: string; // Why this provider was selected
 }
 
-// Detect API provider from environment or URL
-function detectApiProvider(): ApiProvider {
-  // Allow override via localStorage for testing
-  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('API_PROVIDER') : null;
-  if (stored === 'railway' || stored === 'vercel') return stored;
-
-  // Check if we're running locally
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'railway'; // Default to railway in development
-  }
-
-  // Production: use Vercel by default
-  return 'vercel';
-}
+// Import selection logic
+import { selectApiProvider, logApiSelection, type SelectionContext } from '../lib/api-selection';
 
 function getRailwayUrl(): string {
   // Allow override via environment variable
@@ -42,44 +36,65 @@ function getRailwayUrl(): string {
   return 'https://api.railway.app'; // Placeholder
 }
 
-export const API_CONFIG: ApiConfig = {
-  provider: detectApiProvider(),
-  baseUrl: detectApiProvider() === 'railway' ? getRailwayUrl() : '',
-  supabaseUrl: process.env.REACT_APP_SUPABASE_URL || '',
-  supabaseAnonKey: process.env.REACT_APP_SUPABASE_ANON_KEY || '',
-};
+/**
+ * Get current user ID from localStorage
+ * Used for stable hash distribution
+ */
+function getCurrentUserId(): number | undefined {
+  if (typeof localStorage === 'undefined') return undefined;
+
+  try {
+    const stored = localStorage.getItem('CURRENT_USER_ID');
+    if (stored) return parseInt(stored, 10);
+  } catch {
+    // Ignore errors
+  }
+
+  return undefined;
+}
+
+/**
+ * Initialize API config based on rollout strategy
+ */
+function initApiConfig(): ApiConfig {
+  const userId = getCurrentUserId();
+  const context: SelectionContext = { userId };
+
+  const selection = selectApiProvider(context);
+  logApiSelection(userId, selection);
+
+  const baseUrl = selection.provider === 'railway' ? getRailwayUrl() : '';
+
+  return {
+    provider: selection.provider,
+    baseUrl,
+    supabaseUrl: process.env.REACT_APP_SUPABASE_URL || '',
+    supabaseAnonKey: process.env.REACT_APP_SUPABASE_ANON_KEY || '',
+    reason: selection.reason,
+  };
+}
+
+export const API_CONFIG = initApiConfig();
 
 /**
  * Get the current API provider
  */
 export function getApiProvider(): ApiProvider {
-  if (typeof localStorage !== 'undefined') {
-    const stored = localStorage.getItem('API_PROVIDER');
-    if (stored === 'railway' || stored === 'vercel') {
-      return stored;
-    }
-  }
   return API_CONFIG.provider;
 }
 
 /**
- * Set the API provider (for testing)
+ * Get the reason why this provider was selected
  */
-export function setApiProvider(provider: ApiProvider) {
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('API_PROVIDER', provider);
-  }
+export function getApiSelectionReason(): string {
+  return API_CONFIG.reason;
 }
 
 /**
  * Get the base URL for the current API provider
  */
 export function getApiBaseUrl(): string {
-  const provider = getApiProvider();
-  if (provider === 'railway') {
-    return getRailwayUrl();
-  }
-  return ''; // Vercel uses relative URLs
+  return API_CONFIG.baseUrl;
 }
 
 export default API_CONFIG;

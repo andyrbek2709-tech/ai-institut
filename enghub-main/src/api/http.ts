@@ -1,13 +1,12 @@
-// HTTP helper для вызовов /api/* и /rest/v1/* endpoints
-// Поддерживает маршрутизацию между Vercel и Railway API
-// Всегда подставляет user JWT из текущей Supabase-сессии.
+// HTTP helper с поддержкой rollout-based API routing
+// Маршрутизирует между Vercel и Railway на основе rollout процента
+// Включает мониторинг производительности и ошибок
 
 import { getSupabaseAnonClient } from './supabaseClient';
-import { getApiProvider, getApiBaseUrl } from '../config/api';
+import { getApiProvider, getApiBaseUrl, getApiSelectionReason } from '../config/api';
+import { apiMonitor } from '../lib/api-monitoring';
 
 async function getAccessToken(): Promise<string> {
-  // Primary: токен сохранённый LoginPage через прямой fetch /auth/v1/token (см. signIn в supabase.ts).
-  // Этот путь активен прямо сейчас на проде — supabase-js клиент сессию НЕ знает.
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       const stored = window.localStorage.getItem('enghub_token');
@@ -16,7 +15,7 @@ async function getAccessToken(): Promise<string> {
   } catch {
     /* SSR / privacy mode */
   }
-  // Fallback: на случай миграции на supabase-js sign-in.
+
   try {
     const sb = getSupabaseAnonClient();
     const { data } = await sb.auth.getSession();
@@ -28,8 +27,8 @@ async function getAccessToken(): Promise<string> {
 
 /**
  * Resolve the full URL for a request
- * - Vercel API: relative URLs (/api/tasks) stay relative
- * - Railway API: prepend base URL for all requests
+ * Vercel: relative URLs
+ * Railway: prepend base URL
  */
 function resolveUrl(path: string): string {
   const provider = getApiProvider();
@@ -37,13 +36,26 @@ function resolveUrl(path: string): string {
   if (provider === 'railway') {
     const baseUrl = getApiBaseUrl();
     if (path.startsWith('http')) {
-      return path; // Absolute URL, use as-is
+      return path; // Absolute URL
     }
     return `${baseUrl}${path}`;
   }
 
   // Vercel: use relative URLs
   return path;
+}
+
+/**
+ * Log API decision for debugging
+ */
+function logApiDecision(path: string) {
+  const provider = getApiProvider();
+  const reason = getApiSelectionReason();
+  const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
+  if (isDev && typeof (window as any).__DEBUG_API !== 'undefined') {
+    console.debug(`[API] ${provider.toUpperCase()}: ${path} (${reason})`);
+  }
 }
 
 export async function apiFetch<T = any>(path: string, opts: RequestInit = {}): Promise<T> {
@@ -55,20 +67,37 @@ export async function apiFetch<T = any>(path: string, opts: RequestInit = {}): P
   }
 
   const url = resolveUrl(path);
-  const r = await fetch(url, { ...opts, headers });
+  const provider = getApiProvider();
+  const startTime = performance.now();
 
-  if (!r.ok) {
-    let msg = `API ${r.status} ${r.statusText}`;
-    try {
-      const j = await r.json();
-      msg = j?.error || j?.message || msg;
-    } catch {}
-    throw new Error(msg);
+  logApiDecision(path);
+
+  try {
+    const r = await fetch(url, { ...opts, headers });
+    const latency = performance.now() - startTime;
+
+    if (r.ok) {
+      apiMonitor.recordSuccess(provider, latency);
+    } else {
+      apiMonitor.recordError(provider, `HTTP ${r.status}`, r.status, latency);
+
+      let msg = `API ${r.status} ${r.statusText}`;
+      try {
+        const j = await r.json();
+        msg = j?.error || j?.message || msg;
+      } catch {}
+      throw new Error(msg);
+    }
+
+    if (r.status === 204) return undefined as any;
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return r.json();
+    return r.text() as any;
+  } catch (error) {
+    const latency = performance.now() - startTime;
+    apiMonitor.recordError(provider, error, undefined, latency);
+    throw error;
   }
-  if (r.status === 204) return undefined as any;
-  const ct = r.headers.get('content-type') || '';
-  if (ct.includes('application/json')) return r.json();
-  return r.text() as any;
 }
 
 // Удобные обёртки
