@@ -10,6 +10,7 @@ import publishEventRouter from './routes/publish-event.js';
 import proxyRouter from './routes/proxy.js';
 import tasksRouter from './routes/tasks.js';
 import metricsRouter from './routes/metrics.js';
+import autoRollbackRouter from './routes/auto-rollback.js';
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use('/api', publishEventRouter);
 app.use('/api', proxyRouter);
 app.use('/api', tasksRouter);
 app.use('/api', metricsRouter);
+app.use('/api', autoRollbackRouter);
 
 // 404 handler
 app.use(notFoundHandler);

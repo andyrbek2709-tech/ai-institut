@@ -1,174 +1,147 @@
-import { getSupabaseClient } from '../config/supabase.js';
+import { supabaseAdmin } from '../config/supabase.js';
+import { getErrorRate } from './metrics.js';
 import { logger } from '../utils/logger.js';
-import { getErrorRate, getMetricsSummary } from './metrics.js';
-
-export interface RollbackThresholds {
-  error_rate_threshold: number;
-  latency_threshold_ms: number;
-  monitoring_window_minutes: number;
-}
 
 export interface RollbackCheck {
-  should_rollback: boolean;
-  trigger_reason?: 'error_rate' | 'latency' | 'none';
-  error_rate?: number;
-  avg_latency?: number;
+  status: string;
   message: string;
+  metrics: {
+    error_rate: number;
+    avg_latency: number;
+  };
+  rollback_triggered: boolean;
 }
 
-/**
- * Check if we should auto-rollback Railway traffic
- * Returns true if metrics exceed thresholds
- */
 export async function checkAutoRollback(): Promise<RollbackCheck> {
   try {
-    const supabase = getSupabaseClient();
-
-    // Get auto-rollback feature flag settings
-    const { data: flagData, error: flagError } = await supabase
+    const { data: flags, error: flagError } = await supabaseAdmin
       .from('feature_flags')
-      .select('auto_rollback_enabled, error_rate_threshold, latency_threshold_ms, monitoring_window_minutes')
-      .eq('flag_name', 'auto_rollback')
+      .select('*')
+      .eq('flag_name', 'api_railway_rollout')
       .single();
 
-    if (flagError || !flagData?.auto_rollback_enabled) {
+    if (flagError || !flags) {
+      logger.error('Failed to fetch feature flags:', flagError);
       return {
-        should_rollback: false,
-        trigger_reason: 'none',
-        message: 'Auto-rollback disabled',
+        status: 'error',
+        message: 'Failed to check feature flags',
+        metrics: { error_rate: 0, avg_latency: 0 },
+        rollback_triggered: false,
       };
     }
 
-    const thresholds = flagData as RollbackThresholds;
-
-    // Get Railway metrics
-    const metricsData = await getMetricsSummary(1);
-    const railwayMetrics = metricsData.railway;
-
-    if (railwayMetrics.length === 0) {
+    if (!flags.auto_rollback_enabled || flags.rollout_percentage === 0) {
       return {
-        should_rollback: false,
-        trigger_reason: 'none',
-        message: 'No Railway metrics available',
+        status: 'ok',
+        message: 'Auto-rollback not enabled or already at 0%',
+        metrics: { error_rate: 0, avg_latency: 0 },
+        rollback_triggered: false,
       };
     }
 
-    // Calculate average metrics
-    const avgErrorRate = railwayMetrics.reduce((sum, m) => sum + m.error_rate, 0) / railwayMetrics.length;
-    const avgLatency = railwayMetrics.reduce((sum, m) => sum + m.avg_latency, 0) / railwayMetrics.length;
+    const errorRate = await getErrorRate('railway', flags.monitoring_window_minutes);
 
-    // Check thresholds
-    if (avgErrorRate > thresholds.error_rate_threshold) {
-      return {
-        should_rollback: true,
-        trigger_reason: 'error_rate',
-        error_rate: avgErrorRate,
-        avg_latency: avgLatency,
-        message: `Error rate ${avgErrorRate.toFixed(2)}% exceeds threshold ${thresholds.error_rate_threshold}%`,
-      };
-    }
+    // Simulate avg_latency for now (would come from metrics in full implementation)
+    const { data: metrics, error: metricsError } = await supabaseAdmin
+      .from('api_metrics')
+      .select('response_time')
+      .eq('provider', 'railway')
+      .gte('timestamp', new Date(Date.now() - flags.monitoring_window_minutes * 60 * 1000).toISOString());
 
-    if (avgLatency > thresholds.latency_threshold_ms) {
+    const avgLatency = (metrics && metrics.length > 0)
+      ? metrics.reduce((sum: number, m: any) => sum + m.response_time, 0) / metrics.length
+      : 0;
+
+    const shouldRollback = errorRate > flags.error_rate_threshold || avgLatency > flags.latency_threshold_ms;
+
+    if (shouldRollback) {
+      logger.warn(`Auto-rollback triggered: error_rate=${errorRate}%, latency=${avgLatency}ms`);
       return {
-        should_rollback: true,
-        trigger_reason: 'latency',
-        error_rate: avgErrorRate,
-        avg_latency: avgLatency,
-        message: `Average latency ${avgLatency.toFixed(0)}ms exceeds threshold ${thresholds.latency_threshold_ms}ms`,
+        status: 'warning',
+        message: `Auto-rollback condition met: error_rate=${errorRate.toFixed(2)}%, latency=${avgLatency.toFixed(0)}ms`,
+        metrics: { error_rate: errorRate, avg_latency: avgLatency },
+        rollback_triggered: true,
       };
     }
 
     return {
-      should_rollback: false,
-      trigger_reason: 'none',
-      error_rate: avgErrorRate,
-      avg_latency: avgLatency,
-      message: 'Metrics within acceptable range',
+      status: 'ok',
+      message: 'All metrics within acceptable ranges',
+      metrics: { error_rate: errorRate, avg_latency: avgLatency },
+      rollback_triggered: false,
     };
   } catch (err) {
-    logger.error('Error checking auto-rollback:', err);
+    logger.error('Error in checkAutoRollback:', err);
     return {
-      should_rollback: false,
-      trigger_reason: 'none',
-      message: 'Error during rollback check',
+      status: 'error',
+      message: 'Error checking auto-rollback conditions',
+      metrics: { error_rate: 0, avg_latency: 0 },
+      rollback_triggered: false,
     };
   }
 }
 
-/**
- * Execute auto-rollback: set rolloutPercentage to 0
- */
 export async function executeAutoRollback(
-  reason: 'error_rate' | 'latency',
+  reason: string,
   errorRate?: number,
-  avgLatency?: number,
+  avgLatency?: number
 ): Promise<boolean> {
   try {
-    const supabase = getSupabaseClient();
-
-    // Get current rollout percentage
-    const { data: currentFlag } = await supabase
+    const { data: flags, error: flagError } = await supabaseAdmin
       .from('feature_flags')
       .select('rollout_percentage')
       .eq('flag_name', 'api_railway_rollout')
       .single();
 
-    if (!currentFlag || currentFlag.rollout_percentage === 0) {
-      logger.warn('Already at 0%, no rollback needed');
+    if (flagError || !flags) {
+      logger.error('Failed to fetch rollout flag:', flagError);
       return false;
     }
 
-    const previousPercentage = currentFlag.rollout_percentage;
+    const previousPercentage = flags.rollout_percentage;
 
-    // Update rollout percentage to 0
-    const { error: updateError } = await supabase
+    // Update feature_flags
+    const { error: updateError } = await supabaseAdmin
       .from('feature_flags')
-      .update({
-        rollout_percentage: 0,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ rollout_percentage: 0 })
       .eq('flag_name', 'api_railway_rollout');
 
     if (updateError) {
-      throw updateError;
+      logger.error('Failed to update rollout percentage:', updateError);
+      return false;
     }
 
-    // Log rollback event
-    await supabase.from('feature_rollback_events').insert({
-      flag_name: 'api_railway_rollout',
-      previous_rollout_percentage: previousPercentage,
-      new_rollout_percentage: 0,
-      trigger_reason: reason,
-      error_rate: errorRate,
-      avg_latency: avgLatency,
-    });
+    // Log to feature_rollback_events
+    const { error: logError } = await supabaseAdmin
+      .from('feature_rollback_events')
+      .insert([
+        {
+          flag_name: 'api_railway_rollout',
+          previous_rollout_percentage: previousPercentage,
+          new_rollout_percentage: 0,
+          trigger_reason: reason,
+          error_rate: errorRate,
+          avg_latency: avgLatency,
+        },
+      ]);
 
-    logger.warn(`🚨 AUTO-ROLLBACK TRIGGERED: ${reason}`, {
-      previous_percentage: previousPercentage,
-      error_rate: errorRate,
-      avg_latency: avgLatency,
-    });
+    if (logError) {
+      logger.error('Failed to log rollback event:', logError);
+      return false;
+    }
 
+    logger.warn(`Auto-rollback executed: ${previousPercentage}% → 0% (reason: ${reason})`);
     return true;
   } catch (err) {
-    logger.error('Error executing auto-rollback:', err);
+    logger.error('Error in executeAutoRollback:', err);
     return false;
   }
 }
 
-/**
- * Check and execute auto-rollback in one call
- */
 export async function checkAndExecuteAutoRollback(): Promise<boolean> {
   const check = await checkAutoRollback();
-
-  if (check.should_rollback && check.trigger_reason) {
-    return await executeAutoRollback(
-      check.trigger_reason,
-      check.error_rate,
-      check.avg_latency,
-    );
+  if (check.rollback_triggered) {
+    return executeAutoRollback('error_rate', check.metrics.error_rate, check.metrics.avg_latency);
   }
-
   return false;
 }
