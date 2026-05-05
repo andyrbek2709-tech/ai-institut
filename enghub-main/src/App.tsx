@@ -3,6 +3,7 @@ import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions, transmitta
 import { NavIcon, IconFolder, IconCheckSquare, IconActivity, IconArchive } from './components/icons';
 import { get, post, patch, del, SURL, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory, listTaskAttachmentsByTaskIds } from './api/supabase';
 import { apiPost, apiGet } from './api/http';
+import { publishTaskCreated, publishTaskSubmittedForReview, publishTaskApproved, publishTaskReturned, publishReviewCommentAdded } from './lib/events/publisher';
 import { getSupabaseAdminClient } from './api/supabaseClient';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput, useCountUp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
@@ -1063,6 +1064,10 @@ export default function App() {
       if (result && typeof result === 'object') {
         setAllTasks((prev) => [...prev, result]);
         loadAllTasks(activeProject.id); // Потом перезагрузи для синхронизации
+        // Publish task.created event to Redis
+        publishTaskCreated(String(result.id), String(activeProject.id), String(currentUserData?.id)).catch((err) => {
+          console.warn('[Events] Failed to publish task.created:', err);
+        });
       }
       addNotification(`Задача "${newTask.name}" создана${leadUser ? ` → ${leadUser.full_name}` : ''}`, 'success');
       if (newTask.assigned_to && String(newTask.assigned_to) !== String(currentUserData?.id)) {
@@ -1214,6 +1219,23 @@ export default function App() {
     await patch(`tasks?id=eq.${taskId}`, { status, ...(comment ? { comment } : {}) }, token!);
     const statusLabel = statusMap[status]?.label || status;
     addNotification(`Статус задачи изменён → "${statusLabel}"`, status === 'done' ? 'success' : 'info');
+    // Publish task status change event
+    if (activeProject && currentUserData) {
+      const metadata = comment ? { comment } : {};
+      if (status === 'review' || status === 'in_review') {
+        publishTaskSubmittedForReview(String(taskId), String(activeProject.id), String(currentUserData.id), metadata).catch((err) => {
+          console.warn('[Events] Failed to publish task.submitted_for_review:', err);
+        });
+      } else if (status === 'done' || status === 'approved') {
+        publishTaskApproved(String(taskId), String(activeProject.id), String(currentUserData.id), metadata).catch((err) => {
+          console.warn('[Events] Failed to publish task.approved:', err);
+        });
+      } else if (status === 'revision') {
+        publishTaskReturned(String(taskId), String(activeProject.id), String(currentUserData.id), 'lead', metadata).catch((err) => {
+          console.warn('[Events] Failed to publish task.returned:', err);
+        });
+      }
+    }
     // Создаём уведомление в БД для исполнителя задачи
     if (targetTask?.assigned_to && targetTask.assigned_to !== currentUserData?.id) {
       createNotification({
@@ -2736,6 +2758,7 @@ export default function App() {
                   token={token!}
                   submitReview={submitReview}
                   changeReviewStatus={changeReviewStatus}
+                  projectId={activeProject?.id ? String(activeProject.id) : undefined}
                 />
               )}
 

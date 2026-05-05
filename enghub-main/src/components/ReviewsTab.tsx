@@ -15,6 +15,7 @@ type Props = {
   token: string;
   submitReview: () => void;
   changeReviewStatus: (reviewId: string, status: string) => void;
+  projectId?: string;
 };
 
 export function ReviewsTab({
@@ -30,6 +31,7 @@ export function ReviewsTab({
   token,
   submitReview,
   changeReviewStatus,
+  projectId,
 }: Props) {
   return (
     <div className="screen-fade">
@@ -71,6 +73,7 @@ export function ReviewsTab({
                 )}
                 <ReviewThread
                   reviewId={r.id}
+                  projectId={projectId}
                   currentUser={currentUser}
                   token={token}
                   appUsers={appUsers}

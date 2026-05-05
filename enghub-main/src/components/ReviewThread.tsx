@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { listReviewComments, createReviewComment } from '../api/supabase';
 import { AvatarComp } from './ui';
+import { publishReviewCommentAdded } from '../lib/events/publisher';
 
 interface ReviewThreadProps {
   reviewId: number;
+  projectId?: string;
   currentUser: any;
   token: string;
   appUsers: any[];
@@ -53,6 +55,12 @@ export function ReviewThread({ reviewId, currentUser, token, appUsers, C }: Revi
       await createReviewComment(payload, token);
       setText('');
       setReplyTo(null);
+      // Publish review.comment_added event (task_id is empty as reviews are on drawings)
+      if (projectId && currentUser?.id) {
+        publishReviewCommentAdded('', projectId, String(currentUser.id), String(reviewId), { comment: text.trim() }).catch((err) => {
+          console.warn('[Events] Failed to publish review.comment_added:', err);
+        });
+      }
       await load();
     } catch {}
     setSaving(false);

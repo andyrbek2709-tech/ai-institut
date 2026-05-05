@@ -6,6 +6,7 @@ import {
   signProjectFileUrl,
   FILE_SIZE_LIMIT,
 } from '../api/supabase';
+import { publishFileAttached } from '../lib/events/publisher';
 
 const TASK_FILE_LIMIT_COUNT = 5;
 const TASK_FILE_LIMIT_TOTAL = 50 * 1024 * 1024; // суммарно
@@ -88,6 +89,10 @@ export function TaskAttachments({ C, projectId, taskId, currentUserId, token, ca
     try {
       await uploadTaskAttachment(projectId, taskId, file, currentUserId, token);
       await reload();
+      // Publish file.attached event to Redis
+      publishFileAttached(String(taskId), String(projectId), String(currentUserId), { fileName: file.name, fileSize: file.size }).catch((err) => {
+        console.warn('[Events] Failed to publish file.attached:', err);
+      });
     } catch (e: any) {
       setError(e?.message || 'Ошибка загрузки');
     } finally {
