@@ -1,0 +1,48 @@
+name: Deploy Orchestrator Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/orchestrator/**'
+      - '.github/workflows/deploy-orchestrator.yml'
+
+env:
+  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        working-directory: services/orchestrator
+        run: |
+          railway up \
+            --force \
+            --service orchestrator \
+            --environment production
+
+      - name: Verify deployment
+        run: |
+          echo "Orchestrator deployed to Railway"
+          echo "Monitor logs: railway logs orchestrator --environment production"
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Orchestrator deployment failed. Check GitHub Actions logs.'
+            })
