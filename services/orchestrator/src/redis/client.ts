@@ -18,10 +18,10 @@ export class RedisStreamClient {
 
       // Create consumer group if it doesn't exist
       try {
-        await this.redis.xgroupCreate(STREAM_NAME, CONSUMER_GROUP, '$', 'MKSTREAM');
+        await (this.redis as any).xgroup('CREATE', STREAM_NAME, CONSUMER_GROUP, '$', 'MKSTREAM');
         this.logger.info(`Consumer group '${CONSUMER_GROUP}' created`);
       } catch (error: any) {
-        if (error.message.includes('BUSYGROUP')) {
+        if (error.message && error.message.includes('BUSYGROUP')) {
           this.logger.info(`Consumer group '${CONSUMER_GROUP}' already exists`);
         } else {
           throw error;
@@ -51,19 +51,27 @@ export class RedisStreamClient {
         '>',
       );
 
-      if (!messages) {
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
         return [];
       }
 
-      return messages[0]?.[1]?.map((msg: any) => ({
-        id: msg[0],
-        data: msg[1].reduce((acc: Record<string, string>, val: string, i: number) => {
-          if (i % 2 === 0) {
-            acc[val] = msg[1][i + 1];
-          }
-          return acc;
-        }, {}),
-      })) || [];
+      const streamMessages = messages[0];
+      if (!Array.isArray(streamMessages) || streamMessages.length < 2) {
+        return [];
+      }
+
+      const msgArray = streamMessages[1];
+      return Array.isArray(msgArray)
+        ? msgArray.map((msg: any) => ({
+            id: msg[0] as string,
+            data: (msg[1] as string[]).reduce((acc: Record<string, string>, val: string, i: number) => {
+              if (i % 2 === 0) {
+                acc[val] = (msg[1] as string[])[i + 1];
+              }
+              return acc;
+            }, {}),
+          }))
+        : [];
     } catch (error) {
       this.logger.error(error, 'Failed to read messages from Redis Stream');
       throw error;
@@ -97,7 +105,7 @@ export class RedisStreamClient {
         'timestamp',
         event.timestamp.toString(),
       );
-      return messageId;
+      return messageId || '';
     } catch (error) {
       this.logger.error({ error, event }, 'Failed to publish event');
       throw error;
