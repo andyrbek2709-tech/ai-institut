@@ -29,10 +29,11 @@ export interface RolloutConfig {
 
 /**
  * Default rollout config
- * Start with 0% (all Vercel), gradually increase
+ * Production: 100% Railway (migration complete)
+ * Vercel kept as reserve but not used
  */
 export const DEFAULT_ROLLOUT_CONFIG: RolloutConfig = {
-  railwayPercentage: 0, // Stage 0: All Vercel (safe default)
+  railwayPercentage: 100, // Stage 100: All Railway (migration complete)
   enableMonitoring: true,
   verboseLogging: false,
 };
