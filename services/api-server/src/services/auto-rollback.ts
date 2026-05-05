@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '../config/supabase.js';
 import { getErrorRate } from './metrics.js';
 import { logger } from '../utils/logger.js';
+import { cache } from './cache.js';
 
 export interface RollbackCheck {
   status: string;
@@ -14,10 +15,19 @@ export interface RollbackCheck {
 
 export async function checkAutoRollback(): Promise<RollbackCheck> {
   try {
+    // Check cache first
+    const cacheKey = 'auto-rollback:check';
+    const cached = cache.get<RollbackCheck>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
+
+    // Fetch feature flags (only needed columns)
     const { data: flags, error: flagError } = await supabaseAdmin
       .from('feature_flags')
-      .select('*')
+      .select('auto_rollback_enabled,rollout_percentage,monitoring_window_minutes,error_rate_threshold,latency_threshold_ms')
       .eq('flag_name', 'api_railway_rollout')
       .single() as any;
 
@@ -32,22 +42,25 @@ export async function checkAutoRollback(): Promise<RollbackCheck> {
     }
 
     if (!flags.auto_rollback_enabled || flags.rollout_percentage === 0) {
-      return {
+      const result = {
         status: 'ok',
         message: 'Auto-rollback not enabled or already at 0%',
         metrics: { error_rate: 0, avg_latency: 0 },
         rollback_triggered: false,
       };
+      cache.set(cacheKey, result, 60);
+      return result;
     }
 
-    const errorRate = await getErrorRate('railway', flags.monitoring_window_minutes);
-
-    // Simulate avg_latency for now (would come from metrics in full implementation)
-    const { data: metrics, error: metricsError } = await supabaseAdmin
-      .from('api_metrics')
-      .select('response_time')
-      .eq('provider', 'railway')
-      .gte('timestamp', new Date(Date.now() - flags.monitoring_window_minutes * 60 * 1000).toISOString());
+    // Parallel: fetch error rate and metrics in parallel
+    const [errorRate, { data: metrics, error: metricsError }] = await Promise.all([
+      getErrorRate('railway', flags.monitoring_window_minutes),
+      supabaseAdmin
+        .from('api_metrics')
+        .select('response_time')
+        .eq('provider', 'railway')
+        .gte('timestamp', new Date(Date.now() - flags.monitoring_window_minutes * 60 * 1000).toISOString()),
+    ]);
 
     const avgLatency = (metrics && metrics.length > 0)
       ? metrics.reduce((sum: number, m: any) => sum + m.response_time, 0) / metrics.length
@@ -57,20 +70,24 @@ export async function checkAutoRollback(): Promise<RollbackCheck> {
 
     if (shouldRollback) {
       logger.warn(`Auto-rollback triggered: error_rate=${errorRate}%, latency=${avgLatency}ms`);
-      return {
+      const result = {
         status: 'warning',
         message: `Auto-rollback condition met: error_rate=${errorRate.toFixed(2)}%, latency=${avgLatency.toFixed(0)}ms`,
         metrics: { error_rate: errorRate, avg_latency: avgLatency },
         rollback_triggered: true,
       };
+      cache.set(cacheKey, result, 30);
+      return result;
     }
 
-    return {
+    const result = {
       status: 'ok',
       message: 'All metrics within acceptable ranges',
       metrics: { error_rate: errorRate, avg_latency: avgLatency },
       rollback_triggered: false,
     };
+    cache.set(cacheKey, result, 60);
+    return result;
   } catch (err) {
     logger.error('Error in checkAutoRollback:', err);
     return {
