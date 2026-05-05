@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../config/supabase.js';
+import { getSupabaseAdmin } from '../config/supabase.js';
 import { logger } from '../utils/logger.js';
 
 export interface MetricData {
@@ -34,9 +34,10 @@ export interface RolloutRecommendation {
 
 export async function recordMetric(data: MetricData): Promise<void> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { error } = await supabaseAdmin
       .from('api_metrics')
-      .insert([data]);
+      .insert([data]) as any;
 
     if (error) {
       logger.error('Failed to record metric:', error);
@@ -48,6 +49,7 @@ export async function recordMetric(data: MetricData): Promise<void> {
 
 export async function getMetricsSummary(hours: number = 1): Promise<MetricsSummary> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
       .from('api_metrics')
       .select('provider, endpoint, status_code, response_time, error')
@@ -124,6 +126,7 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
 
 export async function getProviderMetrics(provider: 'vercel' | 'railway'): Promise<any[]> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
       .from('api_metrics')
       .select('*')
@@ -144,6 +147,7 @@ export async function getProviderMetrics(provider: 'vercel' | 'railway'): Promis
 
 export async function getErrorRate(provider: 'vercel' | 'railway', minutes: number = 5): Promise<number> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
       .from('api_metrics')
       .select('status_code')

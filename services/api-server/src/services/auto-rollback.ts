@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../config/supabase.js';
+import { getSupabaseAdmin } from '../config/supabase.js';
 import { getErrorRate } from './metrics.js';
 import { logger } from '../utils/logger.js';
 
@@ -14,11 +14,12 @@ export interface RollbackCheck {
 
 export async function checkAutoRollback(): Promise<RollbackCheck> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: flags, error: flagError } = await supabaseAdmin
       .from('feature_flags')
       .select('*')
       .eq('flag_name', 'api_railway_rollout')
-      .single();
+      .single() as any;
 
     if (flagError || !flags) {
       logger.error('Failed to fetch feature flags:', flagError);
@@ -87,11 +88,12 @@ export async function executeAutoRollback(
   avgLatency?: number
 ): Promise<boolean> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: flags, error: flagError } = await supabaseAdmin
       .from('feature_flags')
       .select('rollout_percentage')
       .eq('flag_name', 'api_railway_rollout')
-      .single();
+      .single() as any;
 
     if (flagError || !flags) {
       logger.error('Failed to fetch rollout flag:', flagError);
