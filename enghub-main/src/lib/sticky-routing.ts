@@ -1,139 +1,111 @@
-/**
- * Sticky Routing
- * Ensures the same user gets the same provider throughout their session
- * Prevents user from switching between Vercel and Railway mid-session
- */
+import { supabase } from '@/config/supabase';
 
-import { supabase } from '../lib/supabase';
-import type { ApiProvider } from '../config/api';
+export interface StickySession {
+  session_id: string;
+  selected_provider: 'vercel' | 'railway';
+  hash_value: number;
+  expires_at: string;
+}
 
-const SESSION_STORAGE_KEY = 'STICKY_ROUTING_SESSION_ID';
-const PROVIDER_STORAGE_KEY = 'STICKY_ROUTING_PROVIDER';
-const COOKIE_NAME = 'sr_session_id';
-const COOKIE_MAX_AGE = 86400; // 24 hours
+let cachedProvider: 'vercel' | 'railway' | null = null;
+let cachedSessionId: string | null = null;
 
-/**
- * Generate a unique session ID
- */
 function generateSessionId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-/**
- * Get or create session ID
- * Persisted in sessionStorage (survives page refresh within same tab)
- */
-function getSessionId(): string {
-  if (typeof sessionStorage === 'undefined') {
-    return generateSessionId();
+function hashUserId(userId: string | undefined): number {
+  if (!userId) return Math.floor(Math.random() * 100);
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+    hash = hash & hash;
   }
-
-  let sessionId = sessionStorage.getItem(SESSION_STORAGE_KEY);
-  if (!sessionId) {
-    sessionId = generateSessionId();
-    sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
-  }
-
-  return sessionId;
+  return Math.abs(hash) % 100;
 }
 
-/**
- * Get or create sticky routing session in database
- * Returns the provider that was selected for this session
- */
 export async function getStickyRoutingProvider(
   userId: string | undefined,
-  selectedProvider: ApiProvider,
-  hashValue: number,
-): Promise<ApiProvider> {
-  // If no user ID, can't use sticky routing
-  if (!userId) {
-    return selectedProvider;
+  rolloutPercentage: number,
+): Promise<'vercel' | 'railway'> {
+  // Check sessionStorage first (fast path)
+  if (typeof window !== 'undefined') {
+    const cached = sessionStorage.getItem('sticky_provider');
+    if (cached) {
+      cachedProvider = cached as 'vercel' | 'railway';
+      return cachedProvider;
+    }
   }
 
-  try {
-    const sessionId = getSessionId();
+  const sessionId = cachedSessionId || generateSessionId();
+  cachedSessionId = sessionId;
 
-    // Check if session exists
-    const { data: existing, error: selectError } = await supabase
-      .from('sticky_routing_sessions')
-      .select('selected_provider')
-      .eq('session_id', sessionId)
-      .eq('user_id', userId)
-      .single();
+  // Determine provider based on hash and rollout percentage
+  const hashValue = hashUserId(userId);
+  const provider = hashValue < rolloutPercentage ? 'railway' : 'vercel';
 
-    if (selectError && selectError.code !== 'PGRST116') {
-      // PGRST116 = no rows returned (expected on first visit)
-      throw selectError;
-    }
+  // Save to sessionStorage for subsequent requests
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('sticky_provider', provider);
+  }
 
-    // Session exists, use stored provider
-    if (existing) {
-      return existing.selected_provider as ApiProvider;
-    }
-
-    // Create new sticky routing session
-    const { error: insertError } = await supabase.from('sticky_routing_sessions').insert({
-      session_id: sessionId,
-      user_id: userId,
-      selected_provider: selectedProvider,
-      hash_value: hashValue,
-      expires_at: new Date(Date.now() + COOKIE_MAX_AGE * 1000).toISOString(),
+  // Save to Supabase for persistence (async, non-blocking)
+  if (userId) {
+    saveStickySession(sessionId, userId, provider, hashValue).catch(err => {
+      console.error('Failed to save sticky session:', err);
     });
+  }
 
-    if (insertError) {
-      console.error('Failed to create sticky routing session:', insertError);
+  cachedProvider = provider;
+  return provider;
+}
+
+async function saveStickySession(
+  sessionId: string,
+  userId: string,
+  provider: 'vercel' | 'railway',
+  hashValue: number,
+): Promise<void> {
+  try {
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    const { error } = await supabase
+      .from('sticky_routing_sessions')
+      .insert({
+        session_id: sessionId,
+        user_id: userId,
+        selected_provider: provider,
+        hash_value: hashValue,
+        expires_at: expiresAt,
+      });
+
+    if (error) {
+      console.error('Error saving sticky session:', error);
     }
-
-    // Store in memory as well for quick access
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem(PROVIDER_STORAGE_KEY, selectedProvider);
-    }
-
-    return selectedProvider;
   } catch (err) {
-    console.error('Error in sticky routing:', err);
-    // Fallback to selected provider if sticky routing fails
-    return selectedProvider;
+    console.error('Error in saveStickySession:', err);
   }
 }
 
-/**
- * Get cached provider from session storage (no DB call)
- * Used for immediate response
- */
-export function getCachedStickyProvider(): ApiProvider | null {
-  if (typeof sessionStorage === 'undefined') {
-    return null;
+export function getCachedStickyProvider(): 'vercel' | 'railway' | null {
+  if (typeof window !== 'undefined') {
+    const cached = sessionStorage.getItem('sticky_provider');
+    if (cached) return cached as 'vercel' | 'railway';
   }
-
-  const cached = sessionStorage.getItem(PROVIDER_STORAGE_KEY);
-  if (cached === 'vercel' || cached === 'railway') {
-    return cached;
-  }
-
-  return null;
+  return cachedProvider;
 }
 
-/**
- * Clear sticky routing session (on logout)
- */
 export function clearStickyRouting(): void {
-  if (typeof sessionStorage !== 'undefined') {
-    sessionStorage.removeItem(SESSION_STORAGE_KEY);
-    sessionStorage.removeItem(PROVIDER_STORAGE_KEY);
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('sticky_provider');
   }
+  cachedProvider = null;
+  cachedSessionId = null;
 }
 
-/**
- * Force sticky provider for testing
- */
-export function forceStickyProvider(provider: ApiProvider | null): void {
-  if (typeof sessionStorage === 'undefined') return;
-
-  if (provider === null) {
-    sessionStorage.removeItem(PROVIDER_STORAGE_KEY);
-  } else {
-    sessionStorage.setItem(PROVIDER_STORAGE_KEY, provider);
+export function forceStickyProvider(provider: 'vercel' | 'railway'): void {
+  cachedProvider = provider;
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('sticky_provider', provider);
   }
 }
