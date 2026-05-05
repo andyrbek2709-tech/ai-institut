@@ -1,7 +1,9 @@
-// Тонкий HTTP-helper для вызовов /api/* серверных функций.
+// HTTP helper для вызовов /api/* и /rest/v1/* endpoints
+// Поддерживает маршрутизацию между Vercel и Railway API
 // Всегда подставляет user JWT из текущей Supabase-сессии.
 
 import { getSupabaseAnonClient } from './supabaseClient';
+import { getApiProvider, getApiBaseUrl } from '../config/api';
 
 async function getAccessToken(): Promise<string> {
   // Primary: токен сохранённый LoginPage через прямой fetch /auth/v1/token (см. signIn в supabase.ts).
@@ -24,6 +26,26 @@ async function getAccessToken(): Promise<string> {
   }
 }
 
+/**
+ * Resolve the full URL for a request
+ * - Vercel API: relative URLs (/api/tasks) stay relative
+ * - Railway API: prepend base URL for all requests
+ */
+function resolveUrl(path: string): string {
+  const provider = getApiProvider();
+
+  if (provider === 'railway') {
+    const baseUrl = getApiBaseUrl();
+    if (path.startsWith('http')) {
+      return path; // Absolute URL, use as-is
+    }
+    return `${baseUrl}${path}`;
+  }
+
+  // Vercel: use relative URLs
+  return path;
+}
+
 export async function apiFetch<T = any>(path: string, opts: RequestInit = {}): Promise<T> {
   const token = await getAccessToken();
   const headers = new Headers(opts.headers || {});
@@ -31,7 +53,10 @@ export async function apiFetch<T = any>(path: string, opts: RequestInit = {}): P
   if (!headers.has('Content-Type') && opts.body && !(opts.body instanceof FormData) && typeof opts.body === 'string') {
     headers.set('Content-Type', 'application/json');
   }
-  const r = await fetch(path, { ...opts, headers });
+
+  const url = resolveUrl(path);
+  const r = await fetch(url, { ...opts, headers });
+
   if (!r.ok) {
     let msg = `API ${r.status} ${r.statusText}`;
     try {

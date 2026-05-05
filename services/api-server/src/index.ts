@@ -6,6 +6,8 @@ import { corsMiddleware } from './middleware/cors.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { logger } from './utils/logger.js';
 import publishEventRouter from './routes/publish-event.js';
+import proxyRouter from './routes/proxy.js';
+import tasksRouter from './routes/tasks.js';
 
 const app = express();
 
@@ -49,6 +51,8 @@ app.get('/ready', async (req: Request, res: Response) => {
 
 // Routes
 app.use('/api', publishEventRouter);
+app.use('/api', proxyRouter);
+app.use('/api', tasksRouter);
 
 // 404 handler
 app.use(notFoundHandler);
