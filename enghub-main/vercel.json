@@ -19,30 +19,10 @@
       ]
     }
   ],
-  "functions": {
-    "api/spec-export.js": {
-      "includeFiles": "{api/template.xlsx,node_modules/exceljs/**}"
-    },
-    "api/cable-calc/parse.py": {
-      "maxDuration": 60
-    },
-    "api/cable-calc/calc.py": {
-      "maxDuration": 60
-    },
-    "api/cable-calc/reverse.py": {
-      "maxDuration": 60
-    }
-  },
   "rewrites": [
     {
-      "source": "/((?!api/).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
-    }
-  ],
-  "crons": [
-    {
-      "path": "/api/weekly-digest",
-      "schedule": "0 8 * * 1"
     }
   ]
 }
