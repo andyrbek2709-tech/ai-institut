@@ -3,11 +3,13 @@ import pinoHttp from 'pino-http';
 import { env } from './config/environment.js';
 import { getRedisClient, closeRedis } from './config/redis.js';
 import { corsMiddleware } from './middleware/cors.js';
+import { metricsMiddleware } from './middleware/metrics.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { logger } from './utils/logger.js';
 import publishEventRouter from './routes/publish-event.js';
 import proxyRouter from './routes/proxy.js';
 import tasksRouter from './routes/tasks.js';
+import metricsRouter from './routes/metrics.js';
 
 const app = express();
 
@@ -24,6 +26,7 @@ app.use(pinoHttp({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(corsMiddleware);
+app.use(metricsMiddleware());
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
@@ -53,6 +56,7 @@ app.get('/ready', async (req: Request, res: Response) => {
 app.use('/api', publishEventRouter);
 app.use('/api', proxyRouter);
 app.use('/api', tasksRouter);
+app.use('/api', metricsRouter);
 
 // 404 handler
 app.use(notFoundHandler);
