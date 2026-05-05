@@ -40,7 +40,7 @@ export async function proxyRequest<T = any>(
     const fetchOptions: RequestInit = {
       method,
       headers: { ...defaultHeaders(token), ...headers },
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(10000),
     };
 
     // Add body for non-GET requests
@@ -135,12 +135,18 @@ export async function listRecords<T>(
     order?: string;
     limit?: number;
     token?: string;
+    select?: string;
   }
 ): Promise<T[]> {
-  const { filters = {}, order = 'id.desc', limit = 1000, token } = options || {};
+  const { filters = {}, order = 'id.desc', limit = 500, token, select } = options || {};
 
   // Build query string
   const params = new URLSearchParams();
+
+  // Select specific columns to reduce data transfer
+  if (select) {
+    params.append('select', select);
+  }
 
   Object.entries(filters).forEach(([key, value]) => {
     params.append(key, value);

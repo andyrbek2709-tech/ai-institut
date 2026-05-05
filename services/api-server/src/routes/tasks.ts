@@ -3,6 +3,7 @@ import { logger } from '../utils/logger.js';
 import { listRecords, createRecord, updateRecord, deleteRecord } from '../services/supabase-proxy.js';
 import { ApiError } from '../middleware/errorHandler.js';
 import { getRedisClient } from '../config/redis.js';
+import { cache } from '../services/cache.js';
 
 const router = Router();
 
@@ -17,7 +18,7 @@ interface TaskRecord {
 
 /**
  * GET /api/tasks/:projectId
- * List all tasks for a project
+ * List all tasks for a project (cached 30s)
  */
 router.get('/tasks/:projectId', async (req: Request, res: Response) => {
   try {
@@ -28,12 +29,22 @@ router.get('/tasks/:projectId', async (req: Request, res: Response) => {
       throw new ApiError(400, 'projectId is required');
     }
 
+    // Check cache
+    const cacheKey = `tasks:${projectId}`;
+    const cached = cache.get<TaskRecord[]>(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const tasks = await listRecords<TaskRecord>('tasks', {
       filters: { 'project_id': `eq.${projectId}` },
       order: 'id',
+      limit: 500,
       token,
+      select: 'id,project_id,name,status,priority,assigned_to,created_at,deadline,rework_count',
     });
 
+    cache.set(cacheKey, tasks, 30);
     res.json(tasks);
   } catch (err) {
     if (err instanceof ApiError) throw err;

@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '../config/supabase.js';
 import { logger } from '../utils/logger.js';
+import { cache } from './cache.js';
 
 export interface MetricData {
   timestamp: string;
@@ -50,6 +51,12 @@ export async function recordMetric(data: MetricData): Promise<void> {
 
 export async function getMetricsSummary(hours: number = 1): Promise<MetricsSummary> {
   try {
+    const cacheKey = `metrics:summary:${hours}h`;
+    const cached = cache.get<MetricsSummary>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
       .from('api_metrics')
@@ -109,7 +116,7 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
       ? allMetrics.reduce((sum: number, m: any) => sum + m.response_time, 0) / allMetrics.length
       : 0;
 
-    return {
+    const result = {
       vercel: vercelMetrics,
       railway: railwayMetrics,
       aggregated: {
@@ -119,6 +126,9 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
       },
       timestamp: new Date().toISOString(),
     };
+
+    cache.set(`metrics:summary:${hours}h`, result, 30);
+    return result;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error('Error in getMetricsSummary: ' + msg);
@@ -128,10 +138,16 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
 
 export async function getProviderMetrics(provider: 'vercel' | 'railway'): Promise<any[]> {
   try {
+    const cacheKey = `metrics:provider:${provider}`;
+    const cached = cache.get<any[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
       .from('api_metrics')
-      .select('*')
+      .select('timestamp, endpoint, status_code, response_time, error')
       .eq('provider', provider)
       .gte('timestamp', new Date(Date.now() - 60 * 60 * 1000).toISOString());
 
@@ -140,7 +156,9 @@ export async function getProviderMetrics(provider: 'vercel' | 'railway'): Promis
       return [];
     }
 
-    return data || [];
+    const result = data || [];
+    cache.set(cacheKey, result, 30);
+    return result;
   } catch (err) {
     logger.error(`Error in getProviderMetrics:`, err);
     return [];
@@ -149,6 +167,12 @@ export async function getProviderMetrics(provider: 'vercel' | 'railway'): Promis
 
 export async function getErrorRate(provider: 'vercel' | 'railway', minutes: number = 5): Promise<number> {
   try {
+    const cacheKey = `metrics:error-rate:${provider}:${minutes}m`;
+    const cached = cache.get<number>(cacheKey);
+    if (cached !== null) {
+      return cached;
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
       .from('api_metrics')
@@ -165,7 +189,9 @@ export async function getErrorRate(provider: 'vercel' | 'railway', minutes: numb
     if (metrics.length === 0) return 0;
 
     const errorCount = metrics.filter((m: any) => m.status_code >= 400).length;
-    return (errorCount / metrics.length) * 100;
+    const rate = (errorCount / metrics.length) * 100;
+    cache.set(cacheKey, rate, 30);
+    return rate;
   } catch (err) {
     logger.error('Error in getErrorRate:', err);
     return 0;
