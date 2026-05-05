@@ -104,6 +104,31 @@ export function extractServicesQueueFromText(text) {
   return out.length >= 2 ? out : [];
 }
 
+/**
+ * Ложный мультисервис: «вводная фраза, баннер» по запятой → ["другое","баннер"].
+ * Если фактический тип диалога уже совпадает с единственной конкретной услугой в очереди —
+ * сбрасываем очередь, чтобы «да» ушло в обычный finalize одной заявки.
+ *
+ * @param {{ servicesQueue: string[], idx: number, perService: object }} intake
+ * @param {(string|null|undefined)[]} primaryCandidates — curCode, entry.serviceCode, merged.type, …
+ * @returns {boolean} true если очередь сброшена
+ */
+export function tryCollapseSpuriousOtherPlusServiceQueue(intake, primaryCandidates) {
+  const q = intake?.servicesQueue;
+  if (!Array.isArray(q) || q.length !== 2) return false;
+  if (!q.includes("другое")) return false;
+  const concrete = q.find((c) => c !== "другое" && SERVICE_TYPES.includes(c));
+  if (!concrete || concrete === "другое") return false;
+  const prim = (primaryCandidates || [])
+    .map((c) => normalizeServiceType(c) || (c && String(c).trim()) || null)
+    .find((c) => c && c !== "другое" && SERVICE_TYPES.includes(c));
+  if (!prim || prim !== concrete) return false;
+  intake.servicesQueue = [];
+  intake.idx = 0;
+  intake.perService = {};
+  return true;
+}
+
 /** Сбрасываем поля, специфичные для предыдущей позиции — иначе объём/размер «прилипают» к следующей услуге. */
 const SERVICE_SLOT_RESET_KEYS = [
   "size",

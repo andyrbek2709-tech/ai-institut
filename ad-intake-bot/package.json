@@ -10,7 +10,10 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "build:telegram-logo": "node scripts/build-telegram-logo.mjs"
+    "build:telegram-logo": "node scripts/build-telegram-logo.mjs",
+    "dump:last-conv": "node scripts/dump-last-conversation.mjs",
+    "dump:transcript": "node scripts/export-conversation-by-lead.mjs",
+    "railway:sync-supabase": "node scripts/sync-supabase-to-railway.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",
@@ -22,6 +25,7 @@
     "telegraf": "^4.16.3"
   },
   "devDependencies": {
-    "sharp": "^0.34.1"
+    "sharp": "^0.34.1",
+    "supabase": "^2.98.0"
   }
 }

@@ -7,13 +7,26 @@ import { normalizeToSchema } from "../bot/orderSchema.js";
 export { mergeData } from "../bot/orderSchema.js";
 import { ASSIST_SYSTEM, buildAssistUserMessage } from "../bot/managerAssistPrompt.js";
 import { PROPOSAL_SYSTEM, buildProposalUserMessage } from "../bot/proposalPrompt.js";
-import { TEACH_EXTRACT_SYSTEM, buildTeachExtractUserMessage } from "../bot/teachExtractPrompt.js";
+import {
+  TEACH_EXTRACT_SYSTEM,
+  buildTeachExtractUserMessage,
+  KNOWLEDGE_EXTRACT_SYSTEM,
+  buildKnowledgeExtractUserMessage,
+} from "../bot/teachExtractPrompt.js";
+import { supabase } from "./supabase.js";
 
 const openai = new OpenAI({
   apiKey: process.env.LLM_API_KEY || process.env.OPENAI_API_KEY,
   baseURL: process.env.LLM_BASE_URL || "https://api.deepseek.com",
 });
 const LLM_MODEL = process.env.LLM_MODEL || "deepseek-v4-flash";
+
+/** Embeddings только через api.openai.com (не DeepSeek baseURL). */
+const openaiEmbeddings = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || process.env.LLM_API_KEY,
+});
+
+const EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small";
 
 const TOOLS = [{ type: "function", function: SAVE_ORDER_FUNCTION }];
 
@@ -600,49 +613,184 @@ export async function generateProposal({ orderData = {}, history = [], lang = "r
 }
 
 
+const VALID_KNOWLEDGE_TYPES = new Set(["price", "material", "rule", "service", "tip"]);
+
 /**
- * Извлечь структурированную запись knowledge_base из заметки менеджера.
- * Возвращает {category, name, price, description, tags} либо null при ошибке.
- *
- * @param {string} text  raw text (или транскрипт голосового)
+ * Embedding для RAG (OpenAI text-embedding-3-small, 1536 измерений).
+ * @param {string} text
+ * @returns {Promise<number[]>}
  */
-export async function extractTeachStructured(text) {
-  if (!text || !text.trim()) return null;
+export async function createEmbedding(text) {
+  const input = String(text || "").trim().slice(0, 8000);
+  if (!input) throw new Error("createEmbedding: empty text");
+  const resp = await openaiEmbeddings.embeddings.create({
+    model: EMBEDDING_MODEL,
+    input,
+    dimensions: 1536,
+  });
+  const emb = resp.data?.[0]?.embedding;
+  if (!Array.isArray(emb) || emb.length !== 1536) {
+    throw new Error(`createEmbedding: bad vector length ${emb?.length}`);
+  }
+  return emb;
+}
+
+/**
+ * Извлечь структуру знания для knowledge_items.
+ * @returns {Promise<{type: string, title: string, clean_text: string, structured_data: object}|null>}
+ */
+export async function extractKnowledge(text) {
+  if (!text || !String(text).trim()) return null;
   try {
     const response = await openai.chat.completions.create({
       model: LLM_MODEL,
       messages: [
-        { role: "system", content: TEACH_EXTRACT_SYSTEM },
-        { role: "user", content: buildTeachExtractUserMessage(text) },
+        { role: "system", content: KNOWLEDGE_EXTRACT_SYSTEM },
+        { role: "user", content: buildKnowledgeExtractUserMessage(text) },
       ],
       response_format: { type: "json_object" },
       temperature: 0.2,
-      max_tokens: 500,
+      max_tokens: 900,
     });
     const raw = response.choices?.[0]?.message?.content?.trim();
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-
-    // Валидация / нормализация на уровне сервиса knowledgeBase, здесь
-    // только базовая защита от мусора.
-    const category = String(parsed.category || "").toLowerCase().trim();
-    const name = String(parsed.name || "").trim();
-    const description = String(parsed.description || "").trim();
-    let price = parsed.price;
-    if (price === "" || price === undefined) price = null;
-    if (price !== null && !Number.isFinite(Number(price))) price = null;
-    const tags = Array.isArray(parsed.tags) ? parsed.tags.map((t) => String(t)).filter(Boolean) : [];
-
-    if (!name && !description) return null;
+    let type = String(parsed.type || "").toLowerCase().trim();
+    if (!VALID_KNOWLEDGE_TYPES.has(type)) type = "tip";
+    const title = String(parsed.title || "").trim().slice(0, 200);
+    const clean_text = String(parsed.clean_text || "").trim().slice(0, 4000);
+    const structured_data =
+      parsed.structured_data && typeof parsed.structured_data === "object" && !Array.isArray(parsed.structured_data)
+        ? parsed.structured_data
+        : {};
+    if (!title && !clean_text) return null;
     return {
-      category: category || "tip",
-      name: name || description.slice(0, 40),
-      price: price === null ? null : Number(price),
-      description: description || name,
-      tags,
+      type,
+      title: title || clean_text.slice(0, 80),
+      clean_text: clean_text || title,
+      structured_data,
     };
   } catch (err) {
-    console.error("extractTeachStructured failed:", err.message);
+    console.error("extractKnowledge failed:", err.message);
     return null;
   }
+}
+
+/**
+ * Поиск top-N по embedding (Supabase RPC match_knowledge_items).
+ * @param {string} query
+ * @param {number} limit
+ * @returns {Promise<object[]>} строки knowledge_items
+ */
+export async function matchKnowledgeItemsByEmbedding(query, limit = 3) {
+  const q = String(query || "").trim();
+  if (!q) return [];
+  try {
+    const emb = await createEmbedding(q);
+    const { data, error } = await supabase.rpc("match_knowledge_items", {
+      query_embedding: emb,
+      match_count: limit,
+    });
+    if (error) {
+      console.error("matchKnowledgeItemsByEmbedding rpc:", error.message);
+      return [];
+    }
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error("matchKnowledgeItemsByEmbedding failed:", err.message);
+    return [];
+  }
+}
+
+/**
+ * Детерминированные подсказки по structured_data (без LLM).
+ * @param {Array<{ type?: string, title?: string, structured_data?: object, content?: string }>} rows
+ * @returns {string|null}
+ */
+export function calculateFromKnowledge(rows) {
+  if (!Array.isArray(rows) || !rows.length) return null;
+  const lines = [];
+  for (const r of rows) {
+    const sd = r.structured_data && typeof r.structured_data === "object" ? r.structured_data : {};
+    const title = String(r.title || "").trim() || "запись";
+    if (r.type === "price" && sd.price != null && Number.isFinite(Number(sd.price))) {
+      const u = sd.unit ? ` ${sd.unit}` : " ₸";
+      lines.push(`${title}: ${Number(sd.price).toLocaleString("ru-RU")}${u}`);
+    }
+    if (sd.formula && typeof sd.formula === "string") {
+      lines.push(`${title}: формула «${sd.formula}»`);
+    }
+    if (sd.unit_price != null && sd.quantity != null) {
+      const a = Number(sd.unit_price);
+      const b = Number(sd.quantity);
+      if (Number.isFinite(a) && Number.isFinite(b)) {
+        lines.push(`${title}: ${a} × ${b} = ${(a * b).toLocaleString("ru-RU")} (из structured_data)`);
+      }
+    }
+  }
+  const out = lines.filter(Boolean);
+  return out.length ? out.join("\n") : null;
+}
+
+/**
+ * Режим «рассчитай» для менеджера: только по найденным записям, без выдумывания цен.
+ */
+export async function summarizeManagerCalculation(queryText, items, lang = "ru") {
+  if (!items?.length) {
+    return lang === "kk"
+      ? "Білім базасынан сәйкес жазба табылмады."
+      : "В базе знаний не нашлось релевантных записей для расчёта.";
+  }
+  const deterministic = calculateFromKnowledge(items);
+  const compact = items.map((i) => ({
+    type: i.type,
+    title: i.title,
+    content: String(i.content || "").slice(0, 400),
+    structured_data: i.structured_data,
+  }));
+  const sys =
+    "Менеджер просит расчёт. Ниже — только извлечённые из базы знаний факты (JSON). " +
+    "Ответь кратко на русском: используй ТОЛЬКО эти числа и формулы; если данных не хватает — так и напиши. " +
+    "Не придумывай цены и курсы. Если есть блок «Детерминированно» — согласуй с ним.";
+  const user = `Запрос менеджера: ${queryText}\n\nДетерминированно (если есть):\n${deterministic || "(нет)"}\n\nЗаписи:\n${JSON.stringify(compact, null, 0)}`;
+  try {
+    const response = await openai.chat.completions.create({
+      model: LLM_MODEL,
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: user },
+      ],
+      temperature: 0.2,
+      max_tokens: 500,
+    });
+    return normalizeAssistantTextContent(response.choices?.[0]?.message) || deterministic;
+  } catch (err) {
+    console.error("summarizeManagerCalculation:", err.message);
+    return deterministic || "Не удалось сформулировать расчёт.";
+  }
+}
+
+/**
+ * Извлечь структурированную запись (совместимость со старым вызовом addKnowledge в handlers).
+ * Внутри использует extractKnowledge.
+ *
+ * @param {string} text  raw text (или транскрипт голосового)
+ */
+export async function extractTeachStructured(text) {
+  const k = await extractKnowledge(text);
+  if (!k) return null;
+  const price = k.structured_data?.price;
+  const tags = Array.isArray(k.structured_data?.tags)
+    ? k.structured_data.tags.map((t) => String(t)).filter(Boolean)
+    : [];
+  let p = price === "" || price === undefined ? null : Number(price);
+  if (!Number.isFinite(p)) p = null;
+  return {
+    category: k.type,
+    name: k.title,
+    price: p,
+    description: k.clean_text,
+    tags,
+    structured_data: k.structured_data,
+  };
 }

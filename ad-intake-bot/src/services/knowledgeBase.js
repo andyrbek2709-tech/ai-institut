@@ -1,15 +1,15 @@
-// Сервис knowledge_base: CRUD + поиск.
-// Используется командой /teach (запись) и командой /knowledge (просмотр/удаление).
-// На следующем шаге searchKnowledge() будет дёргаться из processUserMessage,
-// чтобы подмешивать релевантные записи в системный промт ответа клиенту.
+// Сервис knowledge_items: CRUD + RAG (embedding + FTS fallback).
+// Команды /teach (запись) и /knowledge (просмотр/удаление).
+// Поиск: vector RPC через openai.matchKnowledgeItemsByEmbedding, затем search_doc.
 
 import { supabase } from "./supabase.js";
+import { matchKnowledgeItemsByEmbedding } from "./openai.js";
 
-const VALID_CATEGORIES = new Set(["material", "service", "rule", "price", "tip"]);
+const VALID_TYPES = new Set(["material", "service", "rule", "price", "tip"]);
 
-function normalizeCategory(cat) {
+function normalizeType(cat) {
   const c = String(cat || "").toLowerCase().trim();
-  return VALID_CATEGORIES.has(c) ? c : "tip";
+  return VALID_TYPES.has(c) ? c : "tip";
 }
 
 function normalizeTags(tags) {
@@ -17,7 +17,7 @@ function normalizeTags(tags) {
   return tags
     .map((t) => String(t || "").trim().toLowerCase())
     .filter(Boolean)
-    .slice(0, 5);
+    .slice(0, 8);
 }
 
 function normalizePrice(price) {
@@ -27,114 +27,118 @@ function normalizePrice(price) {
 }
 
 /**
- * Добавить запись.
+ * Добавить запись в knowledge_items.
  * @param {object} args
- * @param {string} args.category   material|service|rule|price|tip
- * @param {string} args.name
- * @param {number|null} args.price
- * @param {string} args.description
- * @param {string[]} args.tags
+ * @param {string} args.category   material|service|rule|price|tip → type
+ * @param {string} args.name       → title
+ * @param {number|null} args.price → в structured_data если не передано structured_data
+ * @param {string} args.description → content
+ * @param {string[]} args.tags     → в structured_data.tags
+ * @param {object} [args.structured_data]  полный JSON от extractKnowledge
+ * @param {number[]|null} [args.embedding] вектор 1536 или null
+ * @param {string} [args.source]   text|voice|file
  * @param {number|string|null} args.createdByChatId
  */
-export async function addKnowledge({ category, name, price = null, description, tags = [], createdByChatId = null }) {
+export async function addKnowledge({
+  category,
+  name,
+  price = null,
+  description,
+  tags = [],
+  structured_data: structuredIn = null,
+  embedding = null,
+  source = "text",
+  createdByChatId = null,
+}) {
+  const type = normalizeType(category);
+  const title = String(name || "").slice(0, 200).trim() || "(без названия)";
+  const content = String(description || "").slice(0, 8000).trim() || "(пусто)";
+  let structured_data =
+    structuredIn && typeof structuredIn === "object" && !Array.isArray(structuredIn)
+      ? { ...structuredIn }
+      : {};
+  const p = normalizePrice(price);
+  if (p !== null && structured_data.price == null) structured_data.price = p;
+  const nt = normalizeTags(tags);
+  if (nt.length && !Array.isArray(structured_data.tags)) structured_data.tags = nt;
+
   const row = {
-    category: normalizeCategory(category),
-    name: String(name || "").slice(0, 200).trim() || "(без названия)",
-    price: normalizePrice(price),
-    description: String(description || "").slice(0, 4000).trim() || "(пусто)",
-    tags: normalizeTags(tags),
+    type,
+    title,
+    content,
+    structured_data,
+    embedding,
+    source: ["text", "voice", "file"].includes(source) ? source : "text",
     created_by_chat_id: createdByChatId ? Number(createdByChatId) : null,
   };
 
-  const { data, error } = await supabase
-    .from("knowledge_base")
-    .insert(row)
-    .select()
-    .single();
-  if (error) throw new Error(`KB insert failed: ${error.message}`);
+  const { data, error } = await supabase.from("knowledge_items").insert(row).select().single();
+  if (error) throw new Error(`knowledge_items insert failed: ${error.message}`);
   return data;
 }
 
-/**
- * Список записей (по умолчанию — последние 20).
- * @param {object} args
- * @param {string=} args.category
- * @param {number=} args.limit
- */
 export async function listKnowledge({ category = null, limit = 20 } = {}) {
-  let q = supabase
-    .from("knowledge_base")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (category && VALID_CATEGORIES.has(category)) q = q.eq("category", category);
+  let q = supabase.from("knowledge_items").select("*").order("created_at", { ascending: false }).limit(limit);
+  if (category && VALID_TYPES.has(category)) q = q.eq("type", category);
 
   const { data, error } = await q;
-  if (error) throw new Error(`KB list failed: ${error.message}`);
+  if (error) throw new Error(`knowledge_items list failed: ${error.message}`);
   return data || [];
 }
 
-/**
- * Получить одну запись.
- */
 export async function getKnowledgeById(id) {
   const { data, error } = await supabase
-    .from("knowledge_base")
+    .from("knowledge_items")
     .select("*")
     .eq("id", Number(id))
     .maybeSingle();
-  if (error) throw new Error(`KB get failed: ${error.message}`);
+  if (error) throw new Error(`knowledge_items get failed: ${error.message}`);
   return data || null;
 }
 
-/**
- * Удалить запись (полное удаление, не soft-delete).
- */
 export async function deleteKnowledge(id) {
-  const { error } = await supabase
-    .from("knowledge_base")
-    .delete()
-    .eq("id", Number(id));
-  if (error) throw new Error(`KB delete failed: ${error.message}`);
+  const { error } = await supabase.from("knowledge_items").delete().eq("id", Number(id));
+  if (error) throw new Error(`knowledge_items delete failed: ${error.message}`);
 }
 
 /**
- * Поиск по полнотекстовому индексу + по тегам.
- * Используется на следующем шаге для подмешивания знаний в ответ клиенту.
- *
- * @param {string} query
- * @param {number} limit
+ * RAG: сначала top-N по embedding, иначе полнотекст по search_doc.
  */
 export async function searchKnowledge(query, limit = 5) {
   const q = String(query || "").trim();
   if (!q) return [];
 
-  // 1) Полнотекстовый поиск по name+description.
-  // websearch_to_tsquery терпим к произвольному вводу клиента.
+  try {
+    const vec = await matchKnowledgeItemsByEmbedding(q, limit);
+    if (vec.length) return vec;
+  } catch (err) {
+    console.warn("searchKnowledge vector:", err.message);
+  }
+
   const { data: ftData, error: ftErr } = await supabase
-    .from("knowledge_base")
+    .from("knowledge_items")
     .select("*")
-    .textSearch("kb_search_text", q, { type: "websearch", config: "russian" })
+    .textSearch("search_doc", q, { type: "websearch", config: "russian" })
     .limit(limit);
 
   if (!ftErr && ftData && ftData.length) return ftData;
 
-  // 2) Фолбэк: по тегам (overlap) — если введены 1-2 слова.
   const tokens = q
     .toLowerCase()
     .split(/[\s,;.!?()«»"]+/)
     .map((t) => t.trim())
     .filter((t) => t.length >= 3)
-    .slice(0, 5);
+    .slice(0, 3);
   if (!tokens.length) return [];
 
-  const { data: tagData, error: tagErr } = await supabase
-    .from("knowledge_base")
+  const t0 = tokens[0].replace(/%/g, "");
+  const { data: likeData, error: likeErr } = await supabase
+    .from("knowledge_items")
     .select("*")
-    .overlaps("tags", tokens)
+    .or(`title.ilike.%${t0}%,content.ilike.%${t0}%`)
     .limit(limit);
-  if (tagErr) return [];
-  return tagData || [];
+  if (!likeErr && likeData?.length) return likeData;
+  return [];
 }
 
 export const KB_CATEGORIES = ["material", "service", "rule", "price", "tip"];
