@@ -358,26 +358,53 @@ table.btab tr:hover td{background:rgba(64,128,240,.08)}
 /* ============================================================
    SINGLE-LINE IEC 60364 CALCULATOR (existing logic)
    ============================================================ */
-const CD={2.5:{E:32,D:28,R:9.370,X:0.112},4:{E:42,D:36,R:5.866,X:0.098},6:{E:54,D:44,R:3.966,X:0.090},10:{E:75,D:58,R:2.344,X:0.080},16:{E:100,D:75,R:1.478,X:0.079},25:{E:127,D:96,R:0.935,X:0.081},35:{E:158,D:115,R:0.675,X:0.071},50:{E:192,D:135,R:0.497,X:0.079},70:{E:246,D:167,R:0.346,X:0.077},95:{E:298,D:197,R:0.248,X:0.073},120:{E:346,D:223,R:0.196,X:0.075},150:{E:399,D:251,R:0.162,X:0.073},185:{E:456,D:281,R:0.127,X:0.081}};
+// Cu (медь) — допустимые токи (Метод E/D) и сопротивления при рабочей температуре
+const CD_Cu={2.5:{E:32,D:28,R:9.370,X:0.112},4:{E:42,D:36,R:5.866,X:0.098},6:{E:54,D:44,R:3.966,X:0.090},10:{E:75,D:58,R:2.344,X:0.080},16:{E:100,D:75,R:1.478,X:0.079},25:{E:127,D:96,R:0.935,X:0.081},35:{E:158,D:115,R:0.675,X:0.071},50:{E:192,D:135,R:0.497,X:0.079},70:{E:246,D:167,R:0.346,X:0.077},95:{E:298,D:197,R:0.248,X:0.073},120:{E:346,D:223,R:0.196,X:0.075},150:{E:399,D:251,R:0.162,X:0.073},185:{E:456,D:281,R:0.127,X:0.081}};
+// Al (алюминий) — IEC 60364-5-52 (R ≈ 1.6×Cu, I ≈ 0.78×Cu)
+const CD_Al={2.5:{E:25,D:22,R:15.10,X:0.112},4:{E:32,D:28,R:9.410,X:0.098},6:{E:42,D:35,R:6.340,X:0.090},10:{E:58,D:47,R:3.750,X:0.080},16:{E:77,D:60,R:2.360,X:0.079},25:{E:98,D:76,R:1.500,X:0.081},35:{E:122,D:92,R:1.080,X:0.071},50:{E:148,D:110,R:0.795,X:0.079},70:{E:189,D:138,R:0.554,X:0.077},95:{E:228,D:167,R:0.397,X:0.073},120:{E:265,D:191,R:0.314,X:0.075},150:{E:305,D:215,R:0.259,X:0.073},185:{E:347,D:244,R:0.203,X:0.081}};
 const SECS=[2.5,4,6,10,16,25,35,50,70,95,120,150,185];
 const C1={30:1.00,35:0.96,40:0.91,45:0.87,50:0.82,55:0.76,60:0.71};
-function c2(lay,cpl){if(lay===1)return[1.00,0.88,0.82,0.77,0.75,0.73,0.72,0.71,0.70][Math.min(cpl-1,8)];if(lay===2)return cpl<=3?0.87:cpl<=6?0.77:0.72;return cpl<=3?0.82:cpl<=6?0.73:0.70}
+// k для S_min при КЗ (IEC 60364-4-43, табл. 43.A)
+const K_TABLE={Cu_XLPE:143,Cu_PVC:115,Al_XLPE:94,Al_PVC:76};
+// c2 — поправка на групповую прокладку. Для метода D (подземно) — IEC B.52-21, для E — B.52-20
+function c2(lay,cpl,meth){
+  if(meth==='D'){const tD=[1.00,0.80,0.70,0.65,0.60,0.57,0.54,0.52,0.50];return tD[Math.min(cpl-1,8)]}
+  if(lay===1)return[1.00,0.88,0.82,0.77,0.75,0.73,0.72,0.71,0.70][Math.min(cpl-1,8)];
+  if(lay===2)return cpl<=3?0.87:cpl<=6?0.77:0.72;
+  return cpl<=3?0.82:cpl<=6?0.73:0.70;
+}
 function g(id){return document.getElementById(id)}
 let RES=null;
 function doCalc(){
   const P=+g('i_P').value,U=+g('i_U').value,cp=+g('i_cphi').value,L=+g('i_L').value,S=+g('i_S').value;
   const meth=g('i_meth').value,T=+g('i_T').value,lay=+g('i_lay').value,cpl=+g('i_cpl').value;
   const Isc=+g('i_Isc').value,t=+g('i_t').value,vdl=parseFloat(g('i_vdl').value);
-  if(!P||!L)return;
-  const sp=Math.sqrt(1-cp*cp),cd=CD[S];
-  const I=P/(U*cp),Izr=meth==='E'?cd.E:cd.D;
-  const c1a=C1[T]||0.87,c2a=c2(lay,cpl),CA=c1a*c2a,Izadj=Izr*CA;
+  const mat=g('i_mat').value||'Cu',ins=g('i_ins').value||'XLPE';
+  // Валидации
+  if(!P||P<=0){alert('Введите мощность P > 0 (Вт)');return}
+  if(!L||L<=0){alert('Введите длину L > 0 (м)');return}
+  if(!cp||cp<=0||cp>1){alert('cosφ должен быть в диапазоне (0; 1]');return}
+  // Выбор таблицы по материалу
+  const CD=(mat==='Al')?CD_Al:CD_Cu;
+  const cd=CD[S];
+  if(!cd||cd.E==null){alert(`Сечение ${S} мм² (${mat}) недоступно — выберите другое.`);return}
+  // 3-фазная сеть при U ≥ 380 В, иначе 1-фазная
+  const phases=(U>=380)?3:1;
+  const sp=Math.sqrt(1-cp*cp);
+  // Расчётный ток: 3ф — через √3, 1ф — без
+  const I=(phases===3)?P/(Math.sqrt(3)*U*cp):P/(U*cp);
+  const Izr=meth==='E'?cd.E:cd.D;
+  const c1a=C1[T]||0.87,c2a=c2(lay,cpl,meth),CA=c1a*c2a,Izadj=Izr*CA;
   const ok1=I<=Izadj;
-  const dU=2*I*(L/1000)*(cd.R*cp+cd.X*sp),dUpct=(dU/U)*100,ok2=dUpct<=vdl;
-  const Smin=(Isc*Math.sqrt(t))/143,ok3=S>=Smin;
+  // Падение напряжения: 3ф — множитель √3, 1ф — 2
+  const factor=(phases===3)?Math.sqrt(3):2;
+  const dU=factor*I*(L/1000)*(cd.R*cp+cd.X*sp),dUpct=(dU/U)*100,ok2=dUpct<=vdl;
+  // S_min при КЗ: k зависит от материала и изоляции (IEC 60364-4-43)
+  const k=K_TABLE[`${mat}_${ins}`]||143;
+  const Smin=(Isc*Math.sqrt(t))/k,ok3=S>=Smin;
   let rec=null;
-  for(const s of SECS){const d=CD[s];const iz=(meth==='E'?d.E:d.D)*CA;const du=2*I*(L/1000)*(d.R*cp+d.X*sp)/U*100;if(iz>=I&&du<=vdl&&s>=Smin){rec=s;break}}
-  RES={P,U,cp,sp,L,S,meth,T,lay,cpl,Isc,t,vdl,I,Izr,c1a,c2a,CA,Izadj,ok1,dU,dUpct,ok2,Smin,ok3,rec,R:cd.R,X:cd.X,allOk:ok1&&ok2&&ok3};
+  for(const s of SECS){const d=CD[s];if(!d||d.E==null)continue;const iz=(meth==='E'?d.E:d.D)*CA;const du=factor*I*(L/1000)*(d.R*cp+d.X*sp)/U*100;if(iz>=I&&du<=vdl&&s>=Smin){rec=s;break}}
+  RES={P,U,cp,sp,L,S,meth,T,lay,cpl,Isc,t,vdl,mat,ins,phases,k,factor,I,Izr,c1a,c2a,CA,Izadj,ok1,dU,dUpct,ok2,Smin,ok3,rec,R:cd.R,X:cd.X,allOk:ok1&&ok2&&ok3};
   render(RES);
   g('ph').style.display='none';g('rw').style.display='block';g('btn_word').disabled=false;
 }
@@ -387,15 +414,17 @@ function render(r){
   const feed=g('i_feed').value||'—';
   g('r_flbl').textContent='Фидер: '+feed;
   const ov=g('r_ov');ov.textContent=r.allOk?'✓ Все условия выполнены':'✗ Условия не выполнены';ov.className='overall '+(r.allOk?'pass':'fail');
-  g('r1f').textContent=`I = P / (U × cosφ)\n  = ${r.P} / (${r.U} × ${r.cp})\n  = ${f(r.I)} А`;
+  const ifFormula=(r.phases===3)?`I = P / (√3 × U × cosφ)\n  = ${r.P} / (1.732 × ${r.U} × ${r.cp})`:`I = P / (U × cosφ)\n  = ${r.P} / (${r.U} × ${r.cp})`;
+  g('r1f').textContent=`${ifFormula}\n  = ${f(r.I)} А    [${r.phases}ф сеть]`;
   g('r1v').textContent=f(r.I,2);g('r1s').textContent=`sinφ = ${f(r.sp,4)}`;
-  g('r2f').textContent=`Iz (${r.S} мм², Метод ${r.meth}) = ${r.Izr} А\n   [IEC 60364-5-52, табл. B.52-12]\nC₁ₐ (T=${r.T}°C, табл. B.52-14) = ${r.c1a}\nC₂ₐ (${r.lay} сл.×${r.cpl} каб., табл. B.52-20) = ${r.c2a}\nCA = ${r.c1a} × ${r.c2a} = ${f(r.CA,4)}\nIz_adj = ${r.Izr} × ${f(r.CA,4)} = ${f(r.Izadj,3)} А`;
+  g('r2f').textContent=`Iz (${r.S} мм², ${r.mat}, Метод ${r.meth}) = ${r.Izr} А\n   [IEC 60364-5-52, табл. B.52-12]\nC₁ₐ (T=${r.T}°C, табл. B.52-14) = ${r.c1a}\nC₂ₐ (${r.lay} сл.×${r.cpl} каб., ${r.meth==='D'?'B.52-21 подз.':'B.52-20 надз.'}) = ${r.c2a}\nCA = ${r.c1a} × ${r.c2a} = ${f(r.CA,4)}\nIz_adj = ${r.Izr} × ${f(r.CA,4)} = ${f(r.Izadj,3)} А`;
   g('r2v').textContent=f(r.Izadj,1);setBadge('r2b',r.ok1);
   const r2c=g('r2c');r2c.textContent=`${f(r.I,2)} А ${r.ok1?'≤':'>'} ${f(r.Izadj,2)} А\n${r.ok1?'✓ Выполнено':'✗ Превышение!'}`;r2c.className='rcheck '+(r.ok1?'pass':'fail');
-  g('r3f').textContent=`ΔU = 2·I·L·(R_AC·cosφ + X·sinφ)\nR_AC(${r.S}мм²)=${r.R} Ом/км; X(${r.S}мм²)=${r.X} Ом/км\n\nΔU = 2 × ${f(r.I,3)} × ${f(r.L/1000,4)}\n     × (${r.R}×${r.cp} + ${r.X}×${f(r.sp,4)})\n   = ${f(r.dU,4)} В\nΔu% = ${f(r.dU,4)}/${r.U} × 100`;
+  const fSym=(r.phases===3)?'√3':'2';
+  g('r3f').textContent=`ΔU = ${fSym}·I·L·(R_AC·cosφ + X·sinφ)    [${r.phases}ф]\nR_AC(${r.S}мм², ${r.mat})=${r.R} Ом/км; X(${r.S}мм²)=${r.X} Ом/км\n\nΔU = ${f(r.factor,3)} × ${f(r.I,3)} × ${f(r.L/1000,4)}\n     × (${r.R}×${r.cp} + ${r.X}×${f(r.sp,4)})\n   = ${f(r.dU,4)} В\nΔu% = ${f(r.dU,4)}/${r.U} × 100`;
   g('r3v').textContent=f(r.dUpct,2);g('r3a').textContent=`(${f(r.dU,3)} В)`;setBadge('r3b',r.ok2);
   const r3c=g('r3c');r3c.textContent=`${f(r.dUpct,2)}% ${r.ok2?'≤':'>'} ${r.vdl}% (предел)\n${r.ok2?'✓ Выполнено':'✗ Превышение!'}`;r3c.className='rcheck '+(r.ok2?'pass':'fail');
-  g('r4f').textContent=`S_min = I_кз × √t / k\nk = 143  (Cu, XLPE: 90°C→250°C)\n         [IEC 60364-4-43]\n\nS_min = ${r.Isc} × √${r.t} / 143\n      = ${r.Isc} × ${f(Math.sqrt(r.t),5)} / 143\n      = ${f(r.Smin,4)} мм²`;
+  g('r4f').textContent=`S_min = I_кз × √t / k\nk = ${r.k}  (${r.mat}/${r.ins}, IEC 60364-4-43)\n\nS_min = ${r.Isc} × √${r.t} / ${r.k}\n      = ${r.Isc} × ${f(Math.sqrt(r.t),5)} / ${r.k}\n      = ${f(r.Smin,4)} мм²`;
   g('r4v').textContent=f(r.Smin,2);setBadge('r4b',r.ok3);
   const r4c=g('r4c');r4c.textContent=`S=${r.S} мм² ${r.ok3?'≥':'<'} S_min=${f(r.Smin,2)} мм²\n${r.ok3?'✓ Выполнено':'✗ Увеличьте сечение!'}`;r4c.className='rcheck '+(r.ok3?'pass':'fail');
   const rsov=g('rs_ov');rsov.textContent=r.allOk?'✓ Годен':'✗ Не прошёл';rsov.className='overall '+(r.allOk?'pass':'fail');
@@ -466,28 +495,28 @@ async function exportWord(){
     BP('— допустимая токонесущая способность (IEC 60364-5-52);'),
     BP('— допустимое падение напряжения;'),
     BP('— термическая стойкость к токам КЗ (IEC 60364-4-43).'),
-    SH('4.1','Расчётный ток нагрузки'),FP('I = P / (U × cosφ)'),
-    SH('4.2','Токонесущая способность'),FP('Iz_adj = Iz_rated × C1A × C2A'),BP('C1A — поправка на температуру (табл. B.52-14); C2A — на групповую прокладку (табл. B.52-20).'),
-    SH('4.3','Падение напряжения'),FP('ΔU = 2 × I × L × (R_AC × cosφ + X × sinφ)'),FP('Δu% = ΔU / U × 100'),
-    SH('4.4','Термическая стойкость к токам КЗ'),FP('S_min = I_кз × √t / k'),BP('k = 143 — для Cu/XLPE (90°C → 250°C), IEC 60364-4-43.'),
+    SH('4.1','Расчётный ток нагрузки'),FP(r.phases===3?'I = P / (√3 × U × cosφ)   [3-фазная сеть]':'I = P / (U × cosφ)   [1-фазная сеть]'),
+    SH('4.2','Токонесущая способность'),FP('Iz_adj = Iz_rated × C1A × C2A'),BP(`C1A — поправка на температуру (табл. B.52-14); C2A — на групповую прокладку (${r.meth==='D'?'табл. B.52-21, подземно':'табл. B.52-20, надземно'}).`),
+    SH('4.3','Падение напряжения'),FP(r.phases===3?'ΔU = √3 × I × L × (R_AC × cosφ + X × sinφ)   [3-фазная сеть]':'ΔU = 2 × I × L × (R_AC × cosφ + X × sinφ)   [1-фазная сеть]'),FP('Δu% = ΔU / U × 100'),
+    SH('4.4','Термическая стойкость к токам КЗ'),FP('S_min = I_кз × √t / k'),BP(`k = ${r.k} — для ${r.mat}/${r.ins} (IEC 60364-4-43, табл. 43.A).`),
     H('5','Расчёт'),
     SH('5.1','Расчётный ток нагрузки'),
-    FP(`I = P / (U × cosφ) = ${r.P} / (${r.U} × ${r.cp})`),RP(`I = ${f(r.I,3)} А`),FP(`sinφ = √(1 − cosφ²) = ${f(r.sp,4)}`),
+    FP(r.phases===3?`I = P / (√3 × U × cosφ) = ${r.P} / (1.732 × ${r.U} × ${r.cp})`:`I = P / (U × cosφ) = ${r.P} / (${r.U} × ${r.cp})`),RP(`I = ${f(r.I,3)} А`),FP(`sinφ = √(1 − cosφ²) = ${f(r.sp,4)}`),
     SH('5.2','Допустимая токонесущая способность'),
-    FP(`Iz_rated (Метод ${r.meth}, S = ${r.S} мм², Cu, XLPE) = ${r.Izr} А  [IEC 60364-5-52, табл. B.52-12]`),
+    FP(`Iz_rated (Метод ${r.meth}, S = ${r.S} мм², ${r.mat}, ${r.ins}) = ${r.Izr} А  [IEC 60364-5-52, табл. B.52-12]`),
     FP(`C1A (T = ${r.T}°C) = ${r.c1a}  [табл. B.52-14]`),
-    FP(`C2A (${r.lay} сл., ${r.cpl} каб/сл.) = ${r.c2a}  [табл. B.52-20]`),
+    FP(`C2A (${r.lay} сл., ${r.cpl} каб/сл.) = ${r.c2a}  [${r.meth==='D'?'табл. B.52-21':'табл. B.52-20'}]`),
     FP(`CA = C1A × C2A = ${r.c1a} × ${r.c2a} = ${f(r.CA,4)}`),
     FP(`Iz_adj = ${r.Izr} × ${f(r.CA,4)} = ${f(r.Izadj,3)} А`),
     CP(r.ok1,`${f(r.I,3)} А ${r.ok1?'≤':'>'} ${f(r.Izadj,3)} А — условие ${r.ok1?'ВЫПОЛНЕНО ✓':'НЕ ВЫПОЛНЕНО ✗'}`),
     SH('5.3','Падение напряжения'),
-    FP(`R_AC (${r.S} мм²) = ${r.R} Ом/км;  X = ${r.X} Ом/км`),
-    FP(`ΔU = 2 × ${f(r.I,4)} × ${f(r.L/1000,5)} × (${r.R}×${r.cp} + ${r.X}×${f(r.sp,4)})`),
+    FP(`R_AC (${r.S} мм², ${r.mat}) = ${r.R} Ом/км;  X = ${r.X} Ом/км`),
+    FP(`ΔU = ${f(r.factor,3)} × ${f(r.I,4)} × ${f(r.L/1000,5)} × (${r.R}×${r.cp} + ${r.X}×${f(r.sp,4)})`),
     RP(`ΔU = ${f(r.dU,5)} В`),
     FP(`Δu% = ${f(r.dU,5)} / ${r.U} × 100 = ${f(r.dUpct,4)} %`),
     CP(r.ok2,`${f(r.dUpct,3)} % ${r.ok2?'≤':'>'} ${r.vdl} % — условие ${r.ok2?'ВЫПОЛНЕНО ✓':'НЕ ВЫПОЛНЕНО ✗'}`),
     SH('5.4','Термическая стойкость к токам КЗ'),
-    FP(`S_min = ${r.Isc} × √${r.t} / 143 = ${r.Isc} × ${f(Math.sqrt(r.t),5)} / 143 = ${f(r.Smin,5)} мм²`),
+    FP(`S_min = ${r.Isc} × √${r.t} / ${r.k} = ${r.Isc} × ${f(Math.sqrt(r.t),5)} / ${r.k} = ${f(r.Smin,5)} мм²`),
     CP(r.ok3,`S выбр. = ${r.S} мм² ${r.ok3?'≥':'<'} S_min = ${f(r.Smin,3)} мм² — условие ${r.ok3?'ВЫПОЛНЕНО ✓':'НЕ ВЫПОЛНЕНО ✗'}`),
     H('6','Заключение'),
     tbl([
@@ -498,7 +527,7 @@ async function exportWord(){
     ],[3500,2000,2000,1855]),par([]),
     BP(r.allOk?`Все три условия выбора сечения кабеля выполнены. Выбранное сечение 3×${r.S} мм² обеспечивает требуемую токонесущую способность с учётом понижающих коэффициентов, допустимое падение напряжения и термическую стойкость к токам КЗ.`:`Одно или несколько условий выбора сечения не выполнены. Рекомендуется применить кабель сечением 3×${r.rec||'?'} мм².`),
     par([run('Рекомендуемое сечение кабеля: ',true,false,'',13),run(`3×${r.rec||r.S} мм²`,true,true,passC,14)],false,80,100),
-    par([run('(тип: Cu / XLPE / PVC / SWA / PVC, 600/1000 В)',false,false,'606060',10)]),
+    par([run(`(тип: ${r.mat} / ${r.ins} / PVC / SWA / PVC, 600/1000 В)`,false,false,'606060',10)]),
   ].join('');
   const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1701" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>`;
   const styXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="ru-RU"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="60" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="22"/></w:rPr></w:style></w:styles>`;
