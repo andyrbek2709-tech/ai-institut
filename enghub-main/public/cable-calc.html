@@ -221,12 +221,12 @@ table.btab tr:hover td{background:rgba(64,128,240,.08)}
   <div class="sec">
     <div class="sec-t">Короткое замыкание</div>
     <div class="gr2">
-      <div class="fl"><label class="lbl">Ток КЗ <em>I</em>кз, А</label><input id="i_Isc" type="number" min="0" step="100" value="1000"></div>
+      <div class="fl"><label class="lbl">Ток КЗ <em>I</em>кз, А</label><input id="i_Isc" type="number" min="1" step="100" value="1000"></div>
       <div class="fl"><label class="lbl">Время откл. <em>t</em>, с</label><input id="i_t" type="number" min="0.01" step="0.01" value="0.1"></div>
     </div>
   </div>
   <div class="sec">
-    <div class="sec-t">Материал / изоляция (для журнала)</div>
+    <div class="sec-t">Материал / изоляция</div>
     <div class="gr2">
       <div class="fl"><label class="lbl">Материал</label>
         <select id="i_mat"><option value="Cu" selected>Cu (медь)</option><option value="Al">Al (алюминий)</option></select></div>
@@ -385,6 +385,7 @@ function doCalc(){
   if(!P||P<=0){_resetUI();alert('Введите мощность P > 0 (Вт)');return}
   if(!L||L<=0){_resetUI();alert('Введите длину L > 0 (м)');return}
   if(!cp||cp<=0||cp>1){_resetUI();alert('cosφ должен быть в диапазоне (0; 1]');return}
+  if(!Isc||Isc<=0){_resetUI();alert('Введите ток КЗ Iкз > 0 (А). Если данных по КЗ нет — задайте минимальный ожидаемый ток.');return}
   // Выбор таблицы по материалу
   const CD=(mat==='Al')?CD_Al:CD_Cu;
   const cd=CD[S];
