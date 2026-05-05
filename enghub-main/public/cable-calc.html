@@ -314,7 +314,7 @@ table.btab tr:hover td{background:rgba(64,128,240,.08)}
     <div class="step-card">
       <div class="step-hd"><div class="step-hl"><div class="snum">1</div><div class="stit">Расчётный ток нагрузки</div></div><span class="badge b-info">IEC формула</span></div>
       <div class="step-body">
-        <div class="fbox"><div class="flbl">Формула — однофазная цепь</div><div class="ftxt" id="r1f"></div></div>
+        <div class="fbox"><div class="flbl" id="r1lbl">Формула — расчётный ток</div><div class="ftxt" id="r1f"></div></div>
         <div class="rbox"><div style="font-size:10px;color:var(--dim);margin-bottom:6px">Ток нагрузки</div><div class="rval" id="r1v"></div><span class="runit">А</span><div style="font-size:10px;color:var(--dim);margin-top:8px;font-family:var(--mono)" id="r1s"></div></div>
       </div>
     </div>
@@ -328,7 +328,7 @@ table.btab tr:hover td{background:rgba(64,128,240,.08)}
     <div class="step-card">
       <div class="step-hd"><div class="step-hl"><div class="snum">3</div><div class="stit">Падение напряжения</div></div><span class="badge" id="r3b"></span></div>
       <div class="step-body">
-        <div class="fbox"><div class="flbl">Формула — однофазная цепь переменного тока</div><div class="ftxt" id="r3f"></div></div>
+        <div class="fbox"><div class="flbl" id="r3lbl">Формула — падение напряжения</div><div class="ftxt" id="r3f"></div></div>
         <div class="rbox"><div style="font-size:10px;color:var(--dim);margin-bottom:6px">Падение напряжения</div><div class="rval" id="r3v"></div><span class="runit">%</span><div style="font-size:10px;color:var(--dim);margin-top:3px;font-family:var(--mono)" id="r3a"></div><div class="rcheck" id="r3c"></div></div>
       </div>
     </div>
@@ -380,10 +380,11 @@ function doCalc(){
   const meth=g('i_meth').value,T=+g('i_T').value,lay=+g('i_lay').value,cpl=+g('i_cpl').value;
   const Isc=+g('i_Isc').value,t=+g('i_t').value,vdl=parseFloat(g('i_vdl').value);
   const mat=g('i_mat').value||'Cu',ins=g('i_ins').value||'XLPE';
-  // Валидации
-  if(!P||P<=0){alert('Введите мощность P > 0 (Вт)');return}
-  if(!L||L<=0){alert('Введите длину L > 0 (м)');return}
-  if(!cp||cp<=0||cp>1){alert('cosφ должен быть в диапазоне (0; 1]');return}
+  // Валидации с очисткой результатов (чтобы не "залипали" старые цифры)
+  const _resetUI=()=>{g('ph').style.display='block';g('rw').style.display='none';g('btn_word').disabled=true;RES=null;};
+  if(!P||P<=0){_resetUI();alert('Введите мощность P > 0 (Вт)');return}
+  if(!L||L<=0){_resetUI();alert('Введите длину L > 0 (м)');return}
+  if(!cp||cp<=0||cp>1){_resetUI();alert('cosφ должен быть в диапазоне (0; 1]');return}
   // Выбор таблицы по материалу
   const CD=(mat==='Al')?CD_Al:CD_Cu;
   const cd=CD[S];
@@ -415,6 +416,8 @@ function render(r){
   g('r_flbl').textContent='Фидер: '+feed;
   const ov=g('r_ov');ov.textContent=r.allOk?'✓ Все условия выполнены':'✗ Условия не выполнены';ov.className='overall '+(r.allOk?'pass':'fail');
   const ifFormula=(r.phases===3)?`I = P / (√3 × U × cosφ)\n  = ${r.P} / (1.732 × ${r.U} × ${r.cp})`:`I = P / (U × cosφ)\n  = ${r.P} / (${r.U} × ${r.cp})`;
+  g('r1lbl').textContent=(r.phases===3)?'Формула — трёхфазная цепь (3ф)':'Формула — однофазная цепь (1ф)';
+  g('r3lbl').textContent=(r.phases===3)?'Формула — трёхфазная цепь (3ф)':'Формула — однофазная цепь (1ф)';
   g('r1f').textContent=`${ifFormula}\n  = ${f(r.I)} А    [${r.phases}ф сеть]`;
   g('r1v').textContent=f(r.I,2);g('r1s').textContent=`sinφ = ${f(r.sp,4)}`;
   g('r2f').textContent=`Iz (${r.S} мм², ${r.mat}, Метод ${r.meth}) = ${r.Izr} А\n   [IEC 60364-5-52, табл. B.52-12]\nC₁ₐ (T=${r.T}°C, табл. B.52-14) = ${r.c1a}\nC₂ₐ (${r.lay} сл.×${r.cpl} каб., ${r.meth==='D'?'B.52-21 подз.':'B.52-20 надз.'}) = ${r.c2a}\nCA = ${r.c1a} × ${r.c2a} = ${f(r.CA,4)}\nIz_adj = ${r.Izr} × ${f(r.CA,4)} = ${f(r.Izadj,3)} А`;
@@ -764,7 +767,8 @@ async function runCalc(){
       return;
     }
     const phases = l.phases || phasesDefault;
-    const u_nom_v = phases===1 ? 230 : 380;
+    const u_user = parseFloat(g('i_U').value);
+    const u_nom_v = (u_user && u_user > 0) ? u_user : (phases===1 ? 230 : 400);
     const power_kw = l.power_kw || 0;
     const length_m = l.length_m;
     const section_mm2 = l.section_mm2 || null;
@@ -882,11 +886,14 @@ g('i_file').addEventListener('change',()=>{
 
 async function doReverseCalc(){
   const P=+g('i_P').value,U=+g('i_U').value,cp=+g('i_cphi').value,L=+g('i_L').value;
-  const meth=g('i_meth').value,T=+g('i_T').value;
+  // Приоритет: собственные поля обратного расчёта (rev_meth, rev_T), иначе — основные
+  const meth=(g('rev_meth')&&g('rev_meth').value)||g('i_meth').value;
+  const T_rev=g('rev_T')&&g('rev_T').value?+g('rev_T').value:+g('i_T').value;
   const mat=g('i_mat').value,ins=g('i_ins').value;
   const phases = U >= 380 ? 3 : 1;
   const du_max = parseFloat(g('rev_du_max').value) || 5.0;
-  if(!P||!L)return alert('Укажите мощность и длину кабеля');
+  if(!P||P<=0||!L||L<=0)return alert('Укажите мощность P > 0 и длину L > 0');
+  if(!cp||cp<=0||cp>1)return alert('cosφ должен быть в диапазоне (0; 1]');
   try{
     const r=await fetch('/api/cable-calc/reverse',{
       method:'POST',
@@ -894,7 +901,8 @@ async function doReverseCalc(){
       body:JSON.stringify({
         power_kw:P/1000,phases,cos_phi:cp,length_m:L,
         material:mat,insulation:ins,method:meth,
-        ambient_temp_c:T,delta_u_pct_max:du_max
+        ambient_temp_c:T_rev,delta_u_pct_max:du_max,
+        u_nom_v:U
       })
     });
     if(!r.ok)throw new Error((await r.json()).error||r.statusText);
