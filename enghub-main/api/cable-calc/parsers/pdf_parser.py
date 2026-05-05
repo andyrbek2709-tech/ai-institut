@@ -154,8 +154,35 @@ def parse_pdf(path: str, start_page=None, end_page=None, row_num_start: int = 1)
 
         for page_idx, page in enumerate(pages_to_process):
             if _has_text(page):
-                # Цифровой PDF — берём таблицы
-                tables = page.extract_tables()
+                # Цифровой PDF — попытка извлечь таблицы с разными стратегиями
+                tables = None
+
+                # Стратегия 1: стандартный вызов extract_tables
+                try:
+                    tables = page.extract_tables()
+                except:
+                    tables = None
+
+                # Стратегия 2: с явными параметрами таблиц (для улучшения распознавания)
+                if not tables:
+                    try:
+                        tables = page.extract_tables({
+                            "vertical_strategy": "lines_strict",
+                            "horizontal_strategy": "lines_strict",
+                        })
+                    except:
+                        pass
+
+                # Стратегия 3: с looser стратегией (для не-стандартных таблиц)
+                if not tables:
+                    try:
+                        tables = page.extract_tables({
+                            "vertical_strategy": "text",
+                            "horizontal_strategy": "text",
+                        })
+                    except:
+                        pass
+
                 if tables:
                     for table in tables:
                         for cells in table:
