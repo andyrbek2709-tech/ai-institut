@@ -4,6 +4,30 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-06 23:00 UTC — RAILWAY ARCHITECTURE AUDIT: Diagnostic complete, immediate actions identified 🔴
+
+**Статус:** 🔴 **ACTION REQUIRED** — Все системы готовы к коду, требуется фиксация Railway deployment
+
+**Что найдено:**
+- ✅ Frontend: build существует, Dockerfile правильный, env переменные верные
+- ✅ API Server: Express код готов, routes реализованы, Dockerfile правильный
+- ⚠️ API Server: Текущий URL `https://api-server-production-8157.up.railway.app/` возвращает React HTML (неправильный сервис)
+- ❌ Frontend: Не развернут на Railway (нужно создать новый сервис)
+- ❌ Orchestrator: Не развернут на Railway (нужно создать новый сервис)
+- ✅ Supabase: Healthy, все миграции применены, Vercel полностью исключен
+
+**Требует действия (in order):**
+1. **FIX API Server:** Удалить неправильный сервис на api-server-production-8157, создать новый с корректным Dockerfile (`services/api-server/`) — 5 мин
+2. **DEPLOY Frontend:** Создать Railway сервис с Root Directory `enghub-main/` — 10 мин
+3. **DEPLOY Orchestrator:** Создать Railway сервис с Root Directory `services/orchestrator/` — 10 мин
+4. **TEST E2E:** Smoke tests login → create task → verify API → verify DB — 10 мин
+
+**Документация:** `RAILWAY_ONLY_DEPLOYMENT_REPORT.md` (100+ pages, полная диагностика)
+
+**Архитектура:** 100% Railway. Vercel исключен из системы полностью.
+
+---
+
 ### 2026-05-06 21:30 UTC — FINAL PRODUCTION VALIDATION: Complete system audit + deployment readiness ✅
 
 **Статус:** 🟡 **DEPLOYMENT READY** — All code clean, architecture sound, services ready
