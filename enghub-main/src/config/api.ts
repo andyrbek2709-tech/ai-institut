@@ -3,7 +3,7 @@
  * Controls which backend is used: Vercel or Railway
  */
 
-export type { ApiProvider } from '../lib/api-selection-updated';
+export type { ApiProvider } from '../lib/api-selection';
 
 export {
   selectApiProvider,
@@ -12,7 +12,7 @@ export {
   getRolloutPercentage,
   setApiProvider,
   clearApiProvider,
-} from '../lib/api-selection-updated';
+} from '../lib/api-selection';
 
 function getRailwayUrl(): string {
   if (process.env.REACT_APP_RAILWAY_API_URL) {

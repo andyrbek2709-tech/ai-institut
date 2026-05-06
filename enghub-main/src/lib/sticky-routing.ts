@@ -1,4 +1,4 @@
-import { supabase } from '@/config/supabase';
+import { getSupabaseAnonClient } from '../api/supabaseClient';
 
 export interface StickySession {
   session_id: string;
@@ -52,7 +52,7 @@ export async function getStickyRoutingProvider(
   // Save to Supabase for persistence (async, non-blocking)
   if (userId) {
     saveStickySession(sessionId, userId, provider, hashValue).catch(err => {
-      console.error('Failed to save sticky session:', err);
+      console.warn('Failed to save sticky session:', err);
     });
   }
 
@@ -68,8 +68,9 @@ async function saveStickySession(
 ): Promise<void> {
   try {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const sb = getSupabaseAnonClient();
 
-    const { error } = await supabase
+    const { error } = await sb
       .from('sticky_routing_sessions')
       .insert({
         session_id: sessionId,
@@ -80,10 +81,10 @@ async function saveStickySession(
       });
 
     if (error) {
-      console.error('Error saving sticky session:', error);
+      console.warn('Error saving sticky session:', error);
     }
   } catch (err) {
-    console.error('Error in saveStickySession:', err);
+    console.warn('Error in saveStickySession:', err);
   }
 }
 
