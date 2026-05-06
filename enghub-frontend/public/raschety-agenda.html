@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EngHub · Доска расчётов</title>
+<style>
+:root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b;--cyan:#06b6d4;--pink:#ec4899}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+.wrap{max-width:1640px;margin:0 auto;padding:18px 18px 80px}
+.nav-bar{background:#0d1228;border:1px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+.nav-bar .nav-title{font-weight:700;color:var(--muted);font-size:12px;text-transform:uppercase;margin-right:6px}
+.nav-bar a{color:#cbd5e1;text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;transition:.15s}
+.nav-bar a:hover{background:var(--panel2);color:#fff}
+.nav-bar a.active{background:var(--accent);color:#fff}
+.hero{background:linear-gradient(135deg,#1a2350 0%,#2a1a4f 100%);border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin:0 0 16px}
+.hero h1{margin:0 0 6px;font-size:24px;font-weight:800;letter-spacing:-.01em}
+.hero .sub{color:var(--muted);font-size:13px;line-height:1.6}
+.hero code{background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px;font-size:12px;color:#cbd5e1}
+header.meta{padding:0 0 14px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+header.meta .updated{color:var(--muted);font-size:11px;line-height:1.6}
+header.meta .updated a{color:var(--accent);text-decoration:none}
+.legend{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:12px;color:var(--muted);display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:980px){.legend{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:540px){.legend{grid-template-columns:1fr}}
+.legend .lcol{display:flex;gap:8px;align-items:flex-start}
+.legend b{color:var(--text)}
+.kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:0 0 14px}
+@media(max-width:1280px){.kpis{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:680px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer;transition:.15s;text-align:center}
+.kpi:hover{border-color:var(--accent);transform:translateY(-1px)}
+.kpi .label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.kpi .value{font-size:22px;font-weight:800}
+.kpi.idea .value{color:var(--gray)}
+.kpi.triage .value{color:var(--accent2)}
+.kpi.clarify .value{color:var(--yellow)}
+.kpi.decided .value{color:var(--cyan)}
+.kpi.in_progress .value{color:var(--accent)}
+.kpi.done .value{color:var(--green)}
+.kpi.skip .value{color:var(--red)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;align-items:center}
+.search{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px}
+.controls button{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:.15s}
+.controls button:hover{background:var(--panel2);border-color:var(--accent)}
+.controls button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.cols{display:grid;grid-template-columns:repeat(7,minmax(210px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+@media(max-width:1280px){.cols{grid-template-columns:repeat(7,260px);overflow-x:auto}}
+.col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;min-height:320px}
+.col h2{margin:0 0 10px;font-size:13px;font-weight:700;display:flex;gap:6px;align-items:center}
+.col h2 .count{background:var(--panel2);color:var(--muted);padding:2px 8px;border-radius:11px;font-size:10px;font-weight:700;margin-left:auto}
+.col.idea{border-top:3px solid var(--gray)}
+.col.triage{border-top:3px solid var(--accent2)}
+.col.clarify{border-top:3px solid var(--yellow)}
+.col.decided{border-top:3px solid var(--cyan)}
+.col.in_progress{border-top:3px solid var(--accent)}
+.col.done{border-top:3px solid var(--green)}
+.col.skip{border-top:3px solid var(--red)}
+.item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 11px;margin-bottom:8px;cursor:pointer;transition:.15s}
+.item:hover{border-color:var(--accent);transform:translateY(-1px)}
+.item .id{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-right:5px;letter-spacing:.04em}
+.item .title{font-size:12.5px;font-weight:600;line-height:1.4}
+.item .desc{font-size:11.5px;color:var(--muted);line-height:1.55;display:none;margin-top:6px}
+.item.open .desc{display:block}
+.item .meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;align-items:center}
+.tag{padding:1px 7px;border-radius:9px;font-size:9px;font-weight:600;border:1px solid transparent}
+.tag.proj{background:rgba(79,140,255,.13);color:var(--accent);border-color:rgba(79,140,255,.3)}
+.tag.cat-electric{background:rgba(245,158,11,.13);color:var(--yellow)}
+.tag.cat-light{background:rgba(168,85,247,.13);color:#a855f7}
+.tag.cat-vent{background:rgba(6,182,212,.13);color:var(--cyan)}
+.tag.cat-heat{background:rgba(239,68,68,.13);color:var(--red)}
+.tag.cat-water{background:rgba(56,189,248,.13);color:#38bdf8}
+.tag.cat-struct{background:rgba(100,116,139,.18);color:var(--gray)}
+.tag.cat-road{background:rgba(34,197,94,.13);color:var(--green)}
+.tag.cat-protect{background:rgba(236,72,153,.13);color:var(--pink)}
+.tag.cat-meta{background:rgba(139,92,246,.13);color:var(--accent2)}
+.item .date{font-size:10px;color:var(--muted);margin-left:auto}
+.item .links{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.item .links a{font-size:11px;color:var(--accent);text-decoration:none;background:rgba(79,140,255,.08);padding:2px 8px;border-radius:5px}
+.empty{color:var(--muted);font-size:11px;text-align:center;padding:20px 8px;font-style:italic}
+.notice{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:10px 12px;margin:0 0 14px;font-size:12px;line-height:1.55;color:var(--muted)}
+.notice b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="nav-bar">
+  <span class="nav-title">Расчёты →</span>
+  <a href="/agenda.html" style="border:1px solid #4f8cff;background:rgba(79,140,255,.08)">↗ Все проекты (Master board)</a>
+  <a href="/raschety.html">📐 Раздел Расчёты</a>
+  <a href="/raschety-agenda.html" class="active">📋 Доска расчётов</a>
+  <a href="/cable-calc.html">🔌 Кабели 1кВ</a>
+</nav>
+
+<div class="hero">
+<h1>📐 Расчёты EngHub — банк калькуляторов</h1>
+<div class="sub">Канбан-доска для всех инженерных расчётов: что готово, что в работе, что в идеях. Каждая карточка — отдельный калькулятор или фича расчётного модуля.<br>Прод: <code>enghub-three.vercel.app/raschety-agenda.html</code> · единая тёмная тема EngHub</div>
+</div>
+
+<header class="meta">
+<div class="updated">Локально: <code>D:\\ai-institut\\enghub-main\\public\\raschety-agenda.html</code><br>Vercel: <a href="https://enghub-three.vercel.app/raschety-agenda.html">enghub-three.vercel.app/raschety-agenda.html</a></div>
+<div class="updated">Обновлён: 2026-05-01<br>Подход: добавляешь новую идею расчёта → карточка в «Идеи» → триаж → решение → реализация → готово</div>
+</header>
+
+<div class="notice">
+<b>📐 Зачем эта доска.</b> EngHub растёт банк инженерных калькуляторов: кабели 1кВ уже на проде, дальше — трансформаторы, освещение, вентиляция, отопление, водоснабжение, фундаменты, дороги, ТКЗ, селективность РЗА. Чтобы не теряться — единый канбан с 7 колонками от «Идея» до «Сделано» / «Не делаем».
+</div>
+
+<div class="legend">
+<div class="lcol"><span>💡</span><div><b>Идеи</b> — что хочется сделать когда-нибудь</div></div>
+<div class="lcol"><span>🔍</span><div><b>Триаж</b> — оцениваем приоритет и сложность</div></div>
+<div class="lcol"><span>❓</span><div><b>Уточнить</b> — нужны исходные данные или нормативы</div></div>
+<div class="lcol"><span>✅</span><div><b>Решено</b> — определились что и как, ждёт реализации</div></div>
+<div class="lcol"><span>🔥</span><div><b>В работе</b> — сейчас разрабатывается</div></div>
+<div class="lcol"><span>📋</span><div><b>Сделано</b> — на проде, верифицировано</div></div>
+<div class="lcol"><span>🚫</span><div><b>Не делаем</b> — отказались с обоснованием</div></div>
+</div>
+
+<div class="kpis">
+<div class="kpi idea"><div class="label">💡 Идеи</div><div class="value" id="kpi-idea">0</div></div>
+<div class="kpi triage"><div class="label">🔍 Триаж</div><div class="value" id="kpi-triage">0</div></div>
+<div class="kpi clarify"><div class="label">❓ Уточнить</div><div class="value" id="kpi-clarify">0</div></div>
+<div class="kpi decided"><div class="label">✅ Решено</div><div class="value" id="kpi-decided">0</div></div>
+<div class="kpi in_progress"><div class="label">🔥 В работе</div><div class="value" id="kpi-ip">0</div></div>
+<div class="kpi done"><div class="label">📋 Сделано</div><div class="value" id="kpi-done">0</div></div>
+<div class="kpi skip"><div class="label">🚫 Не делаем</div><div class="value" id="kpi-skip">0</div></div>
+</div>
+
+<div class="controls">
+<input class="search" id="search" placeholder="🔍 Поиск по названию или описанию…">
+<button class="active" data-cat="all">Все категории</button>
+<button data-cat="electric">⚡ Электрика</button>
+<button data-cat="light">💡 Свет</button>
+<button data-cat="vent">🌬 Вентиляция</button>
+<button data-cat="heat">🔥 Теплоснабжение</button>
+<button data-cat="water">💧 Вода</button>
+<button data-cat="struct">🏗 Конструкции</button>
+<button data-cat="road">🛣 Дороги</button>
+<button data-cat="protect">🛡 РЗА</button>
+<button data-cat="meta">⚙ Платформа</button>
+</div>
+
+<div class="cols">
+<div class="col idea"><h2>💡 Идеи <span class="count" id="cnt-idea">0</span></h2><div id="list-idea"></div></div>
+<div class="col triage"><h2>🔍 Триаж <span class="count" id="cnt-triage">0</span></h2><div id="list-triage"></div></div>
+<div class="col clarify"><h2>❓ Уточнить <span class="count" id="cnt-clarify">0</span></h2><div id="list-clarify"></div></div>
+<div class="col decided"><h2>✅ Решено <span class="count" id="cnt-decided">0</span></h2><div id="list-decided"></div></div>
+<div class="col in_progress"><h2>🔥 В работе <span class="count" id="cnt-ip">0</span></h2><div id="list-ip"></div></div>
+<div class="col done"><h2>📋 Сделано <span class="count" id="cnt-done">0</span></h2><div id="list-done"></div></div>
+<div class="col skip"><h2>🚫 Не делаем <span class="count" id="cnt-skip">0</span></h2><div id="list-skip"></div></div>
+</div>
+</div>
+
+<script>
+const BOARD = {
+  idea: [
+    {id:"CALC-TRANS",title:"⚡ Расчёт силового трансформатора",desc:"Подбор мощности по нагрузке, расчёт потерь Pхх+Pкз, токов КЗ на стороне ВН/НН, проверка по ПУЭ и СО 153-34.20.122. Ввод: суммарная нагрузка, cos φ, K загрузки. Вывод: типоразмер ТМ/ТМГ, U% реактивное.",cat:"electric",date:"2026-05-01"},
+    {id:"CALC-LIGHT",title:"💡 Светотехнический расчёт помещения",desc:"Метод коэффициента использования (СП 52.13330, СНиП 23-05). Ввод: размеры, тип помещения, требуемая Eсредняя (лк), тип светильника. Вывод: количество светильников, мощность, проверка КЕО.",cat:"light",date:"2026-05-01"},
+    {id:"CALC-VENT",title:"🌬 Аэродинамический расчёт вентиляции",desc:"Расчёт потерь давления в воздуховодах круглого/прямоугольного сечения, подбор вентилятора по характеристике. Учёт фитингов, регулирующих устройств. СП 60.13330, ВСН 353-86.",cat:"vent",date:"2026-05-01"},
+    {id:"CALC-HEAT",title:"🔥 Теплотехнический расчёт (СП 60.13330)",desc:"Расчёт тепловых потерь здания через ограждающие конструкции, подбор отопительных приборов, гидравлический расчёт двухтрубной системы отопления. Климат по СП 131.13330.",cat:"heat",date:"2026-05-01"},
+    {id:"CALC-WATER",title:"💧 Расчёт водоснабжения и канализации",desc:"Расчётный расход холодной/горячей воды по СП 30.13330 с учётом вероятности действия приборов. Подбор диаметров труб, потери напора, выбор насосной станции. Канализация — расчёт самотечных участков.",cat:"water",date:"2026-05-01"},
+    {id:"CALC-FOUND",title:"🏗 Расчёт фундаментов (СП 22.13330)",desc:"Определение несущей способности грунта, расчёт осадки фундамента мелкого заложения, проверка по двум группам предельных состояний. Ввод: ИГЭ, нагрузки от здания. Вывод: размеры подошвы.",cat:"struct",date:"2026-05-01"},
+    {id:"CALC-ROAD",title:"🛣 Расчёт дорожных одежд (СП РК 3.03-104)",desc:"Прототип уже есть (<code>pavement_calc_sp_rk.html</code>) — нужно встроить в EngHub-доску. Расчёт жёстких/нежёстких дорожных одежд по приведённому модулю упругости, проверка по сдвигу/растяжению при изгибе.",cat:"road",date:"2026-05-01"},
+    {id:"CALC-SHORT",title:"⚡ Расчёт ТКЗ (токов короткого замыкания)",desc:"Расчёт токов 3-фазного и 1-фазного КЗ в сетях до 1кВ и выше 1кВ. Метод приведённых сопротивлений, метод симметричных составляющих. ГОСТ 28249. Для проверки чувствительности защит.",cat:"electric",date:"2026-05-01"},
+    {id:"CALC-PROTECT",title:"🛡 Селективность РЗА и подбор автоматов",desc:"Подбор номиналов автоматических выключателей по току нагрузки, проверка селективности (карты селективности производителей), оценка времени срабатывания при КЗ. Для радиальных и магистральных схем.",cat:"protect",date:"2026-05-01"},
+    {id:"CALC-LOSSES",title:"📉 Расчёт потерь напряжения и мощности в сети",desc:"Расчёт ΔU и ΔP в распределительной сети 0.4кВ с учётом длин и сечений всех участков, балансировки фаз. Проверка ΔU ≤5% по ГОСТ 32144. Опционально — расчёт компенсации реактивной мощности.",cat:"electric",date:"2026-05-01"},
+  ],
+  triage: [],
+  clarify: [],
+  decided: [
+    {id:"CALC-REGISTRY",title:"📚 Зарегистрировать расчёты в едином реестре EngHub",desc:"Создать <code>enghub-main/src/calculations/registry.ts</code> — TypeScript-список доступных калькуляторов с метаданными (id, name, category, url, status, описание). Чтобы инженеры в проектах видели какие расчёты доступны и переходили из карточки задачи прямо в нужный калькулятор.",cat:"meta",date:"2026-05-01"},
+    {id:"CALC-AUTH",title:"🔒 Защитить расчёты Supabase-логином",desc:"Сейчас <code>/cable-calc.html</code> и будущие калькуляторы доступны всем без логина. Нужно перенести в защищённую зону EngHub с проверкой Supabase-сессии, чтобы внешние не пользовались бесплатно. Альтернатива — оставить публичный preview с лимитом строк/расчётов в день.",cat:"meta",date:"2026-05-01"},
+  ],
+  in_progress: [
+    {id:"CALC-INPUT-FORMATS",title:"📂 Универсальное чтение входных файлов",desc:"<b>Цель:</b> поддержка всех распространённых форматов входных файлов для кабельных журналов и других расчётов:<br>• <b>PDF чистый</b> (с текстовым слоем) → pdfplumber<br>• <b>PDF из AutoCAD print-to-PDF</b> (vector paths без шрифтов) → OpenAI Vision OCR ← <b>основной кейс</b><br>• <b>PDF-скан</b> (растровый) → OpenAI Vision OCR<br>• <b>Изображения</b> (PNG/JPG) → OpenAI Vision OCR<br>• <b>Word</b> (.doc/.docx) с перечнем линий → python-docx<br>• <b>Excel</b> (.xls/.xlsx/.xlsm) с перечнем линий → openpyxl<br>+ Если парсер не уверен какие столбцы что значат — переспрашивать пользователя через диалог в UI (mapping столбцов).<br><br><b>Стадия:</b> PDF и Excel/Word уже сделаны, OpenAI Vision интегрирован но упёрся в недействительный API ключ в Vercel. Изображения PNG/JPG и interactive column mapping — не сделаны, на бэклоге.",cat:"meta",date:"2026-05-01"},
+  ],
+  done: [
+    {id:"CALC-CABLE-1KV",title:"🔌 Калькулятор кабелей 1кВ (СП РК + IEC 60364)",desc:"Одиночный расчёт кабеля до 1 кВ: подбор сечения по нагреву, проверка ΔU, проверка по току КЗ. Ввод: P, U, cos φ, материал (Cu/Al), изоляция (PVC/XLPE), метод прокладки (A1..F), длина, t среды. Вывод: сечение жилы, I_доп с поправками k_t·k_gr·k_грунт, ΔU%, max_load на одиночный пролёт.",cat:"electric",deployedDate:"2026-05-01",links:[{label:"Открыть",url:"https://enghub-three.vercel.app/cable-calc.html"}]},
+    {id:"CALC-IEC-UI",title:"🎨 Полный UI с тёмной темой по IEC 60364",desc:"Готовый интерфейс калькулятора кабелей: карточки ввода, KPI-блок результатов, таблица проверок (нагрев / падение напряжения / ТКЗ), badges OK/WARN/FAIL. Стиль выдержан в общей тёмной теме EngHub, адаптивная сетка для мобильных.",cat:"electric",deployedDate:"2026-05-01"},
+    {id:"CALC-UPLOAD-XLSX",title:"📥 Загрузка Excel-журнала с массовой проверкой",desc:"Endpoint <code>/api/cable-calc/parse</code> принимает multipart upload (.xlsx/.xlsm/.pdf/.docx), авто-routing по расширению. Парсер вытаскивает строки кабельного журнала и для каждой считает per-row I_доп с поправками. UI показывает таблицу результатов с подсветкой строк OK/WARN/FAIL.",cat:"electric",deployedDate:"2026-05-01"},
+    {id:"CALC-REPORT-WORD",title:"📄 Экспорт Word-отчёта (.docx)",desc:"Endpoint <code>/api/cable-calc/report</code> принимает POST JSON {input, result} → возвращает Word через python-docx. Содержимое: исходные данные, результаты, поправочные коэффициенты, проверки, методика с формулами, графа подписи. ~38 KB на тест-кейсе.",cat:"electric",deployedDate:"2026-05-01"},
+    {id:"CALC-REPORT-XLSX",title:"📊 Экспорт Excel-результата проверки",desc:"Endpoint <code>/api/cable-calc/report-xlsx</code> принимает POST JSON со строками журнала → возвращает Excel через openpyxl с цветовой раскраской OK/WARN/FAIL (зелёный/жёлтый/красный) + summary-row внизу. Готовый файл для подшивки в проектную папку.",cat:"electric",deployedDate:"2026-05-01"},
+    {id:"CALC-OCR-PDF",title:"🔎 OCR PDF-журналов через OpenAI Vision",desc:"Для image-only PDF (AutoCAD print-to-PDF без текстового слоя) парсер использует OpenAI Vision API: страницы PDF → PNG → отправка в gpt-4o-vision → структурированный JSON со строками журнала. PIL и pytesseract обёрнуты в try/except — на Vercel serverless без tesseract OCR-страницы пропускаются с warning, цифровые PDF читаются нормально через pdfplumber.",cat:"electric",deployedDate:"2026-05-01"},
+    {id:"CALC-VERIFY-CALCULATE",title:"✓ Кнопки «Проверить» / «Рассчитать» с авто-детектом",desc:"Двойной режим: «Проверить» — пользователь вводит уже выбранное сечение и калькулятор подтверждает что оно проходит по всем критериям (или говорит почему нет). «Рассчитать» — калькулятор сам подбирает минимальное проходящее сечение. Авто-детект недостающих данных и подсветка обязательных полей.",cat:"electric",deployedDate:"2026-05-01"},
+  ],
+  skip: [],
+};
+
+const CAT_LABEL = {
+  electric:"⚡ Электрика", light:"💡 Свет", vent:"🌬 Вентиляция", heat:"🔥 Теплоснабжение",
+  water:"💧 Вода", struct:"🏗 Конструкции", road:"🛣 Дороги", protect:"🛡 РЗА", meta:"⚙ Платформа"
+};
+
+function renderCard(item, useDeployedDate) {
+  const cat = item.cat ? `<span class="tag cat-${item.cat}">${CAT_LABEL[item.cat] || item.cat}</span>` : '';
+  const links = (item.links || []).map(l => `<a href="${l.url}" target="_blank" onclick="event.stopPropagation()">${l.label} →</a>`).join('');
+  const date = useDeployedDate ? (item.deployedDate || item.date || '') : (item.date || '');
+  const text = (item.title + ' ' + (item.desc || '')).toLowerCase().replace(/"/g, '&quot;');
+  return `<div class="item" data-cat="${item.cat || ''}" data-text="${text}">
+    <div class="title"><span class="id">#${item.id}</span>${item.title}</div>
+    <div class="desc">${item.desc || ''}${links ? `<div class="links">${links}</div>` : ''}</div>
+    <div class="meta">${cat}<span class="date">${date}</span></div>
+  </div>`;
+}
+
+function render() {
+  const cols = ['idea','triage','clarify','decided','ip','done','skip'];
+  const map = {idea:'idea', triage:'triage', clarify:'clarify', decided:'decided', ip:'in_progress', done:'done', skip:'skip'};
+  cols.forEach(c => {
+    const key = map[c];
+    const list = BOARD[key] || [];
+    const useDep = (key === 'done');
+    const html = list.map(it => renderCard(it, useDep)).join('') || '<div class="empty">пусто</div>';
+    const listEl = document.getElementById('list-' + c);
+    const cntEl = document.getElementById('cnt-' + c);
+    const kpiEl = document.getElementById('kpi-' + c);
+    if (listEl) listEl.innerHTML = html;
+    if (cntEl) cntEl.textContent = list.length;
+    if (kpiEl) kpiEl.textContent = list.length;
+  });
+  document.querySelectorAll('.item').forEach(it => it.addEventListener('click', () => it.classList.toggle('open')));
+}
+
+function applyFilters() {
+  const search = document.getElementById('search').value.toLowerCase().trim();
+  const activeCat = document.querySelector('.controls button[data-cat].active').getAttribute('data-cat');
+  document.querySelectorAll('.item').forEach(it => {
+    const text = it.getAttribute('data-text') || '';
+    const cat = it.getAttribute('data-cat') || '';
+    const matchSearch = !search || text.includes(search);
+    const matchCat = activeCat === 'all' || cat === activeCat;
+    it.style.display = (matchSearch && matchCat) ? '' : 'none';
+  });
+}
+
+document.getElementById('search').addEventListener('input', applyFilters);
+document.querySelectorAll('.controls button[data-cat]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.controls button[data-cat]').forEach(b => b.classList.

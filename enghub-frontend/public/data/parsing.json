@@ -1,0 +1,910 @@
+{
+  "meta": {
+    "generated_at": "2026-05-05T08:02:29Z",
+    "sources_used": [
+      "extra",
+      "habr",
+      "hn",
+      "hn-comment",
+      "ph",
+      "so",
+      "so-answer",
+      "vc"
+    ],
+    "stats": {
+      "total_scraped": 898,
+      "ai_processed": 898,
+      "confirmed_pain": 24,
+      "clusters": 5,
+      "meta_clusters": 2
+    },
+    "categories": {
+      "integration": "Интеграция систем",
+      "workflow": "Workflow-автоматизация",
+      "docgen": "Генерация документов",
+      "monitoring": "Мониторинг и триггеры",
+      "parsing": "Парсинг и агрегация",
+      "mass-ops": "Массовые операции",
+      "ai": "AI-обработка",
+      "ui": "Интерфейсы (бот/веб/форма)"
+    },
+    "cost_usd": 0.0474
+  },
+  "meta_clusters": [
+    {
+      "id": "автоматизация",
+      "label": "Автоматизация",
+      "emoji": "🧩",
+      "clusters_count": 4,
+      "items_count": 22,
+      "total_priority": 161.0
+    },
+    {
+      "id": "тестирование",
+      "label": "Тестирование",
+      "emoji": "🧩",
+      "clusters_count": 1,
+      "items_count": 2,
+      "total_priority": 15.0
+    }
+  ],
+  "clusters": [
+    {
+      "id": "misc-other",
+      "label": "Прочее",
+      "category": "workflow",
+      "items_count": 15,
+      "examples_ids": [
+        "hn-48019262",
+        "hn-48018886",
+        "hn-48018630",
+        "hn-48018488",
+        "hn-48016156",
+        "hn-48015655",
+        "hn-48013758",
+        "hn-48012986"
+      ],
+      "meta_cluster_id": "автоматизация",
+      "avg_priority": 7.63
+    },
+    {
+      "id": "ручной-процесс",
+      "label": "Ручной-процесс",
+      "category": "workflow",
+      "items_count": 3,
+      "examples_ids": [
+        "hn-48014969",
+        "habr-ps-habr-com-ru-articles-1030684",
+        "habr-ps-habr-com-ru-articles-1031194"
+      ],
+      "meta_cluster_id": "автоматизация",
+      "avg_priority": 5.0
+    },
+    {
+      "id": "автоматизация-процессов",
+      "label": "Автоматизация процессов",
+      "category": "ai",
+      "items_count": 2,
+      "examples_ids": [
+        "hn-48017838",
+        "hn-48014199"
+      ],
+      "meta_cluster_id": "автоматизация",
+      "avg_priority": 8.25
+    },
+    {
+      "id": "управление-задачами-markdown",
+      "label": "Управление задачами markdown",
+      "category": "workflow",
+      "items_count": 2,
+      "examples_ids": [
+        "hn-48016652",
+        "hn-48014767"
+      ],
+      "meta_cluster_id": "автоматизация",
+      "avg_priority": 7.5
+    },
+    {
+      "id": "автоматизация-тестирования-flutter",
+      "label": "Автоматизация тестирования flutter",
+      "category": "workflow",
+      "items_count": 2,
+      "examples_ids": [
+        "lobsters-https-lobste-rs-s-juyhsy",
+        "hn-comment-48019263"
+      ],
+      "meta_cluster_id": "тестирование",
+      "avg_priority": 7.5
+    }
+  ],
+  "items": [
+    {
+      "id": "lobsters-https-lobste-rs-s-fk5hpa",
+      "source": "lobsters",
+      "source_label": "Lobsters",
+      "url": "https://github.com/jeromedalbert/ace-template",
+      "title": "Ace Template: go from `rails new` to deployed in under 5 minutes (self-hosted or PaaS)",
+      "text_excerpt": "Comments",
+      "timestamp": "2026-05-05T06:45:59Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "monitoring",
+      "category_label": "Мониторинг и триггеры",
+      "priority": 9.0,
+      "problem_short": "Проблема с правильностью тестов в автоматизации.",
+      "automation_idea": "Создать систему мониторинга и анализа тестов для выявления ошибок.",
+      "concrete_solution": [
+        "Разработать систему отслеживания тестов",
+        "Настроить уведомления о сбоях",
+        "Интегрировать с CI/CD"
+      ],
+      "tools": [
+        "OpenAI API",
+        "Zapier",
+        "Slack bot"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Проблема с правильностью тестов в автоматизации.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48017838",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://news.ycombinator.com/item?id=48017838",
+      "title": "I'm looking for an AI Automation Engineer role or gig",
+      "text_excerpt": "Hi all, I'm an AI automation engineer who builds systems that replace manual work, scale outreach, and turn workflows into revenue. I have sent out working systems for managing leads to CRM, finding real estate deals, sorting emails with AI, chatbot integration, AI voice integration, and agentic RAG…",
+      "timestamp": "2026-05-05T03:48:17Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "ai",
+      "category_label": "AI-обработка",
+      "priority": 8.5,
+      "problem_short": "Ищу работу, где могу автоматизировать ручные процессы.",
+      "automation_idea": "Создание систем, которые заменяют ручную работу и масштабируют процессы.",
+      "concrete_solution": [
+        "Определить ключевые процессы для автоматизации",
+        "Разработать интеграции с существующими системами",
+        "Использовать инструменты для автоматизации, такие как n8n или Airtable"
+      ],
+      "tools": [
+        "n8n",
+        "Airtable",
+        "OpenAI API",
+        "Zapier",
+        "Python"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Ищу работу, где могу автоматизировать ручные процессы.",
+      "cluster_id": "автоматизация-процессов",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48018886",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://clereviewofbooks.com/the-laboratory-and-the-artist/",
+      "title": "The Laboratory and the Artist",
+      "text_excerpt": "",
+      "timestamp": "2026-05-05T06:41:46Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "mass-ops",
+      "category_label": "Массовые операции",
+      "priority": 8.0,
+      "problem_short": "Необходимость массового удаления сообщений в Instagram.",
+      "automation_idea": "Создать скрипт для автоматического удаления сообщений в Instagram.",
+      "concrete_solution": [
+        "Использовать Instagram API для авторизации",
+        "Получить список всех сообщений",
+        "Удалить сообщения по заданным критериям"
+      ],
+      "tools": [
+        "Python",
+        "Instagram API"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Необходимость массового удаления сообщений в Instagram.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48018488",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://songshift.reachnick.co",
+      "title": "Show HN: SongShift, an advanced, AI-powered song conversion service",
+      "text_excerpt": "Hi everyone- 've spent a lot of time recently working on this AI-powered song conversion web app. I think it's ready for testing. You can search for songs, link to a song on YouTube, Spotify, Tidal, etc, or even upload a file from your own machine, and my service will convert it quickly and in top q…",
+      "timestamp": "2026-05-05T05:38:35Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "ai",
+      "category_label": "AI-обработка",
+      "priority": 8.0,
+      "problem_short": "Сложно конвертировать песни из разных источников.",
+      "automation_idea": "Создать веб-приложение для автоматической конвертации песен с использованием AI.",
+      "concrete_solution": [
+        "Разработать интерфейс для загрузки и поиска песен",
+        "Интегрировать API для YouTube, Spotify и других сервисов",
+        "Настроить алгоритм конвертации с использованием AI"
+      ],
+      "tools": [
+        "OpenAI API",
+        "Google Sheets",
+        "Node.js"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Сложно конвертировать песни из разных источников.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48014199",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://www.operator23.com/",
+      "title": "Show HN: Plain English automation that fixes itself when it breaks",
+      "text_excerpt": "operator23 lets you describe a workflow in plain English and run it across your stack. hubspot, apollo, monday, slack, google drive, others. no builder, no if-then config. built for 5-15 person teams. founder doing inbound triage, one ops person juggling six tools, work that should be automated keep…",
+      "timestamp": "2026-05-04T20:03:14Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 8.0,
+      "problem_short": "Ручная работа по автоматизации процессов в команде.",
+      "automation_idea": "Использовать инструменты для автоматизации рабочих процессов без необходимости программирования.",
+      "concrete_solution": [
+        "Изучить существующие процессы в команде",
+        "Определить повторяющиеся задачи",
+        "Настроить автоматизацию с помощью n8n или Zapier"
+      ],
+      "tools": [
+        "n8n",
+        "Zapier",
+        "Make.com"
+      ],
+      "complexity": "easy",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Ручная работа по автоматизации процессов в команде.",
+      "cluster_id": "автоматизация-процессов",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48013758",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://news.ycombinator.com/item?id=48013758",
+      "title": "Tell HN: The saddest irony of my/our craft",
+      "text_excerpt": "So I wouldn't mind to lose my job for almost any other reason. Bad market, company pivot, even my own stupid mistakes... fine, thats life. But losing it because of the love I put in my open source projects? C'mon man, that one really pisses me off. I had side projects on weekends just for fun like e…",
+      "timestamp": "2026-05-04T19:28:20Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "ai",
+      "category_label": "AI-обработка",
+      "priority": 8.0,
+      "problem_short": "Автор недоволен тем, что его проекты используются для обучения AI.",
+      "automation_idea": "Создать платформу для защиты авторских прав на открытые проекты.",
+      "concrete_solution": [
+        "Разработать систему отслеживания использования кода",
+        "Создать API для регистрации проектов",
+        "Внедрить уведомления для авторов при использовании их кода"
+      ],
+      "tools": [
+        "OpenAI API",
+        "Webhook",
+        "Python"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Автор недоволен тем, что его проекты используются для обучения AI.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48012986",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://noreporter.ai",
+      "title": "Show HN: NoReporter – AI-only newsroom, $1/year",
+      "text_excerpt": "A completely automated news agency, eliminate human selection bias.",
+      "timestamp": "2026-05-04T18:38:51Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "ai",
+      "category_label": "AI-обработка",
+      "priority": 8.0,
+      "problem_short": "Ищут полностью автоматизированное новостное агентство.",
+      "automation_idea": "Создать новостное агентство, которое будет использовать AI для генерации новостей без человеческого участия.",
+      "concrete_solution": [
+        "Разработать AI-модель для генерации новостей",
+        "Подключить API для получения актуальных новостей",
+        "Настроить автоматическую публикацию на сайте"
+      ],
+      "tools": [
+        "OpenAI API",
+        "Zapier",
+        "Google Sheets"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Ищут полностью автоматизированное новостное агентство.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "lobsters-https-lobste-rs-s-2iabwb",
+      "source": "lobsters",
+      "source_label": "Lobsters",
+      "url": "https://www.c64os.com/post/thec64handheld",
+      "title": "THEC64 Handheld",
+      "text_excerpt": "Comments",
+      "timestamp": "2026-05-04T16:38:00Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "docgen",
+      "category_label": "Генерация документов",
+      "priority": 8.0,
+      "problem_short": "Необходимость в переводе технических документов для международных тендеров.",
+      "automation_idea": "Создать систему автоматизированного перевода и проверки документов.",
+      "concrete_solution": [
+        "Собрать требования к документам",
+        "Подключить API переводчика",
+        "Настроить автоматическую проверку формата документов"
+      ],
+      "tools": [
+        "Google Sheets",
+        "Zapier",
+        "OpenAI API"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Необходимость в переводе технических документов для международных тендеров.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-comment-48019263",
+      "source": "hn-comment",
+      "source_label": "HN comment",
+      "url": "https://news.ycombinator.com/item?id=48019263",
+      "title": "Here is a demo of something I have currently been working on: Using Claude Code with Vercel's agent-…",
+      "text_excerpt": "Here is a demo of something I have currently been working on: Using Claude Code with Vercel's agent-browser for some browser automations in Zoho Books. I have bundled majority of the automation into a client side IIFE. This led to a 18x cost-saving as shown below, though realistically I feel it must…",
+      "timestamp": "2026-05-05T07:42:09.000Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 8.0,
+      "problem_short": "Высокие затраты на токены из-за большого количества тестов.",
+      "automation_idea": "Оптимизировать процесс тестирования с помощью автоматизации и пакетной обработки.",
+      "concrete_solution": [
+        "Настроить автоматизацию тестов с использованием Playwright",
+        "Создать систему для пакетной обработки тестов",
+        "Оптимизировать использование токенов при взаимодействии с AI"
+      ],
+      "tools": [
+        "n8n",
+        "Zapier",
+        "OpenAI API"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Высокие затраты на токены из-за большого количества тестов.",
+      "cluster_id": "автоматизация-тестирования-flutter",
+      "meta_cluster_id": "тестирование"
+    },
+    {
+      "id": "hn-48019262",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://www.youtube.com/watch?v=ZM8Ar_Cr-LI",
+      "title": "Using Agent-Browser in Claude Code to Automate Zoho Books Workflows",
+      "text_excerpt": "",
+      "timestamp": "2026-05-05T07:42:09Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 7.5,
+      "problem_short": "Необходимо автоматизировать рабочие процессы в Zoho Books.",
+      "automation_idea": "Использовать Agent-Browser для автоматизации задач в Zoho Books.",
+      "concrete_solution": [
+        "Настроить Agent-Browser для работы с Zoho Books",
+        "Определить повторяющиеся задачи",
+        "Создать сценарии для автоматизации этих задач"
+      ],
+      "tools": [
+        "n8n",
+        "Zapier",
+        "Make.com"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Необходимо автоматизировать рабочие процессы в Zoho Books.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48018630",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://news.ycombinator.com/item?id=48018630",
+      "title": "Ask HN: Created Testing Hub for Indi Game Devs and Gamers Community",
+      "text_excerpt": "I Have This pain as a passionate game dev, I’ve learned that building the APK is only half the work. Getting real, honest feedback before launch is the real challenge. That’s why I created Coffee Games Testing Hub Submit your APK, get genuine community feedback, and improve before launch. I don't kn…",
+      "timestamp": "2026-05-05T06:01:35Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 7.5,
+      "problem_short": "Трудно получить честную обратную связь от тестеров перед запуском игры.",
+      "automation_idea": "Создать платформу для сбора отзывов от тестеров с автоматической отправкой уведомлений.",
+      "concrete_solution": [
+        "Создать веб-приложение для загрузки APK",
+        "Настроить систему уведомлений для тестеров",
+        "Собирать и анализировать отзывы в реальном времени"
+      ],
+      "tools": [
+        "Google Sheets",
+        "Node.js",
+        "Webhook"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Трудно получить честную обратную связь от тестеров перед запуском игры.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48016652",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://www.wsj.com/tech/ai/anthropic-and-fis-are-building-an-ai-agent-to-help-banks-police-financial-crimes-5a0be5a8",
+      "title": "Anthropic and FIS Are Building an AI Agent to Help Banks Police Financial Crimes",
+      "text_excerpt": "",
+      "timestamp": "2026-05-05T00:28:49Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 7.5,
+      "problem_short": "Не хватает удобного интерфейса для управления задачами.",
+      "automation_idea": "Создать веб-интерфейс для управления задачами с использованием Markdown.",
+      "concrete_solution": [
+        "Разработать веб-приложение для управления задачами",
+        "Использовать Markdown для описания задач",
+        "Интегрировать с существующими инструментами для импорта задач"
+      ],
+      "tools": [
+        "Node.js",
+        "Python",
+        "Slack bot"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Не хватает удобного интерфейса для управления задачами.",
+      "cluster_id": "управление-задачами-markdown",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48016156",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://news.ycombinator.com/item?id=48016156",
+      "title": "Ask HN: Cryptic refusals of credit cards with Firefox?",
+      "text_excerpt": "On Ubuntu 24 Firefox, trying to buy a ~$1500 item from major vendors new to me gets failures at various points in the transaction. At last reaching an actual human on phone support, was told FF is the problem. Anyone else seeing this?",
+      "timestamp": "2026-05-04T23:09:14Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "ui",
+      "category_label": "Интерфейсы (бот/веб/форма)",
+      "priority": 7.5,
+      "problem_short": "Проблемы с покупкой товаров через Firefox.",
+      "automation_idea": "Создать интерфейс для автоматизации процесса покупки с использованием другого браузера.",
+      "concrete_solution": [
+        "Разработать веб-приложение для автоматизации покупок",
+        "Интегрировать API для проверки доступности товаров",
+        "Использовать альтернативный браузер для совершения покупок"
+      ],
+      "tools": [
+        "Python",
+        "Node.js",
+        "Webhook"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Проблемы с покупкой товаров через Firefox.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48015655",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://allbsides.com/",
+      "title": "Show HN: I indexed 8,643 BSides talks across 227 chapters and 6 continents",
+      "text_excerpt": "Hi HN, I'm Roland, and for the past few weeks, I've been building AllBSides — a directory of every BSides conference talk uploaded to YouTube. As of today, 8,643 talks from 5,927 speakers across 227 chapters in 68 countries. Combined runtime is 280 days. The transcripts come to about 60 million word…",
+      "timestamp": "2026-05-04T22:10:21Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "parsing",
+      "category_label": "Парсинг и агрегация",
+      "priority": 7.5,
+      "problem_short": "Необходимо вручную индексировать и обрабатывать большое количество видео и транскриптов.",
+      "automation_idea": "Можно автоматизировать процесс извлечения данных из YouTube и их индексации с помощью API.",
+      "concrete_solution": [
+        "Использовать YouTube API для получения списка видео",
+        "Сохранить транскрипты в базу данных",
+        "Запустить скрипт для обработки и индексации данных"
+      ],
+      "tools": [
+        "YouTube API",
+        "PostgreSQL",
+        "Python"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Необходимо вручную индексировать и обрабатывать большое количество видео и транскриптов.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48014767",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://news.ycombinator.com/item?id=48014767",
+      "title": "Ask HN: Best local agent setup for Markdown notes?",
+      "text_excerpt": "I have a Macbook Pro with 24GB of RAM and an M4 processor. I have a lot of Obsidian notes (i.e. markdown files with links between them) that I'd like to query and manipulate locally with an agent. What's the best harness/model combination for this use case? The kind of prompt I'd like to use is: \"Cr…",
+      "timestamp": "2026-05-04T20:48:51Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "parsing",
+      "category_label": "Парсинг и агрегация",
+      "priority": 7.5,
+      "problem_short": "Необходимо эффективно управлять заметками в формате Markdown.",
+      "automation_idea": "Создать локального агента для обработки и манипуляции заметками в формате Markdown.",
+      "concrete_solution": [
+        "Установить Obsidian на Macbook Pro",
+        "Настроить локальный агент для работы с Markdown",
+        "Создать скрипт для генерации новых заметок по заданным критериям"
+      ],
+      "tools": [
+        "Python",
+        "Node.js",
+        "Obsidian"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Необходимо эффективно управлять заметками в формате Markdown.",
+      "cluster_id": "управление-задачами-markdown",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "habr-nies-simpleone-articles-1031342",
+      "source": "habr",
+      "source_label": "Habr",
+      "url": "https://habr.com/ru/companies/simpleone/articles/1031342/?utm_campaign=1031342&utm_source=habrahabr&utm_medium=rss",
+      "title": "15 команд, 1 продукт, 14 проектов в Jira. Что не так?",
+      "text_excerpt": "Пока команда одна — всё логично: бэклог, доска, понятный поток. Но когда команд становится пятнадцать и все работают над одним продуктом — Jira начинает вести себя странно. Product Owner открывает утро с обхода четырёх проектов, задачи дублируются, а зависимости живут в комментариях. Разбираемся, по…",
+      "timestamp": "2026-05-05T07:22:28Z",
+      "lang": "ru",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 7.5,
+      "problem_short": "Сложности в управлении проектами в Jira при большом количестве команд.",
+      "automation_idea": "Автоматизировать создание и управление задачами в Jira с помощью интеграции с другими инструментами.",
+      "concrete_solution": [
+        "Настроить автоматическое создание задач в Jira через API",
+        "Использовать Slack для уведомлений о новых задачах",
+        "Создать дашборд для отслеживания статусов задач"
+      ],
+      "tools": [
+        "Zapier",
+        "Slack bot",
+        "Jira",
+        "Webhook"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Сложности в управлении проектами в Jira при большом количестве команд.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "so-79936163",
+      "source": "so",
+      "source_label": "Stack Overflow",
+      "url": "https://stackoverflow.com/questions/79936163/codex-session-still-cannot-access-the-local-word-renderer",
+      "title": "Codex session still cannot access the local Word renderer",
+      "text_excerpt": "I tried the visual QA again, but this Codex session still cannot access the local Word renderer. What happened: Word is installed, but Word automation still fails with 80070520 / “specified logon session does not exist.” The single-threaded Word automation route fails the same way. Task Scheduler is…",
+      "timestamp": "2026-05-05T01:20:05Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 7.5,
+      "problem_short": "Не удается автоматизировать рендеринг документов Word.",
+      "automation_idea": "Использовать API для автоматизации рендеринга документов Word.",
+      "concrete_solution": [
+        "Проверить доступ к API Word",
+        "Настроить автоматический рендеринг через API",
+        "Использовать скрипт для обработки DOCX файлов"
+      ],
+      "tools": [
+        "Python",
+        "Node.js",
+        "Zapier"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Не удается автоматизировать рендеринг документов Word.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "devto-entation-a-developers-guide-2lol",
+      "source": "devto",
+      "source_label": "Dev.to",
+      "url": "https://dev.to/diogoheleno/building-translation-pipelines-for-maritime-documentation-a-developers-guide-2lol",
+      "title": "Building Translation Pipelines for Maritime Documentation — A Developer's Guide",
+      "text_excerpt": "Building Translation Pipelines for Maritime Documentation — A Developer's Guide As maritime companies scale globally, they face a technical challenge that goes beyond just translating documents. Naval documentation involves complex terminology, strict regulatory requirements, and multiple stakeholde…",
+      "timestamp": "2026-05-05T07:24:27Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 7.5,
+      "problem_short": "Сложности с переводом морской документации из-за специфической терминологии и требований.",
+      "automation_idea": "Автоматизировать процесс перевода с помощью специализированных API для перевода и управления документами.",
+      "concrete_solution": [
+        "Использовать API для перевода документов",
+        "Создать базу данных терминологии",
+        "Настроить автоматическую проверку и обновление переводов"
+      ],
+      "tools": [
+        "Google Sheets",
+        "Zapier",
+        "OpenAI API"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Сложности с переводом морской документации из-за специфической терминологии и требований.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48012857",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://ariadne.space/2022/03/26/the-tragedy-of-gethostbyname.html",
+      "title": "The Tragedy of Gethostbyname",
+      "text_excerpt": "",
+      "timestamp": "2026-05-04T18:30:21Z",
+      "lang": "ru",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 7.0,
+      "problem_short": "Проблема с забыванием запланированных встреч.",
+      "automation_idea": "Использовать приложение для напоминаний и интеграции с календарем.",
+      "concrete_solution": [
+        "Установить Übersicht для отображения задач",
+        "Подключить Google Calendar для синхронизации",
+        "Настроить уведомления о предстоящих встречах"
+      ],
+      "tools": [
+        "Google Calendar",
+        "Zapier",
+        "n8n"
+      ],
+      "complexity": "easy",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Проблема с забыванием запланированных встреч.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "lobsters-https-lobste-rs-s-juyhsy",
+      "source": "lobsters",
+      "source_label": "Lobsters",
+      "url": "https://seclists.org/oss-sec/2026/q2/332",
+      "title": "uutils coreutils CVEs",
+      "text_excerpt": "Comments",
+      "timestamp": "2026-05-04T19:41:43Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 7.0,
+      "problem_short": "Необходимость в автоматизации тестирования приложений на Flutter.",
+      "automation_idea": "Разработать единый фреймворк для тестирования приложений на Flutter.",
+      "concrete_solution": [
+        "Изучить существующие стратегии тестирования",
+        "Создать единый тестовый фреймворк",
+        "Интегрировать с CI/CD"
+      ],
+      "tools": [
+        "Python",
+        "Node.js",
+        "Zapier"
+      ],
+      "complexity": "medium",
+      "value": "high",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Необходимость в автоматизации тестирования приложений на Flutter.",
+      "cluster_id": "автоматизация-тестирования-flutter",
+      "meta_cluster_id": "тестирование"
+    },
+    {
+      "id": "hn-48012808",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://www.wsj.com/world/africa/worlds-biggest-animal-migration-great-nile-b67e3c0b",
+      "title": "The Biggest Animal Migration–and Few Outsiders Have Seen It",
+      "text_excerpt": "",
+      "timestamp": "2026-05-04T18:27:22Z",
+      "lang": "ru",
+      "is_pain": true,
+      "category": "docgen",
+      "category_label": "Генерация документов",
+      "priority": 6.0,
+      "problem_short": "Ищут инструмент для создания резюме.",
+      "automation_idea": "Использовать онлайн-сервис для генерации резюме на основе шаблонов.",
+      "concrete_solution": [
+        "Выбрать шаблон резюме",
+        "Заполнить необходимые данные",
+        "Сохранить и экспортировать резюме в PDF"
+      ],
+      "tools": [
+        "Google Sheets",
+        "Notion",
+        "Zapier"
+      ],
+      "complexity": "easy",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Ищут инструмент для создания резюме.",
+      "cluster_id": "misc-other",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48014969",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://news.ycombinator.com/item?id=48014969",
+      "title": "Ask HN: Can't follow \"don't use HN for promotion\" due to my lifestyle: OK or no?",
+      "text_excerpt": "I have two questions for the HN community: 1. Should I, individually , be allowed to \"self promote\" by having everything I ever post be a link to my personal site? 2. If not, then, in light of my unique constraints , where should I post if not HN? Let me provide some context: I have probably read Ha…",
+      "timestamp": "2026-05-04T21:03:20Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Ask HN: Can't follow \"don't use HN for promotion\" due to my lifestyle: OK or no?",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Ask HN: Can't follow \"don't use HN for promotion\" due to my lifestyle: OK or no?",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "habr-ps-habr-com-ru-articles-1030684",
+      "source": "habr",
+      "source_label": "Habr",
+      "url": "https://habr.com/ru/articles/1030684/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1030684",
+      "title": "Как Gemma и LangGraph написали законопроект победившего биопанка",
+      "text_excerpt": "Для специального бенчмарка мне потребовался нормативно-правовой документ с научной терминологией, перекрестными ссылками и набором сложных для векторизации имён. По традиции для подобных задач я использую тексты в жанре Киберпанк. Сразу вспомнил о «Манифесте Киберпанка» (слишком коротком для моей за…",
+      "timestamp": "2026-05-05T07:17:04Z",
+      "lang": "ru",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Как Gemma и LangGraph написали законопроект победившего биопанка",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Как Gemma и LangGraph написали законопроект победившего биопанка",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "habr-ps-habr-com-ru-articles-1031194",
+      "source": "habr",
+      "source_label": "Habr",
+      "url": "https://habr.com/ru/articles/1031194/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1031194",
+      "title": "Мы можем решать задачи компьютерного зрения без видеокарт. И вам советуем",
+      "text_excerpt": "Когда-нибудь спрашивали себя, какие технологии должны быть в башке терминатора из фильмов Джеймса Кэмерона, чтобы он (терминатор) мог обрабатывать данные так, как он это делает в дилогии? (Остальные сиквелы/приквелы за фильмы мы не считаем – третья часть получилась вопреки желаниям создателей плохой…",
+      "timestamp": "2026-05-04T12:09:55Z",
+      "lang": "ru",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Мы можем решать задачи компьютерного зрения без видеокарт. И вам советуем",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Мы можем решать задачи компьютерного зрения без видеокарт. И вам советуем",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    }
+  ]
+}

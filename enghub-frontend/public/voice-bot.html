@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Голос → Telegram · интерактивная сборка</title>
+<style>
+:root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b;--cyan:#06b6d4}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+.wrap{max-width:1080px;margin:0 auto;padding:18px 18px 80px}
+header{padding:6px 0 18px;border-bottom:1px solid var(--border);margin-bottom:18px}
+header h1{margin:0 0 4px;font-size:24px;letter-spacing:-0.01em}
+header .sub{color:var(--muted);font-size:13px;line-height:1.6}
+.tip{background:rgba(79,140,255,.08);border:1px solid rgba(79,140,255,.25);border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:13px;line-height:1.6;color:var(--muted)}
+.tip b{color:var(--text)}
+.tip a{color:var(--accent)}
+.tip code{background:var(--panel2);padding:2px 6px;border-radius:4px;font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px}
+@media(max-width:720px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:11px 14px}
+.kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.kpi .value{font-size:24px;font-weight:700;margin-top:4px}
+.kpi.done .value{color:var(--green)}
+.kpi.left .value{color:var(--accent)}
+.kpi.total .value{color:var(--text)}
+.section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px}
+.section h2{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}
+.section h2 .num{background:var(--accent);color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.section.done{border-left:4px solid var(--green)}
+.section.skipped{border-left:4px solid var(--gray);opacity:.7}
+.section.stuck{border-left:4px solid var(--red)}
+.section.in_progress{border-left:4px solid var(--accent)}
+.section .desc{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:10px}
+.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.actions .lbl{font-size:11px;color:var(--muted);align-self:center}
+.act-btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:11px;transition:.15s}
+.act-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.act-btn.chosen.done{background:var(--green);border-color:var(--green);color:#fff}
+.act-btn.chosen.stuck{background:var(--red);border-color:var(--red);color:#fff}
+.act-btn.chosen.skip{background:var(--gray);border-color:var(--gray);color:#fff}
+.input-row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.input-row label{font-size:11px;color:var(--muted);min-width:100px}
+.input-row input{flex:1;min-width:200px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font:13px monospace}
+.input-row input:focus{outline:none;border-color:var(--accent)}
+.copy-mini{background:var(--accent);color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:11px}
+.value-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font:12px monospace;line-height:1.6;margin:8px 0;word-break:break-all;white-space:pre-wrap}
+.value-block .lbl{color:var(--muted);font-family:inherit;display:block;margin-bottom:3px;text-transform:uppercase;font-size:9px;letter-spacing:.05em}
+.path-pick{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px}
+@media(max-width:900px){.path-pick{grid-template-columns:1fr}}
+.path .chosen-badge{display:inline-block;background:var(--green);color:#fff;font-size:9px;padding:1px 7px;border-radius:9px;font-weight:700;letter-spacing:.04em;margin-left:6px;vertical-align:middle}
+.path .price.cyan{color:var(--cyan)}
+.nav-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;padding:8px 10px;background:var(--panel);border:1px solid var(--border);border-radius:10px;font-size:12px;align-items:center}
+.nav-bar a{color:var(--accent);text-decoration:none;padding:3px 9px;border-radius:6px;background:rgba(79,140,255,.08)}
+.nav-bar a:hover{background:rgba(79,140,255,.18)}
+.nav-bar .sep{color:var(--muted);margin:0 2px}
+.nav-bar .pin{color:var(--green);font-weight:600;margin-left:auto;font-size:11px}
+.build-status{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;border-left:4px solid var(--cyan)}
+.build-status h2{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}
+.build-status h2 .num{background:var(--cyan);color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.build-status .row{display:grid;grid-template-columns:140px 1fr;gap:10px 16px;margin:6px 0;font-size:13px}
+@media(max-width:600px){.build-status .row{grid-template-columns:1fr}}
+.build-status .row .lbl{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;align-self:center}
+.build-status .row .val{font-family:monospace;font-size:12px}
+.build-status .badge{display:inline-block;padding:2px 9px;border-radius:9px;font-size:11px;font-weight:600}
+.build-status .badge.pending{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+.build-status .actions-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.build-status .dl-btn{background:var(--cyan);color:#fff;border:none;padding:8px 14px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;text-decoration:none;display:inline-block;opacity:.5;pointer-events:none}
+.build-status .dl-btn.ready{opacity:1;pointer-events:auto}
+.build-status .dl-btn:hover.ready{background:#0891b2}
+.build-status .ci-link{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:7px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-block}
+.build-status .ci-link:hover{border-color:var(--accent)}
+.path{padding:14px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:.15s}
+.path:hover{border-color:var(--accent)}
+.path.chosen{border-color:var(--green);background:rgba(34,197,94,.06)}
+.path h3{margin:0 0 6px;font-size:14px}
+.path .price{color:var(--green);font-size:11px;font-weight:600;margin-bottom:6px}
+.path .price.gray{color:var(--muted)}
+.path p{margin:0;font-size:12px;color:var(--muted);line-height:1.55}
+.note{width:100%;margin-top:8px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px;font:12px/1.5 inherit;resize:vertical;min-height:36px}
+ul.steps-mini{margin:6px 0;padding-left:20px;font-size:13px;line-height:1.7}
+ul.steps-mini li{margin-bottom:3px}
+ul.steps-mini code{background:var(--panel2);padding:1px 5px;border-radius:3px;font-size:12px}
+.bottom-bar{position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--border);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin:24px -18px -80px;gap:12px;flex-wrap:wrap}
+.bottom-bar .stats{font-size:12px;color:var(--muted)}
+.bottom-bar .stats span{color:var(--text);font-weight:600}
+.bottom-bar a{color:var(--accent);text-decoration:none;font-size:12px}
+.bottom-bar a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+<h1>🎙️ Голос → Telegram · интерактивная сборка</h1>
+<div class="sub">Цель — за вечер сделать так, чтобы ты говорил телефону и сообщение уходило в Telegram. Кликаешь по карточке, отмечаешь «✓ готово» / «✗ застрял». Поля для TOKEN и chat_id сохраняются локально в браузере.</div>
+</header>
+
+<div class="nav-bar">
+<a href="/agenda.html">📋 Повестка</a>
+<a href="/status.html">📊 Статус</a>
+<a href="/parsing.html">🏭 Парсинг</a>
+<a href="/health-map.html">🩺 Health</a>
+<a href="/qa-review.html">🔍 QA</a>
+<a href="/conveyor.html">🚜 Конвейер</a>
+<a href="/cable-calc.html">🔌 Кабели 1кВ</a>
+<span class="pin">👑 Решение 29.04: путь D — нативный APK</span>
+</div>
+
+<div class="tip">
+💡 <b>Решение Андрея 29.04:</b> выбран путь <b>D — нативный Android APK с TDLib</b>. Сборка идёт в CI (см. блок «Статус сборки» ниже). Пути A (Google Assistant) и B (Tasker+AutoVoice) оставлены ниже как fallback на случай если кто-то захочет повторить эксперимент. Поля для TOKEN и chat_id сохраняются локально в браузере.
+</div>
+
+<div class="kpis">
+<div class="kpi total"><div class="label">Шагов всего</div><div class="value">7</div></div>
+<div class="kpi done"><div class="label">Готово</div><div class="value" id="kpi-done">0</div></div>
+<div class="kpi left"><div class="label">Осталось</div><div class="value" id="kpi-left">7</div></div>
+</div>
+
+<div class="section" data-step="0">
+<h2><span class="num">0</span> Выбери путь</h2>
+<div class="desc">Какой маршрут пойдёшь? Можно сменить позже — просто отметь чтобы трекать прогресс.</div>
+<div class="path-pick">
+<div class="path" data-path="google">
+<h3>🅰 Google Assistant + Telegram</h3>
+<div class="price">бесплатно · 1 минута</div>
+<p>Скажи «Окей Гугл, отправь в Telegram…». Telegram официально привязывается к Google Assistant. Триггер — голос «Окей Гугл», не своё слово. Не работает если ты не пользуешься Google Assistant.</p>
+</div>
+<div class="path" data-path="tasker">
+<h3>🅱 Tasker + AutoVoice + свой бот</h3>
+<div class="price gray">~2500 тенге · 30-40 минут</div>
+<p>Своё триггер-слово через AutoVoice (настраиваешь сам), своё приложение в Tasker, свой Telegram-бот. Полный контроль, но нужно купить 2 приложения и настроить.</p>
+</div>
+<div class="path" data-path="apk">
+<h3>🅳 Нативный APK (TDLib)<span class="chosen-badge">ВЫБРАН</span></h3>
+<div class="price cyan">бесплатно · 1 установка</div>
+<p>Своё APK-приложение с встроенным Telegram-клиентом (TDLib). Своё триггер-слово, своё фоновое прослушивание, никаких покупок. Сборка — в GitHub Actions, скачивание — из релизов репо. Статус сборки ниже.</p>
+</div>
+</div>
+<div class="actions">
+<button class="act-btn done" data-status="done">✓ выбрал</button>
+<button class="act-btn skip" data-status="skip">— потом</button>
+</div>
+</div>
+
+<div class="build-status" id="apk-build-status">
+<h2><span class="num">D</span> Путь D — нативный APK · статус сборки</h2>
+<div class="row">
+<div class="lbl">Статус</div>
+<div class="val"><span class="badge pending" id="apk-status-badge">⏳ ожидает первой сборки в CI</span></div>
+</div>
+<div class="row">
+<div class="lbl">Workflow</div>
+<div class="val"><code>.github/workflows/build-voice-bot-apk.yml</code></div>
+</div>
+<div class="row">
+<div class="lbl">Триггер</div>
+<div class="val">push в <code>main</code> с изменениями в <code>android-voicebot/</code> · <code>workflow_dispatch</code> вручную</div>
+</div>
+<div class="row">
+<div class="lbl">Артефакт</div>
+<div class="val">GitHub Release · тег <code>voice-bot-vN</code> · файл <code>voice-bot-release.apk</code></div>
+</div>
+<div class="row">
+<div class="lbl">Что делает APK</div>
+<div class="val">Слушает фразу «<i>отправь в телеграм …</i>» через Android SpeechRecognizer → шлёт текст после «телеграм» в Telegram через TDLib (свой клиент, не Bot API).</div>
+</div>
+<div class="actions-row">
+<a class="ci-link" href="https://github.com/andyrbek2709-tech/ai-institut/actions/workflows/build-voice-bot-apk.yml" target="_blank">🔧 Открыть CI workflow</a>
+<a class="ci-link" href="https://github.com/andyrbek2709-tech/ai-institut/releases" target="_blank">📦 Релизы (последний APK)</a>
+<a class="dl-btn" id="apk-dl-btn" href="#" target="_blank">⬇ Скачать APK</a>
+</div>
+<p style="font-size:12px;color:var(--muted);margin:10px 0 0;line-height:1.6"><b>Когда APK готов:</b> CI публикует релиз с тегом <code>voice-bot-vN</code> → кнопка «Скачать APK» становится активной (определяется автоматически по <code>fetch</code> к GitHub Releases API при загрузке страницы). Установка на телефон: разреши «установка из неизвестных источников», открой <code>.apk</code>, дай разрешения на микрофон и фоновую работу.</p>
+</div>
+
+<div class="section" data-step="1">
+<h2><span class="num">1</span> Создать Telegram-бота через @BotFather</h2>
+<div class="desc">Это твой персональный бот для приёма сообщений. Бот ничего сам делать не будет — только примет твоё сообщение и положит в чат.</div>
+<ul class="steps-mini">
+<li>В Telegram открой <a href="https://t.me/BotFather" target="_blank" style="color:var(--accent)">@BotFather</a></li>
+<li>Отправь команду <code>/newbot</code></li>
+<li>Имя бота: любое (например, <code>Андрей помощник</code>)</li>
+<li>Username: должен заканчиваться на <code>bot</code> (например, <code>andrey_helper_bot</code>)</li>
+<li>BotFather пришлёт TOKEN — длинная строка вида <code>7891234567:AAH-...</code></li>
+<li>Найди своего бота в поиске Telegram → нажми START → напиши «привет»</li>
+</ul>
+<div class="input-row">
+<label>Сохрани TOKEN:</label>
+<input id="token-input" type="text" placeholder="7891234567:AAH-..." spellcheck="false">
+<button class="copy-mini" onclick="navigator.clipboard.writeText(document.getElementById('token-input').value).then(()=>alert('TOKEN скопирован'))">Копир.</button>
+</div>
+<div class="actions">
+<button class="act-btn done" data-status="done">✓ Бот создан, TOKEN сохранён</button>
+<button class="act-btn stuck" data-status="stuck">✗ застрял</button>
+<textarea class="note" placeholder="Заметка / что не получилось"></textarea>
+</div>
+</div>
+
+<div class="section" data-step="2">
+<h2><span class="num">2</span> Узнать свой chat_id</h2>
+<div class="desc">Это твой ID в Telegram, куда бот будет писать. Узнаётся через браузер.</div>
+<ul class="steps-mini">
+<li>Сначала <b>напиши боту любое сообщение</b> в Telegram (если ещё не написал)</li>
+<li>Открой в браузере (на этом же телефоне или на компе): <span id="updates-url">укажи TOKEN выше</span></li>
+<li>Откроется JSON. Найди в нём <code>"chat":{"id":</code> — число после двоеточия и есть твой chat_id</li>
+<li>Пример: <code>"chat":{"id":<b style="color:var(--green)">123456789</b>, "first_name":"..."}</code></li>
+</ul>
+<div class="input-row">
+<label>Сохрани chat_id:</label>
+<input id="chatid-input" type="text" placeholder="123456789" spellcheck="false">
+<button class="copy-mini" onclick="navigator.clipboard.writeText(document.getElementById('chatid-input').value).then(()=>alert('chat_id скопирован'))">Копир.</button>
+</div>
+<div class="actions">
+<button class="act-btn done" data-status="done">✓ chat_id найден</button>
+<button class="act-btn stuck" data-status="stuck">✗ застрял</button>
+<textarea class="note" placeholder="Заметка"></textarea>
+</div>
+</div>
+
+<div class="section" data-step="3">
+<h2><span class="num">3</span> Тест: отправь сам себе через браузер</h2>
+<div class="desc">Прежде чем настраивать Tasker — проверим что бот рабочий. Если эта ссылка отправит сообщение — вся «облачная» часть работает.</div>
+<div class="value-block" id="test-url"><span class="lbl">Открой эту ссылку в браузере (заполни TOKEN и chat_id выше):</span>—</div>
+<div class="actions">
+<button class="act-btn done" data-status="done">✓ Сообщение пришло в Telegram</button>
+<button class="act-btn stuck" data-status="stuck">✗ Не пришло</button>
+<textarea class="note" placeholder="Какая ошибка вернулась?"></textarea>
+</div>
+</div>
+
+<div class="section" data-step="4">
+<h2><span class="num">4</span> Купить и установить Tasker + AutoVoice</h2>
+<div class="desc">Tasker — автоматизация на Android. AutoVoice — плагин который слушает голос и передаёт текст в Tasker.</div>
+<ul class="steps-mini">
+<li>Google Play: <a href="https://play.google.com/store/apps/details?id=net.dinglisch.android.taskerm" target="_blank" style="color:var(--accent)">Tasker</a> — ~1500 тенге</li>
+<li>Google Play: <a href="https://play.google.com/store/apps/details?id=com.joaomgcd.autovoice" target="_blank" style="color:var(--accent)">AutoVoice</a> — ~1000 тенге</li>
+<li>Установи оба, дай разрешения которые попросят (микрофон, уведомления, фоновую работу)</li>
+<li>В настройках телефона: <b>Батарея → Tasker и AutoVoice → выключи оптимизацию</b> (важно!)</li>
+</ul>
+<div class="actions">
+<button class="act-btn done" data-status="done">✓ Установлено и настроено</button>
+<button class="act-btn stuck" data-status="stuck">✗ застрял</button>
+<textarea class="note" placeholder="Заметка"></textarea>
+</div>
+</div>
+
+<div class="section" data-step="5">
+<h2><span class="num">5</span> Создать задачу в Tasker (Send Telegram)</h2>
+<div class="desc">Это «исполнитель» — что делать когда придёт команда. Один HTTP-запрос к Bot API.</div>
+<ul class="steps-mini">
+<li>Открой Tasker → внизу вкладка <b>Tasks</b> → нажми <b>«+»</b></li>
+<li>Имя задачи: <code>Send Telegram</code></li>
+<li>На пустом экране задачи нажми <b>«+»</b> → <b>Net</b> → <b>HTTP Request</b></li>
+<li>Method: <code>POST</code></li>
+<li>URL: <span id="tasker-url" style="color:var(--accent)">укажи TOKEN выше</span></li>
+<li>Body: <span id="tasker-body" style="color:var(--accent)">укажи chat_id выше</span></li>
+<li>Content Type: <code>application/x-www-form-urlencoded</code></li>
+<li>Назад → дискета (сохранить)</li>
+</ul>
+<div class="actions">
+<button class="act-btn done" data-status="done">✓ Задача создана</button>
+<button class="act-btn stuck" data-status="stuck">✗ застрял</button>
+<textarea class="note" placeholder="Заметка"></textarea>
+</div>
+</div>
+
+<div class="section" data-step="6">
+<h2><span class="num">6</span> Создать профиль AutoVoice (триггер на голос)</h2>
+<div class="desc">Это «слушатель» — что должно сработать на твою команду.</div>
+<ul class="steps-mini">
+<li>Tasker → вкладка <b>Profiles</b> → <b>«+»</b></li>
+<li><b>Event</b> → <b>Plugin</b> → <b>AutoVoice</b> → <b>Recognized</b></li>
+<li>В настройках AutoVoice Recognized:
+  <ul>
+    <li><b>Command Filter:</b> <code>отправь в телеграм (.*)</code></li>
+    <li>Включи галочку <b>«Use Regex»</b></li>
+  </ul>
+</li>
+<li>Назад → Tasker спросит какую задачу запустить → выбери <b>Send Telegram</b></li>
+<li>Открой <b>AutoVoice</b> отдельно → включи <b>Continuous Listening</b> (постоянное прослушивание)</li>
+</ul>
+<div class="actions">
+<button class="act-btn done" data-status="done">✓ Профиль создан, Continuous Listening on</button>
+<button class="act-btn stuck" data-status="stuck">✗ застрял</button>
+<textarea class="note" placeholder="Заметка"></textarea>
+</div>
+</div>
+
+<div class="section" data-step="7">
+<h2><span class="num">7</span> Тест с голоса</h2>
+<div class="desc">Самый красивый момент. Скажи телефону вслух:</div>
+<div class="value-block">«Отправь в телеграм проверка работает»</div>
+<p style="font-size:13px;color:var(--muted);line-height:1.6">Через 1-2 секунды в чате с твоим ботом должно появиться сообщение «проверка работает». <b>Если появилось — поздравляю!</b> Можно усложнять команды.</p>
+<p style="font-size:13px;color:var(--muted);line-height:1.6"><b>Если НЕ появилось:</b> открой Tasker → нижний бар → значок журнала (свиток) — увидишь логи с ошибкой. Самые частые причины:</p>
+<ul class="steps-mini">
+<li>Опечатка в TOKEN или chat_id</li>
+<li>AutoVoice Continuous Listening выключен</li>
+<li>Не выключена оптимизация батареи для Tasker / AutoVoice</li>
+</ul>
+<div class="actions">
+<button class="act-btn done" data-status="done">🎉 Работает!</button>
+<button class="act-btn stuck" data-status="stuck">✗ Не работает</button>
+<textarea class="note" placeholder="Текст ошибки из лога"></textarea>
+</div>
+</div>
+
+<div class="bottom-bar">
+<div class="stats">Прогресс: <span id="stat-progress">0/7</span> · сохраняется в браузере</div>
+<div><a href="https://enghub-three.vercel.app/agenda.html" target="_blank">→ доска повестки</a></div>
+</div>
+
+</div>
+<script>
+const STORAGE_KEY = 'enghub_voicebot_setup_v1';
+const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); updateStats(); }
+
+function updateStats() {
+  let done = 0;
+  document.querySelectorAll('.section[data-step]').forEach(s => {
+    const step = s.getAttribute('data-step');
+    const status = state['s' + step];
+    s.classList.remove('done', 'stuck', 'skipped', 'in_progress');
+    if (status === 'done') { s.classList.add('done'); done++; }
+    else if (status === 'stuck') s.classList.add('stuck');
+    else if (status === 'skip') s.classList.add('skipped');
+  });
+  const total = document.querySelectorAll('.section[data-step]').length;
+  document.getElementById('kpi-done').textContent = done;
+  document.getElementById('kpi-left').textContent = total - done;
+  document.getElementById('stat-progress').textContent = done + '/' + total;
+}
+
+document.querySelectorAll('.section[data-step]').forEach(section => {
+  const step = section.getAttribute('data-step');
+  const status = state['s' + step];
+
+  section.querySelectorAll('.act-btn').forEach(btn => {
+    const s = btn.getAttribute('data-status');
+    if (status === s) btn.classList.add('chosen', s);
+    btn.addEventListener('click', () => {
+      section.querySelectorAll('.act-btn').forEach(b => b.classList.remove('chosen', 'done', 'stuck', 'skip'));
+      if (state['s' + step] === s) {
+        delete state['s' + step];
+      } else {
+        state['s' + step] = s;
+        btn.classList.add('chosen', s);
+      }
+      save();
+    });
+  });
+
+  const note = section.querySelector('.note');
+  if (note) {
+    if (state['n' + step]) note.value = state['n' + step];
+    note.addEventListener('input', () => {
+      state['n' + step] = note.value;
+      save();
+    });
+  }
+
+  if (step === '0') {
+    section.querySelectorAll('.path').forEach(p => {
+      const path = p.getAttribute('data-path');
+      if (state.path === path) p.classList.add('chosen');
+      p.addEventListener('click', () => {
+        section.querySelectorAll('.path').forEach(p2 => p2.classList.remove('chosen'));
+        p.classList.add('chosen');
+        state.path = path;
+        save();
+      });
+    });
+  }
+});
+
+const tokenInput = document.getElementById('token-input');
+const chatidInput = document.getElementById('chatid-input');
+if (state.token) tokenInput.value = state.token;
+if (state.chatid) chatidInput.value = state.chatid;
+function syncDerived() {
+  const t = tokenInput.value.trim();
+  const c = chatidInput.value.trim();
+  document.getElementById('updates-url').innerHTML = t
+    ? '<a href="https://api.telegram.org/bot' + encodeURIComponent(t) + '/getUpdates" target="_blank" style="color:var(--accent)">https://api.telegram.org/bot' + t.slice(0,15) + '.../getUpdates ↗</a>'
+    : 'укажи TOKEN выше';
+  if (t && c) {
+    const testUrl = 'https://api.telegram.org/bot' + t + '/sendMessage?chat_id=' + c + '&text=Проверка%20работает';
+    document.getElementById('test-url').innerHTML = '<span class="lbl">Открой эту ссылку:</span><a href="' + testUrl + '" target="_blank" style="color:var(--accent);word-break:break-all">' + testUrl + '</a>';
+    document.getElementById('tasker-url').innerHTML = '<code>https://api.telegram.org/bot' + t + '/sendMessage</code>';
+    document.getElementById('tasker-body').innerHTML = '<code>chat_id=' + c + '&text=%avcomm</code>';
+  } else {
+    document.getElementById('test-url').innerHTML = '<span class="lbl">Заполни TOKEN и chat_id выше:</span>—';
+  }
+}
+tokenInput.addEventListener('input', () => { state.token = tokenInput.value; save(); syncDerived(); });
+chatidInput.addEventListener('input', () => { state.chatid = chatidInput.value; save(); syncDerived(); });
+syncDerived();
+updateStats();
+
+// ─── путь D: проверка статуса релизов APK через GitHub API ──────────────────
+(function checkApkRelease() {
+  const badge = document.getElementById('apk-status-badge');
+  const dlBtn = document.getElementById('apk-dl-btn');
+  if (!badge || !dlBtn) return;
+  const url = 'https://api.github.com/repos/andyrbek2709-tech/ai-institut/releases';
+  fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(releases => {
+      const apkRel = (releases || []).find(r => /voice-bot/i.test(r.tag_name || '') && (r.assets || []).some(a => /\.apk$/i.test(a.name)));
+      if (apkRel) {
+        const apk = apkRel.assets.find(a => /\.apk$/i.test(a.name));
+        badge.textContent = '✅ собран · ' + apkRel.tag_name + ' · ' + new Date(apkRel.published_at).toLocaleDateString('ru-RU');
+        badge.className = 'badge';
+        badge.style.cssText = 'background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)';
+        dlBtn.href = apk.browser_download_url;
+        dlBtn.classList.add('ready');
+        dlBtn.textContent = '⬇ Скачать ' + apk.name + ' (' + Math.round(apk.size / 1024 / 1024) + ' МБ)';
+      } else {
+        badge.textContent = '⏳ ожидает первой сборки в CI (релизов с APK пока нет)';
+      }
+    })
+    .catch(() => {
+      badge.textContent = '⏳ статус недоступен (GitHub API не отвечает)';
+    });
+})();
+</script>
+</body>
+</html>

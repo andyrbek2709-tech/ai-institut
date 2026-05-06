@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EngHub · Конвейер задач — интерактивные решения</title>
+<style>
+:root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b;--cyan:#06b6d4}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 18px 80px}
+header{padding:6px 0 18px;border-bottom:1px solid var(--border);margin-bottom:18px}
+header h1{margin:0 0 4px;font-size:24px;letter-spacing:-0.01em}
+header .sub{color:var(--muted);font-size:13px;line-height:1.6}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 18px}
+@media(max-width:720px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px}
+.kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.kpi .value{font-size:24px;font-weight:700;margin-top:4px}
+.kpi.done .value{color:var(--green)}
+.kpi.left .value{color:var(--yellow)}
+.kpi.total .value{color:var(--accent)}
+.hero{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px}
+.hero h2{margin:0 0 10px;font-size:16px}
+.hero .desc{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px}
+.flow-diagram{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:18px;margin-top:8px;overflow-x:auto}
+.flow-diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.q-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin-bottom:18px;overflow:hidden}
+.q-card.answered{border-left:4px solid var(--green)}
+.q-card .head{padding:14px 18px;border-bottom:1px solid var(--border);background:var(--panel2)}
+.q-card .head .qid{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.q-card .head h3{margin:4px 0 6px;font-size:16px}
+.q-card .head .ctx{color:var(--muted);font-size:13px;line-height:1.6}
+.options{padding:14px 18px}
+.opt{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;cursor:pointer;transition:.15s}
+.opt:hover{border-color:var(--accent)}
+.opt.chosen{border:2px solid var(--green);background:rgba(34,197,94,.06)}
+.opt .opt-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.opt .letter{flex:0 0 32px;height:32px;border-radius:50%;background:var(--panel2);color:var(--text);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;border:2px solid var(--border)}
+.opt.chosen .letter{background:var(--green);color:#fff;border-color:var(--green)}
+.opt .opt-title{flex:1;font-size:14px;font-weight:600}
+.opt .recommend{font-size:10px;color:var(--accent);font-weight:600;background:rgba(79,140,255,.13);padding:2px 8px;border-radius:9px;border:1px solid rgba(79,140,255,.3)}
+.opt .opt-svg{margin:8px 0;background:var(--panel2);border-radius:6px;padding:10px;display:flex;justify-content:center}
+.opt .opt-svg svg{display:block;max-width:100%;height:auto}
+.opt .opt-explain{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:8px}
+.opt .pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;font-size:12px}
+@media(max-width:600px){.opt .pros-cons{grid-template-columns:1fr}}
+.opt .pros, .opt .cons{padding:8px 10px;border-radius:6px}
+.opt .pros{background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.18)}
+.opt .cons{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18)}
+.opt .pros .lbl, .opt .cons .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;margin-bottom:3px}
+.opt .pros .lbl{color:var(--green)}.opt .cons .lbl{color:var(--red)}
+.opt ul{margin:0;padding-left:18px}
+.opt li{margin-bottom:2px;line-height:1.5}
+.note{width:100%;margin-top:10px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font:12px/1.5 inherit;resize:vertical;min-height:42px}
+.summary-bar{position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin:24px -18px -80px;gap:12px;flex-wrap:wrap}
+.summary-bar .stats{font-size:13px;color:var(--muted)}
+.summary-bar .stats span{color:var(--text);font-weight:600;margin:0 4px}
+.summary-bar .copy{background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+#decision-out{display:none;margin-top:18px;background:var(--panel);border:2px solid var(--accent);border-radius:12px;padding:14px}
+#decision-text{width:100%;min-height:280px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;font:12px/1.5 'SF Mono',Menlo,Consolas,monospace}
+.bonus{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-top:18px}
+.bonus h3{margin:0 0 10px;font-size:14px}
+.bonus .conv-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;line-height:1.6}
+@media(max-width:600px){.bonus .conv-list{grid-template-columns:1fr}}
+.bonus .conv-item{padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px}
+.bonus .conv-item code{background:var(--panel2);padding:1px 5px;border-radius:3px;font-size:11px;color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+<h1>🚜 Конвейер инженерного взаимодействия — твои решения</h1>
+<div class="sub">ТЗ от внешнего эксперта, 28.04.2026. Ниже 5 ключевых вопросов с визуальными превью каждой опции. Кликаешь — выбираешь — в конце копируешь решение в чат.</div>
+</header>
+
+<div class="kpis">
+<div class="kpi total"><div class="label">Всего вопросов</div><div class="value">5</div></div>
+<div class="kpi done"><div class="label">Отвечено</div><div class="value" id="kpi-done">0</div></div>
+<div class="kpi left"><div class="label">Осталось</div><div class="value" id="kpi-left">5</div></div>
+</div>
+
+<div class="hero">
+<h2>📐 Что такое «конвейер»</h2>
+<div class="desc">
+Каждая задача проходит чёткие стадии. На каждой — конкретный ответственный. Нельзя «застрять незаметно». Если задача ждёт данные от другого отдела — это видно явно как отдельная стадия. ГИП в любой момент видит «где зависло и у кого».
+</div>
+<div class="flow-diagram">
+<svg viewBox="0 0 880 160" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8d96b3"/></marker>
+</defs>
+<g font-family="Inter, sans-serif" font-size="11">
+<!-- В работе -->
+<rect x="10" y="60" width="105" height="40" rx="6" fill="#4f8cff" opacity="0.18" stroke="#4f8cff"/>
+<text x="62" y="76" fill="#4f8cff" text-anchor="middle" font-weight="700">В работе</text>
+<text x="62" y="91" fill="#8d96b3" text-anchor="middle" font-size="9">инженер</text>
+<line x1="115" y1="80" x2="155" y2="80" stroke="#8d96b3" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+<!-- Проверка нач. отдела -->
+<rect x="160" y="60" width="125" height="40" rx="6" fill="#a855f7" opacity="0.18" stroke="#a855f7"/>
+<text x="222" y="76" fill="#a855f7" text-anchor="middle" font-weight="700">Проверка</text>
+<text x="222" y="91" fill="#8d96b3" text-anchor="middle" font-size="9">нач. отдела</text>
+<line x1="285" y1="80" x2="325" y2="80" stroke="#8d96b3" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+<!-- Проверка ГИП -->
+<rect x="330" y="60" width="115" height="40" rx="6" fill="#f59e0b" opacity="0.18" stroke="#f59e0b"/>
+<text x="387" y="76" fill="#f59e0b" text-anchor="middle" font-weight="700">Проверка</text>
+<text x="387" y="91" fill="#8d96b3" text-anchor="middle" font-size="9">ГИП</text>
+<line x1="445" y1="80" x2="485" y2="80" stroke="#8d96b3" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+<!-- Готово -->
+<rect x="490" y="60" width="100" height="40" rx="6" fill="#22c55e" opacity="0.18" stroke="#22c55e"/>
+<text x="540" y="76" fill="#22c55e" text-anchor="middle" font-weight="700">Готово</text>
+<text x="540" y="91" fill="#8d96b3" text-anchor="middle" font-size="9">утверждено</text>
+
+<!-- На доработке (loop back) -->
+<rect x="160" y="125" width="285" height="30" rx="6" fill="#ef4444" opacity="0.13" stroke="#ef4444"/>
+<text x="302" y="144" fill="#ef4444" text-anchor="middle" font-weight="700">↩ На доработке (с обязательной причиной)</text>
+
+<!-- Ожидание входных данных (NEW) -->
+<rect x="610" y="60" width="260" height="40" rx="6" fill="#06b6d4" opacity="0.18" stroke="#06b6d4" stroke-dasharray="4,3"/>
+<text x="740" y="76" fill="#06b6d4" text-anchor="middle" font-weight="700">★ Ожидание входных данных</text>
+<text x="740" y="91" fill="#8d96b3" text-anchor="middle" font-size="9">от другого отдела (НОВОЕ)</text>
+
+<text x="20" y="20" fill="#e9ecf3" font-weight="700" font-size="12">Цикл задачи:</text>
+<text x="20" y="35" fill="#8d96b3" font-size="10">Цветами выделены стадии. Пунктир — новая стадия из ТЗ конвейера.</text>
+</g>
+</svg>
+</div>
+</div>
+
+<!-- Q1 — Связанная задача кому -->
+<div class="q-card" data-qid="Q1">
+<div class="head">
+<div class="qid">Вопрос 1</div>
+<h3>Связанная задача — КОМУ автоматически идёт в другом отделе?</h3>
+<div class="ctx">Инженер ВК ставит задачу с пометкой «нужны данные от КЖ». Система должна создать задачу в КЖ. Кому именно она ставится сразу?</div>
+</div>
+<div class="options">
+
+<div class="opt" data-q="Q1" data-opt="A">
+<div class="opt-head"><div class="letter">A</div><div class="opt-title">Lead КЖ — он сам распределяет</div><span class="recommend">★ моя рекомендация</span></div>
+<div class="opt-svg">
+<svg viewBox="0 0 380 90" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif" font-size="10">
+<rect x="5" y="30" width="80" height="30" rx="5" fill="#4f8cff" opacity="0.2" stroke="#4f8cff"/>
+<text x="45" y="49" text-anchor="middle" fill="#4f8cff" font-weight="700">Инж. ВК</text>
+<line x1="85" y1="45" x2="120" y2="45" stroke="#8d96b3" marker-end="url(#a1)"/>
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#8d96b3"/></marker></defs>
+<rect x="125" y="30" width="80" height="30" rx="5" fill="#a855f7" opacity="0.2" stroke="#a855f7"/>
+<text x="165" y="49" text-anchor="middle" fill="#a855f7" font-weight="700">Lead КЖ</text>
+<line x1="205" y1="45" x2="240" y2="45" stroke="#8d96b3" marker-end="url(#a1)"/>
+<rect x="245" y="5" width="125" height="22" rx="4" fill="#22c55e" opacity="0.15" stroke="#22c55e"/>
+<text x="307" y="20" text-anchor="middle" fill="#22c55e" font-size="9">Инж. КЖ-1</text>
+<rect x="245" y="33" width="125" height="22" rx="4" fill="#8d96b3" opacity="0.13" stroke="#8d96b3"/>
+<text x="307" y="48" text-anchor="middle" fill="#8d96b3" font-size="9">Инж. КЖ-2</text>
+<rect x="245" y="61" width="125" height="22" rx="4" fill="#8d96b3" opacity="0.13" stroke="#8d96b3"/>
+<text x="307" y="76" text-anchor="middle" fill="#8d96b3" font-size="9">Инж. КЖ-3</text>
+<text x="190" y="79" fill="#8d96b3" text-anchor="middle" font-size="9">Lead решает кому</text>
+</svg>
+</div>
+<div class="opt-explain">Задача автоматически попадает к руководителю отдела КЖ как «новый запрос». Lead смотрит загрузку своих инженеров и сам назначает на конкретного человека. Это естественный паттерн для проектных институтов — обычно так и работают.</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>Lead знает свою команду — лучше распределит</li><li>Не нужен сложный алгоритм автоматической балансировки</li><li>Соответствует реальному рабочему процессу</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>Lead может «забыть» распределить</li><li>+1 шаг до начала работы</li></ul></div>
+</div>
+<textarea class="note" data-q="Q1" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+<div class="opt" data-q="Q1" data-opt="B">
+<div class="opt-head"><div class="letter">B</div><div class="opt-title">Автоматически — наименее загруженному инженеру в КЖ</div></div>
+<div class="opt-svg">
+<svg viewBox="0 0 380 90" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif" font-size="10">
+<rect x="5" y="30" width="80" height="30" rx="5" fill="#4f8cff" opacity="0.2" stroke="#4f8cff"/>
+<text x="45" y="49" text-anchor="middle" fill="#4f8cff" font-weight="700">Инж. ВК</text>
+<line x1="85" y1="45" x2="240" y2="45" stroke="#8d96b3" marker-end="url(#a1)"/>
+<text x="160" y="40" fill="#8d96b3" text-anchor="middle" font-size="9">алгоритм:</text>
+<text x="160" y="58" fill="#8d96b3" text-anchor="middle" font-size="9">мин. задач = выбран</text>
+<rect x="245" y="5" width="125" height="22" rx="4" fill="#8d96b3" opacity="0.13" stroke="#8d96b3"/>
+<text x="307" y="20" text-anchor="middle" fill="#8d96b3" font-size="9">КЖ-1 (5 задач)</text>
+<rect x="245" y="33" width="125" height="22" rx="4" fill="#22c55e" opacity="0.2" stroke="#22c55e"/>
+<text x="307" y="48" text-anchor="middle" fill="#22c55e" font-size="9">КЖ-2 (2) ✓</text>
+<rect x="245" y="61" width="125" height="22" rx="4" fill="#8d96b3" opacity="0.13" stroke="#8d96b3"/>
+<text x="307" y="76" text-anchor="middle" fill="#8d96b3" font-size="9">КЖ-3 (4 задач)</text>
+</svg>
+</div>
+<div class="opt-explain">Система сама находит инженера в КЖ с минимальным числом активных задач и ставит ему. Никакого ручного распределения.</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>Мгновенно — задача сразу у исполнителя</li><li>Балансирует нагрузку</li><li>Не зависит от Lead</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>Не учитывает специализацию (КЖ-1 умеет монолит, КЖ-2 — сборный)</li><li>Lead не контролирует кто что делает</li><li>Алгоритм «загруженности» спорный (по числу задач? по сложности?)</li></ul></div>
+</div>
+<textarea class="note" data-q="Q1" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+<div class="opt" data-q="Q1" data-opt="C">
+<div class="opt-head"><div class="letter">C</div><div class="opt-title">Прямо к Lead КЖ как «к нему персонально»</div></div>
+<div class="opt-svg">
+<svg viewBox="0 0 380 90" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif" font-size="10">
+<rect x="5" y="30" width="80" height="30" rx="5" fill="#4f8cff" opacity="0.2" stroke="#4f8cff"/>
+<text x="45" y="49" text-anchor="middle" fill="#4f8cff" font-weight="700">Инж. ВК</text>
+<line x1="85" y1="45" x2="180" y2="45" stroke="#8d96b3" marker-end="url(#a1)"/>
+<rect x="185" y="30" width="190" height="30" rx="5" fill="#a855f7" opacity="0.25" stroke="#a855f7"/>
+<text x="280" y="49" text-anchor="middle" fill="#a855f7" font-weight="700">Lead КЖ — выполняет сам</text>
+<text x="190" y="80" fill="#8d96b3" font-size="9">или делегирует, но это уже его дело</text>
+</svg>
+</div>
+<div class="opt-explain">Задача персонально на Lead КЖ как assigned_to. Он сам выполняет или делегирует — но это уже не наша система, она показывает «задача у Lead КЖ».</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>Самая простая логика — один конкретный получатель</li><li>Lead отвечает головой</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>Если Lead перегружен — застрянет</li><li>Не отражает реальность: данные обычно делает инженер</li></ul></div>
+</div>
+<textarea class="note" data-q="Q1" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+</div>
+</div>
+
+<!-- Q2 — Срок связанной -->
+<div class="q-card" data-qid="Q2">
+<div class="head">
+<div class="qid">Вопрос 2</div>
+<h3>Срок связанной задачи — отдельный дедлайн или просто текстом?</h3>
+<div class="ctx">Когда ВК ставит зависимость в КЖ, нужно указать «когда нужны данные». Это полноценный дедлайн со стандартной системой просрочек или просто текстовая пометка?</div>
+</div>
+<div class="options">
+
+<div class="opt" data-q="Q2" data-opt="A">
+<div class="opt-head"><div class="letter">A</div><div class="opt-title">Полноценный дедлайн — отдельное поле даты</div><span class="recommend">★ моя рекомендация</span></div>
+<div class="opt-explain">Связанная задача создаётся как обычная задача с полем deadline. Если КЖ просрочил — она помечается красным как любая другая. ВК-задача в статусе «Ожидание входных данных» не считается просроченной (виноват КЖ, не ВК).</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>Просрочки видны единым способом</li><li>Сортировки/фильтры работают как обычно</li><li>Не нужна отдельная логика</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>+1 поле в форме создания зависимости</li></ul></div>
+</div>
+<textarea class="note" data-q="Q2" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+<div class="opt" data-q="Q2" data-opt="B">
+<div class="opt-head"><div class="letter">B</div><div class="opt-title">Просто текстом «срок: к 15.05» в описании</div></div>
+<div class="opt-explain">Срок не структурированное поле, а часть текста описания. Никаких специальных алертов о просрочке — лидер просто читает.</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>Минимум полей</li><li>Можно писать что-то типа «к концу недели»</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>Просрочки не отслеживаются автоматически</li><li>Сортировка по сроку не работает</li><li>Лид может не заметить срок в тексте</li></ul></div>
+</div>
+<textarea class="note" data-q="Q2" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+</div>
+</div>
+
+<!-- Q3 — Storage bucket -->
+<div class="q-card" data-qid="Q3">
+<div class="head">
+<div class="qid">Вопрос 3</div>
+<h3>Хранение файлов — один общий bucket или разные?</h3>
+<div class="ctx">У нас будут: ТЗ проекта, файлы к возвратам, файлы к задачам, замечания, чертежи. Как организовать в Supabase Storage?</div>
+</div>
+<div class="options">
+
+<div class="opt" data-q="Q3" data-opt="A">
+<div class="opt-head"><div class="letter">A</div><div class="opt-title">Один общий bucket project-files с подпапками</div><span class="recommend">★ моя рекомендация</span></div>
+<div class="opt-svg">
+<svg viewBox="0 0 380 110" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
+<text x="10" y="20" fill="#4f8cff" font-weight="700">project-files/</text>
+<text x="30" y="38" fill="#e9ecf3">└── 42/  (project_id)</text>
+<text x="50" y="56" fill="#e9ecf3">├── tz/    ТЗ</text>
+<text x="50" y="72" fill="#e9ecf3">├── revisions/   возвраты</text>
+<text x="50" y="88" fill="#e9ecf3">├── tasks/   к задачам</text>
+<text x="50" y="104" fill="#e9ecf3">└── reviews/   замечания</text>
+</svg>
+</div>
+<div class="opt-explain">Один bucket, одни RLS-политики, одна функция выдачи signed URL. Структура папок чёткая — всё что относится к проекту 42 — в /42/.</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>Одна точка управления — RLS, лимиты, бэкапы</li><li>Удалили проект — удалили /42/ — все его файлы вместе</li><li>Простая навигация в Supabase Dashboard</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>Если разные типы файлов нужны разные лимиты — сложнее</li></ul></div>
+</div>
+<textarea class="note" data-q="Q3" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+<div class="opt" data-q="Q3" data-opt="B">
+<div class="opt-head"><div class="letter">B</div><div class="opt-title">Разные buckets под каждую сущность</div></div>
+<div class="opt-svg">
+<svg viewBox="0 0 380 100" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="10">
+<text x="10" y="22" fill="#a855f7" font-weight="700">project-tz/</text>
+<text x="10" y="40" fill="#f59e0b" font-weight="700">project-revisions/</text>
+<text x="10" y="58" fill="#22c55e" font-weight="700">project-tasks/</text>
+<text x="10" y="76" fill="#06b6d4" font-weight="700">project-reviews/</text>
+<text x="10" y="94" fill="#8d96b3">+ normative-docs/  (уже есть)</text>
+</svg>
+</div>
+<div class="opt-explain">Каждый тип файлов в своём bucket. Уже есть `normative-docs` — добавляем ещё 4 для проектных файлов.</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>Разные лимиты на тип</li><li>Логично: ТЗ — отдельная сущность</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>5 разных RLS-политик вместо одной</li><li>Сложнее настроить одинаково</li><li>При удалении проекта надо чистить 5 мест</li></ul></div>
+</div>
+<textarea class="note" data-q="Q3" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+</div>
+</div>
+
+<!-- Q4 — Связанная задача обычная или специальная -->
+<div class="q-card" data-qid="Q4">
+<div class="head">
+<div class="qid">Вопрос 4</div>
+<h3>Связанная задача — обычная или специальная «запрос данных»?</h3>
+<div class="ctx">КЖ получает зависимость от ВК. Это полноценная задача в его потоке (как любая другая) или особая «инцидент» с урезанным workflow?</div>
+</div>
+<div class="options">
+
+<div class="opt" data-q="Q4" data-opt="A">
+<div class="opt-head"><div class="letter">A</div><div class="opt-title">Обычная задача — есть тег «зависимость от ВК»</div><span class="recommend">★ моя рекомендация</span></div>
+<div class="opt-explain">Связанная задача = обычная задача КЖ со всеми стадиями (todo → inprogress → review_lead → review_gip → done). Просто есть поле parent_task_id и бейдж «↩ для проекта ВК-15». В дашборде Lead КЖ она выглядит как обычная задача отдела.</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>Никакой новой логики — переиспользуем существующее</li><li>КЖ видит её среди своих задач</li><li>Все workflow-кнопки работают</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>Может «потеряться» среди прочих задач</li></ul></div>
+</div>
+<textarea class="note" data-q="Q4" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+<div class="opt" data-q="Q4" data-opt="B">
+<div class="opt-head"><div class="letter">B</div><div class="opt-title">Специальная «запрос данных» с урезанным workflow</div></div>
+<div class="opt-explain">Тип задачи `data_request` — у неё только статусы todo/done (без review_lead/review_gip). Lead КЖ смотрит запрос, делает, пушит «готово» → ВК-задача разблокируется. Без согласования у ГИП.</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>Логично — запрос данных не требует утверждения ГИПа</li><li>Видно что это «межотдельный запрос»</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>+1 тип задачи — больше веток в коде</li><li>Если запрос сложный (например надо чертёж нарисовать) — без проверки нач. отдела опасно</li></ul></div>
+</div>
+<textarea class="note" data-q="Q4" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+</div>
+</div>
+
+<!-- Q5 — Разблокировка после выполнения -->
+<div class="q-card" data-qid="Q5">
+<div class="head">
+<div class="qid">Вопрос 5</div>
+<h3>Когда КЖ выполнил — как разблокируется ВК-задача?</h3>
+<div class="ctx">КЖ закончил работу по зависимости и нажал «Готово». Что дальше с задачей ВК (которая в статусе «Ожидание входных данных»)?</div>
+</div>
+<div class="options">
+
+<div class="opt" data-q="Q5" data-opt="A">
+<div class="opt-head"><div class="letter">A</div><div class="opt-title">Автоматически: КЖ → Готово → ВК сразу В работе</div></div>
+<div class="opt-svg">
+<svg viewBox="0 0 380 100" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif" font-size="10">
+<rect x="5" y="35" width="100" height="30" rx="5" fill="#22c55e" opacity="0.2" stroke="#22c55e"/>
+<text x="55" y="54" text-anchor="middle" fill="#22c55e" font-weight="700">КЖ → Готово</text>
+<line x1="105" y1="50" x2="155" y2="50" stroke="#22c55e" marker-end="url(#a1)" stroke-width="2"/>
+<text x="130" y="42" fill="#22c55e" text-anchor="middle" font-size="9" font-weight="700">мгновенно</text>
+<rect x="160" y="35" width="215" height="30" rx="5" fill="#4f8cff" opacity="0.2" stroke="#4f8cff"/>
+<text x="267" y="54" text-anchor="middle" fill="#4f8cff" font-weight="700">ВК-задача → В работе (auto)</text>
+</svg>
+</div>
+<div class="opt-explain">Триггер в БД: при изменении статуса связанной задачи на `done` — родительская задача автоматически переходит из `awaiting_input` в `inprogress`. ВК получает уведомление «Данные получены, можно продолжать».</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>Минимум кликов</li><li>ВК сразу видит что разблокировался</li><li>Нет рисков «забыли продолжить»</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>Если КЖ сдал не то / не полностью — ВК уже думает что разблокирован</li><li>Нужен пересмотр со стороны ВК «получил ли действительно нужное»</li></ul></div>
+</div>
+<textarea class="note" data-q="Q5" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+<div class="opt" data-q="Q5" data-opt="B">
+<div class="opt-head"><div class="letter">B</div><div class="opt-title">С подтверждением от ВК: «Получил, продолжаю»</div><span class="recommend">★ моя рекомендация</span></div>
+<div class="opt-svg">
+<svg viewBox="0 0 380 110" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif" font-size="10">
+<rect x="5" y="35" width="100" height="30" rx="5" fill="#22c55e" opacity="0.2" stroke="#22c55e"/>
+<text x="55" y="54" text-anchor="middle" fill="#22c55e" font-weight="700">КЖ → Готово</text>
+<line x1="105" y1="50" x2="155" y2="50" stroke="#8d96b3" marker-end="url(#a1)"/>
+<text x="130" y="42" fill="#8d96b3" text-anchor="middle" font-size="9">уведомл.</text>
+<rect x="160" y="35" width="100" height="30" rx="5" fill="#f59e0b" opacity="0.2" stroke="#f59e0b"/>
+<text x="210" y="54" text-anchor="middle" fill="#f59e0b" font-weight="700">ВК смотрит</text>
+<line x1="260" y1="50" x2="305" y2="50" stroke="#8d96b3" marker-end="url(#a1)"/>
+<rect x="310" y="35" width="65" height="30" rx="5" fill="#4f8cff" opacity="0.2" stroke="#4f8cff"/>
+<text x="342" y="54" text-anchor="middle" fill="#4f8cff" font-weight="700">ВК → В работе</text>
+<text x="190" y="85" fill="#8d96b3" text-anchor="middle" font-size="9">ВК нажимает «Продолжить» — может вернуть КЖ если не то</text>
+</svg>
+</div>
+<div class="opt-explain">КЖ закончил → ВК получает уведомление «Данные готовы, посмотри». ВК открывает, смотрит, нажимает либо «✅ Получил, продолжаю» (статус → inprogress), либо «↩ Это не то, дополни» (новая итерация в КЖ).</div>
+<div class="pros-cons">
+<div class="pros"><div class="lbl">Плюсы</div><ul><li>ВК контролирует что получил действительно нужное</li><li>Защита от сырых результатов</li><li>Возможность отбить с дополнением</li></ul></div>
+<div class="cons"><div class="lbl">Минусы</div><ul><li>+1 действие для ВК</li><li>Можно «забыть» нажать продолжить</li></ul></div>
+</div>
+<textarea class="note" data-q="Q5" placeholder="Заметка / уточнение"></textarea>
+</div>
+
+</div>
+</div>
+
+<!-- BONUS: CONV-XX list -->
+<div class="bonus">
+<h3>📋 После твоих ответов — план реализации (8 задач, ~17-22 часа)</h3>
+<div class="conv-list">
+<div class="conv-item"><code>CONV-01</code> Новый статус <code>awaiting_input</code></div>
+<div class="conv-item"><code>CONV-02</code> Обязательная причина возврата</div>
+<div class="conv-item"><code>CONV-03</code> Прикрепление файла к причине</div>
+<div class="conv-item"><code>CONV-04</code> Форма «нужны входные данные?»</div>
+<div class="conv-item"><code>CONV-05</code> Связанные задачи + автопереходы (главная фича)</div>
+<div class="conv-item"><code>CONV-06</code> Confirmation «Уверены что не нужны?»</div>
+<div class="conv-item"><code>CONV-07</code> История действий в карточке (UI)</div>
+<div class="conv-item"><code>CONV-08</code> Зачистка кнопок строго по роли</div>
+</div>
+</div>
+
+<div id="decision-out">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+<strong style="font-size:13px">Твои решения по конвейеру (выдели и скопируй):</strong>
+<button id="try-copy" style="background:var(--accent);color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px">Скопировать</button>
+</div>
+<textarea id="decision-text" readonly></textarea>
+<div style="font-size:11px;color:var(--muted);margin-top:6px">Если кнопка не работает — клик в поле, Ctrl+A, Ctrl+C.</div>
+</div>
+
+<div class="summary-bar">
+<div class="stats">Отвечено: <span id="stat-done">0</span> из 5</div>
+<button class="copy" id="copy-btn">Показать решение</button>
+</div>
+
+</div>
+<script>
+const STORAGE_KEY = 'enghub_conveyor_decisions_v1';
+const decisions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+document.querySelectorAll('.opt').forEach(opt => {
+  const q = opt.getAttribute('data-q');
+  const o = opt.getAttribute('data-opt');
+  if (decisions[q] && decisions[q].opt === o) opt.classList.add('chosen');
+  const note = opt.querySelector('.note');
+  if (note && decisions[q] && decisions[q].note) note.value = decisions[q].note;
+
+  opt.addEventListener('click', e => {
+    if (e.target.tagName === 'TEXTAREA') return;
+    document.querySelectorAll(`.opt[data-q="${q}"]`).forEach(o2 => o2.classList.remove('chosen'));
+    opt.classList.add('chosen');
+    decisions[q] = decisions[q] || {};
+    decisions[q].opt = o;
+    if (note) decisions[q].note = note.value;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(decisions));
+    updateStats();
+  });
+  if (note) {
+    note.addEventListener('input', () => {
+      decisions[q] = decisions[q] || {};
+      decisions[q].note = note.value;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(decisions));
+    });
+    note.addEventListener('click', e => e.stopPropagation());
+  }
+});
+
+function updateStats() {
+  let done = 0;
+  ['Q1','Q2','Q3','Q4','Q5'].forEach(q => { if (decisions[q] && decisions[q].opt) done++; });
+  document.getElementById('kpi-done').textContent = done;
+  document.getElementById('kpi-left').textContent = 5 - done;
+  document.getElementById('stat-done').textContent = done;
+  document.querySelectorAll('.q-card').forEach(c => {
+    const qid = c.getAttribute('data-qid');
+    if (decisions[qid] && decisions[qid].opt) c.classList.add('answered');
+    else c.classList.remove('answered');
+  });
+}
+updateStats();
+
+function buildSummary() {
+  const lines = ['# EngHub · Конвейер задач — мои ответы', `_${new Date().toLocaleString('ru-RU')}_`, ''];
+  const titles = {
+    Q1: 'Связанная задача — кому идёт',
+    Q2: 'Срок связанной задачи',
+    Q3: 'Storage bucket',
+    Q4: 'Связанная задача обычная или специальная',
+    Q5: 'Разблокировка после выполнения',
+  };
+  let answered = 0;
+  ['Q1','Q2','Q3','Q4','Q5'].forEach(q => {
+    const d = decisions[q] || {};
+    const title = titles[q];
+    if (d.opt) {
+      answered++;
+      lines.push(`**${q}** (${title}): **${d.opt}**${d.note ? ` — заметка: ${d.note}` : ''}`);
+    } else {
+      lines.push(`**${q}** (${title}): _не отвечен_`);
+    }
+  });
+  lines.unshift(`Отвечено: ${answered}/5`);
+  lines.unshift('');
+  return lines.join('\n');
+}
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const text = buildSummary();
+  document.getElementById('decision-text').value = text;
+  const out = document.getElementById('decision-out');
+  out.style.display = 'block';
+  out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => {
+    const ta = document.getElementById('decision-text');
+    ta.focus(); ta.select();
+  }, 100);
+});
+
+document.getElementById('try-copy').addEventListener('click', () => {
+  const ta = document.getElementById('decision-text');
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  const btn = document.getElementById('try-copy');
+  if (ok) { btn.textContent = '✓ Скопировано'; setTimeout(() => btn.textContent = 'Скопировать', 2000); }
+  else if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(() => { btn.textContent = '✓ Скопировано'; setTimeout(() => btn.textContent = 'Скопировать', 2000); });
+});
+</script>
+</body>
+</html>

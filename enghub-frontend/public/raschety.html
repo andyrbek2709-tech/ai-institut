@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Раздел Расчёты · Банк инженерных калькуляторов</title>
+<style>
+:root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--gray:#64748b;--cyan:#06b6d4;--pink:#ec4899}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+.wrap{max-width:1280px;margin:0 auto;padding:18px 18px 80px}
+.nav-bar{background:#0d1228;border:1px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+.nav-bar .nav-title{font-weight:700;color:var(--muted);font-size:12px;text-transform:uppercase;margin-right:6px}
+.nav-bar a{color:#cbd5e1;text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;transition:.15s}
+.nav-bar a:hover{background:var(--panel2);color:#fff}
+.nav-bar a.active{background:var(--accent);color:#fff}
+.hero{background:linear-gradient(135deg,#1a2350 0%,#2a1a4f 100%);border:1px solid var(--border);border-radius:14px;padding:28px 30px;margin:0 0 20px}
+.hero h1{margin:0 0 8px;font-size:30px;font-weight:800;letter-spacing:-.01em}
+.hero .sub{color:#cbd5e1;font-size:14px;line-height:1.6;max-width:780px}
+.hero .sub b{color:#fff}
+.section{margin:24px 0 14px}
+.section h2{margin:0 0 14px;font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px}
+.section h2 .badge{background:var(--panel2);color:var(--muted);font-size:11px;font-weight:600;padding:2px 9px;border-radius:11px;text-transform:uppercase;letter-spacing:.04em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.calc-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;transition:.2s}
+.calc-card.ready{border-left:4px solid var(--green)}
+.calc-card.soon{border-left:4px solid var(--gray);opacity:.78}
+.calc-card.in-dev{border-left:4px solid var(--accent)}
+.calc-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,140,255,.12)}
+.calc-card h3{margin:0;font-size:16px;font-weight:700;line-height:1.3}
+.calc-card .desc{color:var(--muted);font-size:12.5px;line-height:1.55;flex:1}
+.calc-card .meta{display:flex;align-items:center;gap:8px;font-size:11px}
+.status{padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.status.ready{background:rgba(34,197,94,.15);color:var(--green)}
+.status.soon{background:rgba(100,116,139,.18);color:var(--gray)}
+.status.in-dev{background:rgba(79,140,255,.15);color:var(--accent)}
+.norms{font-size:11px;color:var(--muted);font-style:italic}
+.cta{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;text-decoration:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;align-self:flex-start;transition:.15s}
+.cta:hover{background:#3a73e8;transform:translateX(2px)}
+.cta.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.cta.ghost:hover{background:var(--panel2);color:var(--text)}
+.footer{margin-top:32px;padding:18px 22px;background:var(--panel);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:13px;line-height:1.6}
+.footer b{color:var(--text)}
+.footer a{color:var(--accent);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 18px}
+@media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center}
+.stat .v{font-size:24px;font-weight:800;color:var(--accent)}
+.stat .v.green{color:var(--green)}
+.stat .v.gray{color:var(--gray)}
+.stat .v.blue{color:var(--accent)}
+.stat .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="nav-bar">
+  <span class="nav-title">Расчёты →</span>
+  <a href="/raschety.html" class="active">📐 Раздел Расчёты</a>
+  <a href="/raschety-agenda.html">📋 Доска расчётов</a>
+  <a href="/cable-calc.html">🔌 Кабели 1кВ</a>
+</nav>
+
+<div class="hero">
+<h1>📐 Расчёты EngHub — банк инженерных калькуляторов</h1>
+<div class="sub">Готовые расчётные модули по нормативам СП РК / СНиП РФ / ГОСТ / IEC. <b>Один интерфейс, все стадии проектирования.</b> Загружай журналы из Excel/PDF/Word, получай Word- и Excel-отчёты, всё с цветовой раскраской OK / WARN / FAIL.</div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="v green" id="stat-ready">1</div><div class="l">Готов сейчас</div></div>
+  <div class="stat"><div class="v blue" id="stat-dev">1</div><div class="l">В работе</div></div>
+  <div class="stat"><div class="v gray" id="stat-soon">10</div><div class="l">В планах</div></div>
+  <div class="stat"><div class="v">12</div><div class="l">Всего в банке</div></div>
+</div>
+
+<div class="section">
+  <h2>🟢 Доступно сейчас <span class="badge">READY</span></h2>
+  <div class="grid">
+    <div class="calc-card ready">
+      <h3>🔌 Расчёт сечения силовых кабелей 1 кВ</h3>
+      <div class="desc">Подбор и проверка сечения кабелей до 1 кВ: по нагреву, по падению напряжения ΔU, по току КЗ. Загрузка кабельного журнала из Excel/PDF/Word, выгрузка Word- и Excel-отчётов с цветовой раскраской.</div>
+      <div class="meta"><span class="status ready">✓ На проде</span><span class="norms">СП РК 4.04-101 • IEC 60364-5-52 • ПУЭ</span></div>
+      <a class="cta" href="/cable-calc.html">Открыть калькулятор →</a>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>🔵 В разработке <span class="badge">IN DEV</span></h2>
+  <div class="grid">
+    <div class="calc-card in-dev">
+      <h3>📂 Универсальное чтение входных файлов</h3>
+      <div class="desc">PDF чистый / PDF из AutoCAD / PDF-скан / PNG-JPG / Word / Excel — все форматы кабельных журналов через единый pipeline. OpenAI Vision для image-only PDF + интерактивный mapping столбцов когда парсер сомневается.</div>
+      <div class="meta"><span class="status in-dev">⚙ В работе</span><span class="norms">PDF/Excel/Word — готово · Vision — ждёт ключ · PNG — в очереди</span></div>
+      <a class="cta ghost" href="/raschety-agenda.html">Подробности на доске →</a>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>⚪ Скоро <span class="badge">SOON</span></h2>
+  <div class="grid">
+    <div class="calc-card soon">
+      <h3>⚡ Расчёт силового трансформатора</h3>
+      <div class="desc">Подбор мощности по нагрузке, расчёт потерь, ТКЗ на ВН/НН по СО 153-34.20.122 и ПУЭ.</div>
+      <div class="meta"><span class="status soon">в планах</span></div>
+    </div>
+    <div class="calc-card soon">
+      <h3>💡 Светотехнический расчёт помещений</h3>
+      <div class="desc">Метод коэффициента использования по СП 52.13330 / СНиП 23-05. Проверка КЕО.</div>
+      <div class="meta"><span class="status soon">в планах</span></div>
+    </div>
+    <div class="calc-card soon">
+      <h3>🌬 Аэродинамический расчёт вентиляции</h3>
+      <div class="desc">Потери давления в воздуховодах, подбор вентилятора по характеристике. СП 60.13330.</div>
+      <div class="meta"><span class="status soon">в планах</span></div>
+    </div>
+    <div class="calc-card soon">
+      <h3>🔥 Теплотехнический расчёт (СП 60.13330)</h3>
+      <div class="desc">Тепловые потери ограждающих конструкций, подбор отопительных приборов, гидравлика двухтрубки.</div>
+      <div class="meta"><span class="status soon">в планах</span></div>
+    </div>
+    <div class="calc-card soon">
+      <h3>💧 Расчёт водоснабжения и канализации</h3>
+      <div class="desc">Расход по СП 30.13330 с вероятностью действия приборов, диаметры, насосная станция.</div>
+      <div class="meta"><span class="status soon">в планах</span></div>
+    </div>
+    <div class="calc-card soon">
+      <h3>🏗 Расчёт фундаментов (СП 22.13330)</h3>
+      <div class="desc">Несущая способность грунта, осадка фундамента мелкого заложения, проверка по двум группам предельных состояний.</div>
+      <div class="meta"><span class="status soon">в планах</span></div>
+    </div>
+    <div class="calc-card soon">
+      <h3>🛣 Расчёт дорожных одежд (СП РК 3.03-104)</h3>
+      <div class="desc">Жёсткие/нежёсткие одежды по приведённому модулю упругости. Прототип pavement_calc_sp_rk.html уже есть.</div>
+      <div class="meta"><span class="status soon">в планах</span></div>
+    </div>
+    <div class="calc-card soon">
+      <h3>⚡ Расчёт ТКЗ (токов короткого замыкания)</h3>
+      <div class="desc">3-фазный и 1-фазный КЗ до и выше 1 кВ. Метод приведённых сопротивлений по ГОСТ 28249.</div>
+      <div class="meta"><span class="status soon">в планах</span></div>
+    </div>
+    <div class="calc-card soon">
+      <h3>🛡 Селективность РЗА и подбор автоматов</h3>
+      <div class="desc">Подбор номиналов автоматов, проверка селективности по картам производителей, чувствительность защит.</div>
+      <div class="meta"><span class="status soon">в планах</span></div>
+    </div>
+    <div class="calc-card soon">
+      <h3>📉 Потери напряжения и мощности в сети 0.4 кВ</h3>
+      <div class="desc">ΔU и ΔP по сети с учётом длин/сечений всех участков, балансировки фаз. Проверка ΔU ≤ 5% по ГОСТ 32144.</div>
+      <div class="meta"><span class="status soon">в планах</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+<b>Как развивается раздел:</b> новые типы расчётов сначала появляются в колонке «Идеи» на <a href="/raschety-agenda.html">доске расчётов</a>, проходят триаж → решение → реализацию и переезжают в «Сделано». Когда модуль выходит на прод — он добавляется сюда, в «Доступно сейчас».<br><br>
+<b>Раздел автономный:</b> калькуляторы и доска не привязаны к проектам EngHub — пользоваться можно без логина, как открытым банком инженерных утилит. Интеграция с проектным workflow EngHub — отдельная задача (см. CALC-REGISTRY и CALC-AUTH на доске).
+</div>
+
+</div>
+</body>
+</html>
