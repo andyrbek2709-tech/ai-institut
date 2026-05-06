@@ -2,6 +2,33 @@
 
 > Живой журнал. Обновляется при каждом значимом изменении. Источник правды между сессиями Claude.
 
+## Последние изменения (новые сверху)
+
+### 2026-05-06 20:15 UTC — PRODUCTION CLEANUP & NORMALIZATION: Legacy removed, env normalized ✅
+
+**Статус:** CLEANUP COMPLETE — Production environment stabilized and normalized
+
+**Что очищено:**
+- ✅ Deleted enghub-deploy/ (old deploy structure)
+- ✅ Deleted enghub-frontend/ (duplicate of enghub-main)
+- ✅ Deleted legacy API functions (livekit-token.legacy.js, ConferenceRoom.legacy.tsx)
+- ✅ Removed unused test scripts and documents (194 files total)
+- ✅ Updated .env.example (removed unused REACT_APP_RAILWAY_API_URL)
+
+**Verified:**
+- ✅ vercel.json (frontend-only config, no functions)
+- ✅ railway.json (production-ready, health checks)
+- ✅ Dockerfile (multi-stage build)
+- ✅ package.json (no server dependencies)
+
+**Commit:** cb461c4 — Production cleanup: removed 194 files
+
+**Report:** PRODUCTION_NORMALIZATION_REPORT.md (detailed analysis)
+
+**Status:** 🟢 **PRODUCTION READY** — Frontend clean, backend structured, env normalized
+
+---
+
 ## Текущее состояние
 
 - **AdIntakeBot (исходники):** `ad-intake-bot/` в этом репо — зеркало разработки с `D:\AdIntakeBot`; прод на Railway; **канон URL/БД/скриптов:** `ad-intake-bot/docs/PRODUCTION_CURRENT.md` (Supabase бота **`pbxzxwskhuzaojphkeet`**, не путать с EngHub **`jbdljdwlfimvmqybzynv`** ниже).
