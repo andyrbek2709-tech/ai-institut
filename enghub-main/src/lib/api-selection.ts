@@ -1,4 +1,5 @@
-import { supabase } from '@/config/supabase';
+import { getRolloutConfig } from '../config/api-rollout';
+import { getSupabaseAnonClient } from '../api/supabaseClient';
 import { getStickyRoutingProvider, getCachedStickyProvider } from './sticky-routing';
 
 export type ApiProvider = 'vercel' | 'railway';
@@ -34,7 +35,8 @@ export async function selectApiProvider(userId: string | undefined): Promise<Api
 
   try {
     // Get rollout percentage from feature flags
-    const { data: flagData, error: flagError } = await supabase
+    const sb = getSupabaseAnonClient();
+    const { data: flagData, error: flagError } = await sb
       .from('feature_flags')
       .select('rollout_percentage, enabled')
       .eq('flag_name', 'api_railway_rollout')
@@ -118,4 +120,33 @@ export function clearApiProvider(): void {
   if (typeof window !== 'undefined') {
     sessionStorage.removeItem('force_api_provider');
   }
+}
+
+export interface SelectionMetrics {
+  stage: string;
+  enableMonitoring: boolean;
+  verboseLogging: boolean;
+}
+
+export function getSelectionMetrics(): SelectionMetrics {
+  const config = getRolloutConfig();
+  const provider = getApiProvider();
+  const rolloutPercentage = getRolloutPercentage();
+
+  let stage = 'Stage 0';
+  if (rolloutPercentage > 0 && rolloutPercentage <= 10) {
+    stage = 'Stage 1: 10% Railway';
+  } else if (rolloutPercentage > 10 && rolloutPercentage <= 50) {
+    stage = 'Stage 2: 50% Railway';
+  } else if (rolloutPercentage > 50 && rolloutPercentage < 100) {
+    stage = 'Stage 3: >50% Railway';
+  } else if (rolloutPercentage === 100) {
+    stage = 'Stage 4: 100% Railway (Migration Complete)';
+  }
+
+  return {
+    stage,
+    enableMonitoring: config.enableMonitoring,
+    verboseLogging: config.verboseLogging,
+  };
 }

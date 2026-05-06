@@ -12,7 +12,7 @@ interface ReviewThreadProps {
   C: any;
 }
 
-export function ReviewThread({ reviewId, currentUser, token, appUsers, C }: ReviewThreadProps) {
+export function ReviewThread({ reviewId, projectId, currentUser, token, appUsers, C }: ReviewThreadProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [text, setText] = useState('');
   const [replyTo, setReplyTo] = useState<any | null>(null);
