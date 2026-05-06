@@ -29,6 +29,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(corsMiddleware);
 app.use(metricsMiddleware());
 
+// Root endpoint
+app.get('/', (req: Request, res: Response) => {
+  res.json({
+    name: 'EngHub API Server',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Health check
 app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
