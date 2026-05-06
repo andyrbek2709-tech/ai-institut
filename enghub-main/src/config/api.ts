@@ -1,36 +1,16 @@
 /**
  * API Configuration
- * Controls which backend is used: Vercel or Railway
+ * All API calls go through Vercel API functions (/api/*)
+ * Tasks and main data come directly from Supabase
  */
 
-export type { ApiProvider } from '../lib/api-selection';
-
-export {
-  selectApiProvider,
-  getApiProvider,
-  getApiSelectionReason,
-  getRolloutPercentage,
-  setApiProvider,
-  clearApiProvider,
-} from '../lib/api-selection';
-
-function getRailwayUrl(): string {
-  if (process.env.REACT_APP_RAILWAY_API_URL) {
-    return process.env.REACT_APP_RAILWAY_API_URL;
-  }
+export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'http://localhost:3001';
+    return '';  // API functions also available on localhost:3000
   }
-  // Production Railway URL
-  return 'https://api-server-production-8157.up.railway.app';
-}
-
-export function getApiBaseUrl(provider?: string): string {
-  const p = provider || 'railway';
-  return p === 'railway' ? getRailwayUrl() : '';
+  return '';  // Production uses same origin (/api/*)
 }
 
 export default {
-  getRailwayUrl,
   getApiBaseUrl,
 };
