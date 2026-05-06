@@ -1,0 +1,24 @@
+name: Deploy Frontend to Railway
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'enghub-main/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          npm install -g @railway/cli
+          cd enghub-main
+          railway up --detach \
+            --project 6cde329a-a768-442a-8d34-0d1727e9cf83 \
+            --environment b1604c12-e4db-4519-8d19-f641c5a2e295 \
+            --service enghub-frontend
