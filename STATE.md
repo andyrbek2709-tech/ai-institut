@@ -4,6 +4,31 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-07 15:30 UTC — LOGIN HANG FIX: Missing error handling in auth flow ✅
+
+**Статус:** ✅ **FIXED** — Login now properly handles & displays auth errors
+
+**Root cause identified:**
+- `signIn()` function (supabase.ts:55-60) had no error handling
+- Called `.then(r => r.json())` without checking `r.ok`
+- If any response wasn't JSON (HTML error page, network error, etc.), JSON parsing failed
+- Error "Unexpected token '<'" occurred when trying to parse HTML as JSON
+- No try-catch in LoginPage, so error wasn't caught/displayed
+
+**Fixes applied:**
+- ✅ `supabase.ts` — `signIn()` now async, checks `r.ok`, handles JSON parse errors
+- ✅ `LoginPage.tsx` — `handleLogin()` wrapped in try-catch, displays error to user
+- ✅ Frontend rebuilt (`npm run build`) successfully
+- ✅ Commit `5c81579` pushed to main
+
+**Before:** Login hung indefinitely, console showed "Unexpected token '<'"
+**After:** Any auth error now displays clearly to user (e.g., "Invalid login credentials")
+
+**Frontend build:** `main.6ad827a5.js` (528.17 kB gzipped)
+**Commit:** `5c81579` "fix(auth): add error handling for login response parsing"
+
+---
+
 ### 2026-05-07 09:53 UTC — RAILWAY DEPLOYMENT RECOVERY COMPLETE ✅
 
 **Статус:** ✅ **ALL 3 SERVICES UP** — API Server + Frontend + Orchestrator работают
