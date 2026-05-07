@@ -52,12 +52,30 @@ export const patch = (path: string, data: any, token?: string) =>
 export const del = (path: string, token?: string) =>
   fetch(`${SURL}/rest/v1/${path}`, { method: 'DELETE', headers: H(token), signal: AbortSignal.timeout(30000) }).then(guardError);
 
-export const signIn = (email: string, password: string) =>
-  fetch(`${SURL}/auth/v1/token?grant_type=password`, {
+export const signIn = async (email: string, password: string) => {
+  const r = await fetch(`${SURL}/auth/v1/token?grant_type=password`, {
     method: 'POST',
     headers: H(),
     body: JSON.stringify({ email, password }),
-  }).then(r => r.json());
+  });
+
+  if (!r.ok) {
+    let msg = `HTTP ${r.status}: ${r.statusText}`;
+    try {
+      const j = await r.json();
+      msg = j?.error_description || j?.error || j?.message || msg;
+    } catch {
+      // If response is HTML or unparseable, use status message
+    }
+    throw new Error(msg);
+  }
+
+  try {
+    return await r.json();
+  } catch (e) {
+    throw new Error(`Failed to parse login response: ${e instanceof Error ? e.message : String(e)}`);
+  }
+};
 
 // Admin-операции через серверные /api endpoints (требуют admin role).
 // createAuthUser теперь принимает (email, password, full_name, role, dept_id?).

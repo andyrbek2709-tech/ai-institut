@@ -19,10 +19,16 @@ export function LoginPage({ onLogin, dark, setDark }: LoginPageProps) {
 
   const handleLogin = async () => {
     setLoading(true); setError("");
-    const data = await signIn(email, password);
-    if (data.access_token) onLogin(data.access_token, data.user.email);
-    else setError("Неверный email или пароль");
-    setLoading(false);
+    try {
+      const data = await signIn(email, password);
+      if (data?.access_token) onLogin(data.access_token, data.user.email);
+      else setError("Неверный email или пароль");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || "Ошибка при входе. Проверьте данные и попробуйте снова.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
