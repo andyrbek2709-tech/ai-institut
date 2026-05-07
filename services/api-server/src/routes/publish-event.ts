@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { getRedisClient } from '../config/redis.js';
 import { logger } from '../utils/logger.js';
 import { ApiError } from '../middleware/errorHandler.js';
@@ -14,12 +14,12 @@ interface PublishEventBody {
   metadata?: Record<string, any>;
 }
 
-router.post('/publish-event', async (req: Request, res: Response) => {
+router.post('/publish-event', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { event_type, task_id, project_id, user_id, review_id, metadata } = req.body as PublishEventBody;
 
     if (!event_type) {
-      throw new ApiError(400, 'event_type is required');
+      return next(new ApiError(400, 'event_type is required'));
     }
 
     const redis = getRedisClient();
@@ -44,9 +44,7 @@ router.post('/publish-event', async (req: Request, res: Response) => {
       event_type,
     });
   } catch (err) {
-    if (err instanceof ApiError) throw err;
-    logger.error('Failed to publish event:', err);
-    throw new ApiError(500, 'Failed to publish event', { message: (err as Error).message });
+    next(err);
   }
 });
 

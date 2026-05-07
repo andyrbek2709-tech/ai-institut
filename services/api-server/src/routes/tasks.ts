@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger.js';
 import { listRecords, createRecord, updateRecord, deleteRecord } from '../services/supabase-proxy.js';
 import { ApiError } from '../middleware/errorHandler.js';
@@ -16,20 +16,11 @@ interface TaskRecord {
   [key: string]: any;
 }
 
-/**
- * GET /api/tasks/:projectId
- * List all tasks for a project (cached 30s)
- */
-router.get('/tasks/:projectId', async (req: Request, res: Response) => {
+router.get('/tasks/:projectId', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { projectId } = req.params;
     const token = req.headers.authorization?.replace('Bearer ', '');
 
-    if (!projectId) {
-      throw new ApiError(400, 'projectId is required');
-    }
-
-    // Check cache
     const cacheKey = `tasks:${projectId}`;
     const cached = cache.get<TaskRecord[]>(cacheKey);
     if (cached) {
@@ -39,36 +30,28 @@ router.get('/tasks/:projectId', async (req: Request, res: Response) => {
     const tasks = await listRecords<TaskRecord>('tasks', {
       filters: { 'project_id': `eq.${projectId}` },
       order: 'id',
-      limit: 200, // Reduce from 500 to 200 - most projects don't have >200 tasks
+      limit: 200,
       token,
       select: 'id,project_id,name,status,priority,assigned_to,created_at,deadline,rework_count',
     });
 
-    // Increase cache TTL from 30s to 60s - tasks don't change frequently
     cache.set(cacheKey, tasks, 60);
     res.json(tasks);
   } catch (err) {
-    if (err instanceof ApiError) throw err;
-    logger.error('Failed to list tasks:', err);
-    throw new ApiError(500, 'Failed to list tasks', { message: (err as Error).message });
+    next(err);
   }
 });
 
-/**
- * POST /api/tasks
- * Create a new task and publish event
- */
-router.post('/tasks', async (req: Request, res: Response) => {
+router.post('/tasks', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     if (!req.body.name || !req.body.project_id) {
-      throw new ApiError(400, 'name and project_id are required');
+      return next(new ApiError(400, 'name and project_id are required'));
     }
 
     const task = await createRecord<TaskRecord>('tasks', req.body, token);
 
-    // Publish task.created event if Redis is available
     try {
       const redis = getRedisClient();
       await redis.xadd(
@@ -84,33 +67,21 @@ router.post('/tasks', async (req: Request, res: Response) => {
       logger.debug('Published task.created event', { task_id: task.id });
     } catch (redisErr) {
       logger.warn('Failed to publish event to Redis', redisErr);
-      // Don't fail the request if event publishing fails
     }
 
     res.status(201).json(task);
   } catch (err) {
-    if (err instanceof ApiError) throw err;
-    logger.error('Failed to create task:', err);
-    throw new ApiError(500, 'Failed to create task', { message: (err as Error).message });
+    next(err);
   }
 });
 
-/**
- * PATCH /api/tasks/:id
- * Update a task and publish event
- */
-router.patch('/tasks/:id', async (req: Request, res: Response) => {
+router.patch('/tasks/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const token = req.headers.authorization?.replace('Bearer ', '');
 
-    if (!id) {
-      throw new ApiError(400, 'id is required');
-    }
-
     const task = await updateRecord<TaskRecord>('tasks', id, req.body, token);
 
-    // Publish task.status_changed event if status was updated
     if (req.body.status) {
       try {
         const redis = getRedisClient();
@@ -131,32 +102,19 @@ router.patch('/tasks/:id', async (req: Request, res: Response) => {
 
     res.json(task);
   } catch (err) {
-    if (err instanceof ApiError) throw err;
-    logger.error('Failed to update task:', err);
-    throw new ApiError(500, 'Failed to update task', { message: (err as Error).message });
+    next(err);
   }
 });
 
-/**
- * DELETE /api/tasks/:id
- * Delete a task
- */
-router.delete('/tasks/:id', async (req: Request, res: Response) => {
+router.delete('/tasks/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const token = req.headers.authorization?.replace('Bearer ', '');
 
-    if (!id) {
-      throw new ApiError(400, 'id is required');
-    }
-
     await deleteRecord('tasks', id, token);
-
     res.status(204).send();
   } catch (err) {
-    if (err instanceof ApiError) throw err;
-    logger.error('Failed to delete task:', err);
-    throw new ApiError(500, 'Failed to delete task', { message: (err as Error).message });
+    next(err);
   }
 });
 
