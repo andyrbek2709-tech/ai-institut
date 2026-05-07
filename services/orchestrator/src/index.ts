@@ -15,15 +15,10 @@ async function main() {
     const env = loadEnvironment(logger);
 
     // Initialize services
-    logger.info('Initializing RedisStreamClient...');
     const redisClient = new RedisStreamClient(env.redis.url, logger);
-    logger.info('Initializing Database...');
     const db = new Database(env.supabase.url, env.supabase.serviceKey, logger);
-    logger.info('Initializing NotificationService...');
     const notifications = new NotificationService(logger, env.telegram);
-    logger.info('Initializing StateMachine...');
     const stateMachine = new StateMachine(logger);
-    logger.info('Calling redisClient.init()...');
 
     await redisClient.init();
 
