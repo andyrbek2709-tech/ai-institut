@@ -27,7 +27,7 @@
 - 🔴 Frontend Railway service — создать (root: `enghub-main/`)
 - 🔴 Orchestrator Railway service — создать (root: `services/orchestrator/`)
 - 🔴 Railway deployment — дождаться QUEUED → SUCCESS
-- 🔴 DB migration 027 — применить к Supabase `inachjylaqelysiwtsux`
+- ✅ DB migration 027 — применена к Supabase `inachjylaqelysiwtsux` (provider constraint: railway-only, vercel_metrics flag deleted)
 
 **Архитектура:** 100% Railway. Vercel PERMANENTLY DECOMMISSIONED (2026-05-07).
 **Supabase project:** `inachjylaqelysiwtsux` (НЕ `jbdljdwlfimvmqybzynv` — старая doc была неверна)
