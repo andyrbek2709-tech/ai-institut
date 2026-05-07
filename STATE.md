@@ -4,6 +4,23 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-07 11:25 UTC — FRONTEND FIX: REACT_APP_* env vars not baked into CRA bundle 🔧
+
+**Статус:** 🔧 **IN PROGRESS** — Fixing Dockerfile ARG declarations, redeploying
+
+**Root cause:** `enghub-main/Dockerfile` had no `ARG` declarations for `REACT_APP_*` vars.
+Railway injects env vars as Docker build args, but they're silently ignored unless declared with `ARG`.
+Result: `REACT_APP_SUPABASE_URL` was empty string in bundle → `signIn()` fetched from own frontend URL → returned HTML → "Unexpected token '<'".
+
+**Fix:** Added to Dockerfile builder stage:
+- `ARG REACT_APP_SUPABASE_URL` + `ENV REACT_APP_SUPABASE_URL=$REACT_APP_SUPABASE_URL`
+- `ARG REACT_APP_SUPABASE_ANON_KEY` + `ENV REACT_APP_SUPABASE_ANON_KEY=$REACT_APP_SUPABASE_ANON_KEY`
+- `ARG REACT_APP_RAILWAY_API_URL` + `ENV REACT_APP_RAILWAY_API_URL=$REACT_APP_RAILWAY_API_URL`
+
+**Verification:** Supabase auth works server-side (`admin@enghub.com` / `EngAdmin2026!` → JWT OK).
+
+---
+
 ### 2026-05-07 15:30 UTC — LOGIN HANG FIX: Missing error handling in auth flow ✅
 
 **Статус:** ✅ **FIXED** — Login now properly handles & displays auth errors
