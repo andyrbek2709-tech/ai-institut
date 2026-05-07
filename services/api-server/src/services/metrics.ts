@@ -4,7 +4,7 @@ import { cache } from './cache.js';
 
 export interface MetricData {
   timestamp: string;
-  provider: 'vercel' | 'railway';
+  provider: 'railway';
   endpoint: string;
   status_code: number;
   response_time: number;
@@ -13,7 +13,6 @@ export interface MetricData {
 }
 
 export interface MetricsSummary {
-  vercel: any[];
   railway: any[];
   aggregated: {
     total_requests: number;
@@ -60,21 +59,18 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
     const supabaseAdmin = getSupabaseAdmin();
     const cutoffTime = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
-    // Optimization: Fetch only essential columns and limit dataset
-    // SELECT only what we need to reduce data transfer and processing
     const { data, error } = await supabaseAdmin
       .from('api_metrics')
-      .select('provider,endpoint,status_code,response_time')
+      .select('endpoint,status_code,response_time')
+      .eq('provider', 'railway')
       .gte('timestamp', cutoffTime)
-      .limit(5000); // Prevent fetching too much data - last 5000 metrics is enough
+      .limit(5000);
 
     if (error) {
       logger.error('Error fetching metrics:', error);
       return getDefaultMetrics();
     }
 
-    // Fast grouping: single pass instead of two separate filters + reduces
-    const vercelMap = new Map<string, any>();
     const railwayMap = new Map<string, any>();
     let totalRequests = 0;
     let totalLatency = 0;
@@ -86,16 +82,15 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
       if (isError) errorCount++;
       totalLatency += m.response_time;
 
-      const map = m.provider === 'vercel' ? vercelMap : railwayMap;
       const key = m.endpoint;
-      const existing = map.get(key);
+      const existing = railwayMap.get(key);
 
       if (existing) {
         existing.request_count++;
         if (isError) existing.error_count++;
         existing.total_response_time += m.response_time;
       } else {
-        map.set(key, {
+        railwayMap.set(key, {
           endpoint: m.endpoint,
           request_count: 1,
           error_count: isError ? 1 : 0,
@@ -106,7 +101,6 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
     }
 
     const result = {
-      vercel: Array.from(vercelMap.values()),
       railway: Array.from(railwayMap.values()),
       aggregated: {
         total_requests: totalRequests,
@@ -116,7 +110,6 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
       timestamp: new Date().toISOString(),
     };
 
-    // Cache longer - metrics summary is stable
     cache.set(`metrics:summary:${hours}h`, result, 120);
     return result;
   } catch (err) {
@@ -126,7 +119,7 @@ export async function getMetricsSummary(hours: number = 1): Promise<MetricsSumma
   }
 }
 
-export async function getProviderMetrics(provider: 'vercel' | 'railway'): Promise<any[]> {
+export async function getProviderMetrics(provider: 'railway'): Promise<any[]> {
   try {
     const cacheKey = `metrics:provider:${provider}`;
     const cached = cache.get<any[]>(cacheKey);
@@ -155,7 +148,7 @@ export async function getProviderMetrics(provider: 'vercel' | 'railway'): Promis
   }
 }
 
-export async function getErrorRate(provider: 'vercel' | 'railway', minutes: number = 5): Promise<number> {
+export async function getErrorRate(provider: 'railway', minutes: number = 5): Promise<number> {
   try {
     const cacheKey = `metrics:error-rate:${provider}:${minutes}m`;
     const cached = cache.get<number>(cacheKey);
@@ -164,20 +157,14 @@ export async function getErrorRate(provider: 'vercel' | 'railway', minutes: numb
     }
 
     const supabaseAdmin = getSupabaseAdmin();
-
-    // Optimize: use PostgreSQL COUNT aggregate instead of SELECT + JS filter
-    // This is much faster for large datasets (100x improvement possible)
     const cutoffTime = new Date(Date.now() - minutes * 60 * 1000).toISOString();
 
-    // Get total requests and error count in parallel
     const [totalResult, errorResult] = await Promise.all([
-      // Total requests for this provider and time window
       supabaseAdmin
         .from('api_metrics')
         .select('count', { count: 'exact' })
         .eq('provider', provider)
         .gte('timestamp', cutoffTime),
-      // Error requests (status >= 400)
       supabaseAdmin
         .from('api_metrics')
         .select('count', { count: 'exact' })
@@ -195,7 +182,6 @@ export async function getErrorRate(provider: 'vercel' | 'railway', minutes: numb
     }
 
     const rate = (errors / total) * 100;
-    // Cache error rate longer when it's stable (0% or very low)
     const cacheTTL = rate < 1 ? 120 : 30;
     cache.set(cacheKey, rate, cacheTTL);
     return rate;
@@ -238,7 +224,6 @@ export async function getRolloutRecommendation(): Promise<RolloutRecommendation>
 
 function getDefaultMetrics(): MetricsSummary {
   return {
-    vercel: [],
     railway: [],
     aggregated: {
       total_requests: 0,
