@@ -129,7 +129,7 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRo
         reader.readAsDataURL(file);
       });
       const mediaType = file.type || 'image/png';
-      const apiUrl = window.location.hostname === 'localhost' ? 'https://enghub-three.vercel.app/api/orchestrator' : '/api/orchestrator';
+      const apiUrl = `${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/orchestrator`;
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

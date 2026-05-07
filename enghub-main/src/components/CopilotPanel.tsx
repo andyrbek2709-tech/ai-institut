@@ -112,7 +112,7 @@ export function CopilotPanel({
 
     // Real Orchestrator Backend API call
     try {
-      const apiUrl = window.location.hostname === 'localhost' ? 'https://enghub-three.vercel.app/api/orchestrator' : '/api/orchestrator';
+      const apiUrl = `${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/orchestrator`;
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

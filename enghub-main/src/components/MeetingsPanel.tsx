@@ -95,7 +95,7 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      const apiUrl = window.location.hostname === 'localhost' ? 'https://enghub-three.vercel.app/api/transcribe' : '/api/transcribe';
+      const apiUrl = `${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/transcribe`;
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

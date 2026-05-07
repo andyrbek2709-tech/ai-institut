@@ -44,7 +44,7 @@ function apiBase(): string {
   // Локальный dev на CRA не имеет /api — переадресовываем на прод-функции,
   // как уже делает MeetingsPanel.tsx (см. вызов /api/transcribe).
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'https://enghub-three.vercel.app';
+    return process.env.REACT_APP_RAILWAY_API_URL || '';
   }
   return '';
 }

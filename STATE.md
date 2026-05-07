@@ -4,6 +4,44 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-07 19:00 UTC — PRODUCTION STABILIZATION COMPLETE ✅
+
+**Статус:** ✅ **STABLE GOVERNED PLATFORM** — переход RECOVERY → STABLE PRODUCTION завершён
+
+**E2E результаты (17:00 UTC):**
+- ✅ Auth: admin@enghub.com → JWT OK
+- ✅ /health, /ready, /diagnostics — все возвращают OK
+- ✅ Redis stream: publish-event работает
+- ✅ Frontend: HTTP 200
+- ✅ Supabase: app_users, tasks, projects — доступны
+
+**Добавлено:**
+- ✅ `services/api-server/src/routes/diagnostics.ts` — `/diagnostics` + `/system-status` endpoints
+- ✅ `scripts/validate-architecture.sh` — 7 architectural checks (запускать перед deploy)
+- ✅ `DEPLOYMENT_GOVERNANCE.md` — canonical deploy flow, rollback, env vars
+- ✅ `PRODUCTION_STABILIZATION_FINAL_REPORT.md` — полный финальный отчёт
+
+**Исправлены Vercel-ссылки (validator нашёл):**
+- ✅ `CopilotPanel.tsx` — Vercel orchestrator URL → `REACT_APP_RAILWAY_API_URL`
+- ✅ `DrawingsPanel.tsx` — Vercel orchestrator URL → `REACT_APP_RAILWAY_API_URL`
+- ✅ `MeetingRoomPage.tsx` — Vercel base URL → `REACT_APP_RAILWAY_API_URL`
+- ✅ `MeetingsPanel.tsx` — Vercel transcribe URL → `REACT_APP_RAILWAY_API_URL`
+
+**Удалено (cleanup):**
+- ✅ 26 obsolete report `.md` из корня репо
+- ✅ `ConferenceRoom.legacy.tsx` + `.new`
+- ✅ `livekit-token.legacy.js` + `.new`
+
+**Memory hardening:**
+- ✅ `AGENT_START_HERE.md` — обновлён (status: STABLE ✅)
+- ✅ `current_architecture.md` — удалены Vercel references, исправлен Supabase project ID
+- ✅ Созданы: `FINAL_PRODUCTION_TOPOLOGY.md`, `CANONICAL_SERVICES.md`, `ARCHITECTURE_CONSTRAINTS.md`, `DEPLOYMENT_TRUTH.md`
+- ✅ `MEMORY.md` — обновлён индекс
+
+**validate-architecture.sh:** ✅ All checks passed
+
+---
+
 ### 2026-05-07 17:00 UTC — FINAL API ROUTING NORMALIZATION ✅
 
 **Статус:** ✅ **COMPLETE** — все relative `/api/*` пути заменены на Railway API Server URL

@@ -11,6 +11,7 @@ import proxyRouter from './routes/proxy.js';
 import tasksRouter from './routes/tasks.js';
 import metricsRouter from './routes/metrics.js';
 import autoRollbackRouter from './routes/auto-rollback.js';
+import diagnosticsRouter from './routes/diagnostics.js';
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use('/api', proxyRouter);
 app.use('/api', tasksRouter);
 app.use('/api', metricsRouter);
 app.use('/api', autoRollbackRouter);
+app.use('/', diagnosticsRouter);
 
 // 404 handler
 app.use(notFoundHandler);
