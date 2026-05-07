@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import {
   getMetricsSummary,
   getProviderMetrics,
@@ -9,56 +9,41 @@ import { logger } from '../utils/logger.js';
 
 const router = Router();
 
-router.get('/metrics/summary', async (req: Request, res: Response) => {
+router.get('/metrics/summary', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const hours = parseInt(req.query.hours as string) || 1;
     const data = await getMetricsSummary(hours);
     res.json(data);
   } catch (err) {
-    logger.error('Error fetching metrics summary:', err);
-    res.status(500).json({ error: 'Failed to fetch metrics' });
+    next(err);
   }
 });
 
-router.get('/metrics/:provider', async (req: Request, res: Response) => {
+router.get('/metrics/railway', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { provider } = req.params;
-
-    if (provider !== 'vercel' && provider !== 'railway') {
-      return res.status(400).json({ error: 'Invalid provider. Must be "vercel" or "railway"' });
-    }
-
-    const metrics = await getProviderMetrics(provider as any);
+    const metrics = await getProviderMetrics('railway' as any);
     res.json({
-      provider,
+      provider: 'railway',
       metrics,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    logger.error(`Error fetching ${req.params.provider} metrics:`, err);
-    res.status(500).json({ error: 'Failed to fetch metrics' });
+    next(err);
   }
 });
 
-router.get('/metrics/error-rate/:provider', async (req: Request, res: Response) => {
+router.get('/metrics/error-rate', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { provider } = req.params;
     const minutes = parseInt(req.query.minutes as string) || 5;
-
-    if (provider !== 'vercel' && provider !== 'railway') {
-      return res.status(400).json({ error: 'Invalid provider' });
-    }
-
-    const errorRate = await getErrorRate(provider as 'vercel' | 'railway', minutes);
+    const errorRate = await getErrorRate('railway' as any, minutes);
     res.json({
-      provider,
+      provider: 'railway',
       error_rate: errorRate,
       minutes,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    logger.error('Error calculating error rate:', err);
-    res.status(500).json({ error: 'Failed to calculate error rate' });
+    next(err);
   }
 });
 
