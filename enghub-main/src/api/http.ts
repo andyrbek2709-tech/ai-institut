@@ -64,5 +64,7 @@ export async function apiFetch<T = any>(path: string, opts: RequestInit = {}): P
 export const apiGet  = <T = any>(path: string) => apiFetch<T>(path, { method: 'GET' });
 export const apiPost = <T = any>(path: string, body?: any) =>
   apiFetch<T>(path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined });
+export const apiPatch = <T = any>(path: string, body?: any) =>
+  apiFetch<T>(path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined });
 export const apiDelete = <T = any>(path: string, body?: any) =>
   apiFetch<T>(path, { method: 'DELETE', body: body !== undefined ? JSON.stringify(body) : undefined });

@@ -416,16 +416,13 @@ export default function App() {
 
   const loadBranding = async () => {
     try {
-      const url = await signStorageUrl('normative-docs', 'branding/company.json', 60 * 60);
-      if (!url) return;
-      const r = await fetch(url);
-      if (!r.ok) return;
-      const json: any = await r.json().catch(() => null);
-      if (!json) return;
-      setBranding({
-        companyName: String(json.companyName || 'EngHub'),
-        logoUrl: json.logoUrl ? String(json.logoUrl) : null
-      });
+      const data: any = await apiGet('/api/admin/org-public');
+      if (data) {
+        setBranding({
+          companyName: String(data.company_name || 'EngHub'),
+          logoUrl: data.logo_url ? String(data.logo_url) : null,
+        });
+      }
     } catch {}
   };
   const loadAllTasks = async (pid: number) => {
@@ -1047,7 +1044,10 @@ export default function App() {
   };
 
   const getDeptNameById = (id: number | string) => depts.find(d => String(d.id) === String(id))?.name || "";
-  const archiveProject = async (id: number) => { await patch(`projects?id=eq.${id}`, { archived: true }, token!); loadProjects(); };
+  const archiveProject = async (id: number) => {
+    await patch(`projects?id=eq.${id}`, { archived: true, archived_at: new Date().toISOString() }, token!);
+    loadProjects();
+  };
 
   const promptArchiveProject = (p: any) => {
     setArchiveConfirm(p);

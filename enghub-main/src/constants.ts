@@ -73,10 +73,24 @@ export const statusMap: Record<string, { label: string; color: string; bg: strin
 
 // Роли
 export const roleLabels: Record<string, string> = {
+  admin: "Администратор",
   gip: "Главный инженер проекта",
   lead: "Руководитель отдела",
+  lead_engineer: "Ведущий инженер",
   engineer: "Инженер",
+  reviewer: "Проверяющий",
+  observer: "Наблюдатель",
 };
+
+export const roleOptions = [
+  { value: "admin", label: "Администратор" },
+  { value: "gip", label: "ГИП" },
+  { value: "lead", label: "Руководитель отдела" },
+  { value: "lead_engineer", label: "Ведущий инженер" },
+  { value: "engineer", label: "Инженер" },
+  { value: "reviewer", label: "Проверяющий" },
+  { value: "observer", label: "Наблюдатель" },
+];
 
 // Иконки навигации (Lucide-style unicode)
 export const navIcons: Record<string, string> = {

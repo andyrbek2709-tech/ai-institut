@@ -12,6 +12,7 @@ import tasksRouter from './routes/tasks.js';
 import metricsRouter from './routes/metrics.js';
 import autoRollbackRouter from './routes/auto-rollback.js';
 import diagnosticsRouter from './routes/diagnostics.js';
+import adminRouter from './routes/admin.js';
 
 const app = express();
 
@@ -70,6 +71,7 @@ app.use('/api', proxyRouter);
 app.use('/api', tasksRouter);
 app.use('/api', metricsRouter);
 app.use('/api', autoRollbackRouter);
+app.use('/api', adminRouter);
 app.use('/', diagnosticsRouter);
 
 // 404 handler

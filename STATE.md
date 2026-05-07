@@ -4,6 +4,52 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-08 — ADMIN DOMAIN IMPLEMENTATION ✅
+
+**Статус:** ✅ **ADMIN DOMAIN DEPLOYED** — полная реализация организационного управления
+
+**Supabase migrations:**
+- ✅ `organization_settings` — singleton-таблица (company_name, logo_url, primary_color)
+- ✅ `audit_logs` — журнал всех admin-действий
+- ✅ `app_users.is_active` — soft-disable пользователей
+- ✅ `departments.head_id`, `departments.is_archived`, `departments.description`
+- ✅ `projects.archived_at` — timestamp архивирования
+
+**Backend (services/api-server):**
+- ✅ `routes/admin.ts` — новый роут `/api/admin-users`, `/api/admin/*`
+  - `POST /api/admin-users` — create / update / reset_password / disable / delete
+  - `GET/PATCH /api/admin/organization` — настройки организации
+  - `POST /api/admin/branding/logo` — загрузка логотипа в Storage
+  - `GET/POST/PATCH/DELETE /api/admin/departments` — CRUD отделов
+  - `POST /api/admin/projects/:id/restore` — восстановление из архива
+  - `DELETE /api/admin/projects/:id` — permanent delete из архива
+  - `GET /api/admin/audit-logs` — журнал аудита
+  - `GET /api/admin/org-public` — публичный брендинг (без auth)
+- ✅ Зарегистрирован в `index.ts`
+
+**Frontend (enghub-main):**
+- ✅ `AdminPanel.tsx` — полный реврайт (5 табов: Организация, Пользователи, Отделы, Архив, Аудит)
+  - Организация: брендинг (логотип, название, цвет), статистика, live preview
+  - Пользователи: все 6 ролей, disable/enable, delete, change password
+  - Отделы: CRUD, назначение руководителя, архивирование/восстановление
+  - Архив: restore проекта, triple-confirm permanent delete
+  - Аудит: журнал действий с иконками и временными метками
+- ✅ `constants.ts` — 7 ролей: admin, gip, lead, lead_engineer, engineer, reviewer, observer
+- ✅ `api/http.ts` — добавлен `apiPatch`
+- ✅ `App.tsx` — `loadBranding()` → `/api/admin/org-public`, `archiveProject()` → пишет `archived_at`
+
+**Удалены:**
+- ✅ Вкладка "Хранилище" из admin panel (хранилище — не область admin, отдельный инструмент)
+- ✅ Лишняя project-аналитика из admin (admin ≠ GIP)
+
+**RBAC:**
+- Все `/api/admin/*` требуют `role=admin` в `app_users`
+- Soft-disable через `is_active=false`
+- Audit logging для всех изменений
+- RLS: `organization_settings` читают все, пишут только admin
+
+---
+
 ### 2026-05-07 19:00 UTC — PRODUCTION STABILIZATION COMPLETE ✅
 
 **Статус:** ✅ **STABLE GOVERNED PLATFORM** — переход RECOVERY → STABLE PRODUCTION завершён
