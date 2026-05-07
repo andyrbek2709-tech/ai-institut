@@ -6,6 +6,7 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3001',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:3001',
+  'https://enghub-frontend-production.up.railway.app',
   'https://enghub.local',
 ];
 

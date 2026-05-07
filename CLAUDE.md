@@ -19,7 +19,7 @@
 | Что | Куда |
 |---|---|
 | API Server | `https://api-server-production-8157.up.railway.app` (Railway, project ENGHUB) |
-| Frontend | Railway service (pending deployment, root: `enghub-main/`) |
+| Frontend | `https://enghub-frontend-production.up.railway.app` (Railway, root: `enghub-main/`) |
 | GitHub | `andyrbek2709-tech/ai-institut`, ветка `main` |
 | Локально | `D:\ai-institut` (фронт в `enghub-main/`) |
 | Railway | project `ENGHUB`, team `andyrbek2709-techs-projects` |

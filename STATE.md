@@ -24,8 +24,8 @@
 - 🟡 Railway deploy запущен — статус `QUEUED` (ожидание)
 
 **Что ещё нужно:**
-- 🔴 Frontend Railway service — создать (root: `enghub-main/`)
-- 🔴 Orchestrator Railway service — создать (root: `services/orchestrator/`)
+- ✅ Frontend Railway service — создан `enghub-frontend`, URL: `https://enghub-frontend-production.up.railway.app`, деплой QUEUED
+- ✅ Orchestrator Railway service — создан `enghub-orchestrator`, деплой QUEUED
 - 🔴 Railway deployment — дождаться QUEUED → SUCCESS
 - ✅ DB migration 027 — применена к Supabase `inachjylaqelysiwtsux` (provider constraint: railway-only, vercel_metrics flag deleted)
 
