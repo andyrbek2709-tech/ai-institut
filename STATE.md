@@ -6,7 +6,7 @@
 
 ### 2026-05-07 11:25 UTC — FRONTEND FIX: REACT_APP_* env vars not baked into CRA bundle 🔧
 
-**Статус:** 🔧 **IN PROGRESS** — Fixing Dockerfile ARG declarations, redeploying
+**Статус:** ✅ **FIXED** — Login flow полностью рабочий
 
 **Root cause:** `enghub-main/Dockerfile` had no `ARG` declarations for `REACT_APP_*` vars.
 Railway injects env vars as Docker build args, but they're silently ignored unless declared with `ARG`.
@@ -17,7 +17,17 @@ Result: `REACT_APP_SUPABASE_URL` was empty string in bundle → `signIn()` fetch
 - `ARG REACT_APP_SUPABASE_ANON_KEY` + `ENV REACT_APP_SUPABASE_ANON_KEY=$REACT_APP_SUPABASE_ANON_KEY`
 - `ARG REACT_APP_RAILWAY_API_URL` + `ENV REACT_APP_RAILWAY_API_URL=$REACT_APP_RAILWAY_API_URL`
 
-**Verification:** Supabase auth works server-side (`admin@enghub.com` / `EngAdmin2026!` → JWT OK).
+**Verification:**
+- ✅ Bundle `main.6ad827a5.js` contains `inachjylaqelysiwtsux` (3 matches) and `api-server-production` (2 matches)
+- ✅ Supabase auth → JWT obtained for `admin@enghub.com`
+- ✅ AdminPanel loads app_users, departments, projects from Supabase with JWT
+- ✅ All 4 Railway services Online: ENGHUB API, enghub-frontend, enghub-orchestrator, Redis
+
+**Deployment ID (frontend):** `38c95a58-f0bd-4241-8212-015148ead00b`
+**Commit:** `bc420d3`
+**Full report:** `FRONTEND_LOGIN_RECOVERY_FINAL.md`
+
+**Remaining risk:** `apiPost('/api/admin-users')` uses relative URL → hits frontend, not API server (Vercel-era design, non-blocking for login).
 
 ---
 
