@@ -33,7 +33,7 @@ export interface RolloutRecommendation {
 
 export async function getDashboardData(): Promise<DashboardData> {
   try {
-    return await apiGet('/metrics/summary?hours=1');
+    return await apiGet('/api/metrics/summary?hours=1');
   } catch (error) {
     console.error('Failed to fetch dashboard data:', error);
     return {
@@ -46,7 +46,7 @@ export async function getDashboardData(): Promise<DashboardData> {
 
 export async function getRailwayMetrics(): Promise<MetricsSummary[]> {
   try {
-    const response = await apiGet('/metrics/railway');
+    const response = await apiGet('/api/metrics/railway');
     return response.metrics || [];
   } catch (error) {
     console.error('Failed to fetch railway metrics:', error);
@@ -56,7 +56,7 @@ export async function getRailwayMetrics(): Promise<MetricsSummary[]> {
 
 export async function getErrorRate(minutes: number = 5): Promise<number> {
   try {
-    const response = await apiGet(`/metrics/error-rate/railway?minutes=${minutes}`);
+    const response = await apiGet(`/api/metrics/error-rate/railway?minutes=${minutes}`);
     return response.error_rate || 0;
   } catch (error) {
     console.error('Failed to fetch error rate:', error);
@@ -66,7 +66,7 @@ export async function getErrorRate(minutes: number = 5): Promise<number> {
 
 export async function getRolloutRecommendation(): Promise<RolloutRecommendation> {
   try {
-    return await apiGet('/metrics/recommendation');
+    return await apiGet('/api/metrics/recommendation');
   } catch (error) {
     console.error('Failed to fetch rollout recommendation:', error);
     return {

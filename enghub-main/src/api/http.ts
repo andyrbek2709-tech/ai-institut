@@ -1,6 +1,5 @@
-// HTTP helper for API calls via Vercel functions
-// All API calls go through /api/* endpoints
-// Tasks and main data come directly from Supabase
+// HTTP helper — all /api/* calls route to Railway API Server
+// REACT_APP_RAILWAY_API_URL must be set in production build args
 
 import { getSupabaseAnonClient } from './supabaseClient';
 
@@ -23,15 +22,11 @@ async function getAccessToken(): Promise<string> {
   }
 }
 
-/**
- * Resolve the full URL for a request
- * All API calls use relative paths (/api/*)
- */
 function resolveUrl(path: string): string {
-  if (path.startsWith('http')) {
-    return path; // Absolute URL
-  }
-  return path;  // Relative path, will be served by same origin
+  if (path.startsWith('http')) return path;
+  const base = process.env.REACT_APP_RAILWAY_API_URL || '';
+  if (base && path.startsWith('/api/')) return `${base}${path}`;
+  return path;
 }
 
 export async function apiFetch<T = any>(path: string, opts: RequestInit = {}): Promise<T> {

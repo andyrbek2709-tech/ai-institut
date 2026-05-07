@@ -4,6 +4,30 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-07 17:00 UTC — FINAL API ROUTING NORMALIZATION ✅
+
+**Статус:** ✅ **COMPLETE** — все relative `/api/*` пути заменены на Railway API Server URL
+
+**Проблема:** Frontend использовал относительные `/api/*` пути (legacy Vercel-era), которые попадали в frontend-контейнер, а не в Railway API Server. Результат: HTML вместо JSON, `Unexpected token '<'`.
+
+**Изменения:**
+- ✅ `api/http.ts` — `resolveUrl()` теперь прицепляет `REACT_APP_RAILWAY_API_URL` для всех `/api/*` путей → фиксирует все `apiPost`/`apiGet`/`apiFetch` вызовы централизованно
+- ✅ `config/api.ts` — `getApiBaseUrl()` возвращает `REACT_APP_RAILWAY_API_URL` (убраны Vercel комментарии)
+- ✅ `lib/events/publisher.ts` — прямой `fetch('/api/publish-event')` заменён на `apiPost` через http.ts
+- ✅ `components/SpecificationsTab.tsx` — прямой `fetch('/api/spec-export')` использует `REACT_APP_RAILWAY_API_URL`
+- ✅ `App.tsx` — два прямых `fetch('/api/orchestrator')` (строки 568, 1195) используют `REACT_APP_RAILWAY_API_URL`
+- ✅ `api/metrics.ts` — пути `/metrics/*` исправлены на `/api/metrics/*` (сервер монтирует роутер под `/api`)
+
+**Затронуто эндпоинтов:** 14 (admin-users ×3, notifications-create, storage-delete, normative-docs ×3, publish-event, orchestrator ×2, spec-export, metrics ×4)
+
+**Build:** Скомпилировано успешно (`528.23 kB`)
+
+**Remaining:** `ConferenceRoom.legacy.tsx:862` — deprecated файл, не импортируется → не блокирует
+
+**Полный отчёт:** `FINAL_ARCHITECTURE_NORMALIZATION_REPORT.md`
+
+---
+
 ### 2026-05-07 11:25 UTC — FRONTEND FIX: REACT_APP_* env vars not baked into CRA bundle 🔧
 
 **Статус:** ✅ **FIXED** — Login flow полностью рабочий

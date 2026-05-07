@@ -1,3 +1,5 @@
+import { apiPost } from '../../api/http';
+
 export interface EventPayload {
   event_type: string;
   task_id?: string;
@@ -10,24 +12,14 @@ export interface EventPayload {
 
 export async function publishEvent(payload: EventPayload): Promise<void> {
   try {
-    const response = await fetch('/api/publish-event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event_type: payload.event_type,
-        task_id: payload.task_id,
-        project_id: payload.project_id,
-        user_id: payload.user_id,
-        review_id: payload.review_id,
-        metadata: payload.metadata,
-      }),
+    await apiPost('/api/publish-event', {
+      event_type: payload.event_type,
+      task_id: payload.task_id,
+      project_id: payload.project_id,
+      user_id: payload.user_id,
+      review_id: payload.review_id,
+      metadata: payload.metadata,
     });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP ${response.status}`);
-    }
-
     console.log(`[Events] Published: ${payload.event_type}`, {
       taskId: payload.task_id,
       projectId: payload.project_id,

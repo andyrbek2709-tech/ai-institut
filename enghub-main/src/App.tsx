@@ -565,7 +565,7 @@ export default function App() {
       // Пробуем семантический поиск
       let semanticResults: any[] = [];
       try {
-        const res = await fetch('/api/orchestrator', {
+        const res = await fetch(`${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/orchestrator`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'search_normative', query: query.trim(), match_count: 20 }),
@@ -1192,7 +1192,7 @@ export default function App() {
     }
     if (currentStatus) {
       try {
-        const wfRes = await fetch('/api/orchestrator', {
+        const wfRes = await fetch(`${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/orchestrator`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

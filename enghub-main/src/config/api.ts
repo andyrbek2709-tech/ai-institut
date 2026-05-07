@@ -1,14 +1,9 @@
-/**
- * API Configuration
- * All API calls go through Vercel API functions (/api/*)
- * Tasks and main data come directly from Supabase
- */
+// Railway API Server base URL
+// In production: REACT_APP_RAILWAY_API_URL = https://api-server-production-8157.up.railway.app
+// In localhost: empty string (CRA proxy or no API)
 
 export function getApiBaseUrl(): string {
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return '';  // API functions also available on localhost:3000
-  }
-  return '';  // Production uses same origin (/api/*)
+  return process.env.REACT_APP_RAILWAY_API_URL || '';
 }
 
 export default {

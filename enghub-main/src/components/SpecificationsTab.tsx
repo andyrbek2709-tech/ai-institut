@@ -579,7 +579,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     const downloadName = `${exportCode}_Спец_${exportDate}.xlsx`;
     setExcelLoading(true);
     try {
-      const resp = await fetch('/api/spec-export', {
+      const resp = await fetch(`${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/spec-export`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
