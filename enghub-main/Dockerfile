@@ -25,9 +25,5 @@ COPY --from=builder /app/build ./build
 # Expose port
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
-
-# Serve the app
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Serve the app on PORT env var (Railway sets PORT; default 3000 for local dev)
+CMD sh -c "serve -s build -l ${PORT:-3000}"
