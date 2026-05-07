@@ -18,9 +18,5 @@ RUN npm run build
 # Remove dev dependencies
 RUN npm ci --only=production
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD node -e "require('net').createConnection({port: 6379, host: 'localhost'}, () => process.exit(0)).on('error', () => process.exit(1))"
-
 # Start service
 CMD ["npm", "start"]
