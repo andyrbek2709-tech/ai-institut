@@ -4,27 +4,34 @@
 
 ## Последние изменения (новые сверху)
 
-### 2026-05-07 09:30 UTC — RAILWAY DEPLOYMENT RECOVERY (в процессе) 🟡
+### 2026-05-07 09:53 UTC — RAILWAY DEPLOYMENT RECOVERY COMPLETE ✅
 
-**Статус:** 🟡 **IN PROGRESS** — API сервер работает ✅; Frontend + Orchestrator деплоятся
+**Статус:** ✅ **ALL 3 SERVICES UP** — API Server + Frontend + Orchestrator работают
 
-**Исправлено (критические баги):**
-- ✅ Корневая причина старых QUEUED деплоев: `railway up` из поддиректории + `rootDirectory` → конфликт путей → "No such file or directory". Исправлено: деплоить только из корня репо
-- ✅ `services/api-server/railway.json` — исправлен `builder: "nixpacks"` → `"NIXPACKS"`, убраны invalid healthchecks
-- ✅ `services/orchestrator/railway.json` — убран `healthcheckPath: "/health"` (воркер без HTTP-сервера)
-- ✅ `services/orchestrator/Dockerfile` — убран HEALTHCHECK (пытался коннектиться к localhost Redis)
-- ✅ `enghub-main/railway.json` — исправлен `builder: "docker"` → `"DOCKERFILE"`
-- ✅ `enghub-main/package-lock.json` — регенерирован (yaml@2.8.4 + @types/dom-mediacapture-record не были в sync)
-- ✅ `enghub-main/package.json` — добавлен явный `yaml@^2.8.4` dep
-- ✅ **Supabase migration** `add_rework_count_to_tasks` — добавлен столбец `rework_count integer DEFAULT 0` (API падал с 400 + крашил Node.js)
-- ✅ `services/api-server/src/routes/tasks.ts` — заменён `throw err` на `next(err)` (Express 4 не обрабатывает async throw → падение Node 22)
-- ✅ `services/api-server/src/routes/publish-event.ts` — то же исправление
-- ✅ `services/api-server/src/routes/metrics.ts` — убраны vercel provider references, исправлен async error handling
+**Финальные деплои (все SUCCESS):**
+- ✅ API Server `2e038d3b` (09:49 UTC) — `https://api-server-production-8157.up.railway.app`
+- ✅ Frontend `04d7eaed` (09:49 UTC) — `https://enghub-frontend-production.up.railway.app`
+- ✅ Orchestrator `a993ddbb` (09:51 UTC) — логи: "Redis connection established → Consumer group created → Orchestrator service started"
 
-**Текущее состояние:**
-- ✅ API Server: `https://api-server-production-8157.up.railway.app/health` → `{"status":"ok"}`, `/ready` → `{"status":"ready","redis":"ok"}`
-- 🟡 Frontend: деплоится, deployment `867f931b`
-- 🟡 Orchestrator: деплоится, deployment `756e8f11`
+**Smoke test (09:53 UTC):**
+- `/health` → `{"status":"ok"}`
+- `/ready` → `{"status":"ready","redis":"ok"}`
+- `/` → `{"name":"EngHub API Server","version":"1.0.0","status":"running"}`
+- `/api/metrics/summary` → `{"total_requests":4,"error_rate":0,"avg_latency":62}`
+- `/api/auto-rollback/check` → `{"status":"ok","message":"All metrics within acceptable ranges"}`
+- Frontend → HTTP 200
+
+**Все исправленные баги (хронологически):**
+- ✅ `railway up` из поддиректории + `rootDirectory` → "No such file or directory" → деплоить только из корня репо
+- ✅ `railway.json` builder uppercase: `"nixpacks"` → `"NIXPACKS"`, `"docker"` → `"DOCKERFILE"`
+- ✅ `services/orchestrator/railway.json` — убран `healthcheckPath` (воркер без HTTP)
+- ✅ `services/orchestrator/Dockerfile` — убран HEALTHCHECK localhost:6379
+- ✅ `enghub-main/package-lock.json` — регенерирован (yaml@2.8.4 missing)
+- ✅ Supabase migration `add_rework_count_to_tasks` — `rework_count integer DEFAULT 0`
+- ✅ Express 4 async error: `throw err` → `next(err)` во всех routes
+- ✅ Redis ioredis: добавлен `lazyConnect: true` + error listener (предотвращает краш до регистрации listener)
+- ✅ `enghub-main/Dockerfile` CMD: `["serve","-l","3000"]` → `sh -c "serve -s build -l ${PORT:-3000}"` (Railway использует PORT=8080)
+- ✅ **`services/orchestrator/Dockerfile`**: `node:20-alpine` → `node:22-alpine` — Supabase `createClient()` требует WebSocket; Node.js 20 не имеет нативного WebSocket → краш при инициализации Database
 
 ---
 
