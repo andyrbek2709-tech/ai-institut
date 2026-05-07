@@ -4,6 +4,46 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-07 09:30 UTC — RAILWAY DEPLOYMENT RECOVERY (в процессе) 🟡
+
+**Статус:** 🟡 **IN PROGRESS** — API сервер работает ✅; Frontend + Orchestrator деплоятся
+
+**Исправлено (критические баги):**
+- ✅ Корневая причина старых QUEUED деплоев: `railway up` из поддиректории + `rootDirectory` → конфликт путей → "No such file or directory". Исправлено: деплоить только из корня репо
+- ✅ `services/api-server/railway.json` — исправлен `builder: "nixpacks"` → `"NIXPACKS"`, убраны invalid healthchecks
+- ✅ `services/orchestrator/railway.json` — убран `healthcheckPath: "/health"` (воркер без HTTP-сервера)
+- ✅ `services/orchestrator/Dockerfile` — убран HEALTHCHECK (пытался коннектиться к localhost Redis)
+- ✅ `enghub-main/railway.json` — исправлен `builder: "docker"` → `"DOCKERFILE"`
+- ✅ `enghub-main/package-lock.json` — регенерирован (yaml@2.8.4 + @types/dom-mediacapture-record не были в sync)
+- ✅ `enghub-main/package.json` — добавлен явный `yaml@^2.8.4` dep
+- ✅ **Supabase migration** `add_rework_count_to_tasks` — добавлен столбец `rework_count integer DEFAULT 0` (API падал с 400 + крашил Node.js)
+- ✅ `services/api-server/src/routes/tasks.ts` — заменён `throw err` на `next(err)` (Express 4 не обрабатывает async throw → падение Node 22)
+- ✅ `services/api-server/src/routes/publish-event.ts` — то же исправление
+- ✅ `services/api-server/src/routes/metrics.ts` — убраны vercel provider references, исправлен async error handling
+
+**Текущее состояние:**
+- ✅ API Server: `https://api-server-production-8157.up.railway.app/health` → `{"status":"ok"}`, `/ready` → `{"status":"ready","redis":"ok"}`
+- 🟡 Frontend: деплоится, deployment `867f931b`
+- 🟡 Orchestrator: деплоится, deployment `756e8f11`
+
+---
+
+### 2026-05-07 09:10 UTC — POST-RECOVERY AUTH INITIALIZATION ✅
+
+**Статус:** ✅ **COMPLETE** — admin аккаунт создан, RBAC восстановлен, логин верифицирован
+
+- ✅ `auth.users` — создан `admin@enghub.com` (UUID `877e0ce5-8687-46e1-b7d9-762b3742ed4d`), email confirmed, bcrypt пароль валиден
+- ✅ `public.app_users` — запись `admin@enghub.com`, role=`admin`, supabase_uid связан
+- ✅ Миграция `028_restore_rbac_helpers` — восстановлены все 10 RBAC-функций (отсутствовали после recovery)
+- ✅ Созданы 3 ранее отсутствовавшие функции: `auth_is_admin()`, `auth_is_gip_of(bigint)`, `auth_can_see_project(bigint)`, `user_can_access_project(bigint)`
+- ✅ `INITIAL_ADMIN_ACCESS.md` создан в корне репо
+- ✅ Верификация: password_valid=true, email_confirmed=true, aud=authenticated, role=authenticated
+
+**Credentials:** `admin@enghub.com` / `EngAdmin2026!` (см. `INITIAL_ADMIN_ACCESS.md`)
+**Frontend:** `https://enghub-frontend-production.up.railway.app`
+
+---
+
 ### 2026-05-07 09:00 UTC — VERCEL ARCHITECTURAL PURGE complete + Railway API server rootDirectory fixed 🟡
 
 **Статус:** 🟡 **IN PROGRESS** — Vercel полностью удалён из архитектуры; Railway API деплоится
