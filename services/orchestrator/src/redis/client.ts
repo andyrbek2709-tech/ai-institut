@@ -7,8 +7,16 @@ export class RedisStreamClient {
   private logger: Logger;
 
   constructor(redisUrl: string, logger: Logger) {
-    this.redis = new Redis(redisUrl);
+    this.redis = new Redis(redisUrl, {
+      retryStrategy: (times) => Math.min(times * 500, 5000),
+      maxRetriesPerRequest: null,
+      enableOfflineQueue: true,
+      lazyConnect: true,
+    });
     this.logger = logger;
+    this.redis.on('error', (err) => {
+      logger.warn({ err: err.message }, 'Redis connection error (will retry)');
+    });
   }
 
   async init(): Promise<void> {
