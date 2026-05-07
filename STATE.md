@@ -4,6 +4,36 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-07 09:00 UTC — VERCEL ARCHITECTURAL PURGE complete + Railway API server rootDirectory fixed 🟡
+
+**Статус:** 🟡 **IN PROGRESS** — Vercel полностью удалён из архитектуры; Railway API деплоится
+
+**Что сделано (Vercel purge):**
+- ✅ `enghub-main/vercel.json` — удалён
+- ✅ `services/api-server/src/middleware/cors.ts` — удалён `enghub-three.vercel.app` из CORS whitelist
+- ✅ `enghub-main/src/App.tsx` — заменён хардкоженный Vercel URL на `REACT_APP_RAILWAY_API_URL`
+- ✅ `enghub-main/src/lib/api-monitoring.ts` — переписан: только Railway provider
+- ✅ `enghub-main/src/api/metrics.ts` — переписан: убраны все Vercel references
+- ✅ `enghub-main/package.json` — удалён `vercel-build` script
+- ✅ `enghub-main/supabase/migrations/027_remove_vercel.sql` — создана миграция: убрать 'vercel' из DB constraints
+- ✅ `CLAUDE.md` — обновлён: Vercel decommissioned, Supabase project ID исправлен (`inachjylaqelysiwtsux`)
+- ✅ Memory: создан `VERCEL_STATUS.md`, обновлены `AGENT_START_HERE.md`, `current_architecture.md`, `MEMORY.md`
+
+**Что сделано (Railway API fix):**
+- ✅ `serviceInstanceUpdate` — установлен `rootDirectory: services/api-server` для Railway service ENGHUB
+- 🟡 Railway deploy запущен — статус `QUEUED` (ожидание)
+
+**Что ещё нужно:**
+- 🔴 Frontend Railway service — создать (root: `enghub-main/`)
+- 🔴 Orchestrator Railway service — создать (root: `services/orchestrator/`)
+- 🔴 Railway deployment — дождаться QUEUED → SUCCESS
+- 🔴 DB migration 027 — применить к Supabase `inachjylaqelysiwtsux`
+
+**Архитектура:** 100% Railway. Vercel PERMANENTLY DECOMMISSIONED (2026-05-07).
+**Supabase project:** `inachjylaqelysiwtsux` (НЕ `jbdljdwlfimvmqybzynv` — старая doc была неверна)
+
+---
+
 ### 2026-05-06 23:00 UTC — RAILWAY ARCHITECTURE AUDIT: Diagnostic complete, immediate actions identified 🔴
 
 **Статус:** 🔴 **ACTION REQUIRED** — Все системы готовы к коду, требуется фиксация Railway deployment

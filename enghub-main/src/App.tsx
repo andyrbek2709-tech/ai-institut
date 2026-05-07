@@ -857,7 +857,7 @@ export default function App() {
     const timer = setTimeout(async () => {
       setTaskSuggestLoading(true);
       try {
-        const apiUrl = window.location.hostname === 'localhost' ? 'https://enghub-three.vercel.app/api/orchestrator' : '/api/orchestrator';
+        const apiUrl = `${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/orchestrator`;
         const lead = appUsers.find(u => String(u.id) === newTask.assigned_to);
         const deptName = lead ? depts.find(d => d.id === lead.dept_id)?.name || '' : '';
         const res = await fetch(apiUrl, {
