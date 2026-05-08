@@ -1,0 +1,343 @@
+{
+  "generated_at": "2026-05-08T10:40:34.063Z",
+  "total_docs": 1,
+  "total_ms": 27074,
+  "documents": [
+    {
+      "filename": "AGSK-3",
+      "pdf_path": "D:\\ai-institut\\AGSK-3(po_sost.na_13.03.26).pdf",
+      "pdf_size_mb": 33.7,
+      "parsed_at": "2026-05-08T10:40:34.053Z",
+      "parsing": {
+        "parse_ms": 25666,
+        "page_count": 8375,
+        "word_count": 2227168,
+        "section_count": 27079,
+        "empty_pages": 0,
+        "cyrillic_pct": 97.3,
+        "encoding_issues": 0,
+        "ocr_anomaly_pages": 1
+      },
+      "headings": {
+        "total": 27078,
+        "by_level": {
+          "1": 26397,
+          "2": 680,
+          "3": 1
+        },
+        "by_type": {
+          "uppercase": 22769,
+          "keyword_cyrillic": 598,
+          "numbered": 3711
+        },
+        "avg_confidence": 0.604,
+        "sample": [
+          {
+            "text": "ТІЗБЕСІ",
+            "level": 1,
+            "type": "uppercase",
+            "confidence": 0.63,
+            "page": 1
+          },
+          {
+            "text": "ПЕРЕЧЕНЬ",
+            "level": 1,
+            "type": "uppercase",
+            "confidence": 0.63,
+            "page": 1
+          },
+          {
+            "text": "АГСК-3",
+            "level": 1,
+            "type": "uppercase",
+            "confidence": 0.53,
+            "page": 1
+          },
+          {
+            "text": "ТІЗБЕСІ",
+            "level": 1,
+            "type": "uppercase",
+            "confidence": 0.63,
+            "page": 2
+          },
+          {
+            "text": "ПЕРЕЧЕНЬ",
+            "level": 1,
+            "type": "uppercase",
+            "confidence": 0.63,
+            "page": 2
+          },
+          {
+            "text": "АГСК-3",
+            "level": 1,
+            "type": "uppercase",
+            "confidence": 0.53,
+            "page": 2
+          },
+          {
+            "text": "АГСК-3",
+            "level": 1,
+            "type": "uppercase",
+            "confidence": 0.53,
+            "page": 3
+          },
+          {
+            "text": "Отдел 21. Материалы и изделия для общестроительных работ 1",
+            "level": 1,
+            "type": "keyword_cyrillic",
+            "confidence": 0.65,
+            "page": 3
+          },
+          {
+            "text": "Раздел 211. Нерудные строительные материалы и продукция горнодобывающей",
+            "level": 1,
+            "type": "keyword_cyrillic",
+            "confidence": 0.65,
+            "page": 3
+          },
+          {
+            "text": "Подраздел 211-1. Земля, глина, грунт 1",
+            "level": 2,
+            "type": "keyword_cyrillic",
+            "confidence": 0.75,
+            "page": 3
+          },
+          {
+            "text": "Подраздел 211-2. Щебень 1",
+            "level": 2,
+            "type": "keyword_cyrillic",
+            "confidence": 0.75,
+            "page": 3
+          },
+          {
+            "text": "Подраздел 211-3. Гравий 5",
+            "level": 2,
+            "type": "keyword_cyrillic",
+            "confidence": 0.75,
+            "page": 3
+          },
+          {
+            "text": "Подраздел 211-4. Песок 6",
+            "level": 2,
+            "type": "keyword_cyrillic",
+            "confidence": 0.75,
+            "page": 3
+          },
+          {
+            "text": "Подраздел 211-5. Материалы из отсевов дробления 6",
+            "level": 2,
+            "type": "keyword_cyrillic",
+            "confidence": 0.65,
+            "page": 3
+          },
+          {
+            "text": "Подраздел 211-6. Смеси из нерудных материалов 6",
+            "level": 2,
+            "type": "keyword_cyrillic",
+            "confidence": 0.65,
+            "page": 3
+          },
+          {
+            "text": "Подраздел 211-7. Прочие нерудные материалы 7",
+            "level": 2,
+            "type": "keyword_cyrillic",
+            "confidence": 0.65,
+            "page": 3
+          },
+          {
+            "text": "Раздел 212. Бетоны, растворы, готовые к употреблению, смеси асфальтобетонные 7",
+            "level": 1,
+            "type": "keyword_cyrillic",
+            "confidence": 0.65,
+            "page": 3
+          },
+          {
+            "text": "Подраздел 212-1. Бетоны тяжелый и мелкозернистый 7",
+            "level": 2,
+            "type": "keyword_cyrillic",
+            "confidence": 0.65,
+            "page": 3
+          },
+          {
+            "text": "Подраздел 212-2. Бетон легкий 19",
+            "level": 2,
+            "type": "keyword_cyrillic",
+            "confidence": 0.75,
+            "page": 3
+          },
+          {
+            "text": "Подраздел 212-3. Бетон специальный 20",
+            "level": 2,
+            "type": "keyword_cyrillic",
+            "confidence": 0.75,
+            "page": 3
+          }
+        ]
+      },
+      "sections": {
+        "total": 27079,
+        "depth_1": 26398,
+        "depth_2": 680,
+        "depth_3plus": 1,
+        "orphan_count": 23367,
+        "empty_count": 957,
+        "avg_words": 80,
+        "sample_headings": [
+          "[L1] Introduction (p.1)",
+          "[L1] ТІЗБЕСІ (p.1)",
+          "[L1] ПЕРЕЧЕНЬ (p.1)",
+          "[L1] АГСК-3 (p.1)",
+          "[L1] ТІЗБЕСІ (p.2)",
+          "[L1] ПЕРЕЧЕНЬ (p.2)",
+          "[L1] АГСК-3 (p.2)",
+          "[L1] АГСК-3 (p.3)",
+          "[L1] Отдел 21. Материалы и изделия для общестроительных работ 1 (p.3)",
+          "[L1] Раздел 211. Нерудные строительные материалы и продукция горнодобывающей (p.3)",
+          "[L2] Подраздел 211-1. Земля, глина, грунт 1 (p.3)",
+          "[L2] Подраздел 211-2. Щебень 1 (p.3)",
+          "[L2] Подраздел 211-3. Гравий 5 (p.3)",
+          "[L2] Подраздел 211-4. Песок 6 (p.3)",
+          "[L2] Подраздел 211-5. Материалы из отсевов дробления 6 (p.3)",
+          "[L2] Подраздел 211-6. Смеси из нерудных материалов 6 (p.3)",
+          "[L2] Подраздел 211-7. Прочие нерудные материалы 7 (p.3)",
+          "[L1] Раздел 212. Бетоны, растворы, готовые к употреблению, смеси асфальтобетонные 7 (p.3)",
+          "[L2] Подраздел 212-1. Бетоны тяжелый и мелкозернистый 7 (p.3)",
+          "[L2] Подраздел 212-2. Бетон легкий 19 (p.3)"
+        ]
+      },
+      "metadata": {
+        "standard_code": "AGSK 3",
+        "title": "Сәулет, қала құрылысы және құрылыс каталогы",
+        "organization": null,
+        "discipline": null,
+        "year": 2026,
+        "version": null,
+        "keywords": [],
+        "completeness": 1
+      },
+      "chunks": {
+        "total": 26203,
+        "chunk_ms": 418,
+        "avg_tokens": 110.7,
+        "median_tokens": 31,
+        "min_tokens": 2,
+        "max_tokens": 595,
+        "oversized_count": 0,
+        "oversized_pct": 0,
+        "tiny_count": 12692,
+        "duplicate_count": 232,
+        "distribution": {
+          "0-99": 17596,
+          "100-299": 4860,
+          "300-499": 3492,
+          "500-600": 255,
+          "601+": 0
+        }
+      },
+      "citations": {
+        "section_fill_rate": 0.134,
+        "page_fill_rate": 1,
+        "orphan_chunks": 22689,
+        "unique_sections": 534,
+        "unique_pages": 8375,
+        "avg_confidence": 1,
+        "sample": [
+          {
+            "chunk_idx": 0,
+            "document": "AGSK 3 2026",
+            "section": "",
+            "page": 1,
+            "version": "2026",
+            "confidence": 1
+          },
+          {
+            "chunk_idx": 1,
+            "document": "AGSK 3 2026",
+            "section": "",
+            "page": 1,
+            "version": "2026",
+            "confidence": 1
+          },
+          {
+            "chunk_idx": 2,
+            "document": "AGSK 3 2026",
+            "section": "",
+            "page": 1,
+            "version": "2026",
+            "confidence": 1
+          },
+          {
+            "chunk_idx": 3,
+            "document": "AGSK 3 2026",
+            "section": "",
+            "page": 1,
+            "version": "2026",
+            "confidence": 1
+          },
+          {
+            "chunk_idx": 4,
+            "document": "AGSK 3 2026",
+            "section": "",
+            "page": 2,
+            "version": "2026",
+            "confidence": 1
+          },
+          {
+            "chunk_idx": 5,
+            "document": "AGSK 3 2026",
+            "section": "",
+            "page": 2,
+            "version": "2026",
+            "confidence": 1
+          },
+          {
+            "chunk_idx": 6,
+            "document": "AGSK 3 2026",
+            "section": "",
+            "page": 3,
+            "version": "2026",
+            "confidence": 1
+          },
+          {
+            "chunk_idx": 7,
+            "document": "AGSK 3 2026",
+            "section": "",
+            "page": 3,
+            "version": "2026",
+            "confidence": 1
+          },
+          {
+            "chunk_idx": 8,
+            "document": "AGSK 3 2026",
+            "section": "",
+            "page": 3,
+            "version": "2026",
+            "confidence": 1
+          },
+          {
+            "chunk_idx": 9,
+            "document": "AGSK 3 2026",
+            "section": "",
+            "page": 4,
+            "version": "2026",
+            "confidence": 1
+          }
+        ]
+      },
+      "vs_week2": {
+        "section_detection_improvement": "0 → 27079 sections (+27079)",
+        "citation_fill_improvement": "0% → 13.4%",
+        "oversized_chunk_improvement": "13.6% → 0.0%",
+        "metadata_completeness_change": "1/4 → 1/4"
+      },
+      "diagnostics_summary": [
+        "✅ PASS: 27079 sections detected",
+        "🔴 BLOCKER: Citation section fill rate 13.4% — below 30% threshold",
+        "✅ PASS: Oversized chunks 0.0%",
+        "⚠️  WARN: Metadata completeness 1/4 — low",
+        "✅ PASS: No encoding issues",
+        "⚠️  WARN: 232 duplicate chunks detected"
+      ]
+    }
+  ]
+}
