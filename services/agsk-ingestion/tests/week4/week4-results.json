@@ -1,0 +1,959 @@
+{
+  "generated_at": "2026-05-08T10:43:52.018Z",
+  "total_ms": 32989,
+  "docs": [
+    {
+      "filename": "AGSK-3",
+      "size_mb": 33.7,
+      "pages": 8375,
+      "words": 2227168,
+      "sections": 27079,
+      "headings": 27078,
+      "heading_confidence": 0.604,
+      "heading_types": {
+        "uppercase": 22769,
+        "keyword_cyrillic": 598,
+        "numbered": 3711
+      },
+      "chunks": 26203,
+      "avg_tokens": 110.7,
+      "oversized_pct": 0,
+      "section_fill_rate": 0.134,
+      "page_fill_rate": 1,
+      "orphan_chunks": 22689,
+      "metadata_score": 1,
+      "org": null,
+      "discipline": null,
+      "year": 2026,
+      "encoding_issues": 0,
+      "parse_ms": 25845,
+      "chunk_ms": 453,
+      "diag": [
+        "✅ PASS: 27079 sections detected",
+        "🔴 BLOCKER: citation fill 13.4% (<30%)",
+        "✅ PASS: oversized 0.0%",
+        "⚠️ WARN: metadata 1/4",
+        "✅ PASS: no encoding issues"
+      ],
+      "sample_headings": [
+        "[L1] Introduction",
+        "[L1] ТІЗБЕСІ",
+        "[L1] ПЕРЕЧЕНЬ",
+        "[L1] АГСК-3",
+        "[L1] ТІЗБЕСІ",
+        "[L1] ПЕРЕЧЕНЬ",
+        "[L1] АГСК-3",
+        "[L1] АГСК-3",
+        "[L1] Отдел 21. Материалы и изделия для общестроительных работ 1",
+        "[L1] Раздел 211. Нерудные строительные материалы и продукция горнодобывающей"
+      ],
+      "section_by_level": {
+        "1": 26398,
+        "2": 680,
+        "3": 1
+      },
+      "token_distribution": {
+        "0-99": 17596,
+        "100-299": 4860,
+        "300-499": 3492,
+        "500-600": 255,
+        "601+": 0
+      }
+    }
+  ],
+  "benchResults": [
+    {
+      "query_id": "Q001",
+      "difficulty": "simple",
+      "discipline": "pipeline",
+      "recall_hit": true,
+      "precision": 0.8,
+      "latency_ms": 107.77,
+      "fp_risk": "cyrillic_latin_overlap",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q002",
+      "difficulty": "simple",
+      "discipline": "structural",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 75.61,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q003",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 68.09,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q004",
+      "difficulty": "medium",
+      "discipline": "welding",
+      "recall_hit": true,
+      "precision": 0.2,
+      "latency_ms": 75.33,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q005",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "recall_hit": true,
+      "precision": 1,
+      "latency_ms": 69.09,
+      "fp_risk": "cyrillic_latin_overlap",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q006",
+      "difficulty": "medium",
+      "discipline": "safety",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 73.68,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q007",
+      "difficulty": "medium",
+      "discipline": "safety",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 53.79,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q008",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "recall_hit": true,
+      "precision": 0.2,
+      "latency_ms": 68.58,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q009",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "recall_hit": true,
+      "precision": 1,
+      "latency_ms": 73.79,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q010",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 59.89,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q011",
+      "difficulty": "simple",
+      "discipline": "structural",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 79.15,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q012",
+      "difficulty": "medium",
+      "discipline": "structural",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 74.94,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q013",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 58.29,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q014",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 72.13,
+      "fp_risk": "cyrillic_latin_overlap",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q015",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 90.08,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q016",
+      "difficulty": "medium",
+      "discipline": "welding",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 67.91,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q017",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 61.32,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q018",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 66.32,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q019",
+      "difficulty": "complex",
+      "discipline": "structural",
+      "recall_hit": true,
+      "precision": 0.8,
+      "latency_ms": 73.14,
+      "fp_risk": "version_year_confusion",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q020",
+      "difficulty": "complex",
+      "discipline": "pipeline",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 67.92,
+      "fp_risk": "cyrillic_latin_overlap",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q021",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 63.72,
+      "fp_risk": "cyrillic_latin_overlap",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q022",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "recall_hit": true,
+      "precision": 0.6,
+      "latency_ms": 60.28,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q023",
+      "difficulty": "simple",
+      "discipline": "pipeline",
+      "recall_hit": true,
+      "precision": 0.8,
+      "latency_ms": 65.48,
+      "fp_risk": "cyrillic_latin_overlap",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q024",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 53.39,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q025",
+      "difficulty": "simple",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 66.88,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q026",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 64.59,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q027",
+      "difficulty": "simple",
+      "discipline": "pipeline",
+      "recall_hit": true,
+      "precision": 0.8,
+      "latency_ms": 64.33,
+      "fp_risk": "cyrillic_latin_overlap",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q028",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 77.68,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q029",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 52.87,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q030",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 63.94,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q031",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 55.63,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q032",
+      "difficulty": "simple",
+      "discipline": "pipeline",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 69.21,
+      "fp_risk": "cyrillic_latin_overlap",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q033",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 63.11,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q034",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 56.58,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q035",
+      "difficulty": "complex",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 70.89,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q036",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "recall_hit": true,
+      "precision": 0.2,
+      "latency_ms": 59.27,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q037",
+      "difficulty": "complex",
+      "discipline": "pipeline",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 71.59,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q038",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 69.94,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q039",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 61.94,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q040",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 67.44,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q041",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "recall_hit": true,
+      "precision": 1,
+      "latency_ms": 59.49,
+      "fp_risk": "cyrillic_latin_overlap",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q042",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 53.53,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q043",
+      "difficulty": "complex",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 65.92,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q044",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 65.8,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q045",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 70.8,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q046",
+      "difficulty": "simple",
+      "discipline": "welding",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 56.04,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q047",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": true,
+      "precision": 0.2,
+      "latency_ms": 63.04,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q048",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 62.16,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q049",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 63.29,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q050",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 66.86,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q051",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 61.57,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q052",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 71.56,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q053",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 63.31,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q054",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 66.09,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q055",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 63.7,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q056",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 56.36,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q057",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "recall_hit": true,
+      "precision": 0.2,
+      "latency_ms": 71.25,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q058",
+      "difficulty": "medium",
+      "discipline": "welding",
+      "recall_hit": true,
+      "precision": 0.2,
+      "latency_ms": 70.89,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q059",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 73.72,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q060",
+      "difficulty": "complex",
+      "discipline": "pipeline",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 59.9,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q061",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 58.72,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q062",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 68.36,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q063",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "recall_hit": true,
+      "precision": 1,
+      "latency_ms": 63.84,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q064",
+      "difficulty": "simple",
+      "discipline": "safety",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 69.35,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q065",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "recall_hit": true,
+      "precision": 0.5,
+      "latency_ms": 52.48,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q066",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 59.68,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q067",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "recall_hit": true,
+      "precision": 0.2,
+      "latency_ms": 59.98,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q068",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "recall_hit": true,
+      "precision": 1,
+      "latency_ms": 69.93,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q069",
+      "difficulty": "medium",
+      "discipline": "structural",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 66.07,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q070",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 62,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q071",
+      "difficulty": "complex",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 72.78,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q072",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 70.82,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q073",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 58.78,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q074",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 55.47,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q075",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 66.99,
+      "fp_risk": "cyrillic_latin_overlap",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q076",
+      "difficulty": "complex",
+      "discipline": "safety",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 60.54,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q077",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": true,
+      "precision": 0.2,
+      "latency_ms": 65.35,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q078",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 70.38,
+      "fp_risk": null,
+      "domain_match": false
+    },
+    {
+      "query_id": "Q079",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "recall_hit": true,
+      "precision": 0.2,
+      "latency_ms": 74.79,
+      "fp_risk": "api_acronym_collision",
+      "domain_match": false
+    },
+    {
+      "query_id": "Q080",
+      "difficulty": "complex",
+      "discipline": "inspection",
+      "recall_hit": false,
+      "precision": 0,
+      "latency_ms": 66.32,
+      "fp_risk": null,
+      "domain_match": false
+    }
+  ],
+  "recall5": 0.25,
+  "precision5": 0.1387,
+  "fpCases": 12,
+  "domainMismatch": 80,
+  "corpusStandards": [
+    "AGSK 3"
+  ],
+  "evalStandards": [
+    "ACI 318",
+    "AISC 360",
+    "API 1104",
+    "API 2000",
+    "API 513",
+    "API 520",
+    "API 570",
+    "API 579",
+    "API 580",
+    "API 5L",
+    "API 6D",
+    "ASCE 7",
+    "ASME B16.5",
+    "ASME B31.1",
+    "ASME B31.3",
+    "ASME B31.4",
+    "ASME B31.8",
+    "ASME B31.8S",
+    "ASME B36.10M",
+    "ASME PESC-1",
+    "ASME Section",
+    "ASTM A106",
+    "ASTM A370",
+    "ASTM A53",
+    "AWS D1.1",
+    "BS 7910",
+    "DNV GL-CP-0214",
+    "GOST 27751-2014",
+    "GOST 27751-2020",
+    "ISO 1219-1",
+    "International Fire",
+    "NACE MR0175",
+    "NACE RP0169",
+    "NACE SP0208",
+    "NACE SP0294",
+    "NIST SP",
+    "OSHA 1910.146"
+  ],
+  "perfMetrics": {
+    "ingestion": {
+      "parse_p50_ms": 25845,
+      "parse_p95_ms": 25845,
+      "chunk_p50_ms": 453,
+      "chunk_p95_ms": 453,
+      "pages_per_sec": 324,
+      "chunks_per_sec": 57843.3
+    },
+    "retrieval": {
+      "bm25_p50_ms": 66.07,
+      "bm25_p95_ms": 77.68,
+      "bm25_avg_ms": 66.17,
+      "note": "Vector search latency requires live Supabase/pgvector (not measurable offline)",
+      "target_total_ms": "<500"
+    }
+  },
+  "readiness": {
+    "verdict": "NO-GO",
+    "score": 30,
+    "blockers": [
+      {
+        "severity": "BLOCKER",
+        "area": "citation",
+        "description": "AGSK-3: section fill rate 13.4% < 30%",
+        "remediation": "Increase heading detection threshold or add more Cyrillic patterns"
+      },
+      {
+        "severity": "WARN",
+        "area": "metadata",
+        "description": "AGSK-3: metadata completeness 1/4",
+        "remediation": "Add document-specific metadata patterns"
+      },
+      {
+        "severity": "BLOCKER",
+        "area": "retrieval",
+        "description": "Recall@5 = 25.0% — critical threshold not met",
+        "remediation": "Ingest actual standards PDFs (API, ASME, GOST). Current corpus is a catalog, not the target standards."
+      },
+      {
+        "severity": "BLOCKER",
+        "area": "corpus",
+        "description": "100% of eval queries target standards not in corpus",
+        "remediation": "AGSK-3 is a materials catalog. Need individual standards: API 5L, ASME B31.x, GOST standards etc."
+      }
+    ]
+  }
+}
