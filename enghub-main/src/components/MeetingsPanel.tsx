@@ -98,7 +98,10 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
       const apiUrl = `${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/transcribe`;
       const res = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ audio_base64: base64, media_type: file.type || 'audio/mpeg', filename: file.name }),
       });
       const data = await res.json();

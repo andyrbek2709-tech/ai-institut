@@ -2773,6 +2773,8 @@ export default function App() {
                   drawings={drawings}
                   onCreate={createProjectDrawing}
                   onUpdate={updateProjectDrawing}
+                  token={token || ''}
+                  userRole={role}
                 />
               )}
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { get, post, patch } from '../api/supabase';
+import { getSupabaseAnonClient } from '../api/supabaseClient';
 import { validateApplyAction } from '../copilot/validateApplyAction';
 import type { Action } from '../copilot/validateApplyAction';
 
@@ -111,10 +112,16 @@ export function CopilotPanel({
 
     // Real Orchestrator Backend API call
     try {
+      const sb = getSupabaseAnonClient();
+      const { data } = await sb.auth.getSession();
+      const token = data?.session?.access_token || '';
       const apiUrl = `${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/orchestrator`;
       const res = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           user_id: userId,
           project_id: projectId,
