@@ -33,11 +33,38 @@ export class AuthError extends Error {
   constructor() { super('Unauthorized'); this.name = 'AuthError'; }
 }
 
+const RLS_TABLE_LABELS: Record<string, string> = {
+  projects: 'проектов',
+  tasks: 'задач',
+  drawings: 'чертежей',
+  reviews: 'замечаний',
+  transmittals: 'трансмитталов',
+  messages: 'сообщений',
+  meetings: 'протоколов',
+  project_documents: 'документов проекта',
+  task_attachments: 'вложений задачи',
+  notifications: 'уведомлений',
+  departments: 'отделов',
+  app_users: 'пользователей',
+};
+
+const humanizeRlsError = (msg: string): string => {
+  const match = msg.match(/row-level security policy for table "?(\w+)"?/);
+  if (!match) return msg;
+  const table = match[1];
+  const label = RLS_TABLE_LABELS[table] || table;
+  return `У вас недостаточно прав для этой операции с ${label}. Проверьте вашу роль в системе.`;
+};
+
 const guardError = async (r: Response): Promise<Response> => {
   if (r.status === 401) throw new AuthError();
   if (!r.ok) {
     const body = await r.json().catch(() => ({}));
-    throw new Error(body.message || body.error || `HTTP ${r.status}: ${r.statusText}`);
+    const raw = body.message || body.error || body.details || `HTTP ${r.status}: ${r.statusText}`;
+    const msg = typeof raw === 'string' && raw.includes('row-level security')
+      ? humanizeRlsError(raw)
+      : raw;
+    throw new Error(msg);
   }
   return r;
 };

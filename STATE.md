@@ -4,6 +4,42 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-08 23:30 — CRITICAL RLS GOVERNANCE FIX ✅
+
+**Статус:** ✅ **GIP WORKFLOW UNBLOCKED** — Полная нормализация RLS/RBAC governance модели.
+
+**Root cause устранён:**
+- Production Supabase имел ТОЛЬКО SELECT-политики на всех операционных таблицах
+- Миграции `011_fix_rls_core_tables` и `015_role_aware_rls` никогда не применялись к prod
+- GIP получал "new row violates row-level security policy for table 'projects'" при создании проекта
+
+**Исправлено (миграция 020_rls_governance_fix, применена через Supabase MCP):**
+- ✅ `projects`: INSERT (gip/admin), UPDATE (gip-owner/admin), DELETE (admin)
+- ✅ `tasks`: INSERT (gip/admin/lead), UPDATE (gip/admin/lead-dept/engineer-assigned), DELETE (gip/admin)
+- ✅ `drawings`: INSERT/UPDATE (все роли), DELETE (gip/admin/lead)
+- ✅ `reviews`, `review_comments`: полный CRUD по ролям
+- ✅ `transmittals`, `transmittal_items`: INSERT/UPDATE (gip/admin/lead)
+- ✅ `notifications`: INSERT (all auth), UPDATE/DELETE (свои + admin/gip)
+- ✅ `app_users`: admin_write ALL + self_update (свой профиль, без смены роли)
+- ✅ `departments`: admin-only write
+- ✅ `messages`, `meetings`, `project_documents`, `task_attachments`, `ai_actions`
+- ✅ `video_meetings`, `specifications`, `spec_items`, `raci`
+- ✅ UX: `humanizeRlsError()` в `api/supabase.ts` — понятные сообщения вместо технических
+
+**Документация создана:**
+- ✅ `RLS_GOVERNANCE_MODEL.md` — эталонная RBAC/RLS модель (матрица ролей, ownership, JWT flow)
+- ✅ `FINAL_RLS_OPERATIONAL_RECOVERY_REPORT.md` — полный отчёт root cause + фикс
+
+**RBAC модель (краткая):**
+```
+admin → всё
+gip   → create/update (own) projects; все задачи/чертежи/замечания
+lead  → задачи/чертежи своего отдела; протоколы
+engineer → обновить назначенные задачи; загружать файлы; комментарии
+```
+
+---
+
 ### 2026-05-08 22:00 — AUTH ARCHITECTURE NORMALIZATION FINAL ✅
 
 **Статус:** ✅ **SINGLE AUTH SYSTEM** — Supabase JS Client = единственный источник правды. Stale token path полностью устранён.
