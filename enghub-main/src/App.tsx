@@ -11,6 +11,7 @@ import { AdminPanel } from './pages/AdminPanel';
 import { useNotifications, ToastContainer } from './components/Notifications';
 import { CalculationView } from './calculations/CalculationView';
 import { calcRegistry } from './calculations/registry';
+import { CalculationsApp } from './calculations-platform/CalculationsApp';
 
 // #05 design diff: animated KPI numbers via useCountUp
 const StatNumber: React.FC<{ value: number; color: string }> = ({ value, color }) => {
@@ -3015,83 +3016,7 @@ export default function App() {
 
           {/* ===== CALCULATIONS ===== */}
           {screen === "calculations" && (
-            <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
-              {/* LEFT SIDEBAR: Accordion Tree */}
-              <div style={{ width: 300, minWidth: 300, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", background: C.surface, overflowY: "auto" }}>
-                <div style={{ padding: "16px 16px 12px", borderBottom: `1px solid ${C.border}` }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 10 }}>Каталог расчётов <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 400 }}>({calcTemplates.length})</span></div>
-                  <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: C.textMuted, pointerEvents: "none" }}>🔍</span>
-                    <input
-                      placeholder="Найти расчёт..."
-                      value={calcSearch}
-                      onChange={e => setCalcSearch(e.target.value)}
-                      style={{ width: "100%", padding: "8px 28px 8px 30px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface2, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }}
-                    />
-                    {calcSearch && <button onClick={() => setCalcSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 13 }}>✕</button>}
-                  </div>
-                </div>
-                <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
-                  {calcSearch.trim() ? (
-                    // Плоский список при поиске
-                    (() => {
-                      const q = calcSearch.toLowerCase();
-                      const filtered = calcTemplates.filter(t => t.name.toLowerCase().includes(q) || t.cat.toLowerCase().includes(q) || (t.desc || "").toLowerCase().includes(q));
-                      return filtered.length > 0 ? filtered.map(t => (
-                        <button key={t.id} onClick={() => { setActiveCalc(t.id); setCalcSearch(""); }}
-                          style={{ width: "100%", textAlign: "left", padding: "8px 12px", fontSize: 13, color: activeCalc === t.id ? C.accent : C.textDim, background: activeCalc === t.id ? C.accent + "15" : "transparent", border: "none", borderRadius: 6, cursor: "pointer", display: "flex", flexDirection: "column", gap: 3 }}>
-                          <span style={{ fontWeight: 500 }}>{t.name}</span>
-                          <span style={{ fontSize: 10, color: C.textMuted, background: C.surface2, padding: "1px 6px", borderRadius: 4, width: "fit-content" }}>{calcCatLabels[t.cat] || t.cat}</span>
-                        </button>
-                      )) : <div style={{ fontSize: 13, color: C.textMuted, padding: "24px 12px", textAlign: "center" }}>Ничего не найдено</div>;
-                    })()
-                  ) : (
-                    // Аккордеон по категориям
-                    calcAllCats.map(cat => {
-                      const catCalcs = calcTemplates.filter(t => t.cat === cat);
-                      const isExpanded = calcFilter === cat;
-                      return (
-                        <div key={cat} style={{ background: isExpanded ? C.surface2 : "transparent", borderRadius: 8, overflow: "hidden" }}>
-                          <button
-                            style={{ width: "100%", textAlign: "left", padding: "9px 12px", fontSize: 13, fontWeight: 600, color: catCalcs.length > 0 ? C.text : C.textMuted, border: "none", background: "transparent", cursor: catCalcs.length > 0 ? "pointer" : "default", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                            onClick={() => catCalcs.length > 0 && setCalcFilter(isExpanded ? "" : cat)}
-                          >
-                            <span>{calcCatLabels[cat] || cat}</span>
-                            <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
-                              {catCalcs.length > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: isExpanded ? C.accent : C.textMuted, background: isExpanded ? C.accent + "20" : C.surface2, padding: "1px 7px", borderRadius: 8 }}>{catCalcs.length}</span>}
-                              <span style={{ fontSize: 9, color: C.textMuted }}>{catCalcs.length > 0 ? (isExpanded ? "▼" : "▶") : "—"}</span>
-                            </div>
-                          </button>
-                          {isExpanded && (
-                            <div style={{ padding: "2px 6px 6px 6px", display: "flex", flexDirection: "column", gap: 1 }}>
-                              {catCalcs.map(t => (
-                                <button key={t.id} onClick={() => setActiveCalc(t.id)}
-                                  style={{ width: "100%", textAlign: "left", padding: "7px 12px", fontSize: 12, color: activeCalc === t.id ? C.accent : C.textDim, background: activeCalc === t.id ? C.accent + "15" : "transparent", border: "none", borderRadius: 6, cursor: "pointer" }}>
-                                  {t.name}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-              
-              {/* RIGHT MAIN VIEW */}
-              <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-                {activeCalc ? (
-                  <CalculationView calcId={activeCalc} C={C} />
-                ) : (
-                  <div style={{ padding: 40, color: C.textDim, textAlign: "center", display: "flex", flexDirection: "column", gap: 12, justifyContent: "center", height: "100%", alignItems: "center" }}>
-                    <div style={{ fontSize: 48, opacity: 0.5 }}>⎍</div>
-                    <div style={{ fontSize: 16, fontWeight: 500 }}>Выберите расчет из каталога слева</div>
-                    <div style={{ fontSize: 13, maxWidth: 300, color: C.textMuted }}>Система автоматически подгрузит формулы, нормативную базу и конвертер для выбранной дисциплины.</div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <CalculationsApp onClose={() => setScreen('dashboard')} />
           )}
 
           {/* ===== SPECIFICATIONS ===== */}
