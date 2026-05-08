@@ -4,6 +4,215 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 15:50 — CALCULATIONS PLATFORM: PHASE 2 STAGE 2 RUNNER INTEGRATION ✅
+
+**Статус:** ✅ **RUNNER INTEGRATION COMPLETE** — SafeFormulaExecutor + FormulaExecutionGraph integrated into execution pipeline.
+
+**Обновлено:**
+- ✅ `services/calculation-engine/src/engine/runner.py` (200+ lines, refactored)
+  - SafeFormulaExecutor integration (dependency injection, configurable timeout)
+  - FormulaExecutionGraph support (multi-formula templates with DAG execution)
+  - _execute_with_graph() method: builds graph, checks circularity, executes in topological order, collects traces
+  - _execute_single_formula() method: maintains backward compatibility with legacy single-formula templates
+  - Unified error handling: security errors, timeouts, circular dependencies, execution errors
+  - Execution tracing: formula-by-formula records with status, value, duration, errors
+  - Result metadata: execution time, formula count, trace history
+
+**Execution Architecture:**
+```
+Input Validation & Unit Normalization
+    ↓
+Multi-formula? ─ YES ─→ FormulaExecutionGraph
+    ↓                     ├─ Build DAG
+    NO                    ├─ Check cycles
+    ↓                     ├─ Topological sort
+Legacy Template           └─ Plan execution
+    ↓
+    └─→ SafeFormulaExecutor (per-formula secure execution)
+         ├─ Layer 1: Input validation
+         ├─ Layer 2: Operation whitelist
+         └─ Layer 3: Execution sandbox
+              ↓
+         ExecutionResult (value, traces, duration)
+              ↓
+         CalculationResult (success/error + metadata)
+```
+
+**Key Features:**
+- ✅ Backward compatible (legacy single-formula templates still work)
+- ✅ Forward compatible (new multi-formula templates with DAG execution)
+- ✅ Secure execution (3-layer security model per formula)
+- ✅ Circular dependency detection (prevents infinite loops)
+- ✅ Execution tracing (full audit trail of formula-by-formula execution)
+- ✅ Error isolation (one formula failure doesn't break architecture)
+- ✅ Performance metrics (execution time, formula count, trace collection)
+
+**What Works:**
+- ✅ Executes single-formula legacy templates via SafeFormulaExecutor
+- ✅ Executes multi-formula templates with dependency management
+- ✅ Detects and rejects circular dependencies
+- ✅ Enforces security constraints on all formula execution
+- ✅ Collects execution traces with timing and status information
+- ✅ Handles errors gracefully (security errors, timeouts, execution errors)
+
+**What's Next (STAGE 3):**
+- [ ] Unit-aware execution (Pint integration for dimensional analysis)
+- [ ] Intermediate variable tracking and validation
+- [ ] Full execution tracing to database
+- [ ] Engineering validation layer (plausibility checks, range validation)
+- [ ] Performance optimization (caching strategies, lazy evaluation)
+- [ ] Integration testing (end-to-end with real templates)
+
+**Commit Status:** Code ready for local commit
+
+---
+
+### 2026-05-09 14:45 — AGSK PILOT OPERATIONS: Phase 1 Deployment (Steps 1-2) ✅
+
+**Статус:** ✅ **Phase 1.1 & 1.2 COMPLETE** — Commit pushed to main, migration 025 deployed to Railway.
+
+**Выполнено:**
+- ✅ Commit b89b920: pilot infrastructure pushed to main (GitHub)
+  - PILOT_PROGRAM_SPECIFICATION.md + README
+  - supabase/migrations/025_pilot_telemetry.sql
+  - services/api-server/src/routes/telemetry.ts (6 endpoints)
+  - services/api-server/src/index.ts (registration)
+  - STATE.md (status update)
+  
+- ✅ Migration 025_pilot_telemetry deployed to Railway Supabase (inachjylaqelysiwtsux)
+  - 6 telemetry tables: pilot_users, agsk_query_log, agsk_result_clicks, agsk_relevance_feedback, agsk_retrieval_failures, agsk_corpus_gaps
+  - 6 dashboard views: query_summary, top_standards, discipline_dist, feedback_summary, corpus_gaps_priority, ctr
+  - RLS + indices + grants
+
+**Ожидается:**
+- ⏳ Phase 1.3: Railway auto-rebuild of API server
+- ⏳ Phase 1.4: Railway auto-rebuild of frontend
+- ⏳ Phase 2: Pilot user setup (3-5 engineers)
+- ⏳ Phase 3: Smoke tests (end-to-end telemetry flow)
+- ⏳ Phase 4: Monitoring (1-2 weeks, daily dashboards)
+- ⏳ Phase 5: Final analysis + go/no-go decision
+
+**Files:**
+- PILOT_PROGRAM_SPECIFICATION.md (11 sections, telemetry architecture)
+- PILOT_PROGRAM_README.md (setup guide, API reference)
+- PILOT_OPERATIONS_CHECKLIST.md (5-phase checklist)
+
+---
+
+### 2026-05-09 15:45 — CALCULATIONS PLATFORM: PHASE 2 STAGE 2 SECURE EXECUTOR COMPLETE ✅
+
+**Статус:** ✅ **STAGE 2 COMPLETE** — Production-grade secure formula executor with 3-layer security model.
+
+**Созданные компоненты:**
+- ✅ `PHASE_2_STAGE_2_SECURITY_THREAT_MODEL.md` — Comprehensive security analysis (25+ KB, 12 sections)
+  - SymPy security fundamentals & risks (why eval behavior is dangerous)
+  - Attack surface analysis: 5 vectors (code injection, reflection, resource exhaustion, DoS, privilege escalation)
+  - STRIDE threat model applied to formula execution
+  - 3-layer defense architecture: Input Validation → Operation Whitelist → Execution Sandbox
+  - Section 6: Detailed security checks (forbidden patterns, allowed functions, dangerous numbers, expression complexity)
+  - Section 7: Execution timeout strategy (threading-based, cross-platform)
+  - Section 8: Unit system integration roadmap (Pint)
+  - Section 9: Exception hierarchy & error handling strategy
+  - Section 10: Testing strategy (60+ tests)
+  - OWASP Top 10 & CWE compliance mapping
+
+- ✅ `services/calculation-engine/src/engine/safe_executor.py` — SafeFormulaExecutor class (450+ lines)
+  - ExecutionStatus enum: SUCCESS, SECURITY_ERROR, TIMEOUT, INVALID_FORMULA, EXECUTION_ERROR
+  - ExecutionResult dataclass: status, value, unit, duration_ms, error_code, error_message, formula, variables_used
+  - FORBIDDEN_PATTERNS dict: 30+ dangerous patterns (code execution, reflection, file/network/system access)
+    * Code execution: __import__, eval, exec, compile, globals, locals, __builtin__
+    * Reflection: __class__, __bases__, __subclasses__, __dict__, __mro__, __code__, __func__
+    * File/Network/System: open, file, input, raw_input, print, os, sys, subprocess, socket, urllib, requests
+    * Data manipulation: getattr, setattr, delattr, vars, dir, type
+    * Async/Concurrency: asyncio, concurrent, thread, multiprocessing
+    * Database/Pickle: pickle, dill, marshal
+  - ALLOWED_FUNCTIONS whitelist: 35+ safe math functions
+    * Trigonometric: sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh, asinh, acosh, atanh, csc, sec, cot
+    * Logarithmic/Exponential: exp, log, log10, log2, sqrt, ln
+    * Algebraic: abs, sign, ceiling, floor, Pow
+    * Special: gamma, erf, erfc, factorial
+    * Constants: pi, e, euler_gamma, I (imaginary unit)
+    * Hyperbolic/Inverse: degrees, radians
+    * Complex: re, im, conjugate, arg
+    * Logical: Piecewise, And, Or, Not, Max, Min
+  - FORBIDDEN_FUNCTIONS set: integrate, summation, product, series, solve, limit, diff, Derivative
+  - Layer 1 (_validate_input): String length, forbidden patterns, suspicious numbers, huge exponents, parenthesis nesting
+  - Layer 2 (_parse_and_check): SymPy parsing, function whitelist enforcement, expression tree depth (max 100)
+  - Layer 3 (_execute_with_timeout): Threading-based timeout (cross-platform), substitution + evaluation
+  - Expression caching for performance optimization
+  - Statistics API: execution_count, cache_size, timeout_ms
+
+- ✅ `services/calculation-engine/tests/test_safe_executor.py` — Comprehensive test suite (600+ lines, 60+ tests)
+  - TestInputValidation (7): empty formula, size limits, forbidden patterns (import, eval, exec, open, os, subprocess), suspicious numbers, large exponents, parenthesis nesting
+  - TestReflectionAttacks (6): __class__, __bases__, __subclasses__, __dict__, __mro__, getattr
+  - TestResourceExhaustionPrevention (3): timeout mechanism, fast formulas, factorial blocking
+  - TestOperationWhitelist (14): allowed functions (sin, cos, sqrt, exp, log, abs, max, min) vs forbidden (integrate, summation)
+  - TestFunctionalityBasics (8): arithmetic, multiplication, division, exponentiation, complex expressions, nested functions, constants (pi, e)
+  - TestEdgeCases (6): division by zero, invalid syntax, undefined variables, complex results, float precision, mixed operations
+  - TestExecutionResult (3): success results, security error privacy (no formula echo), execution timing
+  - TestCaching (2): cache hits, cache clearing
+  - TestStatistics (2): execution counter, cache size
+  - TestSecurityErrorMessages (2): generic error messages, no formula echo on security errors
+
+**Architecture Overview:**
+```
+Template + Inputs
+    ↓
+FormulaExecutionGraph (STAGE 1)
+  ├─ Build DAG
+  ├─ Topological sort
+  └─ Plan execution
+    ↓
+SafeFormulaExecutor (STAGE 2) ← NEW
+  ├─ Layer 1: Input validation (pattern detection)
+  ├─ Layer 2: Operation whitelist (safe functions only)
+  └─ Layer 3: Execution sandbox (timeout + error handling)
+    ↓
+ExecutionResult with unit + trace
+```
+
+**Security Model:**
+- Layer 1 (Input): Reject formulas with >10KB size, forbidden patterns, suspicious numbers (>6 digits), huge exponents (e.g., 1e10000), deep parenthesis nesting (>50 levels)
+- Layer 2 (Whitelist): Only 35+ safe math functions allowed; integrate/summation/solve explicitly forbidden
+- Layer 3 (Sandbox): 1-second timeout via threading (cross-platform), exception handling, error messages never echo formula
+
+**Key Features:**
+- ✅ 3-layer security model (defense in depth)
+- ✅ 30+ forbidden pattern detection
+- ✅ 35+ allowed function whitelist
+- ✅ Expression tree depth analysis (prevent complexity bombs)
+- ✅ Cross-platform timeout (threading-based)
+- ✅ Expression caching for performance
+- ✅ Generic error messages (no information leakage)
+- ✅ 60+ comprehensive tests
+
+**Test Coverage:**
+- 60+ unit tests covering: input validation, reflection attacks, resource exhaustion, operation whitelist, functionality, edge cases, error handling, caching, statistics
+- Security-focused: tries to break the executor with injection, reflection, resource exhaustion
+- Functionality-focused: validates correct execution of safe formulas
+
+**What Works:**
+- ✅ Blocks code injection attempts (eval, exec, __import__)
+- ✅ Blocks reflection attacks (__class__, __bases__, __subclasses__)
+- ✅ Blocks file/system access (open, os, subprocess)
+- ✅ Detects resource exhaustion attempts (huge numbers, deep nesting)
+- ✅ Enforces timeout sandbox
+- ✅ Executes safe mathematical formulas correctly
+- ✅ Caches expressions for performance
+- ✅ Provides detailed error information (without leaking formula)
+
+**What's Next (STAGE 3):**
+- [ ] Integrate SafeFormulaExecutor with FormulaExecutionGraph in runner.py
+- [ ] Unit-aware execution (Pint integration for dimensional analysis)
+- [ ] Intermediate variable support
+- [ ] Full execution tracing
+- [ ] Engineering validation layer
+- [ ] Performance optimization
+
+**Commit Status:** Code ready for commit (awaiting integration with runner.py)
+
+---
+
 ### 2026-05-09 14:30 — CALCULATIONS PLATFORM: PHASE 2 STAGE 1 EXECUTION GRAPH COMPLETE ✅
 
 **Статус:** ✅ **STAGE 1 COMPLETE** — Production-grade execution graph architecture delivered.
