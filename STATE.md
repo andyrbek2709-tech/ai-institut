@@ -4,6 +4,58 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-10 14:30 UTC — ✅ CALCULATIONS PLATFORM PHASE 1 UX — PROFESSIONAL ENGINEERING WORKSTATION ✅
+
+**Статус:** 🟢 **IMPLEMENTATION STARTED** — Desktop-first workspace redesign complete, KaTeX formulas, Recharts integration
+
+**Improvements Implemented:**
+
+1. ✅ **Component Architecture:**
+   - `FormulaRenderer.tsx` — KaTeX formula rendering (display mode, safe error handling)
+   - `ResultsVisualization.tsx` — Recharts bar charts (multi-result support, warning states)
+   - `EngineeringTooltip.tsx` — Context hints for inputs (stub, expandable)
+
+2. ✅ **CalculationWorkspace Complete Redesign:**
+   - **Header:** Sticky, professional with emoji category indicators
+   - **Layout:** 4-column grid (1 inputs | 2 formula+methodology | 1 results) — desktop-first
+   - **Inputs Panel:** Sticky input group, number inputs + unit badges, reset button
+   - **Formula Panel:** KaTeX rendering (beautiful math), methodology box, safety status
+   - **Results Panel:** Sticky panel, color-coded results (green=safe, amber=warning), warning indicators
+   - **Safety Section:** Verification status (3-column), engineering notes, export button
+
+3. ✅ **New Showcase Calculation: Pipe Stress Analysis (🔬)**
+   - Comprehensive stress analysis: hoop stress, longitudinal stress, max working pressure, required thickness
+   - 7 inputs (pressure, diameter, thickness, stress, coeff, corrosion allowance, temperature)
+   - 4 outputs with GOST 32569 / EN 13445-3 methodology
+   - Perfect for engineering-heavy demonstration (stress values trigger warnings)
+
+4. ✅ **Dependencies Added:**
+   - `recharts@^2.x` installed (bar charts, tooltips, responsive)
+
+5. ✅ **TypeScript:** No errors (strict type safety maintained)
+
+**Key UX Decisions:**
+- Professional color scheme: no "CRUD admin panel" feel anymore
+- Sticky inputs + results for simultaneous visibility with formula
+- Warning thresholds: stress > 160 MPa, pressure > 3 MPa, velocity > 5 m/s
+- Emoji category badges (🏗️ structural, 🔥 thermal, ⚡ electrical, etc.)
+- Export button wired (UI only, backend not implemented yet)
+
+**Browser Testing Status:** 
+- ✅ Dev server running on localhost:3000
+- ⚠️ Manual testing required: navigate to Calculations → select Pipe Stress Analysis → modify inputs → verify KaTeX rendering + warning colors + results display
+
+**Next Steps:**
+- [ ] Browser test: KaTeX formula rendering (visual verification)
+- [ ] Browser test: Results color-coding and warning triggers
+- [ ] Browser test: Desktop responsive layout (1/4 | 2/4 | 1/4 grid)
+- [ ] Browser test: Recharts multi-result visualization
+- [ ] Add more showcase calculations: cable sizing, heat balance
+- [ ] Implement export to PDF/Excel
+- [ ] Add engineering tooltips (expand EngineeringTooltip with data)
+
+---
+
 ### 2026-05-10 00:15 UTC — 🔴 BACKEND RETRIEVAL ENGINE FIX — RPC SIGNATURES ALIGNED ✅
 
 **Статус:** 🔴→🟢 **EXACT CRASH POINT IDENTIFIED & FIXED** — /api/agsk/search HTTP 500 root cause resolved

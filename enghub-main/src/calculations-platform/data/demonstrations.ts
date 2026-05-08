@@ -47,6 +47,71 @@ export const DEMO_CALCULATIONS: DemoCalculation[] = [
   },
 
   {
+    id: 'pipe-stress-analysis',
+    name: '🔬 Комплексный анализ напряжений в трубопроводе',
+    description: 'Полный анализ напряжений включая кольцевые (хооповые) напряжения, толщину стенки и максимальное рабочее давление',
+    category: 'structural',
+    formula: 'σ_h = (p × d) / (2 × t) ; σ_l = (p × d) / (4 × t) ; t = (p × d) / (2σ × φ - p) + c',
+    inputs: [
+      { label: 'Рабочее давление', unit: 'МПа', defaultValue: 2.5 },
+      { label: 'Наружный диаметр', unit: 'мм', defaultValue: 219 },
+      { label: 'Толщина стенки', unit: 'мм', defaultValue: 8 },
+      { label: 'Допускаемое напряжение', unit: 'МПа', defaultValue: 160 },
+      { label: 'Коэффициент прочности', unit: '-', defaultValue: 0.85 },
+      { label: 'Допуск на коррозию', unit: 'мм', defaultValue: 1.5 },
+      { label: 'Температура', unit: '°C', defaultValue: 20 },
+    ],
+    outputs: [
+      {
+        label: 'Кольцевое напряжение (хооповое)',
+        unit: 'МПа',
+        formula: (inp) => {
+          const p = inp['Рабочее давление'];
+          const d = inp['Наружный диаметр'];
+          const t = inp['Толщина стенки'];
+          return (p * d) / (2 * t);
+        },
+      },
+      {
+        label: 'Продольное напряжение',
+        unit: 'МПа',
+        formula: (inp) => {
+          const p = inp['Рабочее давление'];
+          const d = inp['Наружный диаметр'];
+          const t = inp['Толщина стенки'];
+          return (p * d) / (4 * t);
+        },
+      },
+      {
+        label: 'Максимальное рабочее давление',
+        unit: 'МПа',
+        formula: (inp) => {
+          const sigma = inp['Допускаемое напряжение'];
+          const d = inp['Наружный диаметр'];
+          const t = inp['Толщина стенки'];
+          const phi = inp['Коэффициент прочности'];
+          const c = inp['Допуск на коррозию'];
+          const t_eff = t - c;
+          return (2 * sigma * phi * t_eff) / d;
+        },
+      },
+      {
+        label: 'Требуемая толщина стенки',
+        unit: 'мм',
+        formula: (inp) => {
+          const p = inp['Рабочее давление'];
+          const d = inp['Наружный диаметр'];
+          const sigma = inp['Допускаемое напряжение'];
+          const phi = inp['Коэффициент прочности'];
+          const c = inp['Допуск на коррозию'];
+          return (p * d) / (2 * sigma * phi - p) + c;
+        },
+      },
+    ],
+    methodology: 'ГОСТ 32569 / EN 13445-3. Кольцевое напряжение критично для прочности трубопровода. Продольное напряжение развивается вдоль оси. Требуемая толщина рассчитывается с запасом на коррозию.',
+  },
+
+  {
     id: 'pressure-drop',
     name: 'Гидравлические потери в трубопроводе',
     description: 'Расчёт падения давления при течении жидкости через трубопровод',
