@@ -4,6 +4,41 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-08 — WEEK 2 VALIDATION COMPLETE ✅ (AGSK Real PDF Testing)
+
+**Статус:** ✅ **PHASE: WEEK 2 DONE** — Real AGSK-3 PDF validated. 2 production blockers found, 5 warnings.
+
+**Validation scripts созданы:**
+- ✅ `services/agsk-ingestion/tests/week2/validate-pipeline.ts` — offline PDF → chunk → metadata validator
+- ✅ `services/agsk-ingestion/tests/week2/validate-retrieval.ts` — retrieval logic + eval dataset analysis
+- ✅ `services/week2-validation-results.json` — raw JSON results (8375 pages, 7418 chunks)
+- ✅ `AGSK_WEEK2_VALIDATION_REPORT.md` — полный отчёт
+
+**Результаты на AGSK-3 (po_sost.na_13.03.26).pdf — 34MB, 8375 стр, 2.2M слов:**
+- ✅ Текст-extraction: отлично (96.9% Cyrillic, 0 OCR ошибок, 0 encoding issues)
+- ✅ Chunking: 7418 chunks, avg 582 tokens (97% от target 600)
+- ✅ Дублей: 0 / Мелких чанков: 0
+- 🔴 BLOCKER: Детект секций = 0 из ~500+ — heading regex только Latin, pdf-parse теряет переносы строк
+- 🔴 BLOCKER: citation_section = "" для всех 7418 чанков — все секционные цитаты пусты
+- ⚠️ 13.6% чанков (1010/7418) превышают 650-токен лимит (каталожные записи без пунктуации = одна длинная "фраза")
+- ⚠️ Metadata completeness: 1/4 (только year; организация/дисциплина/версия не детектируются для CIS/ГОСТ)
+- ⚠️ Unit tests: 20/22 pass (2 ошибки в chunker: oversized-sentence + empty-section-fallback)
+- ✅ Retrieval logic: RRF, dedup, routing — все PASS
+- ✅ Eval dataset: 80 queries загружены (19 simple / 45 medium / 16 complex)
+- ⏳ Recall@5 / Precision@5 — не измеримо (нет индексированных документов, нет env vars)
+
+**Production blockers:**
+- P0.1: Fix pdf-parse pagerender — добавить newline при смене Y-позиции текстовых элементов
+- P0.2: Fix HEADING_REGEX — добавить Cyrillic паттерны (Раздел, Подраздел, Отдел, Часть)
+
+**Recommended fixes (неделя 3, до первой реальной индексации):**
+- H1: Fix oversized sentence в chunker (word-level split fallback)
+- H2: Fix empty-section fallback bug в chunker
+- M1: Add ГОСТ/СТ РК/СП паттерны в metadata-extractor
+- M2: Add Cyrillic keyword extraction
+
+---
+
 ### 2026-05-08 — WEEK 1 FOUNDATION COMPLETE ✅ (AGSK Implementation Phase)
 
 **Статус:** ✅ **PHASE: WEEK 1 DONE** — Database foundation + ingestion pipeline + retrieval engine + API endpoints реализованы и применены.
