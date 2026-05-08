@@ -4,21 +4,13 @@
 import { getSupabaseAnonClient } from './supabaseClient';
 
 async function getAccessToken(): Promise<string> {
-  // Primary: Supabase JS client session — auto-refreshed by autoRefreshToken:true
+  // Single source of truth: Supabase JS client session (auto-refreshed by autoRefreshToken:true).
+  // No localStorage fallback — stale tokens were the root cause of "Invalid token" 401s.
   try {
     const sb = getSupabaseAnonClient();
     const { data } = await sb.auth.getSession();
     if (data?.session?.access_token) return data.session.access_token;
   } catch { /* ignore */ }
-
-  // Fallback: raw localStorage token (legacy sessions before JS-client login fix)
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const stored = window.localStorage.getItem('enghub_token');
-      if (stored) return stored;
-    }
-  } catch { /* privacy mode */ }
-
   return '';
 }
 
@@ -29,7 +21,7 @@ function resolveUrl(path: string): string {
   return path;
 }
 
-export async function apiFetch<T = any>(path: string, opts: RequestInit = {}): Promise<T> {
+export async function apiFetch<T = any>(path: string, opts: RequestInit = {}, _retry = true): Promise<T> {
   const token = await getAccessToken();
   const headers = new Headers(opts.headers || {});
   if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -38,33 +30,35 @@ export async function apiFetch<T = any>(path: string, opts: RequestInit = {}): P
   }
 
   const url = resolveUrl(path);
+  const r = await fetch(url, { ...opts, headers });
 
-  try {
-    const r = await fetch(url, { ...opts, headers });
-
-    if (r.ok) {
-      if (r.status === 204) return undefined as any;
-      const ct = r.headers.get('content-type') || '';
-      if (ct.includes('application/json')) return r.json();
-      return r.text() as any;
-    }
-
-    let msg = `API ${r.status} ${r.statusText}`;
+  // 401: attempt one session refresh then retry
+  if (r.status === 401 && _retry) {
     try {
-      const j = await r.json();
-      msg = j?.error || j?.message || msg;
-    } catch {}
-    throw new Error(msg);
-  } catch (error) {
-    throw error;
+      await getSupabaseAnonClient().auth.refreshSession();
+    } catch { /* ignore */ }
+    return apiFetch(path, opts, false);
   }
+
+  if (r.ok) {
+    if (r.status === 204) return undefined as any;
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return r.json();
+    return r.text() as any;
+  }
+
+  let msg = `API ${r.status} ${r.statusText}`;
+  try {
+    const j = await r.json();
+    msg = j?.error || j?.message || msg;
+  } catch {}
+  throw new Error(msg);
 }
 
-// Удобные обёртки
-export const apiGet  = <T = any>(path: string) => apiFetch<T>(path, { method: 'GET' });
-export const apiPost = <T = any>(path: string, body?: any) =>
+export const apiGet    = <T = any>(path: string) => apiFetch<T>(path, { method: 'GET' });
+export const apiPost   = <T = any>(path: string, body?: any) =>
   apiFetch<T>(path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined });
-export const apiPatch = <T = any>(path: string, body?: any) =>
+export const apiPatch  = <T = any>(path: string, body?: any) =>
   apiFetch<T>(path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined });
 export const apiDelete = <T = any>(path: string, body?: any) =>
   apiFetch<T>(path, { method: 'DELETE', body: body !== undefined ? JSON.stringify(body) : undefined });

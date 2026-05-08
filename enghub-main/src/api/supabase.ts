@@ -10,9 +10,21 @@ import { apiPost } from './http';
 const SURL = process.env.REACT_APP_SUPABASE_URL || '';
 const KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
-const H = (token?: string) => ({
+// Always fetch a fresh token from the Supabase JS session when none is provided.
+// This is the single source of truth — no localStorage fallback.
+const freshToken = async (provided?: string): Promise<string> => {
+  if (provided) return provided;
+  try {
+    const { getSupabaseAnonClient } = await import('./supabaseClient');
+    const { data } = await getSupabaseAnonClient().auth.getSession();
+    if (data.session?.access_token) return data.session.access_token;
+  } catch { /* ignore */ }
+  return KEY; // anon key as last resort for public endpoints
+};
+
+const H = (token: string) => ({
   'apikey': KEY,
-  'Authorization': `Bearer ${token || KEY}`,
+  'Authorization': `Bearer ${token}`,
   'Content-Type': 'application/json',
 });
 
@@ -30,27 +42,35 @@ const guardError = async (r: Response): Promise<Response> => {
   return r;
 };
 
-export const get = (path: string, token?: string) =>
-  fetch(`${SURL}/rest/v1/${path}`, { headers: H(token), signal: AbortSignal.timeout(30000) }).then(guardError).then(r => r.json());
+export const get = async (path: string, token?: string) => {
+  const t = await freshToken(token);
+  return fetch(`${SURL}/rest/v1/${path}`, { headers: H(t), signal: AbortSignal.timeout(30000) }).then(guardError).then(r => r.json());
+};
 
-export const post = (path: string, data: any, token?: string) =>
-  fetch(`${SURL}/rest/v1/${path}`, {
+export const post = async (path: string, data: any, token?: string) => {
+  const t = await freshToken(token);
+  return fetch(`${SURL}/rest/v1/${path}`, {
     method: 'POST',
-    headers: { ...H(token), 'Prefer': 'return=representation' },
+    headers: { ...H(t), 'Prefer': 'return=representation' },
     body: JSON.stringify(data),
     signal: AbortSignal.timeout(30000),
   }).then(guardError).then(r => r.json());
+};
 
-export const patch = (path: string, data: any, token?: string) =>
-  fetch(`${SURL}/rest/v1/${path}`, {
+export const patch = async (path: string, data: any, token?: string) => {
+  const t = await freshToken(token);
+  return fetch(`${SURL}/rest/v1/${path}`, {
     method: 'PATCH',
-    headers: { ...H(token), 'Prefer': 'return=representation' },
+    headers: { ...H(t), 'Prefer': 'return=representation' },
     body: JSON.stringify(data),
     signal: AbortSignal.timeout(30000),
   }).then(guardError).then(r => r.json());
+};
 
-export const del = (path: string, token?: string) =>
-  fetch(`${SURL}/rest/v1/${path}`, { method: 'DELETE', headers: H(token), signal: AbortSignal.timeout(30000) }).then(guardError);
+export const del = async (path: string, token?: string) => {
+  const t = await freshToken(token);
+  return fetch(`${SURL}/rest/v1/${path}`, { method: 'DELETE', headers: H(t), signal: AbortSignal.timeout(30000) }).then(guardError);
+};
 
 export const signIn = async (email: string, password: string) => {
   // Use Supabase JS client so autoRefreshToken keeps the session alive
@@ -204,12 +224,13 @@ export const FILE_SIZE_LIMIT = 50 * 1024 * 1024; // 50 MB
 
 const sanitizeName = (n: string) => n.replace(/[^a-zA-Z0-9._-]/g, '_');
 
-const uploadToBucket = async (path: string, file: File, token: string) => {
+const uploadToBucket = async (path: string, file: File, token?: string) => {
+  const t = await freshToken(token);
   const r = await fetch(`${SURL}/storage/v1/object/${STORAGE_BUCKET}/${path}`, {
     method: 'POST',
     headers: {
       apikey: KEY,
-      Authorization: `Bearer ${token || KEY}`,
+      Authorization: `Bearer ${t}`,
       'Content-Type': file.type || 'application/octet-stream',
       'x-upsert': 'false',
     },

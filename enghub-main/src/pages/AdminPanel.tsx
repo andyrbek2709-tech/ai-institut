@@ -57,7 +57,9 @@ export function AdminPanel({ token: _token, onLogout, dark, setDark }: AdminPane
     apiReachable: boolean | null;
     currentRole: string;
     currentEmail: string;
-  }>({ tokenPresent: false, sessionValid: null, apiReachable: null, currentRole: '', currentEmail: '' });
+    tokenExpiresAt: string;
+    refreshStatus: string;
+  }>({ tokenPresent: false, sessionValid: null, apiReachable: null, currentRole: '', currentEmail: '', tokenExpiresAt: '', refreshStatus: '' });
 
   // user modal
   const [showUserModal, setShowUserModal] = useState(false);
@@ -189,12 +191,13 @@ export function AdminPanel({ token: _token, onLogout, dark, setDark }: AdminPane
   // ─── Diagnostics ────────────────────────────────────────────────────────────
 
   const runDiagnostics = async () => {
-    setDiagInfo({ tokenPresent: false, sessionValid: null, apiReachable: null, currentRole: '', currentEmail: '' });
+    setDiagInfo({ tokenPresent: false, sessionValid: null, apiReachable: null, currentRole: '', currentEmail: '', tokenExpiresAt: '', refreshStatus: '' });
     const { getSupabaseAnonClient } = await import('../api/supabaseClient');
     const sb = getSupabaseAnonClient();
     const { data: sess } = await sb.auth.getSession().catch(() => ({ data: { session: null } }));
     const session = sess?.session;
-    const tokenPresent = !!session?.access_token || !!localStorage.getItem('enghub_token');
+    // Single source of truth: Supabase JS session only — no localStorage fallback
+    const tokenPresent = !!session?.access_token;
     let sessionValid = false;
     let currentRole = '';
     let currentEmail = '';
@@ -207,7 +210,6 @@ export function AdminPanel({ token: _token, onLogout, dark, setDark }: AdminPane
       const me = await apiGet('/api/admin/organization');
       apiReachable = !!me;
     } catch { /* unreachable */ }
-    // Try to get current user role
     try {
       const me = await apiGet('/api/admin/users');
       if (Array.isArray(me) && currentEmail) {
@@ -216,7 +218,19 @@ export function AdminPanel({ token: _token, onLogout, dark, setDark }: AdminPane
         if (u) sessionValid = true;
       }
     } catch { /* silent */ }
-    setDiagInfo({ tokenPresent, sessionValid, apiReachable, currentRole, currentEmail });
+    let tokenExpiresAt = '';
+    let refreshStatus = '';
+    if (session?.expires_at) {
+      const exp = new Date(session.expires_at * 1000);
+      const minsLeft = Math.round((exp.getTime() - Date.now()) / 60000);
+      tokenExpiresAt = `${exp.toLocaleTimeString()} (через ${minsLeft} мин)`;
+      refreshStatus = minsLeft > 5 ? 'Активна — авто-обновление включено' : minsLeft > 0 ? 'Скоро истечёт — обновляется' : 'Истекла';
+    } else if (tokenPresent) {
+      refreshStatus = 'Суpabase JS управляет сессией';
+    } else {
+      refreshStatus = 'Нет активной сессии';
+    }
+    setDiagInfo({ tokenPresent, sessionValid, apiReachable, currentRole, currentEmail, tokenExpiresAt, refreshStatus });
   };
 
   // ─── User actions ───────────────────────────────────────────────────────────
@@ -981,7 +995,7 @@ export function AdminPanel({ token: _token, onLogout, dark, setDark }: AdminPane
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: C.text }}>Состояние авторизации</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {[
-                      { label: "Токен присутствует", value: diagInfo.tokenPresent, hint: diagInfo.tokenPresent ? "OK" : "Отсутствует — нужна повторная авторизация" },
+                      { label: "Сессия Supabase JS", value: diagInfo.tokenPresent, hint: diagInfo.tokenPresent ? "Активна (авто-обновление включено)" : "Нет — нужна повторная авторизация" },
                       { label: "Сессия валидна", value: diagInfo.sessionValid, hint: diagInfo.sessionValid === null ? "Проверка..." : diagInfo.sessionValid ? "OK — сессия активна" : "Истекла — войдите снова" },
                       { label: "API Server доступен", value: diagInfo.apiReachable, hint: diagInfo.apiReachable === null ? "Проверка..." : diagInfo.apiReachable ? "OK — Railway API отвечает" : "Недоступен — проверьте Railway" },
                     ].map(row => (
@@ -993,6 +1007,18 @@ export function AdminPanel({ token: _token, onLogout, dark, setDark }: AdminPane
                         </div>
                       </div>
                     ))}
+                    {diagInfo.tokenExpiresAt && (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ fontSize: 13, color: C.textMuted }}>Токен истекает</div>
+                        <span style={{ fontSize: 12, color: C.textMuted }}>{diagInfo.tokenExpiresAt}</span>
+                      </div>
+                    )}
+                    {diagInfo.refreshStatus && (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ fontSize: 13, color: C.textMuted }}>Авто-обновление</div>
+                        <span style={{ fontSize: 12, color: diagInfo.refreshStatus.includes('Истек') ? '#ef4444' : '#22c55e' }}>{diagInfo.refreshStatus}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -83,8 +83,7 @@ export function CopilotPanel({
   // Polling ai_actions
   const fetchActions = async () => {
     try {
-      const token = localStorage.getItem('enghub_token');
-      const data = await get(`ai_actions?project_id=eq.${projectId}&order=created_at.desc`, token || '');
+      const data = await get(`ai_actions?project_id=eq.${projectId}&order=created_at.desc`);
       if (Array.isArray(data)) {
         setActions(data);
       }
@@ -148,7 +147,6 @@ export function CopilotPanel({
   };
 
   const applyAction = async (action: AIAction, approved: boolean) => {
-    const token = localStorage.getItem('enghub_token');
     const payload = (action.payload && typeof action.payload === 'object' ? action.payload : {}) as Record<string, unknown>;
 
     if (approved && applyInFlightRef.current.has(action.id)) {
@@ -172,7 +170,7 @@ export function CopilotPanel({
 
     try {
       if (approved) {
-        const latestRows = await get(`ai_actions?id=eq.${action.id}&select=id,status`, token || '');
+        const latestRows = await get(`ai_actions?id=eq.${action.id}&select=id,status`);
         const latest = Array.isArray(latestRows) ? latestRows[0] : null;
         if (!latest) {
           setMessages(prev => [...prev, { role: 'ai', text: 'Действие не найдено: возможно, уже обработано другим пользователем.' }]);
@@ -195,7 +193,7 @@ export function CopilotPanel({
             status: 'todo',
             assigned_to: null,
             dept: (t as any).dept || 'Общие'
-          }, token || '');
+          });
         }
         onTaskCreated();
       }
@@ -209,17 +207,17 @@ export function CopilotPanel({
           status: 'draft',
           revision: 'R0',
           created_by: userId
-        }, token || '');
+        });
         onDataChanged?.();
       }
 
       if (approved && action.action_type === 'update_drawing' && payload?.drawing_id) {
-        await patch(`drawings?id=eq.${payload.drawing_id}`, (payload.updates || {}) as Record<string, unknown>, token || '');
+        await patch(`drawings?id=eq.${payload.drawing_id}`, (payload.updates || {}) as Record<string, unknown>);
         onDataChanged?.();
       }
 
       if (approved && (action.action_type === 'create_drawing_revision' || action.action_type === 'create_revision') && payload?.drawing_id) {
-        const drawingRows = await get(`drawings?id=eq.${payload.drawing_id}&select=id,revision,project_id`, token || '');
+        const drawingRows = await get(`drawings?id=eq.${payload.drawing_id}&select=id,revision,project_id`);
         const drawing = Array.isArray(drawingRows) ? drawingRows[0] : null;
         const revNum = Number(String(drawing?.revision || 'R0').replace('R', '')) + 1;
         const nextRev = `R${Number.isFinite(revNum) ? revNum : 1}`;
@@ -229,8 +227,8 @@ export function CopilotPanel({
           from_revision: drawing?.revision || 'R0',
           to_revision: nextRev,
           issued_by: userId
-        }, token || '');
-        await patch(`drawings?id=eq.${payload.drawing_id}`, { revision: nextRev, status: 'in_work' }, token || '');
+        });
+        await patch(`drawings?id=eq.${payload.drawing_id}`, { revision: nextRev, status: 'in_work' });
         onDataChanged?.();
       }
 
@@ -242,7 +240,7 @@ export function CopilotPanel({
           severity: (payload?.severity as string) || 'major',
           status: 'open',
           author_id: userId
-        }, token || '');
+        });
         onDataChanged?.();
       }
 
@@ -250,7 +248,7 @@ export function CopilotPanel({
         await patch(`reviews?id=eq.${payload.review_id}`, {
           status: payload.status as string,
           updated_at: new Date().toISOString(),
-        }, token || '');
+        });
         onDataChanged?.();
       }
 
@@ -262,7 +260,7 @@ export function CopilotPanel({
           note: payload?.note || null,
           status: 'draft',
           issued_by: userId
-        }, token || '');
+        });
         const created = Array.isArray(createdRows) ? createdRows[0] : null;
         if (created?.id && Array.isArray(payload?.items)) {
           for (const item of payload.items as Array<{ drawing_id?: string; revision_id?: string; note?: string }>) {
@@ -271,7 +269,7 @@ export function CopilotPanel({
               drawing_id: item?.drawing_id || null,
               revision_id: item?.revision_id || null,
               note: item?.note || null,
-            }, token || '');
+            });
           }
         }
         onDataChanged?.();
@@ -281,14 +279,14 @@ export function CopilotPanel({
         await patch(`transmittals?id=eq.${payload.transmittal_id}`, {
           status: payload.status as string,
           updated_at: new Date().toISOString(),
-        }, token || '');
+        });
         onDataChanged?.();
       }
 
       // Update action status
       await patch(`ai_actions?id=eq.${action.id}`, {
         status: approved ? 'approved' : 'rejected'
-      }, token || '');
+      });
       
       fetchActions();
     } catch (e) {

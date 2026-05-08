@@ -4,7 +4,7 @@ import { NavIcon, IconFolder, IconCheckSquare, IconActivity, IconArchive } from 
 import { get, post, patch, del, SURL, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory, listTaskAttachmentsByTaskIds } from './api/supabase';
 import { apiPost, apiGet } from './api/http';
 import { publishTaskCreated, publishTaskSubmittedForReview, publishTaskApproved, publishTaskReturned, publishReviewCommentAdded } from './lib/events/publisher';
-import { getSupabaseAdminClient } from './api/supabaseClient';
+import { getSupabaseAnonClient } from './api/supabaseClient';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput, useCountUp } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPanel } from './pages/AdminPanel';
@@ -178,7 +178,10 @@ export default function App() {
   const [dark, setDark] = useState(false); // Светлая тема по умолчанию
   const C = dark ? DARK : LIGHT;
 
-  const [token, setToken] = useState<string | null>(localStorage.getItem('enghub_token'));
+  // Auth state: initialized from Supabase JS session, kept fresh via onAuthStateChange.
+  // Never reads from localStorage.enghub_token — that stale path is eliminated.
+  const [token, setToken] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [userEmail, setUserEmail] = useState<string>(localStorage.getItem('enghub_email') || "");
   const [currentUserData, setCurrentUserData] = useState<any>(null);
   const [screen, setScreen] = useState(localStorage.getItem('enghub_screen') || "dashboard");
@@ -269,6 +272,32 @@ export default function App() {
   const getUserById = (id: any) => appUsers.find(u => String(u.id) === String(id));
   const getDeptName = (id: any) => depts.find(d => String(d.id) === String(id))?.name || "Общие";
 
+  // ── Auth lifecycle: single source of truth = Supabase JS session ──────────
+  useEffect(() => {
+    const sb = getSupabaseAnonClient();
+    // Hydrate from existing session on mount (handles page reload)
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setToken(data.session.access_token);
+        setUserEmail(data.session.user.email ?? '');
+        localStorage.setItem('enghub_email', data.session.user.email ?? '');
+      }
+      setAuthReady(true);
+    });
+    // Keep token fresh: fires on login, token refresh, and logout
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setToken(session.access_token);
+        setUserEmail(session.user.email ?? '');
+        localStorage.setItem('enghub_email', session.user.email ?? '');
+      } else {
+        setToken(null);
+        setUserEmail('');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []); // eslint-disable-line
+
   useEffect(() => {
     if (token && !isAdmin) {
       Promise.all([loadAppUsers(), loadDepts(), loadProjects(), loadNormativeDocs(), loadBranding()])
@@ -337,7 +366,7 @@ export default function App() {
       }
       return;
     }
-    const supa = getSupabaseAdminClient();
+    const supa = getSupabaseAnonClient();
     const ch = supa.channel(`session:${currentUserData.id}`, {
       config: { broadcast: { self: false, ack: false } }
     });
@@ -361,7 +390,7 @@ export default function App() {
   // ── Уведомления о входящих вызовах (bypass RLS через broadcast) ──
   useEffect(() => {
     if (!currentUserData?.id || !token) return;
-    const supa = getSupabaseAdminClient();
+    const supa = getSupabaseAnonClient();
     const ch = supa.channel(`callnotify:${currentUserData.id}`, {
       config: { broadcast: { self: false, ack: false } }
     });
@@ -721,7 +750,7 @@ export default function App() {
   // ── Supabase Realtime: подписка на изменения задач ──
   useEffect(() => {
     if (!token || !currentUserData?.id) return;
-    const supa = getSupabaseAdminClient();
+    const supa = getSupabaseAnonClient();
     const channel = supa.channel('tasks:live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, (payload: any) => {
         const t = payload.new;
@@ -806,7 +835,7 @@ export default function App() {
   // ── Supabase Realtime: подписка на новые сообщения чата ──
   useEffect(() => {
     if (!token || !currentUserData?.id) return;
-    const supa = getSupabaseAdminClient();
+    const supa = getSupabaseAnonClient();
     const channel = supa.channel('messages:live')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
         const m = payload.new;
@@ -890,7 +919,7 @@ export default function App() {
       if (!ok) return;
       await leaveConference();
     }
-    const supa = getSupabaseAdminClient();
+    const supa = getSupabaseAnonClient();
     const ch = supa.channel(`presence:${activeProject.id}`, {
       config: { presence: { key: String(currentUserData.id) } }
     });
@@ -1395,15 +1424,26 @@ export default function App() {
     setShowTaskDetail(false);
     loadTasks(activeProject.id);
   };
-  const handleLogin = async (accessToken: string, email: string) => { setToken(accessToken); setUserEmail(email); setScreen('dashboard'); localStorage.setItem('enghub_token', accessToken); localStorage.setItem('enghub_email', email); if (email !== "admin@enghub.com") setLoading(true); else setLoading(false); };
+  // handleLogin: Supabase JS already holds the session after signInWithPassword().
+  // onAuthStateChange fires and updates token/userEmail via the auth useEffect above.
+  // We only handle navigation and loading state here.
+  const handleLogin = async (_accessToken: string, email: string) => {
+    setScreen('dashboard');
+    if (email !== "admin@enghub.com") setLoading(true);
+    else setLoading(false);
+  };
+
   const handleLogout = () => {
-    setToken(null); setUserEmail(""); setCurrentUserData(null); setProjects([]); setTasks([]); setAllTasks([]); setMsgs([]); setChatInput(""); setTaskComment("");
-    // T29 fix: дополнительно сбрасываем стейт прошлой сессии (виджет "Активных задач" протекал)
+    // Sign out from Supabase JS — onAuthStateChange will clear token + userEmail.
+    // Clear token immediately too so UI switches to login without waiting for async signOut.
+    setToken(null);
+    setUserEmail('');
+    getSupabaseAnonClient().auth.signOut().catch(() => {});
+    setCurrentUserData(null); setProjects([]); setTasks([]); setAllTasks([]); setMsgs([]); setChatInput(""); setTaskComment("");
     setDrawings([]); setRevisions([]); setReviews([]); setTransmittals([]); setTransmittalItems({}); setArchivedProjects([]);
-    // FIX: reset search and filter states so next user doesn't see previous user's filters
     setSearchQuery(""); setFilterStatus("all"); setFilterPriority("all"); setFilterAssigned("all");
     setActiveProject(null); setScreen('dashboard');
-    localStorage.removeItem('enghub_token'); localStorage.removeItem('enghub_email');
+    localStorage.removeItem('enghub_email');
     localStorage.removeItem('enghub_screen'); localStorage.removeItem('enghub_sidetab');
   };
 
@@ -1450,6 +1490,8 @@ export default function App() {
   const getAutoProgress = (pid: number): number => { const pt = allTasks.filter(t => t.project_id === pid); if (pt.length === 0) return 0; return Math.round((pt.filter(t => t.status === "done").length / pt.length) * 100); };
   const activeProjectProgress = activeProject ? getAutoProgress(activeProject.id) : 0;
 
+  // Wait for Supabase session check before rendering login (prevents login-page flash on reload)
+  if (!authReady) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: dark ? '#0f1117' : '#f4f6fa' }}><span style={{ color: '#8896a8', fontSize: 14 }}>Загрузка...</span></div>;
   if (!token) return <LoginPage onLogin={handleLogin} dark={dark} setDark={setDark} />;
   if (isAdmin) return <AdminPanel token={token} onLogout={handleLogout} dark={dark} setDark={setDark} />;
 
