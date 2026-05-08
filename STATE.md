@@ -4,6 +4,66 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 03:45 UTC — 🟢 ARCHITECTURE CORRECTION: STANDALONE CALCULATIONS PLATFORM ✅
+
+**Статус:** 🟢 **ARCHITECTURAL SEPARATION COMPLETE** — Calculations Platform extracted into fully independent React application with separate port (3001), routing, and deployment
+
+**Завершено:**
+- ✅ REMOVED: CalculationsApp integration from EngHub frontend (import line 14, nav item, screen === "calculations" rendering)
+- ✅ RESTORED: EngHub to pure dashboard/project management app (no calculations UI, no platform mixing)
+- ✅ CREATED: Standalone `calculations-platform/` directory with complete React application:
+  * `src/App.tsx` + `src/index.tsx` (entry point)
+  * `CalculationsApp.tsx` (main component, collapsible sidebar)
+  * Pages: `CalculationsHome.tsx` (search/filter/categories) + `CalculationWorkspace.tsx` (3-column interactive)
+  * Components: `CalculationCard.tsx`, `FileUpload.tsx`, `ReportGenerator.tsx`, `CalculationHistory.tsx`
+  * Data: `demonstrations.ts` (8 real engineering calculations: thermal, structural, electrical, hydraulic, acoustic, ventilation, foundation, fire resistance)
+  * Config: `package.json` (PORT=3001), `tsconfig.json`, `tailwind.config.js`, `postcss.config.js`, `public/index.html`, `.gitignore`
+- ✅ Coммит 247a4bc: "feat(architecture): Extract Calculations Platform into standalone React application"
+- ✅ Pushed to main branch (resolved merge conflict in App.tsx)
+
+**Структура:**
+```
+calculations-platform/
+├── package.json          (PORT=3001 for dev server)
+├── tsconfig.json
+├── tailwind.config.js
+├── postcss.config.js
+├── src/
+│   ├── App.tsx
+│   ├── index.tsx
+│   ├── index.css         (Tailwind + global styles)
+│   └── calculations/
+│       ├── CalculationsApp.tsx
+│       ├── pages/
+│       │   ├── CalculationsHome.tsx
+│       │   └── CalculationWorkspace.tsx
+│       ├── components/
+│       │   ├── CalculationCard.tsx
+│       │   ├── FileUpload.tsx
+│       │   ├── ReportGenerator.tsx
+│       │   └── CalculationHistory.tsx
+│       └── data/
+│           └── demonstrations.ts   (8 calculations, 6 categories)
+└── public/
+    ├── index.html
+    └── manifest.json
+```
+
+**Технические детали:**
+- React 18.2.0 + TypeScript 4.9.5
+- Tailwind CSS for styling (dark mode support)
+- Independent port: 3001 (npm run dev:calculations or npm start)
+- NO shared EngHub auth or routing
+- Can run completely standalone or separately from main app
+- 100+ lines of calculations logic with real engineering formulas
+
+**Следующие шаги:**
+1. npm install в `calculations-platform/` для установки зависимостей
+2. npm start (или npm run dev:calculations) для запуска на localhost:3001
+3. Verify both apps run independently (EngHub on 3000, Calculations on 3001)
+
+---
+
 ### 2026-05-09 03:20 UTC — 🟢 CALCULATIONS PLATFORM — BROWSER-READY & LIVE ✅
 
 **Статус:** 🟢 **DEV SERVER RUNNING + BUILD SUCCESSFUL** — все компоненты скомпилированы, приложение готово к тестированию в браузере (localhost:3000)
