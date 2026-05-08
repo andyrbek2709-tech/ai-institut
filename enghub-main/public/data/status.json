@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Источник 8/9: HN comments (150 stories)",
-  "progress_pct": 77,
-  "items_processed": 763,
+  "current_step": "Источник 9/9: SO answers (95 qs)",
+  "progress_pct": 88,
+  "items_processed": 846,
   "items_total": 0,
-  "updated_at": "2026-05-08T07:20:29Z",
+  "updated_at": "2026-05-08T07:20:33Z",
   "started_at": "2026-05-08T07:19:30Z"
 }
