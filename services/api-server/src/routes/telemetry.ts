@@ -40,8 +40,8 @@ interface QueryLogRequest {
   query_text: string;
   query_tokens?: number;
   discipline?: string;
-  result_count: number;
-  retrieval_latency_ms: number;
+  result_count?: number;
+  retrieval_latency_ms?: number;
   top_result_score?: number;
   top_result_standard_id?: string;
   session_id?: string;
@@ -56,8 +56,8 @@ router.post('/query', async (req: Request, res: Response, next: NextFunction) =>
     if (!orgId) throw new ApiError(400, 'User org_id not found');
 
     const body = req.body as QueryLogRequest;
-    if (!body.query_text || body.result_count === undefined || body.retrieval_latency_ms === undefined) {
-      throw new ApiError(400, 'Missing required fields: query_text, result_count, retrieval_latency_ms');
+    if (!body.query_text) {
+      throw new ApiError(400, 'Missing required field: query_text');
     }
 
     const sb = getSupabaseAdmin();
@@ -116,7 +116,7 @@ interface ResultClickRequest {
 
 router.post('/click', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const uid = (req as any).user?.sub;
+    const uid = (req as any).user?.id;
     if (!uid) throw new ApiError(401, 'Unauthorized');
 
     const orgId = await getOrgId(uid);
@@ -183,7 +183,7 @@ interface FeedbackRequest {
 
 router.post('/feedback', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const uid = (req as any).user?.sub;
+    const uid = (req as any).user?.id;
     if (!uid) throw new ApiError(401, 'Unauthorized');
 
     const body = req.body as FeedbackRequest;
@@ -255,7 +255,7 @@ interface FailureRequest {
 
 router.post('/failure', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const uid = (req as any).user?.sub;
+    const uid = (req as any).user?.id;
     if (!uid) throw new ApiError(401, 'Unauthorized');
 
     const body = req.body as FailureRequest;
@@ -308,7 +308,7 @@ router.post('/failure', async (req: Request, res: Response, next: NextFunction) 
 
 router.get('/dashboard', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const uid = (req as any).user?.sub;
+    const uid = (req as any).user?.id;
     if (!uid) throw new ApiError(401, 'Unauthorized');
 
     const sb = getSupabaseAdmin();
@@ -355,7 +355,7 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
 
 router.get('/status', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const uid = (req as any).user?.sub;
+    const uid = (req as any).user?.id;
     if (!uid) throw new ApiError(401, 'Unauthorized');
 
     const sb = getSupabaseAdmin();
