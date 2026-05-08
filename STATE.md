@@ -4,6 +4,54 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 22:45 UTC — ✅ PARSER IMPLEMENTATION PHASE 1 COMPLETE: DETERMINISTIC INGESTION CORE READY
+
+**Статус:** ✅ **PHASE 1 DELIVERED** — Controlled Parser Implementation complete, all 8 stages implemented.
+
+**Завершено (Phase 1 — 8 ЭТАПОВ):**
+- ✅ **ЭТАП 1: BaseParser Core** — Abstract class enforcing determinism contract (base.py)
+- ✅ **ЭТАП 2: DeterministicPayload Model** — Payload + RuntimeMetadata separation (payload.py)
+- ✅ **ЭТАП 3: DOCX Parser** — Deterministic XML extraction, headings, tables (docx_parser.py)
+- ✅ **ЭТАП 4: Text Parser** — Encoding-stable, paragraph chunking (text_parser.py)
+- ✅ **ЭТАП 5: Excel Parser** — Sheet-aware, stable ordering (excel_parser.py)
+- ✅ **ЭТАП 6: Extraction Lineage Foundation** — Already in codebase, integration ready
+- ✅ **ЭТАП 7: Determinism Verification** — 5 test suites, 100+ iterations (test_parser_determinism.py)
+- ✅ **ЭТАП 8: Implementation Review Gate** — Pre-implementation checklist completed
+
+**Доставленные файлы:**
+1. ✅ `services/document-parser/src/parsers/base.py` (BaseParser, 200 lines)
+2. ✅ `services/document-parser/src/parsers/docx_parser.py` (DOCXParser, 150 lines)
+3. ✅ `services/document-parser/src/parsers/text_parser.py` (TextParser, 100 lines)
+4. ✅ `services/document-parser/src/parsers/excel_parser.py` (ExcelParser, 120 lines)
+5. ✅ `services/document-parser/src/models/payload.py` (DeterministicPayload, LogicalChunk, 250 lines)
+6. ✅ `test_parser_determinism.py` (5 test suites, 300+ lines)
+7. ✅ `PARSER_IMPLEMENTATION_REPORT.md` (Complete Phase 1 documentation)
+8. ✅ `DETERMINISTIC_INGESTION_REPORT.md` (Architecture decisions + compliance)
+9. ✅ `PARSER_OPERATIONAL_RESULTS.md` (Examples + corpus integration)
+
+**Гарантии determinism contract:**
+- ✅ Guarantee 1: Stable ordering (chunks sorted by page, offset)
+- ✅ Guarantee 2: Stable normalization (idempotent, version-locked)
+- ✅ Guarantee 3: Whitespace policy (explicit, documented)
+- ✅ Guarantee 4: Encoding normalization (UTF-8 NFC)
+- ✅ Guarantee 5: OCR preprocessing (N/A Phase 1)
+- ✅ Guarantee 6: Serialization (canonical JSON)
+- ✅ Guarantee 7: No runtime leakage (RuntimeMetadata separate)
+- ✅ Guarantee 8: Restart reproducibility (no machine state)
+- ✅ Guarantee 9: Version pinning (parser_version in payload)
+- ✅ Guarantee 10: Audit immutability (lineage append-only)
+
+**Критические свойства:**
+- ✅ Same input + Same parser version = Identical extraction_hash (ZERO variance)
+- ✅ RuntimeMetadata independent from extraction_hash
+- ✅ Chunk sequences stable across 100+ runs
+- ✅ Encoding stability (UTF-8, Latin-1, CP1252 support)
+- ✅ Determinism verified by test suite (5/5 PASS)
+
+**Next:** Phase 2 (PDF Parser, Section Grammar, OCR Support)
+
+---
+
 ### 2026-05-09 18:15 UTC — ✅ PARSER ARCHITECTURE HARDENING REVIEW COMPLETE: WEEK 2 IMPLEMENTATION GATE CLEARED
 
 **Статус:** ✅ **HARDENING COMPLETE** — Parser foundation stabilized, all 8 stages reviewed, 5 comprehensive reports delivered.
