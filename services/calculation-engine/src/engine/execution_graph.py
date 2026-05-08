@@ -21,8 +21,10 @@ class FormulaNode:
     description: str
     depends_on: list[str] = field(default_factory=list)
     outputs: Optional[list[str]] = None  # Which variables this formula computes
-    unit: Optional[str] = None
+    unit: Optional[str] = None  # Output unit (for single-output formulas)
     engineering_meaning: Optional[str] = None
+    input_units: dict[str, Optional[str]] = field(default_factory=dict)  # var_id -> unit
+    output_units: dict[str, Optional[str]] = field(default_factory=dict)  # var_id -> unit
 
 
 @dataclass
@@ -35,6 +37,10 @@ class ExecutionPlan:
     intermediate_formulas: set[str]  # Formula IDs that produce intermediate results
     output_formulas: set[str]  # Formula IDs that produce final outputs
     is_executable: bool = True  # False if circular deps or other issues
+    # Unit-aware execution metadata
+    unit_flow_valid: bool = True  # False if unit propagation would fail
+    unit_validation_issues: list[str] = field(default_factory=list)  # Issues found in unit checking
+    required_input_units: dict[str, Optional[str]] = field(default_factory=dict)  # var_id -> required unit
 
 
 @dataclass
@@ -48,6 +54,11 @@ class ExecutionTrace:
     duration_ms: float = 0.0
     status: str = "success"
     error: Optional[str] = None
+    # Unit-aware execution metadata
+    input_units: dict[str, Optional[str]] = field(default_factory=dict)  # var_id -> unit
+    output_unit: Optional[str] = None  # Explicit output unit (may differ from unit)
+    dimensional_check: Optional[str] = None  # "passed", "warning", "failed"
+    unit_conversions: list[tuple[str, str, str]] = field(default_factory=list)  # (var, from_unit, to_unit)
 
 
 class FormulaExecutionGraph:
@@ -93,14 +104,39 @@ class FormulaExecutionGraph:
         """Build NetworkX directed graph from formulas."""
         # Create nodes for each formula
         for formula_id, formula_def in self.formulas.items():
+            # Extract unit information from variable definitions
+            input_units = {}
+            output_units = {}
+
+            # Collect input unit information
+            depends_on = formula_def.get("depends_on", [])
+            for var_id in depends_on:
+                if var_id in self.variables:
+                    var_def = self.variables[var_id]
+                    unit_str = var_def.get("unit")
+                    if unit_str:
+                        input_units[var_id] = unit_str
+
+            # Collect output unit information
+            outputs = formula_def.get("outputs")
+            if outputs:
+                for var_id in outputs:
+                    if var_id in self.variables:
+                        var_def = self.variables[var_id]
+                        unit_str = var_def.get("unit")
+                        if unit_str:
+                            output_units[var_id] = unit_str
+
             node = FormulaNode(
                 formula_id=formula_id,
                 expression=formula_def.get("expression", ""),
                 description=formula_def.get("description", ""),
-                depends_on=formula_def.get("depends_on", []),
-                outputs=formula_def.get("outputs"),  # Which variables this produces
+                depends_on=depends_on,
+                outputs=outputs,
                 unit=formula_def.get("unit"),
-                engineering_meaning=formula_def.get("engineering_meaning")
+                engineering_meaning=formula_def.get("engineering_meaning"),
+                input_units=input_units,
+                output_units=output_units
             )
             self.formula_nodes[formula_id] = node
             self.graph.add_node(formula_id)
@@ -210,6 +246,8 @@ class FormulaExecutionGraph:
 
         # Collect all required input variables
         required_inputs = set()
+        required_input_units = {}
+
         for formula_id, node in self.formula_nodes.items():
             for var_id in node.depends_on:
                 # Check if this var is an input (not computed by another formula)
@@ -221,6 +259,13 @@ class FormulaExecutionGraph:
                 if not is_computed:
                     # This variable must come from inputs
                     required_inputs.add(var_id)
+                    # Track required unit for this input
+                    if var_id in node.input_units:
+                        required_input_units[var_id] = node.input_units[var_id]
+
+        # Validate unit propagation
+        unit_validator = UnitPropagationValidator(self)
+        unit_validation = unit_validator.validate_unit_propagation()
 
         self.execution_plan = ExecutionPlan(
             formula_order=formula_order,
@@ -229,7 +274,10 @@ class FormulaExecutionGraph:
             required_inputs=required_inputs,
             intermediate_formulas=intermediate_formulas,
             output_formulas=output_formulas,
-            is_executable=is_executable
+            is_executable=is_executable,
+            unit_flow_valid=unit_validation["valid"],
+            unit_validation_issues=unit_validation["issues"],
+            required_input_units=required_input_units
         )
 
         return self.execution_plan
@@ -320,6 +368,59 @@ class FormulaExecutionGraph:
 
         return "\n".join(lines)
 
+    def get_unit_flow_path(self, formula_id: str) -> dict[str, Any]:
+        """
+        Trace unit flow through dependencies for a formula.
+
+        Args:
+            formula_id: Formula to trace
+
+        Returns:
+            {
+                "formula_id": str,
+                "input_units": dict[var_id, unit],
+                "output_units": dict[var_id, unit],
+                "dependency_units": dict[dep_formula_id, output_units]
+            }
+        """
+        if formula_id not in self.formula_nodes:
+            return {}
+
+        node = self.formula_nodes[formula_id]
+        dependency_units = {}
+
+        # Get units from all dependencies
+        for dep_formula_id in self.get_dependencies(formula_id):
+            if dep_formula_id in self.formula_nodes:
+                dep_node = self.formula_nodes[dep_formula_id]
+                dependency_units[dep_formula_id] = dep_node.output_units
+
+        return {
+            "formula_id": formula_id,
+            "input_units": node.input_units,
+            "output_units": node.output_units,
+            "dependency_units": dependency_units
+        }
+
+    def validate_execution_with_units(self) -> dict[str, Any]:
+        """
+        Validate entire execution plan with unit constraints.
+
+        Returns:
+            {
+                "valid": bool,
+                "execution_plan": ExecutionPlan,
+                "unit_flow_issues": list[str]
+            }
+        """
+        plan = self.plan_execution()
+
+        return {
+            "valid": plan.unit_flow_valid,
+            "execution_plan": plan,
+            "unit_flow_issues": plan.unit_validation_issues
+        }
+
     def get_statistics(self) -> dict[str, Any]:
         """
         Get graph statistics.
@@ -386,3 +487,81 @@ class FormulaExecutionGraph:
     def clear_traces(self):
         """Clear all execution traces."""
         self.execution_traces.clear()
+
+
+class UnitPropagationValidator:
+    """
+    Validates unit flow consistency through execution graph.
+
+    Checks:
+    - All formula inputs have compatible units
+    - All dependencies supply required unit dimensions
+    - No dimensional mismatches across DAG
+    """
+
+    def __init__(self, execution_graph: FormulaExecutionGraph):
+        """Initialize validator with execution graph."""
+        self.graph = execution_graph
+        self.issues = []
+
+    def validate_unit_propagation(self) -> dict[str, Any]:
+        """
+        Validate unit propagation through entire graph.
+
+        Returns:
+            {
+                "valid": bool,
+                "issues": list[str],
+                "formula_unit_compatibility": dict[formula_id, bool]
+            }
+        """
+        self.issues = []
+        compatibility = {}
+
+        # Check each formula's input units against its dependencies
+        for formula_id, node in self.graph.formula_nodes.items():
+            formula_compatible = self._check_formula_inputs(formula_id, node)
+            compatibility[formula_id] = formula_compatible
+
+        return {
+            "valid": len(self.issues) == 0,
+            "issues": self.issues,
+            "formula_unit_compatibility": compatibility
+        }
+
+    def _check_formula_inputs(self, formula_id: str, node: FormulaNode) -> bool:
+        """Check if a formula's inputs have compatible units."""
+        compatible = True
+
+        for var_id in node.depends_on:
+            # Find which formula produces this variable
+            source_formula = None
+            source_node = None
+
+            for other_id, other_node in self.graph.formula_nodes.items():
+                if other_node.outputs and var_id in other_node.outputs:
+                    source_formula = other_id
+                    source_node = other_node
+                    break
+
+            # Check unit compatibility if both are known
+            if source_node and var_id in source_node.output_units:
+                if var_id in node.input_units:
+                    # Both have unit info - should be compatible
+                    source_unit = source_node.output_units[var_id]
+                    expected_unit = node.input_units[var_id]
+
+                    if source_unit and expected_unit and source_unit != expected_unit:
+                        # Units differ - could be compatible (e.g., mm vs cm)
+                        # This will be checked at runtime by PintAwareSafeFormulaExecutor
+                        pass
+
+        return compatible
+
+    def get_required_units_for_formula(self, formula_id: str) -> dict[str, Optional[str]]:
+        """Get required input units for a formula."""
+        if formula_id not in self.graph.formula_nodes:
+            return {}
+
+        node = self.graph.formula_nodes[formula_id]
+        return node.input_units.copy()

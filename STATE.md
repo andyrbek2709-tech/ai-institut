@@ -4,6 +4,92 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-08 18:45 — CALCULATIONS PLATFORM: PHASE 2 STAGE 2.1 ÉTAP 1.2-1.3 INTEGRATION ✅
+
+**Статус:** ✅ **ÉTAP 1.2 & 1.3 COMPLETE** — ExecutionGraph + Runner unit integration delivered.
+
+**Созданные компоненты:**
+- ✅ Enhanced FormulaNode with unit metadata (input_units, output_units)
+- ✅ Enhanced ExecutionTrace with unit tracking
+- ✅ Enhanced ExecutionPlan with unit validation
+- ✅ NEW: UnitPropagationValidator class
+- ✅ Updated ExecutionGraph methods: get_unit_flow_path(), validate_execution_with_units()
+- ✅ Complete rewrite of Runner with unit-aware execution
+- ✅ 24 comprehensive integration tests (13 + 11)
+
+**Architecture Integrated:**
+```
+ExecutionGraph (unit flow tracking)
+    ↓
+Runner (Quantity creation + graph-based execution)
+    ↓
+PintAwareSafeFormulaExecutor (formula evaluation with units)
+    ↓
+ExecutionResult (value + unit + traces)
+```
+
+**Tests Created:**
+- `tests/test_execution_graph_units.py` (13 tests for ÉTAP 1.2)
+- `tests/test_runner_units.py` (11 tests for ÉTAP 1.3)
+
+**Backward Compatibility:** ✅ MAINTAINED (no breaking changes)
+**Security Layers:** ✅ INTACT (Layer 1, 1.5, 2, 3 all working)
+
+**What's Next (ÉTAP 1.4-1.6, ~4-5 hours):**
+- [ ] 1.4: API integration (2 hrs) — transparent unit handling
+- [ ] 1.5: Performance hardening (1 hr) — benchmarks
+- [ ] 1.6: Documentation + completion (1 hr) — final report
+
+---
+
+### 2026-05-09 17:55 — CALCULATIONS PLATFORM: PHASE 2 STAGE 2.1 FULL PINT INTEGRATION FOUNDATION ✅
+
+**Статус:** ✅ **ÉTAP 1.1 COMPLETE** — Unit-aware execution foundation + comprehensive tests delivered.
+
+**Созданные компоненты:**
+- ✅ `src/engine/unit_manager.py` — UnitRegistry management + engineering units (MPa, N/mm², bar, etc.)
+- ✅ `src/engine/dimensional_analysis.py` — Dimensional consistency checking (blocks MPa + mm)
+- ✅ `src/engine/pint_safe_executor.py` — PintAwareSafeFormulaExecutor with full unit support
+- ✅ `tests/test_unit_manager.py` — 40+ tests for unit operations
+- ✅ `tests/test_pint_safe_executor.py` — 30+ integration tests for unit-aware execution
+
+**Architecture Delivered:**
+```
+Variables as Pint Quantities
+    ↓
+PintAwareSafeFormulaExecutor (extends SafeFormulaExecutor)
+  ├─ Layer 1: Input validation + unit syntax check
+  ├─ Layer 1.5: Dimensional analysis (invalid math blocked)
+  ├─ Layer 2: SymPy parsing + function whitelist
+  ├─ Layer 3: Pint-aware timeout sandbox
+  └─ Result: ExecutionResult with unit preserved
+```
+
+**Key Features:**
+- ✅ Quantity creation with validation
+- ✅ Unit propagation (MPa × mm² = force)
+- ✅ Invalid dimensional math detection
+- ✅ Automatic unit conversion
+- ✅ Security layers intact (eval, __import__ blocked)
+- ✅ Comprehensive test coverage (70+ tests)
+
+**Documentation Created:**
+- ✅ PHASE_2_STAGE_2_ARCHITECTURE_IMPACT.md — Architectural analysis
+- ✅ PHASE_2_STAGE_2_IMPLEMENTATION_CHECKLIST.md — Detailed checklist (all 7 étapes)
+- ✅ PHASE_2_STAGE_2_ETAP_1_REPORT.md — ÉTAP 1 completion report
+- ✅ PHASE_2_STAGE_2_ETAP_2_TO_7_ROADMAP.md — Implementation roadmap
+- ✅ demo_pint_integration.py — 9 demo scenarios
+
+**What's Next (ÉTAP 1.2-1.6, ~6 hours):**
+- [ ] 1.2: ExecutionGraph integration (2 hrs) — unit flow through DAG
+- [ ] 1.3: Runner integration (2 hrs) — build variables as Quantities
+- [ ] 1.4: API integration (2 hrs) — no breaking changes
+- [ ] 1.5: Performance hardening (2 hrs) — benchmark + optimize
+- [ ] 1.6: Documentation + completion (1 hr) — final report
+- [ ] ÉTAP 2-7: Validation, traceability, intermediate variables
+
+---
+
 ### 2026-05-09 15:50 — CALCULATIONS PLATFORM: PHASE 2 STAGE 2 RUNNER INTEGRATION ✅
 
 **Статус:** ✅ **RUNNER INTEGRATION COMPLETE** — SafeFormulaExecutor + FormulaExecutionGraph integrated into execution pipeline.
