@@ -20,7 +20,7 @@ export function metricsMiddleware() {
       if (!req.path.includes('/health') && !req.path.includes('/ready') && !req.path.includes('/metrics')) {
         recordMetric({
           timestamp: new Date().toISOString(),
-          provider: (env.NODE_ENV === 'production' ? 'railway' : 'vercel') as 'railway' | 'vercel',
+          provider: 'railway',
           endpoint: req.path,
           status_code: res.statusCode,
           response_time: responseTime,
