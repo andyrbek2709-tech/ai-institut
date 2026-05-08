@@ -12,7 +12,8 @@
 5. **«Готово»** говорим только после реального теста в браузере на проде: pushed + Railway READY + smoke end-to-end.
 6. **Перед сменой Railway env / Supabase ключей** — спросить пользователя.
 7. **STATE.md** — обновлять в одном коммите вместе с правкой. Новые записи сверху (новые впереди). **Каждое атомарное изменение — отдельная строка-буллет** в дневной записи. Подпроекты с собственным `STATE.md` (например `ad-intake-bot/STATE.md`) — дублировать туда только то, что касается этого подпроекта; полный след по репо — в корневом `STATE.md`. Секреты не писать (только имена env-переменных), персональные данные не писать, длинные диффы — ссылки на коммиты. Стиль: markdown, компактно, дата+время `YYYY-MM-DD HH:MM`. Если `STATE.md` противоречит коду — приоритет у кода, обновить `STATE.md`.
-8. **VERCEL ДЕCOMMISSIONED** — Vercel не существует в архитектуре проекта. Никогда не деплоить на Vercel, не искать .vercel файлы, не использовать Vercel MCP для этого проекта. Railway = единственная production платформа.
+8. **Persistence между сессиями:** Для long-running projects (AGSK, etc.) используй project memory. Каждая сессия: (1) прочитай PROJECT_MASTER_STATE.md (фаза, lock decisions, roadmap), (2) прочитай STATE.md (100 строк, recent changes), (3) прочитай IMPLEMENTATION_LOG.md (current blockers). После каждого significant step (≥30 мин работы): обнови IMPLEMENTATION_LOG.md + STATE.md + коммит оба файла вместе. Читай PERSISTENCE_RULES.md (в project memory) для подробной инструкции.
+9. **VERCEL ДЕCOMMISSIONED** — Vercel не существует в архитектуре проекта. Никогда не деплоить на Vercel, не искать .vercel файлы, не использовать Vercel MCP для этого проекта. Railway = единственная production платформа.
 
 ## Layout
 

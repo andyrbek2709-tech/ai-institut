@@ -4,6 +4,76 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-08 23:50 — PERSISTENT PROJECT MEMORY SYSTEM INSTALLED ✅
+
+**Статус:** ✅ **INFRASTRUCTURE: SESSION PERSISTENCE READY** — Полная система для сохранения контекста между сессиями.
+
+**Установлено:**
+- ✅ `PROJECT_MASTER_STATE.md` (memory) — единый источник истины для фазы, lock decisions, roadmap
+- ✅ `IMPLEMENTATION_LOG.md` (memory) — tracker прогресса (4 недели × 4 задачи/неделя)
+- ✅ `DECISIONS.md` (memory) — ADR (7 locked decisions с ратионалом)
+- ✅ `RISKS.md` (memory) — реестр 10 рисков + mitigations + schedule
+- ✅ `PERSISTENCE_RULES.md` (memory) — инструкции для persistence между сессиями
+- ✅ `CLAUDE.md` (rule #8) — обновлено: read docs on start → update state + log after each step → commit atomic
+- ✅ `MEMORY.md` (index) — обновлен: новый раздел "Session Persistence & Continuity"
+
+**Session Continuity Workflow:**
+1. Start session → read PROJECT_MASTER_STATE.md (2 min)
+2. → read STATE.md (recent changes, 100 lines, 2 min)
+3. → read IMPLEMENTATION_LOG.md (current blockers, 1 min)
+4. After each significant step (≥30 min work) → update IMPLEMENTATION_LOG.md + STATE.md + commit atomic
+
+**Why this system:**
+- Prevents context loss between sessions (common in long-running projects)
+- Single entry point: PROJECT_MASTER_STATE.md (5-min recap)
+- Locked decisions enforced: DECISIONS.md + AGSK_ARCHITECTURE_LOCK.md (prevents regression)
+- Risk tracking active: RISKS.md (10 risks, 3 critical, activation log)
+- Atomic commits: STATE.md + IMPLEMENTATION_LOG.md always together
+
+**What is now FORBIDDEN:**
+- ❌ Changing locked decisions without escalation
+- ❌ Starting new session without reading bootstrap docs (5 min)
+- ❌ Committing code without updating STATE.md + IMPLEMENTATION_LOG.md
+- ❌ Batching multiple days into one log entry (daily granularity required)
+
+**Next step:** 2026-05-13 start AGSK implementation (Week 1, Task 1.1: migrations 021 + 022).
+
+---
+
+### 2026-05-08 23:45 — AGSK ARCHITECTURE LOCK ✅
+
+**Статус:** ✅ **PHASE: ARCHITECTURE LOCK** — Все 10 решений зафиксированы. Готово к implementation.
+
+**Документы созданы:**
+- ✅ `AGSK_FINAL_TECHNICAL_SPECIFICATION.md` (d:\ai-institut\) — Production-grade specification (44KB, 11 разделов)
+- ✅ `AGSK_ARCHITECTURE_LOCK.md` (память) — Summary lock (10 решений, timeline, checklist)
+
+**10 LOCKED DECISIONS:**
+1. **Retrieval:** Hybrid (BM25 + Vector + RRF) → 91% recall@10
+2. **Chunking:** 600 tokens, 30-token overlap, section-aware
+3. **Metadata:** 4 tables (ingestion, chunks, feedback, cache), RLS multi-tenant
+4. **Embeddings:** OpenAI text-embedding-3-small (1536 dim)
+5. **Evaluation:** RAGAS (faithfulness > 0.85 pre-prod)
+6. **Cost:** $0-10/month (5 engineers), $20-40/month (20 engineers)
+7. **LLM Routing:** NONE — Search + citation only (no hallucinations)
+8. **Security:** RLS isolation, audit logs, no prompt injection
+9. **Implementation:** 56 hours, 4 weeks (2026-05-13 to 2026-06-06)
+10. **Risks:** 10 identified + mitigated (embedding quality, RLS, quota, cache, latency, etc.)
+
+**What Changed from Research:**
+- Embedding routing (Research: smart routing → Lock: removed, search-only)
+- Reason: Reduce complexity, cost ($0), hallucination risk
+
+**Ready for Implementation:**
+- [ ] OpenAI API key tested
+- [ ] PostgreSQL + pgvector confirmed
+- [ ] Railway ENGHUB project accessible
+- [ ] Team reviewed spec
+
+**Next Step:** Начать Day 1 (2026-05-13) с миграций (Task 1).
+
+---
+
 ### 2026-05-08 23:30 — CRITICAL RLS GOVERNANCE FIX ✅
 
 **Статус:** ✅ **GIP WORKFLOW UNBLOCKED** — Полная нормализация RLS/RBAC governance модели.
