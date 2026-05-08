@@ -18,6 +18,7 @@ import { logger } from '../utils/logger.js';
 import { ApiError } from '../middleware/errorHandler.js';
 import { env } from '../config/environment.js';
 import OpenAI from 'openai';
+import { rerank } from '../../../services/agsk-ingestion/src/processors/reranker.js';
 
 const router = Router();
 
@@ -163,8 +164,16 @@ router.post(
 
 // ══════════════════════════════════════════════════════════════════════════
 // POST /api/agsk/search
-// Body: { query, limit?, discipline?, standard_code?, retrieval_type? }
-// retrieval_type: 'hybrid' (default) | 'vector' | 'bm25'
+// Body: {
+//   query,
+//   limit? (default 5, max 20),
+//   discipline?,
+//   standard_code?,
+//   retrieval_type? ('hybrid' | 'vector' | 'bm25'),
+//   version_year?,
+//   version_latest_only? (default true),
+//   enable_reranking? (default true)
+// }
 // ══════════════════════════════════════════════════════════════════════════
 
 router.post(
@@ -174,11 +183,14 @@ router.post(
     try {
       const {
         query,
-        limit          = 5,
+        limit               = 5,
         discipline,
         standard_code,
-        retrieval_type = 'hybrid',
+        retrieval_type      = 'hybrid',
         min_similarity,
+        version_year,
+        version_latest_only = true,
+        enable_reranking    = true,
       } = req.body;
 
       if (!query || String(query).trim().length < 3) {
@@ -193,10 +205,10 @@ router.post(
       const orgId = await getOrgId(req.user!.id);
       if (!orgId) return next(new ApiError(403, 'User has no associated organisation'));
 
-      const clampedLimit = Math.min(Math.max(1, Number(limit) || 5), 20);
-      const q            = String(query).trim();
-      const sb           = getSupabaseAdmin();
-      const start        = Date.now();
+      const finalLimit = Math.min(Math.max(1, Number(limit) || 5), 20);
+      const q          = String(query).trim();
+      const sb         = getSupabaseAdmin();
+      const start      = Date.now();
 
       let embedding: number[] | null = null;
       let cacheHit = false;
@@ -207,44 +219,68 @@ router.post(
         cacheHit  = emb.cache_hit;
       }
 
+      // Retrieve top-20 candidates (pre-reranking)
+      const preRerankLimit = Math.min(finalLimit * 4, 20); // up to top-20 for reranking
+
       let chunks: any[] = [];
+      let rerankMetrics: any = null;
 
       if (retrieval_type === 'hybrid') {
-        const { data, error } = await sb.rpc('agsk_hybrid_search', {
+        const { data, error } = await sb.rpc('agsk_hybrid_search_v2', {
+          p_query: q,
           p_query_embedding: embedding,
-          p_query_text:      q,
           p_org_id:          orgId,
-          p_match_count:     clampedLimit,
+          p_limit:           preRerankLimit,
           p_vector_weight:   0.7,
           p_bm25_weight:     0.3,
           p_discipline:      discipline ?? null,
           p_standard_code:   standard_code ?? null,
+          p_version_year:    version_year ?? null,
+          p_version_latest_only: version_latest_only,
         });
         if (error) throw new Error(error.message);
         chunks = data ?? [];
 
       } else if (retrieval_type === 'vector') {
-        const { data, error } = await sb.rpc('agsk_vector_search', {
+        const { data, error } = await sb.rpc('agsk_vector_search_v2', {
           p_query_embedding: embedding,
           p_org_id:          orgId,
-          p_match_count:     clampedLimit,
+          p_limit:           preRerankLimit,
           p_discipline:      discipline ?? null,
           p_standard_code:   standard_code ?? null,
+          p_version_year:    version_year ?? null,
+          p_version_latest_only: version_latest_only,
           p_min_similarity:  min_similarity ?? 0.5,
         });
         if (error) throw new Error(error.message);
         chunks = data ?? [];
 
       } else {
-        const { data, error } = await sb.rpc('agsk_bm25_search', {
-          p_query_text:    q,
-          p_org_id:        orgId,
-          p_match_count:   clampedLimit,
-          p_discipline:    discipline ?? null,
-          p_standard_code: standard_code ?? null,
+        const { data, error } = await sb.rpc('agsk_bm25_search_v2', {
+          p_query:    q,
+          p_org_id:   orgId,
+          p_limit:    preRerankLimit,
+          p_discipline:      discipline ?? null,
+          p_standard_code:   standard_code ?? null,
+          p_version_year:    version_year ?? null,
+          p_version_latest_only: version_latest_only,
         });
         if (error) throw new Error(error.message);
         chunks = data ?? [];
+      }
+
+      // Apply reranking if enabled and we have candidates
+      if (enable_reranking && chunks.length > 0) {
+        try {
+          const rerankResult = await rerank(q, chunks, finalLimit, embedding, env.JINA_API_KEY);
+          rerankMetrics = rerankResult.metrics;
+          chunks = rerankResult.results.map((r: any) => r.item);
+        } catch (rerankErr) {
+          logger.warn({ err: rerankErr }, 'Reranking failed, using retrieval order');
+          chunks = chunks.slice(0, finalLimit);
+        }
+      } else {
+        chunks = chunks.slice(0, finalLimit);
       }
 
       const latency_ms = Date.now() - start;
@@ -279,17 +315,23 @@ router.post(
         embedding_cache_hit:  cacheHit,
         discipline_filter:    discipline ?? null,
         standard_code_filter: standard_code ?? null,
+        version_filter:       version_year ?? null,
+        version_latest_only:  version_latest_only,
+        reranker_type:        rerankMetrics?.reranker_type ?? null,
+        reranker_latency_ms:  rerankMetrics?.latency_ms ?? null,
         retrieved_chunk_ids:  chunks.map((c: any) => c.id),
       }).then().catch(() => {});
 
       res.json({
         chunks,
         citations,
-        query:               q,
+        query:                q,
         retrieval_type,
         latency_ms,
-        result_count:        chunks.length,
-        embedding_cache_hit: cacheHit,
+        result_count:         chunks.length,
+        embedding_cache_hit:  cacheHit,
+        version_filter:       { year: version_year, latest_only: version_latest_only },
+        reranker:             rerankMetrics || null,
       });
     } catch (err) {
       next(err);
