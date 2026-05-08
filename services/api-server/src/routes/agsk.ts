@@ -78,7 +78,7 @@ async function getOrgId(supabaseUid: string): Promise<string | null> {
 
   // Auto-create pilot_users record with default org_id if doesn't exist
   logger.info(`Creating missing pilot_users record for ${supabaseUid}`);
-  const defaultOrgId = 'default';
+  const defaultOrgId = 'f0624384-9ed0-56d0-9c0c-abbd2f5ae8dd'; // Caspian Engineering UUID
   const { error: insertErr } = await sb
     .from('pilot_users')
     .insert({
