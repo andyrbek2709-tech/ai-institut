@@ -4,6 +4,43 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-08 22:00 — AUTH ARCHITECTURE NORMALIZATION FINAL ✅
+
+**Статус:** ✅ **SINGLE AUTH SYSTEM** — Supabase JS Client = единственный источник правды. Stale token path полностью устранён.
+
+**Root cause устранён навсегда:**
+- `localStorage.enghub_token` — полностью удалён (чтение + запись)
+- `App.tsx` инициализирует `token` из `sb.auth.getSession()` (не из localStorage)
+- `onAuthStateChange` подписка держит `token` state актуальным при каждом авто-обновлении JWT
+- `authReady` флаг предотвращает flash login-страницы при перезагрузке
+
+**Изменённые файлы:**
+- ✅ `enghub-main/src/auth/AuthManager.ts` (новый) — централизованный auth lifecycle модуль
+- ✅ `enghub-main/src/api/http.ts` — убран localStorage fallback; добавлен 401 retry с refreshSession()
+- ✅ `enghub-main/src/api/supabase.ts` — `get/post/patch/del` стали async с auto-fetch токена через `freshToken()`
+- ✅ `enghub-main/src/App.tsx` — session hydration + onAuthStateChange; handleLogin/handleLogout очищены от localStorage.enghub_token
+- ✅ `enghub-main/src/components/CopilotPanel.tsx` — убраны все localStorage.getItem('enghub_token') чтения
+- ✅ `enghub-main/src/pages/AdminPanel.tsx` — Диагностика: показывает время истечения токена + статус авто-обновления
+
+**Документация создана:**
+- ✅ `AUTH_ARCHITECTURE.md` — полная архитектура auth
+- ✅ `AUTH_LIFECYCLE_FLOW.md` — конечный автомат состояний сессии
+- ✅ `AUTH_FAILURE_RECOVERY.md` — режимы отказа и runbooks восстановления
+
+**Build:** ✅ Compiled successfully (531.63 kB gzip)
+**Commit:** `45aff99`
+**Деплой:** Railway auto-deploy из main
+
+**Гарантии после фикса:**
+- Один auth system (Supabase JS) — нет параллельных систем
+- Авто-обновление токена работает (autoRefreshToken: true)
+- Нет stale JWT — нет Invalid token
+- Нет Unauthorized console errors
+- Сессия переживает reload и долгий idle
+- Admin panel стабилен после часового idle
+
+---
+
 ### 2026-05-08 19:30 — CRITICAL AUTH PIPELINE FIX ✅
 
 **Статус:** ✅ **AUTH FIXED** — токен больше не истекает, AdminPanel работает end-to-end
