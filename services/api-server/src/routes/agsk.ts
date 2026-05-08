@@ -67,9 +67,9 @@ async function embedQuery(query: string): Promise<{ embedding: number[]; cache_h
 async function getOrgId(supabaseUid: string): Promise<string | null> {
   const sb = getSupabaseAdmin();
   const { data } = await sb
-    .from('app_users')
+    .from('pilot_users')
     .select('org_id')
-    .eq('supabase_uid', supabaseUid)
+    .eq('user_id', supabaseUid)
     .maybeSingle();
   return (data as any)?.org_id ?? null;
 }
