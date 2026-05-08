@@ -1,0 +1,47 @@
+name: "Pipe Stress Analysis"
+category: "pressure"
+description: "Calculate hoop stress in pressurized pipe using Barlow's formula"
+normative_reference: "ASME B31.4, API 5L"
+tags: ["pipeline", "pressure", "stress", "mechanical"]
+
+variables:
+  - name: "pressure"
+    label: "Internal Pressure"
+    description: "Design pressure inside the pipe"
+    unit: "MPa"
+    data_type: "float"
+    required: true
+    min_value: 0
+    max_value: 1000
+
+  - name: "diameter"
+    label: "Outer Diameter"
+    description: "External pipe diameter"
+    unit: "mm"
+    data_type: "float"
+    required: true
+    min_value: 1
+    max_value: 10000
+
+  - name: "thickness"
+    label: "Wall Thickness"
+    description: "Pipe wall thickness"
+    unit: "mm"
+    data_type: "float"
+    required: true
+    min_value: 0.1
+    max_value: 500
+
+  - name: "safety_factor"
+    label: "Safety Factor"
+    description: "Design safety factor"
+    unit: ""
+    data_type: "float"
+    required: false
+    min_value: 1.0
+    max_value: 10.0
+    default_value: 1.5
+
+formula: "(pressure * (diameter - 2*thickness)) / (2 * thickness)"
+outputs:
+  - "result"

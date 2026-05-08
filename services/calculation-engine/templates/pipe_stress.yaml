@@ -1,0 +1,57 @@
+metadata:
+  name: "Pipe Stress Analysis"
+  description: "Calculate stress in pressurized pipe using Barlow's formula"
+  category: "Mechanical/Piping"
+  version: "1.0.0"
+  author: "EnGHub Foundation"
+
+inputs:
+  - name: "pressure"
+    description: "Internal pressure"
+    unit: "MPa"
+    type: "float"
+    min_value: 0
+    max_value: 100
+    required: true
+  - name: "outer_diameter"
+    description: "Outer diameter of pipe"
+    unit: "mm"
+    type: "float"
+    min_value: 10
+    max_value: 5000
+    required: true
+  - name: "wall_thickness"
+    description: "Wall thickness of pipe"
+    unit: "mm"
+    type: "float"
+    min_value: 0.5
+    max_value: 500
+    required: true
+  - name: "yield_strength"
+    description: "Material yield strength"
+    unit: "MPa"
+    type: "float"
+    min_value: 100
+    max_value: 1000
+    required: false
+    default_value: 450
+
+outputs:
+  - name: "hoop_stress"
+    description: "Hoop stress in pipe wall"
+    unit: "MPa"
+    type: "float"
+  - name: "safety_factor"
+    description: "Safety factor (yield_strength / hoop_stress)"
+    unit: "dimensionless"
+    type: "float"
+
+formulas:
+  hoop_stress: "(pressure * (outer_diameter - 2 * wall_thickness)) / (2 * wall_thickness)"
+  safety_factor: "yield_strength / ((pressure * (outer_diameter - 2 * wall_thickness)) / (2 * wall_thickness))"
+
+validation_rules:
+  pressure: "positive"
+  outer_diameter: "positive"
+  wall_thickness: "positive"
+  yield_strength: "positive"
