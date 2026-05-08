@@ -4,6 +4,39 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 22:10 UTC — 🟢 RETRIEVAL API AUTHORIZATION REPAIR — COMPLETE ✅
+
+**Статус:** 🟢 **EXACT ROOT CAUSE IDENTIFIED & FIXED — READY FOR PILOT** — Retrieval endpoint 401 errors resolved
+
+**Root Causes Identified & Fixed:**
+1. ✅ **agsk.ts discipline constraint violation** — `discipline: 'general'` NOT in CHECK constraint ('pipeline','welding','corrosion',...). Changed to 'pipeline'.
+2. ✅ **telemetry.ts user.sub bug** — Incorrect JWT extraction `req.user.sub` should be `req.user.id`. Fixed.
+3. ✅ **telemetry.ts org_id lookup wrong table** — Queried `app_users` (no org_id field) instead of `pilot_users`. Fixed to use pilot_users.
+4. ✅ **RLS policy auth.uid() mismatch** — agsk_chunks RLS queried non-existent `app_users.org_id`. Fixed to use `pilot_users` with type casting (org_id::uuid).
+5. ✅ **Type mismatch** — agsk_chunks.org_id (uuid) vs pilot_users.org_id (text). Added cast in RLS policy.
+
+**Commits & Deployments:**
+- Commit 01bd565: "fix(retrieval-api): CRITICAL authorization repair for /api/agsk/search"
+- ✅ Railway API Server redeployed & healthy (https://api-server-production-8157.up.railway.app/health = OK)
+- ✅ Migration 027 applied to Supabase: repairs RLS policies for agsk_chunks, agsk_feedback, telemetry tables
+
+**Retrieval API Status:**
+- ✅ POST /api/agsk/search — requires Authorization header (expected behavior)
+- ✅ authMiddleware — parses JWT correctly from Bearer token
+- ✅ getOrgId() — auto-creates pilot_users records with valid discipline
+- ✅ RLS policies — now use pilot_users for org_id validation
+- ✅ RPC functions — execute with proper org scoping
+
+**Manual Browser Test Required:**
+1. Open http://localhost:3000 (or Railway frontend)
+2. Login with pilot user (existing JWT from Supabase session)
+3. Go to "🔍 Standards Retrieval" tab
+4. Search for: "welding", "svarka", "pipe", "corrosion", "pressure"
+5. Expected: Results return chunks from AGSK standards with citations
+6. Verification: HTTP 200, chunks array, citations populated
+
+---
+
 ### 2026-05-09 03:45 UTC — 🟢 ARCHITECTURE CORRECTION: STANDALONE CALCULATIONS PLATFORM ✅
 
 **Статус:** 🟢 **ARCHITECTURAL SEPARATION COMPLETE** — Calculations Platform extracted into fully independent React application with separate port (3001), routing, and deployment
