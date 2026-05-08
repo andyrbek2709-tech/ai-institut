@@ -1,0 +1,593 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://enghub.local/schemas/template-v2.schema.json",
+  "title": "EngHub Template Format V2",
+  "description": "JSON Schema for EngHub Template Format V2.0.0",
+  "type": "object",
+  "required": [
+    "metadata",
+    "variables",
+    "formulas"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "description",
+        "category",
+        "version",
+        "created_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$",
+          "description": "Unique template ID (kebab-case)"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 255,
+          "description": "Human-readable template name"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 1000,
+          "description": "Brief description of what the template calculates"
+        },
+        "category": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9/]+$",
+          "description": "Hierarchical category (e.g., 'Mechanical/Piping')"
+        },
+        "subcategory": {
+          "type": "string",
+          "description": "Optional subcategory"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of searchable tags"
+        },
+        "section": {
+          "type": "string",
+          "description": "UI section for dashboard organization"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version (X.Y.Z)"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 creation timestamp"
+        },
+        "last_modified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 last modification timestamp"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "Creator name or team"
+        },
+        "deprecated": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this template is deprecated"
+        },
+        "deprecation_notice": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Deprecation notice for users"
+        },
+        "supersedes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of template IDs this replaces"
+        },
+        "deprecates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          ],
+          "description": "List of template IDs this makes obsolete"
+        },
+        "migration_guide_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "description": "URL to migration instructions"
+        },
+        "standard_references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "standard"
+            ],
+            "properties": {
+              "standard": {
+                "type": "string",
+                "description": "Standard name (e.g., 'ASME B31.8')"
+              },
+              "section": {
+                "type": "string",
+                "description": "Section or clause number"
+              },
+              "title": {
+                "type": "string",
+                "description": "Section title"
+              }
+            }
+          },
+          "description": "References to engineering standards"
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "year": {
+                "type": [
+                  "string",
+                  "integer"
+                ]
+              }
+            }
+          },
+          "description": "Academic/technical references"
+        },
+        "maintainer": {
+          "type": "string",
+          "description": "Team or person responsible for maintenance"
+        },
+        "maintenance_status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "deprecated",
+            "archived"
+          ],
+          "default": "active",
+          "description": "Maintenance status"
+        },
+        "support_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL for support/issues"
+        }
+      }
+    },
+    "variables": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z0-9_]+$": {
+          "$ref": "#/definitions/variable"
+        }
+      },
+      "description": "All calculation variables (inputs, outputs, intermediates)"
+    },
+    "formulas": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z0-9_]+$": {
+          "$ref": "#/definitions/formula"
+        }
+      },
+      "description": "Formula definitions"
+    },
+    "validation": {
+      "$ref": "#/definitions/validation",
+      "description": "Validation rules (input, engineering, output)"
+    },
+    "capabilities": {
+      "$ref": "#/definitions/capabilities",
+      "description": "Template capabilities and limitations"
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/example"
+      },
+      "description": "Example calculations"
+    }
+  },
+  "definitions": {
+    "variable": {
+      "type": "object",
+      "required": [
+        "label",
+        "description",
+        "unit",
+        "type",
+        "category"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Human-readable label"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500,
+          "description": "Variable description"
+        },
+        "engineering_meaning": {
+          "type": "string",
+          "description": "Detailed engineering explanation"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Pint-compatible unit string"
+        },
+        "dimension": {
+          "type": "string",
+          "pattern": "^[A-Z]( [A-Z\\^\\-0-9]+)*$",
+          "description": "SI dimension (e.g., 'M L^-1 T^-2')"
+        },
+        "symbolic_notation": {
+          "type": "string",
+          "description": "Mathematical symbol (e.g., 'σ', 'P', 'OD')"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "float",
+            "int",
+            "string",
+            "enum"
+          ],
+          "description": "Data type"
+        },
+        "required": {
+          "type": "boolean",
+          "default": true,
+          "description": "Must user provide this?"
+        },
+        "default_value": {
+          "description": "Default value if not provided"
+        },
+        "example_value": {
+          "description": "Example value for documentation"
+        },
+        "min_value": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Minimum allowed value"
+        },
+        "max_value": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Maximum allowed value"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "description": "Valid choices for enum type"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "input",
+            "output",
+            "intermediate",
+            "constant"
+          ],
+          "description": "Variable category"
+        },
+        "section": {
+          "type": "string",
+          "description": "UI section grouping"
+        },
+        "help_text": {
+          "type": "string",
+          "description": "Short help text for UI"
+        }
+      }
+    },
+    "formula": {
+      "type": "object",
+      "required": [
+        "expression",
+        "description",
+        "depends_on"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string",
+          "description": "SymPy-compatible mathematical expression"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 500,
+          "description": "Formula description"
+        },
+        "variable_mapping": {
+          "type": "object",
+          "description": "Mapping of formula symbols to variable IDs"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "List of variable IDs this formula depends on"
+        },
+        "explanation": {
+          "type": "string",
+          "description": "Detailed explanation and derivation"
+        },
+        "reference": {
+          "type": "string",
+          "description": "Standard or reference name"
+        },
+        "reference_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to reference documentation"
+        },
+        "year": {
+          "type": [
+            "string",
+            "integer"
+          ],
+          "description": "Year formula was published"
+        },
+        "original_author": {
+          "type": "string",
+          "description": "Original author/developer"
+        },
+        "dimension_check": {
+          "type": "boolean",
+          "default": true,
+          "description": "Perform dimensional analysis?"
+        },
+        "unit_system": {
+          "type": "string",
+          "enum": [
+            "SI",
+            "US",
+            "Mixed"
+          ],
+          "default": "SI",
+          "description": "Unit system"
+        },
+        "range_validation": {
+          "type": "object",
+          "properties": {
+            "output_min": {
+              "type": "number"
+            },
+            "output_max": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/validation_rule"
+          }
+        },
+        "engineering_constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/engineering_constraint"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/validation_rule"
+          }
+        }
+      }
+    },
+    "validation_rule": {
+      "type": "object",
+      "required": [
+        "variable",
+        "rules"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "variable": {
+          "type": "string",
+          "description": "Variable ID"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "positive",
+                  "negative",
+                  "range",
+                  "minimum",
+                  "maximum"
+                ]
+              },
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              },
+              "message": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "error",
+                  "warning"
+                ],
+                "default": "error"
+              }
+            }
+          }
+        }
+      }
+    },
+    "engineering_constraint": {
+      "type": "object",
+      "required": [
+        "description",
+        "condition",
+        "variables"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "What this constraint represents"
+        },
+        "condition": {
+          "type": "string",
+          "description": "Expression that must be true"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Variables involved in constraint"
+        },
+        "message": {
+          "type": "string",
+          "description": "User-friendly error message"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warning"
+          ],
+          "default": "error"
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "supported_features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "applicability": {
+          "type": "object",
+          "properties": {
+            "applicable_conditions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "inapplicable_conditions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "example": {
+      "type": "object",
+      "required": [
+        "name",
+        "description",
+        "inputs",
+        "expected_outputs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "object"
+        },
+        "expected_outputs": {
+          "type": "object"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
