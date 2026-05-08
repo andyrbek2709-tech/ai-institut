@@ -4,6 +4,58 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-08 22:15 UTC — LIFECYCLE & IDENTITY REFACTORING PHASE 1 COMPLETE ✅ ARCHITECTURE STABILIZED
+
+**Статус:** ✅ **CRITICAL ARCHITECTURE REFACTORING DONE** — Identity system integrated into pipeline, deterministic hashing fixed, lifecycle persistence implemented.
+
+**Выполнено (Этапы 1-4):**
+- ✅ **Этап 1:** Unified reporting pipeline (`pipeline.py`, 400 lines) — Identity + lifecycle integrated as core pipeline stages
+- ✅ **Этап 2:** Deterministic hashing framework (`deterministic_hashing.py`, 280 lines) — Canonical serialization, whitespace normalization, float precision
+- ✅ **Этап 3:** Lifecycle persistence layer (`lifecycle_persistence.py`, 350 lines) — In-memory store (future DB-ready)
+- ✅ **Этап 4:** Hardened report identity (7 hash fields) — Added `generation_hash`, `lifecycle_hash` to ReportIdentity
+- ✅ **Этап 5 (partial):** Traceability module (`traceability.py`, 320 lines) — Report lineage, revision tracking, regeneration history
+
+**Ключевые изменения:**
+- `src/engine/reporting/pipeline.py` (NEW) — Unified UnifiedReportingPipeline class orchestrating full flow
+- `src/engine/reporting/deterministic_hashing.py` (NEW) — DeterministicHasher with canonical serialization
+- `src/engine/reporting/lifecycle_persistence.py` (NEW) — LifecyclePersistenceStore for lifecycle metadata
+- `src/engine/reporting/traceability.py` (NEW) — TraceabilityManager for report lineage tracking
+- `src/engine/reporting/report_identity.py` (UPDATED) — Added generation_hash, lifecycle_hash computation methods
+- `src/engine/reporting/__init__.py` (UPDATED) — Exported new modules
+
+**Architecture Fixes:**
+- Identity generation no longer separate — integrated into pipeline execution
+- Lifecycle events recorded at every stage, not deferred
+- Deterministic hashing: "a+b" == "a + b" == "a  +  b" (whitespace-normalized)
+- Float hashing: normalized to 12 decimal places (reproducible)
+- Metadata ordering: canonical JSON with sorted keys (deterministic)
+- 7 hash fields: inputs, formula, execution, semantic, template, generation, lifecycle
+- Lifecycle persistence: immediate storage before response
+- No timing-dependent hashes, no whitespace sensitivity, no metadata ordering variance
+
+**Документация:**
+- `LIFECYCLE_IDENTITY_REFACTORING_REPORT.md` (NEW, 400 lines) — Comprehensive refactoring report with architecture, validation, and readiness assessment
+
+**Статус по фазам:**
+- Phase 1 (Architecture Design): ✅ COMPLETE
+- Phase 2 (Deterministic Hashing): ✅ COMPLETE
+- Phase 3 (Lifecycle Persistence): ✅ COMPLETE
+- Phase 4 (Identity Hardening): ✅ COMPLETE
+- Phase 5 (Traceability): ⏳ IN PROGRESS (module created, integration pending)
+- Phase 6 (Scalability): ⏳ PENDING
+- Phase 7 (Determinism Tests): ⏳ PENDING
+- Phase 8 (Review Revalidation): ⏳ PENDING
+
+**Следующие шаги:**
+1. Complete Etap 5: Integrate traceability with pipeline and persistence
+2. Etap 6: Add bounded storage + cleanup strategy
+3. Etap 7: Create 100+ determinism reproducibility tests
+4. Etap 8: Run review gate revalidation
+5. Phase 2 API integration: Update /api/reports/generate endpoint to use pipeline
+6. Phase 2 DB migration: Move lifecycle persistence to PostgreSQL
+
+---
+
 ### 2026-05-08 18:58 UTC — ÉTAP 3 PHASE 1 PUSHED ✅ ALL CODE IN GITHUB
 
 **Статус:** ✅ **REPORTING MODULE COMPLETE IN GIT** — All 1,500+ lines committed to `main` (fc5894a). Ready for Phase 2 testing and integration.
