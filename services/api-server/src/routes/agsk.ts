@@ -18,7 +18,6 @@ import { logger } from '../utils/logger.js';
 import { ApiError } from '../middleware/errorHandler.js';
 import { env } from '../config/environment.js';
 import OpenAI from 'openai';
-import { rerank } from '../../../services/agsk-ingestion/src/processors/reranker.js';
 
 const router = Router();
 
@@ -269,19 +268,7 @@ router.post(
         chunks = data ?? [];
       }
 
-      // Apply reranking if enabled and we have candidates
-      if (enable_reranking && chunks.length > 0) {
-        try {
-          const rerankResult = await rerank(q, chunks, finalLimit, embedding, env.JINA_API_KEY);
-          rerankMetrics = rerankResult.metrics;
-          chunks = rerankResult.results.map((r: any) => r.item);
-        } catch (rerankErr) {
-          logger.warn({ err: rerankErr }, 'Reranking failed, using retrieval order');
-          chunks = chunks.slice(0, finalLimit);
-        }
-      } else {
-        chunks = chunks.slice(0, finalLimit);
-      }
+      chunks = chunks.slice(0, finalLimit);
 
       const latency_ms = Date.now() - start;
 

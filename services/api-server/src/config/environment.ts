@@ -14,6 +14,7 @@ interface EnvConfig {
   LIVEKIT_API_SECRET?: string;
   OPENAI_API_KEY?: string;
   ANTHROPIC_API_KEY?: string;
+  JINA_API_KEY?: string;
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
   LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error';
@@ -44,6 +45,7 @@ function validateEnv(): EnvConfig {
     LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    JINA_API_KEY: process.env.JINA_API_KEY,
     TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
     LOG_LEVEL: (process.env.LOG_LEVEL as any) || 'info',
