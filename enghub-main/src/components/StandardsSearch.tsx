@@ -38,43 +38,57 @@ export default function StandardsSearch() {
 
   const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[TRACE] handleSearch: START');
+
     if (!query.trim()) {
+      console.log('[TRACE] handleSearch: EMPTY QUERY, RETURN');
       setResults([]);
       return;
     }
 
+    console.log('[TRACE] handleSearch: QUERY=' + query);
     setLoading(true);
     setError(null);
     setResults([]);
     setSelectedResult(null);
 
     try {
+      console.log('[TRACE] handleSearch: AUTH CHECK START');
       const user = await supabase.auth.getUser();
+      console.log('[TRACE] handleSearch: GOT USER:', user.data.user?.id);
       const userId = user.data.user?.id;
 
+      console.log('[TRACE] handleSearch: TELEMETRY POST START');
       // Log query to telemetry
       const telRes = await apiPost('/api/telemetry/query', {
         query_text: query,
         discipline: filters.discipline,
       });
+      console.log('[TRACE] handleSearch: TELEMETRY POST DONE:', telRes?.id);
       const newQueryLogId = telRes?.id;
       setQueryLogId(newQueryLogId);
 
+      console.log('[TRACE] handleSearch: SEARCH POST START');
       // Execute search
       const searchRes = await apiPost('/api/agsk/search', {
         query: query,
         org_id: 'default',
         ...filters,
       });
+      console.log('[TRACE] handleSearch: SEARCH POST DONE:', Array.isArray(searchRes));
 
       if (Array.isArray(searchRes)) {
+        console.log('[TRACE] handleSearch: VALID RESPONSE, RESULTS=' + searchRes.length);
         setResults(searchRes);
       } else {
+        console.log('[TRACE] handleSearch: INVALID RESPONSE TYPE:', typeof searchRes);
         setError('Invalid response format');
       }
     } catch (err) {
+      console.log('[TRACE] handleSearch: ERROR CAUGHT:', err instanceof Error ? err.message : String(err));
       setError(err instanceof Error ? err.message : 'Search failed');
     } finally {
+      console.log('[TRACE] handleSearch: FINALLY - setLoading(false)');
       setLoading(false);
     }
   }, [query, filters, supabase.auth]);

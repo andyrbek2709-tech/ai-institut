@@ -9,8 +9,12 @@ async function getAccessToken(): Promise<string> {
   try {
     const sb = getSupabaseAnonClient();
     const { data } = await sb.auth.getSession();
-    if (data?.session?.access_token) return data.session.access_token;
-  } catch { /* ignore */ }
+    const token = data?.session?.access_token;
+    console.log('[TRACE] getAccessToken:', token ? 'TOKEN_RETRIEVED' : 'NO_TOKEN');
+    if (token) return token;
+  } catch (e) {
+    console.log('[TRACE] getAccessToken: ERROR:', e instanceof Error ? e.message : String(e));
+  }
   return '';
 }
 
@@ -22,7 +26,10 @@ function resolveUrl(path: string): string {
 }
 
 export async function apiFetch<T = any>(path: string, opts: RequestInit = {}, _retry = true): Promise<T> {
+  console.log('[TRACE] apiFetch: START path=' + path);
   const token = await getAccessToken();
+  console.log('[TRACE] apiFetch: GOT TOKEN, hasToken=' + !!token);
+
   const headers = new Headers(opts.headers || {});
   if (token) headers.set('Authorization', `Bearer ${token}`);
   if (!headers.has('Content-Type') && opts.body && !(opts.body instanceof FormData) && typeof opts.body === 'string') {
@@ -30,10 +37,15 @@ export async function apiFetch<T = any>(path: string, opts: RequestInit = {}, _r
   }
 
   const url = resolveUrl(path);
+  console.log('[TRACE] apiFetch: RESOLVED_URL=' + url);
+  console.log('[TRACE] apiFetch: CALLING fetch()');
+
   const r = await fetch(url, { ...opts, headers });
+  console.log('[TRACE] apiFetch: FETCH RETURNED status=' + r.status);
 
   // 401: attempt one session refresh then retry
   if (r.status === 401 && _retry) {
+    console.log('[TRACE] apiFetch: 401 DETECTED, REFRESHING SESSION');
     try {
       await getSupabaseAnonClient().auth.refreshSession();
     } catch { /* ignore */ }
@@ -41,17 +53,20 @@ export async function apiFetch<T = any>(path: string, opts: RequestInit = {}, _r
   }
 
   if (r.ok) {
+    console.log('[TRACE] apiFetch: r.ok=true');
     if (r.status === 204) return undefined as any;
     const ct = r.headers.get('content-type') || '';
     if (ct.includes('application/json')) return r.json();
     return r.text() as any;
   }
 
+  console.log('[TRACE] apiFetch: r.ok=false, status=' + r.status);
   let msg = `API ${r.status} ${r.statusText}`;
   try {
     const j = await r.json();
     msg = j?.error || j?.message || msg;
   } catch {}
+  console.log('[TRACE] apiFetch: THROWING ERROR: ' + msg);
   throw new Error(msg);
 }
 
