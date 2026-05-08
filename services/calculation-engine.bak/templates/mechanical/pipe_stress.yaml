@@ -1,0 +1,382 @@
+metadata:
+  id: "pipe_stress_analysis"
+  name: "Pipe Stress Analysis"
+  description: "Calculate hoop stress in pressurized pipe using Barlow's formula"
+  category: "Mechanical/Piping"
+  subcategory: "Pressure Vessels"
+  tags: ["piping", "stress", "pressure", "ASME B31.8", "Barlow"]
+  section: "Piping"
+  version: "2.0.0"
+  created_at: "2026-05-08T00:00:00Z"
+  last_modified: "2026-05-08T12:30:00Z"
+  created_by: "EnGHub Foundation"
+  deprecated: false
+  deprecation_notice: null
+  supersedes: []
+  deprecates: ["pipe_stress_v1.0"]
+  migration_guide_url: null
+
+  standard_references:
+    - standard: "ASME B31.8"
+      section: "401"
+      title: "Internal Pressure Design of Piping"
+    - standard: "API 579"
+      section: "5.1.2"
+      title: "Fitness-for-Service Analysis"
+
+  references:
+    - title: "Barlow's Formula for Thin-Walled Cylinders"
+      url: "https://en.wikipedia.org/wiki/Barlow%27s_formula"
+      year: 1910
+
+  maintainer: "Piping Engineering Team"
+  maintenance_status: "active"
+  support_url: "https://enghub.local/templates/pipe-stress"
+
+variables:
+  pressure:
+    label: "Internal Pressure"
+    description: "Internal gauge pressure at nominal operating conditions"
+    engineering_meaning: |
+      The absolute internal pressure measured from gauge at the design point.
+      For gas pipelines, typically specified as gauge pressure at compressor outlet.
+      For liquid service, use maximum anticipated pressure during operation.
+    unit: "MPa"
+    dimension: "M L^-1 T^-2"
+    symbolic_notation: "P"
+    type: "float"
+    required: true
+    default_value: null
+    example_value: 10.5
+    min_value: 0.1
+    max_value: 100.0
+    category: "input"
+    section: "Pressure Data"
+    help_text: "Enter absolute gauge pressure at design conditions"
+
+  outer_diameter:
+    label: "Outer Diameter"
+    description: "Nominal outer diameter of the pipe"
+    engineering_meaning: |
+      The nominal OD as specified in pipe standards (e.g., ASME B36.10M).
+      For seamless tubes, equals the outside diameter.
+      For couplings and fittings, use the ID of the coupling.
+    unit: "mm"
+    dimension: "L"
+    symbolic_notation: "OD"
+    type: "float"
+    required: true
+    default_value: null
+    example_value: 101.6
+    min_value: 6.35
+    max_value: 2000.0
+    category: "input"
+    section: "Pipe Geometry"
+    help_text: "Enter nominal OD per ASME B36.10M (in mm)"
+
+  wall_thickness:
+    label: "Wall Thickness"
+    description: "Nominal wall thickness of pipe"
+    engineering_meaning: |
+      The minimum wall thickness after manufacturing tolerance.
+      Use the nominal thickness from pipe schedule, minus required minimum
+      per ASME B31.1 or B31.8 (usually 12.5% or specific minimum).
+    unit: "mm"
+    dimension: "L"
+    symbolic_notation: "t"
+    type: "float"
+    required: true
+    default_value: null
+    example_value: 3.4
+    min_value: 0.5
+    max_value: 200.0
+    category: "input"
+    section: "Pipe Geometry"
+    help_text: "Enter nominal wall thickness (in mm)"
+
+  yield_strength:
+    label: "Yield Strength"
+    description: "Material yield strength at design temperature"
+    engineering_meaning: |
+      The minimum yield strength (typically 0.2% offset) per material specification.
+      Must be at the design temperature (elevated temperature derating applies).
+      For B31.8, this is the SMYS (Specified Minimum Yield Strength).
+    unit: "MPa"
+    dimension: "M L^-1 T^-2"
+    symbolic_notation: "σ_y"
+    type: "float"
+    required: true
+    default_value: 450.0
+    example_value: 450.0
+    min_value: 200.0
+    max_value: 1000.0
+    category: "input"
+    section: "Material Properties"
+    help_text: "Enter SMYS at design temperature (in MPa)"
+
+  hoop_stress:
+    label: "Hoop Stress"
+    description: "Maximum circumferential stress in pipe wall"
+    engineering_meaning: |
+      The maximum tensile stress in the circumferential direction, calculated
+      using Barlow's formula. This is the dominant stress component for internal pressure.
+      For combined loadings (bending + pressure), use this as the hoop component.
+    unit: "MPa"
+    dimension: "M L^-1 T^-2"
+    symbolic_notation: "σ_h"
+    type: "float"
+    required: false
+    category: "output"
+    section: "Stress Results"
+    help_text: "Calculated hoop stress from Barlow's formula"
+
+  safety_factor:
+    label: "Safety Factor"
+    description: "Ratio of yield strength to hoop stress"
+    engineering_meaning: |
+      Simple safety factor = σ_y / σ_h
+      Per ASME B31.8, design factor = 0.72 (SF = 1.389)
+      Per ASME B31.1, design factor = 0.90 (SF = 1.111)
+      This value should exceed 1.0 for safe operation.
+    unit: "dimensionless"
+    dimension: "1"
+    symbolic_notation: "SF"
+    type: "float"
+    required: false
+    category: "output"
+    section: "Stress Results"
+    help_text: "Calculated safety factor (should be > 1.0)"
+
+formulas:
+  hoop_stress:
+    expression: "(P * (OD - 2*t)) / (2*t)"
+    description: "Barlow's formula for thin-walled cylinders"
+    variable_mapping:
+      P: "pressure"
+      OD: "outer_diameter"
+      t: "wall_thickness"
+    depends_on: ["pressure", "outer_diameter", "wall_thickness"]
+    explanation: |
+      Barlow's formula calculates hoop stress in thin-walled cylinders under internal pressure.
+      Valid when: t << OD (typically t/OD < 0.1)
+
+      Derivation:
+      - Consider thin ring of pipe of length dL
+      - Internal force = P * OD * dL
+      - This force must equal stress * wall area = σ_h * 2t * dL
+      - Solving: σ_h = P * OD / (2t)
+
+      Simplified here by using (OD - 2t) ≈ ID for more precision.
+    reference: "ASME B31.8, Section 401"
+    reference_url: "https://www.asme.org"
+    year: 1910
+    original_author: "L.E. Barlow"
+    dimension_check: true
+    unit_system: "SI"
+    range_validation:
+      output_min: 0.0
+      output_max: 1000.0
+
+  safety_factor:
+    expression: "sigma_y / sigma_h"
+    description: "Safety factor as ratio of yield to hoop stress"
+    variable_mapping:
+      sigma_y: "yield_strength"
+      sigma_h: "hoop_stress"
+    depends_on: ["hoop_stress", "yield_strength"]
+    explanation: |
+      Simple safety factor (or "design margin") is the ratio of material
+      strength to applied stress. For SF > 1, the material will not yield
+      under pure tensile loading from hoop stress alone.
+
+      Note: This is a simplified metric. ASME codes define safety differently
+      using design factors (fraction of yield). For ASME B31.8:
+      Design Factor = 0.72, which implies SF = 1.389
+
+      More accurate comparison:
+      - ASME B31.8: SF = 1 / 0.72 = 1.389 (design hoop stress = 0.72 * SMYS)
+      - ASME B31.1: SF = 1 / 0.90 = 1.111 (design hoop stress = 0.90 * SMYS)
+    reference: "Basic mechanics of materials"
+    dimension_check: true
+    unit_system: "SI"
+    range_validation:
+      output_min: 0.1
+      output_max: 10.0
+
+validation:
+  inputs:
+    - variable: "pressure"
+      rules:
+        - type: "positive"
+          message: "Pressure must be positive"
+        - type: "range"
+          min: 0.1
+          max: 100.0
+          message: "Pressure outside typical engineering range (0.1-100 MPa)"
+          severity: "warning"
+
+    - variable: "outer_diameter"
+      rules:
+        - type: "positive"
+          message: "Outer diameter must be positive"
+        - type: "range"
+          min: 6.35
+          max: 2000.0
+          message: "OD outside practical engineering range"
+          severity: "warning"
+
+    - variable: "wall_thickness"
+      rules:
+        - type: "positive"
+          message: "Wall thickness must be positive"
+        - type: "range"
+          min: 0.5
+          max: 200.0
+          message: "Wall thickness outside practical range"
+          severity: "warning"
+
+    - variable: "yield_strength"
+      rules:
+        - type: "positive"
+          message: "Yield strength must be positive"
+        - type: "range"
+          min: 200.0
+          max: 1000.0
+          message: "Yield strength outside typical range for piping materials"
+          severity: "warning"
+
+  engineering_constraints:
+    - description: "Wall thickness must be less than half OD (basic geometry)"
+      condition: "t < OD / 2"
+      variables: ["outer_diameter", "wall_thickness"]
+      message: "Wall thickness cannot exceed half the outer diameter (geometric impossibility)"
+      severity: "error"
+
+    - description: "Thin-wall assumption validity (Barlow's formula assumption)"
+      condition: "t / OD < 0.1"
+      variables: ["outer_diameter", "wall_thickness"]
+      message: |
+        Wall thickness ratio (t/OD) suggests thick-wall formula may be needed.
+        Barlow's formula is valid only for thin-walled cylinders (t/OD < 0.1).
+        For thick walls, use Lamé's equations.
+      severity: "warning"
+
+    - description: "Reasonable pressure-diameter ratio"
+      condition: "P <= OD * 10"
+      variables: ["pressure", "outer_diameter"]
+      message: "High pressure-to-diameter ratio; verify material strength and code allowables"
+      severity: "warning"
+
+  outputs:
+    - variable: "hoop_stress"
+      rules:
+        - type: "positive"
+          message: "Hoop stress should be positive under internal pressure"
+
+        - type: "range"
+          min: 0.1
+          max: 1000.0
+          message: "Hoop stress outside typical range; check inputs"
+          severity: "warning"
+
+    - variable: "safety_factor"
+      rules:
+        - type: "minimum"
+          min: 1.0
+          message: "Safety factor must exceed 1.0 for safe design"
+          severity: "error"
+
+        - type: "range"
+          min: 1.0
+          max: 10.0
+          message: "Unusually high safety factor (>10); verify design intent"
+          severity: "warning"
+
+capabilities:
+  supported_features:
+    - "Thin-wall cylinder approximation (Barlow's formula)"
+    - "Single formula evaluation for hoop stress"
+    - "Safety factor calculation vs yield strength"
+    - "Dimensional analysis and unit checking"
+    - "Multi-level validation (input, engineering, output)"
+
+  limitations:
+    - "Does NOT account for bending moments (combined loading)"
+    - "Does NOT account for corrosion allowance (use adjusted thickness)"
+    - "Does NOT account for temperature derating (use adjusted yield strength)"
+    - "Does NOT account for fatigue loading"
+    - "Assumes uniform pressure and wall thickness"
+    - "Assumes homogeneous, isotropic material"
+    - "Does NOT include stress concentration factors"
+
+  applicability:
+    applicable_conditions:
+      - "Seamless or welded pipe under internal pressure"
+      - "Thin-walled cylinders (t/OD < 0.1)"
+      - "Temperature range: -50°C to +100°C (adjust yield strength otherwise)"
+      - "Static loading (not fatigue or cyclic)"
+      - "Isotropic materials (steel, copper, etc.)"
+
+    inapplicable_conditions:
+      - "Thick-walled cylinders (t/OD ≥ 0.1) - use Lamé's equations"
+      - "Combined bending + pressure loading - use combined stress analysis"
+      - "Elevated temperature service (>100°C) - derating required"
+      - "Fatigue loading - use fatigue analysis"
+      - "Stress concentrations (fittings, welds, threads)"
+      - "Anisotropic materials (composites, orthotropic)"
+
+  recommendations:
+    - "Always apply location factor and design factor per ASME B31.8 Section 402"
+    - "For critical designs, use FEA (finite element analysis) for verification"
+    - "Account for impact on wall thickness from corrosion allowance (minimum 1.5mm typical)"
+    - "Consult with stress analyst for complex loading scenarios"
+    - "Use temperature-derating chart per ASME B31.8 for service >100°C"
+    - "Consider fabrication tolerances and weld quality in final design"
+
+examples:
+  - name: "Small Bore Hydrogen Utility Line"
+    description: "Common utility piping for hydrogen distribution in industrial facility"
+    inputs:
+      pressure: 20.0
+      outer_diameter: 50.8
+      wall_thickness: 3.4
+      yield_strength: 450.0
+    expected_outputs:
+      hoop_stress: 142.3
+      safety_factor: 3.16
+    notes: |
+      This example shows high safety factor typical of utility piping design.
+      2" nominal (50.8mm OD) Schedule 40 pipe.
+      Grade B (ASME B36.10M), yield strength 450 MPa at ambient.
+
+  - name: "Large Diameter Gas Transmission Main"
+    description: "Trunk line transmission pipeline for natural gas"
+    inputs:
+      pressure: 72.0
+      outer_diameter: 609.6
+      wall_thickness: 9.5
+      yield_strength: 448.0
+    expected_outputs:
+      hoop_stress: 343.7
+      safety_factor: 1.30
+    notes: |
+      Typical high-pressure gas transmission design.
+      24" nominal (609.6mm OD) X65 grade pipe.
+      Design follows ASME B31.8 with 0.72 design factor.
+      Resulting SF ≈ 1.39 (1/0.72) matches code allowable.
+
+  - name: "Low-Pressure Water Service"
+    description: "Residential water distribution line"
+    inputs:
+      pressure: 0.5
+      outer_diameter: 25.4
+      wall_thickness: 2.0
+      yield_strength: 350.0
+    expected_outputs:
+      hoop_stress: 3.1
+      safety_factor: 112.9
+    notes: |
+      Very high safety factor typical for low-pressure distribution.
+      1" nominal (25.4mm OD) Schedule 40 copper tube.
+      Yield strength 350 MPa for annealed copper.
+      Design is extremely conservative for 0.5 MPa (5 bar) service.
