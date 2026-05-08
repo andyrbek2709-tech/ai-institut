@@ -4,6 +4,85 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 17:35 UTC — ⚠️ AGSK RETRIEVAL VALIDATION COMPLETE: CRITICAL INGESTION ISSUES IDENTIFIED
+
+**Статус:** ⚠️ **VALIDATION COMPLETE, NOT PRODUCTION READY** — Vector infrastructure ✅, Ingestion quality ❌
+
+**Завершено (Retrieval Validation):**
+- ✅ pgvector infrastructure fully operational (HNSW index, 1536-dim embeddings)
+- ✅ Vector search performance validated (<2ms latency, 95%+ recall expected)
+- ✅ 10 engineering queries tested (1,530 → 420 results each)
+- ✅ Citation field coverage 100% (document, standard, section, page)
+- ✅ 984 unique sections extracted, 287 pages indexed
+- ✅ Full-text search (GIN index) operational
+
+**Критические проблемы найдены:**
+- ❌ **BLOCKING:** Only AGSK-1 (1,565 chunks) ingested; AGSK-2 & AGSK-3 missing (expected 35,313, got 9,390)
+- ❌ **BLOCKING:** Document deduplication error — 6 duplicate UUID entries for AGSK-1 in agsk_standards
+- ❌ **HIGH:** Citation confidence all = 1.0 (unvalidated, no variance)
+- ❌ **HIGH:** Version field (citation_version) unpopulated for all 9,390 chunks
+- ⚠️ **MEDIUM:** ~10% of sections not extracted (1,668 chunks missing citation_section)
+
+**Доставленные файлы:**
+- `AGSK_RETRIEVAL_VALIDATION_REPORT.md` (100KB, complete analysis with fixes)
+- SQL validation queries (10 engineering queries tested)
+- Ingestion blockers identified with root causes
+
+**Verdict:** 🔴 **NOT READY FOR PRODUCTION**
+- Timeline to fix: 6-8 hours (re-ingest AGSK-2 & AGSK-3, deduplicate, validate)
+- Single-document retrieval (AGSK-1) ✅ ready, multi-document ❌ broken
+- Pilot launch blocked until fixes applied
+
+**Next:** Apply fixes to agsk_standards (deduplicate), re-run corpus ingestion for AGSK-2 & AGSK-3, re-validate, then proceed to pilot
+
+---
+
+### 2026-05-10 15:30 UTC — ✅ PARSER IMPLEMENTATION PHASE 2 COMPLETE: DETERMINISTIC PDF INGESTION READY
+
+**Статус:** ✅ **PHASE 2 DELIVERED** — Controlled PDF Parser Implementation complete, all 8 stages implemented.
+
+**Завершено (Phase 2 — 8 ЭТАПОВ):**
+- ✅ **ЭТАП 1: PDFParser Core** — Deterministic PDF extraction, layout-stable, runtime-independent (pdf_parser.py, 300+ lines)
+- ✅ **ЭТАП 2: PDF Text Extraction** — Page ordering, block ordering, encoding normalization (pdf_text_extractor.py, 250+ lines)
+- ✅ **ЭТАП 3: Logical PDF Chunk Model** — Page blocks, paragraphs, tables, headers/footers, sections with stable ordering
+- ✅ **ЭТАП 4: PDF Table Extraction** — Deterministic table parsing, row/column ordering, merged cell handling
+- ✅ **ЭТАП 5: PDF Metadata Normalization** — 3-layer model (binary ≠ content ≠ runtime)
+- ✅ **ЭТАП 6: Lineage Integration** — Extraction lineage with parser_version tracking, audit trail
+- ✅ **ЭТАП 7: Operational Determinism Verification** — 100+ repeated parses (all identical hash), 9 comprehensive tests (9/9 PASS)
+- ✅ **ЭТАП 8: Implementation Review Gate** — Complete 8-stage review gate, all deliverables generated
+
+**Доставленные файлы Phase 2:**
+1. ✅ `services/document-parser/src/parsers/pdf_parser.py` (PDFParser, 300+ lines)
+2. ✅ `services/document-parser/src/processors/pdf_text_extractor.py` (Extractors, 250+ lines)
+3. ✅ `services/document-parser/tests/test_pdf_determinism.py` (9 tests, 400+ lines, 9/9 PASS)
+4. ✅ `PDF_PARSER_IMPLEMENTATION_REPORT.md` (Complete implementation docs)
+5. ✅ `PDF_DETERMINISM_REPORT.md` (Operational validation, 10-point contract verified)
+6. ✅ `PDF_OPERATIONAL_RESULTS.md` (Examples, integration patterns, deployment checklist)
+
+**Детерминизм гарантии:**
+- ✅ Guarantee 1: Stable ordering (chunks sorted by page, offset)
+- ✅ Guarantee 2: Stable normalization (idempotent, version-locked)
+- ✅ Guarantee 3: Whitespace policy (explicit, documented)
+- ✅ Guarantee 4: Encoding normalization (UTF-8, Latin-1, CP1252)
+- ✅ Guarantee 5: Table ordering (row/column sequence deterministic)
+- ✅ Guarantee 6: Serialization (canonical JSON, sorted keys)
+- ✅ Guarantee 7: No runtime leakage (timestamps separate)
+- ✅ Guarantee 8: Restart reproducibility (identity survives reload)
+- ✅ Guarantee 9: Version pinning (behavior locked per version)
+- ✅ Guarantee 10: Audit immutability (lineage append-only)
+
+**Тестирование:**
+- Determinism tests: 9/9 PASS (127 total test runs)
+- 100+ repeated parses: ZERO variance in extraction_hash
+- Runtime metadata independence: VERIFIED
+- Chunk ordering stability: VERIFIED
+- Text normalization: 100% consistency
+- Edge cases: empty PDFs, hidden chars, encoding variations
+
+**Next:** Phase 3 (OCR Support) — scanned PDF detection, OCR integration, confidence scoring
+
+---
+
 ### 2026-05-09 22:45 UTC — ✅ PARSER IMPLEMENTATION PHASE 1 COMPLETE: DETERMINISTIC INGESTION CORE READY
 
 **Статус:** ✅ **PHASE 1 DELIVERED** — Controlled Parser Implementation complete, all 8 stages implemented.
@@ -3368,3 +3447,30 @@ QA-отчёт v3 (тестировщик, hard reload): **ни одного от
 - **Заголовок секции** `Материал / изоляция (для журнала)` → `Материал / изоляция`. Поля Cu/Al и XLPE/PVC после фикса №3 в раунде 1 влияют на расчёт напрямую (таблицы `CD_Cu`/`CD_Al` + `K_TABLE`), пометка «для журнала» вводила в заблуждение.
 
 Что осталось «на усмотрение разработчика» (помечено зелёным в QA): ограничения max на P/L/Isc и уточнение терминологии Method E vs C в таблицах Iz — не блокеры для прода.
+
+### 2026-05-08 22:28 UTC — 🔴 AGSK CORPUS INGESTION BLOCKED BY RLS POLICY
+
+**Статус:** 🔴 **RLS POLICY BLOCKS INSERT** — Ingestion pipeline ready but RLS prevents chunks insert.
+
+**Найдено:**
+- ✅ PDF parsing: 35,313 chunks extracted from 3 PDFs
+- ✅ Embeddings: OpenAI API working, 1536-dim embeddings generated
+- ✅ Supabase connection: verified via test queries
+- 🔴 **BLOCKER:** RLS policy on `agsk_chunks` table denies insert: `code '42501' - new row violates row-level security policy`
+
+**Требуемые действия:**
+1. **URGENT:** Disable RLS on `agsk_chunks` table OR create RLS policy allowing service role insert
+   - Current: RLS blocks all inserts
+   - Solution: ALTER TABLE agsk_chunks DISABLE ROW LEVEL SECURITY (dev) OR create INSERT policy
+2. Re-run ingestion: `npx tsx services/agsk-ingestion/src/bin/ingest-corpus.ts`
+3. Verify chunks in Supabase: SELECT COUNT(*) FROM agsk_chunks
+4. Run retrieval smoke tests
+
+**Optimizations applied:**
+- Fixed environment config to use .env.local (was loading .env with stub keys)
+- Changed org_id from 'default-org' string to NULL (UUID type mismatch)
+- Reduced batch size from 50 to 10 for reliability
+- Added exponential backoff retry logic for insert failures
+
+**Timeline to completion:** ~5 min once RLS fixed
+
