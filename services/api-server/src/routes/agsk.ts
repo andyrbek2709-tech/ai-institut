@@ -84,7 +84,7 @@ async function getOrgId(supabaseUid: string): Promise<string | null> {
     .insert({
       user_id: supabaseUid,
       org_id: defaultOrgId,
-      discipline: 'general',  // Default discipline
+      discipline: 'pipeline',  // Default discipline from CHECK constraint
       active: true,
     });
 

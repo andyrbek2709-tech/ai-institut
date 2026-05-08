@@ -26,9 +26,9 @@ router.use(authMiddleware);
 async function getOrgId(supabaseUid: string): Promise<string | null> {
   const sb = getSupabaseAdmin();
   const { data } = await sb
-    .from('app_users')
+    .from('pilot_users')
     .select('org_id')
-    .eq('supabase_uid', supabaseUid)
+    .eq('user_id', supabaseUid)
     .maybeSingle();
   return (data as any)?.org_id ?? null;
 }
@@ -49,7 +49,7 @@ interface QueryLogRequest {
 
 router.post('/query', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const uid = (req as any).user?.sub;
+    const uid = (req as any).user?.id;
     if (!uid) throw new ApiError(401, 'Unauthorized');
 
     const orgId = await getOrgId(uid);
