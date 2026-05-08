@@ -4,6 +4,40 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 23:50 UTC — 🟢 AGSK FRONTEND AUTH SYSTEM REPAIR: DEPLOYED + READY FOR VALIDATION
+
+**Статус:** 🟢 **DEPLOY COMPLETE** — Commit 5dfa815 на main, Railway READY (обе сервиса), готово к browser validation
+
+**Root Cause (решена):**
+- CopilotPanel.tsx line 115: fetch() без Authorization header → FIXED
+- DrawingsPanel.tsx line 133: fetch() без Authorization header → FIXED
+- MeetingsPanel.tsx line 99: fetch() без Authorization header → FIXED
+
+**Решение (реализовано):**
+1. ✅ CopilotPanel.tsx: Supabase session token в Authorization header при /api/orchestrator
+2. ✅ DrawingsPanel.tsx: token prop + Authorization header при analyze_drawing
+3. ✅ MeetingsPanel.tsx: Authorization header (token в props) при /api/transcribe
+4. ✅ App.tsx: DrawingsPanel получает token + userRole props
+
+**Deployment Status:**
+- ✅ Commit 5dfa815 на main (git verified)
+- ✅ Railway auto-deploy triggered
+- ✅ Frontend (https://enghub-frontend-production.up.railway.app) — HTTP 200 ✓
+- ✅ API Server (https://api-server-production-8157.up.railway.app/health) — HTTP 200 ✓
+- ✅ **READY FOR VALIDATION**
+
+**Следующие шаги (browser validation):**
+- [ ] Phase 1: Login flow — credentials send, redirect to dashboard
+- [ ] Phase 2: Session persistence — F5 refresh maintains login
+- [ ] Phase 3: No infinite 401 loop — verify Network tab
+- [ ] Phase 4: Retrieval queries (Russian) — should return 200, not 401
+- [ ] Phase 5: CopilotPanel AI requests
+- [ ] Phase 6: DrawingsPanel analysis (if available)
+
+**Инструкции:** AGSK_AUTH_FIX_TEST_PLAN.md (6 фаз, ~25 мин общее время)
+
+---
+
 ### 2026-05-09 21:15 UTC — 🟨 SEMANTIC GOVERNANCE OPERATIONAL SIMULATION: 8-PHASE COMPLETE — Phase 8 Verdict: CONDITIONAL APPROVAL
 
 **Статус:** 🟨 **OPERATIONAL SIMULATION PHASE 8 COMPLETE** — 8 operational documents created (20,000+ lines), semantic governance validated for production deployment with conditional approval
