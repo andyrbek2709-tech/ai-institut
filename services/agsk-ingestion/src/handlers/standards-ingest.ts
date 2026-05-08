@@ -8,6 +8,7 @@ import { parsePDF } from '../parsers/pdf-parser.js';
 import { extractMetadata } from '../processors/metadata-extractor.js';
 import { chunkDocument } from '../processors/chunker.js';
 import { embedTexts, EMBEDDING_DIMS } from '../processors/embedder.js';
+import { buildParserDiagnostics, logDiagnosticsSummary } from '../utils/parser-diagnostics.js';
 import { logger } from '../utils/logger.js';
 import { env } from '../config/environment.js';
 import type { IngestionJobMessage } from '../services/queue.js';
@@ -84,6 +85,11 @@ export async function handleStandardsIngest(
 
     const chunks = chunkDocument(parsed, meta.standard_code, meta.version ?? '');
     logger.info({ chunk_count: chunks.length }, 'Document chunked');
+
+    // ── 4b. Parser diagnostics ──────────────────────────────────────────
+    const diag = buildParserDiagnostics(parsed, chunks, filename, env.MINERU_URL ? 'mineru' : 'pdf-parse');
+    logDiagnosticsSummary(diag, (msg) => logger.info(msg));
+    logger.debug({ diagnostics: diag }, 'Full parser diagnostics');
 
     await updateJob(jobId, {
       chunks_total: chunks.length,
