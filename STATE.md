@@ -4,6 +4,45 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 23:30 UTC — 🟢 TELEMETRY LAYER REPAIR — COMPLETE ✅
+
+**Статус:** 🟢 **TELEMETRY SCHEMA VALIDATION + SAFE FALLBACK — READY FOR PILOT** — HTTP 400 'Missing required fields' error fixed
+
+**Root Causes Identified & Fixed:**
+1. ✅ **telemetry.ts /query validation too strict** — Required `result_count` and `retrieval_latency_ms` as mandatory fields, but frontend couldn't provide them at time of initial telemetry POST. Changed to optional with null defaults.
+2. ✅ **telemetry.ts inconsistent JWT extraction** — All endpoints except `/query` used `req.user?.sub` (wrong) instead of `req.user?.id` (correct). Fixed in: /click, /feedback, /failure, /dashboard, /status.
+3. ✅ **Frontend telemetry timing** — StandardsSearch.tsx sent telemetry BEFORE search complete, without result_count or latency. Changed to fire-and-forget AFTER search with actual metrics.
+4. ✅ **Frontend telemetry blocking retrieval** — Any telemetry failure would break retrieval UI. Added try/catch + log-and-continue pattern for all telemetry calls.
+
+**Commits & Deployments:**
+- Commit dcc0180: "fix(telemetry): CRITICAL telemetry layer repair — schema validation + safe fallback"
+- ✅ Railway API Server redeployed (new build with fixed validation)
+- ✅ Frontend updated: StandardsSearch.tsx sends telemetry async (fire-and-forget) AFTER search results
+- ✅ Telemetry failures no longer block retrieval flow
+
+**Changes:**
+- Backend: `/api/telemetry/query` now accepts optional `result_count` and `retrieval_latency_ms` (was required)
+- Backend: All endpoints use consistent `req.user?.id` extraction (JWT normalized)
+- Frontend: Telemetry sent AFTER search completes, includes actual `result_count` and `retrieval_latency_ms`
+- Frontend: All telemetry calls wrapped in try/catch (async, non-blocking)
+
+**Retrieval Flow Now Safe:**
+- ✅ Search returns results even if telemetry endpoint fails (HTTP 400 or 5xx)
+- ✅ Click/feedback logging failures logged but don't close feedback panel
+- ✅ Telemetry exceptions caught and logged to console (not user-facing)
+
+**Manual Browser Test Required (SAME AS BEFORE):**
+1. Open https://enghub-frontend-production.up.railway.app (or http://localhost:3000)
+2. Login with pilot user
+3. Go to "🔍 Standards Retrieval" tab
+4. Search for: "welding", "svarka", "pipe", "corrosion", "pressure", "трубопровод"
+5. Expected: Results return chunks from AGSK standards with citations
+6. Click on result → feedback panel should open
+7. Submit feedback → panel should close
+8. Verification: HTTP 200, chunks array, citations populated, no console errors for telemetry failures
+
+---
+
 ### 2026-05-09 22:10 UTC — 🟢 RETRIEVAL API AUTHORIZATION REPAIR — COMPLETE ✅
 
 **Статус:** 🟢 **EXACT ROOT CAUSE IDENTIFIED & FIXED — READY FOR PILOT** — Retrieval endpoint 401 errors resolved
