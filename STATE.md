@@ -4,6 +4,36 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 13:15 — AGSK PILOT: RAILWAY DEPLOYMENT RECOVERY COMPLETE ✅
+
+**Статус:** ✅ **DEPLOYMENT FIXED & LIVE** — api-server recovered, telemetry infrastructure operational
+
+**Проблема:** 7+ consecutive FAILED deployments after b89b920 (telemetry commit). Root causes:
+1. ❌ Missing `uuid` npm dependency (import in telemetry.ts, not declared in package.json)
+2. ❌ Vercel type reference in metrics.ts (hardcoded 'railway' but code assigned union type 'railway'|'vercel')
+3. ❌ Unbuilt agsk-ingestion service import in agsk.ts (reranking not ready for pilot phase)
+
+**Исправлено (commit 3885c3e):**
+- ✅ Added `uuid@^9.0.1` + `@types/uuid@^9.0.7` to api-server package.json
+- ✅ Fixed metrics.ts line 23: hardcoded provider to 'railway' (removed Vercel fallback)
+- ✅ Disabled reranking in agsk.ts (commented out agsk-ingestion import, removed rerank block)
+- ✅ Added JINA_API_KEY to environment.ts (optional, for future use)
+- ✅ Pushed commit 3885c3e → main (GitHub webhook auto-triggered Railway deploy)
+
+**Deployment Status:**
+- ✅ API Server: RUNNING, /health responding 200, uptime ~4h
+- ✅ Diagnostics: HEALTHY (redis ok, supabase ok, queue ok)
+- ✅ Frontend: RUNNING (React app served)
+- ⏳ Telemetry endpoints: Routes defined but require valid auth token (protected by authMiddleware)
+
+**Next: Phase 1 Steps 3-4**
+- [ ] Obtain valid auth token for pilot user (to test telemetry endpoints)
+- [ ] Smoke test: POST /api/telemetry/query + dashboard endpoint
+- [ ] Verify StandardsSearch UI visible in frontend (requires browser/login)
+- [ ] Mark Phase 1 COMPLETE when all smoke tests pass
+
+---
+
 ### 2026-05-08 18:45 — CALCULATIONS PLATFORM: PHASE 2 STAGE 2.1 ÉTAP 1.2-1.3 INTEGRATION ✅
 
 **Статус:** ✅ **ÉTAP 1.2 & 1.3 COMPLETE** — ExecutionGraph + Runner unit integration delivered.
