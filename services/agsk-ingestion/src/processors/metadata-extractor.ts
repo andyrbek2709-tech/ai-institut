@@ -7,6 +7,8 @@
  *   M2 — Cyrillic technical keyword extraction
  */
 
+export type CorpusType = 'normative' | 'catalog' | 'material_registry' | 'reference' | 'project';
+
 export interface ExtractedMetadata {
   standard_code: string;
   title:         string;
@@ -15,6 +17,7 @@ export interface ExtractedMetadata {
   discipline?:   string;
   organization?: string;
   keywords:      string[];
+  corpus_type:   CorpusType;
 }
 
 // Known standards patterns: [regex, organization, discipline]
@@ -62,6 +65,53 @@ const STANDARD_PATTERNS: Array<[RegExp, string, string]> = [
 
 const YEAR_REGEX    = /\b(19[89]\d|20[0-3]\d)\b/;
 const VERSION_REGEX = /(?:Edition|Rev\.?|Version|Ed\.)\s*([A-Z0-9.]+)|(\d{4})\s*Edition/i;
+
+// Corpus type detection patterns
+const NORMATIVE_PATTERNS = [
+  /\bASME\b/i, /\bAPI\s+\d/i, /\bNACE\s+\w/i, /\bASTM\s+[A-Z]/i,
+  /\bISO\s+\d/i, /\bAWS\s+D/i, /\bAIAG\b/i, /\bDNV\b/i,
+  /ГОСТ\s+[\d\-]+/i, /СТ\s*РК/i, /СП\s+\d+\.\d/i, /СНиП/i, /РД\s+[\d\-]/i,
+  /specification\s+for/i, /standard\s+for/i, /code\s+for/i,
+  /требования.{0,30}к\s+\w/i, /технические\s+условия/i,
+];
+
+const CATALOG_PATTERNS = [
+  /каталог/i, /прайс.?лист/i, /catalog/i, /price.?list/i,
+  /перечень\s+(материалов|продукц|товар)/i, /номенклатур/i,
+  /сортамент/i,
+];
+
+const MATERIAL_REGISTRY_PATTERNS = [
+  /реестр\s+(материал|оборудован)/i, /материальный\s+реестр/i,
+  /approved\s+(material|vendor)\s+list/i, /AML\b/i, /AVL\b/i,
+];
+
+const REFERENCE_PATTERNS = [
+  /справочник/i, /handbook/i, /reference\s+(manual|guide|book)/i,
+  /таблицы?\s+(свойств|характеристик)/i,
+];
+
+const PROJECT_PATTERNS = [
+  /проектная\s+документация/i, /рабочая\s+документация/i,
+  /design\s+(basis|report|package)/i, /project\s+(specification|description)/i,
+  /технологическая\s+схема/i,
+];
+
+function detectCorpusType(text: string, filename: string): CorpusType {
+  const sample = (filename + ' ' + text.slice(0, 2000)).toLowerCase();
+
+  if (CATALOG_PATTERNS.some(p => p.test(sample)))          return 'catalog';
+  if (MATERIAL_REGISTRY_PATTERNS.some(p => p.test(sample))) return 'material_registry';
+  if (PROJECT_PATTERNS.some(p => p.test(sample)))           return 'project';
+  if (REFERENCE_PATTERNS.some(p => p.test(sample)))         return 'reference';
+  if (NORMATIVE_PATTERNS.some(p => p.test(sample)))         return 'normative';
+
+  // Fallback: if filename contains a known standard prefix treat as normative
+  const fileUpper = filename.toUpperCase();
+  if (/^(API|ASME|NACE|ASTM|ISO|AWS|ГОСТ|СТ.РК|СП|РД|СНиП)/.test(fileUpper)) return 'normative';
+
+  return 'reference';
+}
 
 // M2: Cyrillic technical term patterns (capitalized or all-caps Cyrillic nouns)
 const CYR_TERM_REGEX = /\b([А-ЯЁ][а-яёА-ЯЁ]{3,}(?:-[А-ЯЁа-яё]+)?)\b/g;
@@ -144,5 +194,6 @@ export function extractMetadata(
     discipline:   fromText.discipline as ExtractedMetadata['discipline'],
     organization: fromText.organization,
     keywords,
+    corpus_type:  detectCorpusType(text, filename),
   };
 }

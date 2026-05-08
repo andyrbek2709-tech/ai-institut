@@ -1,0 +1,2080 @@
+{
+  "generated_at": "2026-05-08T11:09:24.259Z",
+  "total_ms": 33116,
+  "docs": [
+    {
+      "id": "API_5L_2018",
+      "filename": "API-5L-2018",
+      "corpus_type": "normative",
+      "org": "API",
+      "discipline": "pipeline",
+      "priority": 1,
+      "sections": 7,
+      "headings": 23,
+      "heading_types": {
+        "numbered": 22,
+        "uppercase": 1
+      },
+      "chunks": 7,
+      "avg_tokens": 144.6,
+      "oversized_pct": 0,
+      "section_fill_rate": 0.857,
+      "page_fill_rate": 1,
+      "orphan_chunks": 1,
+      "citation_fill_pct": 85.7,
+      "metadata_score": 3,
+      "parse_ms": 1,
+      "chunk_ms": 1,
+      "diag": [
+        "✅ 7 sections",
+        "✅ citation fill 85.7%",
+        "✅ oversized 0.0%",
+        "corpus_type=normative"
+      ],
+      "token_distribution": {
+        "0-99": 1,
+        "100-299": 6,
+        "300-499": 0,
+        "500-600": 0,
+        "601+": 0
+      }
+    },
+    {
+      "id": "ASME_B31.4_2019",
+      "filename": "ASME-B31.4-2019",
+      "corpus_type": "normative",
+      "org": "ASME",
+      "discipline": "pipeline",
+      "priority": 1,
+      "sections": 7,
+      "headings": 28,
+      "heading_types": {
+        "numbered": 25,
+        "uppercase": 3
+      },
+      "chunks": 7,
+      "avg_tokens": 113.3,
+      "oversized_pct": 0,
+      "section_fill_rate": 0.857,
+      "page_fill_rate": 1,
+      "orphan_chunks": 1,
+      "citation_fill_pct": 85.7,
+      "metadata_score": 4,
+      "parse_ms": 0,
+      "chunk_ms": 0,
+      "diag": [
+        "✅ 7 sections",
+        "✅ citation fill 85.7%",
+        "✅ oversized 0.0%",
+        "corpus_type=normative"
+      ],
+      "token_distribution": {
+        "0-99": 3,
+        "100-299": 4,
+        "300-499": 0,
+        "500-600": 0,
+        "601+": 0
+      }
+    },
+    {
+      "id": "ASME_B31.8_2020",
+      "filename": "ASME-B31.8-2020",
+      "corpus_type": "normative",
+      "org": "ASME",
+      "discipline": "pipeline",
+      "priority": 1,
+      "sections": 6,
+      "headings": 17,
+      "heading_types": {
+        "numbered": 15,
+        "uppercase": 1,
+        "keyword_latin": 1
+      },
+      "chunks": 6,
+      "avg_tokens": 122.3,
+      "oversized_pct": 0,
+      "section_fill_rate": 0.833,
+      "page_fill_rate": 1,
+      "orphan_chunks": 1,
+      "citation_fill_pct": 83.3,
+      "metadata_score": 4,
+      "parse_ms": 0,
+      "chunk_ms": 0,
+      "diag": [
+        "✅ 6 sections",
+        "✅ citation fill 83.3%",
+        "✅ oversized 0.0%",
+        "corpus_type=normative"
+      ],
+      "token_distribution": {
+        "0-99": 3,
+        "100-299": 3,
+        "300-499": 0,
+        "500-600": 0,
+        "601+": 0
+      }
+    },
+    {
+      "id": "API_1104_2021",
+      "filename": "API-1104-2021",
+      "corpus_type": "normative",
+      "org": "API",
+      "discipline": "welding",
+      "priority": 1,
+      "sections": 5,
+      "headings": 19,
+      "heading_types": {
+        "numbered": 19
+      },
+      "chunks": 5,
+      "avg_tokens": 141.8,
+      "oversized_pct": 0,
+      "section_fill_rate": 0.8,
+      "page_fill_rate": 1,
+      "orphan_chunks": 1,
+      "citation_fill_pct": 80,
+      "metadata_score": 4,
+      "parse_ms": 0,
+      "chunk_ms": 0,
+      "diag": [
+        "✅ 5 sections",
+        "✅ citation fill 80.0%",
+        "✅ oversized 0.0%",
+        "corpus_type=normative"
+      ],
+      "token_distribution": {
+        "0-99": 1,
+        "100-299": 4,
+        "300-499": 0,
+        "500-600": 0,
+        "601+": 0
+      }
+    },
+    {
+      "id": "NACE_MR0175_2015",
+      "filename": "NACE-MR0175-ISO15156-2015",
+      "corpus_type": "normative",
+      "org": "NACE",
+      "discipline": "corrosion",
+      "priority": 1,
+      "sections": 5,
+      "headings": 14,
+      "heading_types": {
+        "numbered": 13,
+        "keyword_latin": 1
+      },
+      "chunks": 5,
+      "avg_tokens": 161,
+      "oversized_pct": 0,
+      "section_fill_rate": 0.8,
+      "page_fill_rate": 1,
+      "orphan_chunks": 1,
+      "citation_fill_pct": 80,
+      "metadata_score": 3,
+      "parse_ms": 0,
+      "chunk_ms": 0,
+      "diag": [
+        "✅ 5 sections",
+        "✅ citation fill 80.0%",
+        "✅ oversized 0.0%",
+        "corpus_type=normative"
+      ],
+      "token_distribution": {
+        "0-99": 0,
+        "100-299": 5,
+        "300-499": 0,
+        "500-600": 0,
+        "601+": 0
+      }
+    },
+    {
+      "id": "NACE_SP0169_2013",
+      "filename": "NACE-SP0169-2013",
+      "corpus_type": "normative",
+      "org": "NACE",
+      "discipline": "corrosion",
+      "priority": 1,
+      "sections": 5,
+      "headings": 16,
+      "heading_types": {
+        "numbered": 16
+      },
+      "chunks": 5,
+      "avg_tokens": 155,
+      "oversized_pct": 0,
+      "section_fill_rate": 0.8,
+      "page_fill_rate": 1,
+      "orphan_chunks": 1,
+      "citation_fill_pct": 80,
+      "metadata_score": 4,
+      "parse_ms": 0,
+      "chunk_ms": 0,
+      "diag": [
+        "✅ 5 sections",
+        "✅ citation fill 80.0%",
+        "✅ oversized 0.0%",
+        "corpus_type=normative"
+      ],
+      "token_distribution": {
+        "0-99": 1,
+        "100-299": 4,
+        "300-499": 0,
+        "500-600": 0,
+        "601+": 0
+      }
+    },
+    {
+      "id": "GOST_20295_1985",
+      "filename": "ГОСТ-20295-85",
+      "corpus_type": "normative",
+      "org": "ГОСТ",
+      "discipline": "pipeline",
+      "priority": 2,
+      "sections": 4,
+      "headings": 14,
+      "heading_types": {
+        "numbered": 14
+      },
+      "chunks": 4,
+      "avg_tokens": 123,
+      "oversized_pct": 0,
+      "section_fill_rate": 0.75,
+      "page_fill_rate": 1,
+      "orphan_chunks": 1,
+      "citation_fill_pct": 75,
+      "metadata_score": 2,
+      "parse_ms": 0,
+      "chunk_ms": 0,
+      "diag": [
+        "✅ 4 sections",
+        "✅ citation fill 75.0%",
+        "✅ oversized 0.0%",
+        "corpus_type=normative"
+      ],
+      "token_distribution": {
+        "0-99": 1,
+        "100-299": 3,
+        "300-499": 0,
+        "500-600": 0,
+        "601+": 0
+      }
+    },
+    {
+      "id": "ST_RK_ISO_3183_2014",
+      "filename": "СТ-РК-ISO-3183-2014",
+      "corpus_type": "normative",
+      "org": "СТ РК",
+      "discipline": "pipeline",
+      "priority": 2,
+      "sections": 2,
+      "headings": 5,
+      "heading_types": {
+        "numbered": 5
+      },
+      "chunks": 2,
+      "avg_tokens": 125.5,
+      "oversized_pct": 0,
+      "section_fill_rate": 0.5,
+      "page_fill_rate": 1,
+      "orphan_chunks": 1,
+      "citation_fill_pct": 50,
+      "metadata_score": 3,
+      "parse_ms": 0,
+      "chunk_ms": 0,
+      "diag": [
+        "✅ 2 sections",
+        "⚠️ citation fill 50.0%",
+        "✅ oversized 0.0%",
+        "corpus_type=normative"
+      ],
+      "token_distribution": {
+        "0-99": 1,
+        "100-299": 1,
+        "300-499": 0,
+        "500-600": 0,
+        "601+": 0
+      }
+    },
+    {
+      "id": "AGSK-3",
+      "filename": "AGSK-3",
+      "corpus_type": "catalog",
+      "org": "АГСК",
+      "discipline": "materials_catalog",
+      "priority": 3,
+      "sections": 24941,
+      "headings": 24940,
+      "heading_types": {
+        "uppercase": 20631,
+        "keyword_cyrillic": 598,
+        "numbered": 3711
+      },
+      "chunks": 24129,
+      "avg_tokens": 120.3,
+      "oversized_pct": 0,
+      "section_fill_rate": 0.146,
+      "page_fill_rate": 1,
+      "orphan_chunks": 20613,
+      "citation_fill_pct": 14.6,
+      "metadata_score": 1,
+      "parse_ms": 26184,
+      "chunk_ms": 464,
+      "diag": [
+        "corpus_type=catalog",
+        "headings: 24940 (catalog_product=0, uppercase=20631)",
+        "cite=14.6%"
+      ],
+      "token_distribution": {
+        "0-99": 15501,
+        "100-299": 4667,
+        "300-499": 3700,
+        "500-600": 261,
+        "601+": 0
+      }
+    }
+  ],
+  "bench": {
+    "results": [
+      {
+        "query_id": "Q001",
+        "difficulty": "simple",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 94.51,
+        "fp_risk": "cyrillic_latin_overlap",
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "7",
+        "top5_sources": [
+          "API 5L[7]",
+          "API 5L[823]",
+          "API 5L[7.T7]",
+          "API 5L[401]",
+          "API 5L[821]"
+        ]
+      },
+      {
+        "query_id": "Q002",
+        "difficulty": "simple",
+        "discipline": "structural",
+        "recall_hit": true,
+        "precision": 0.8,
+        "latency_ms": 70.82,
+        "fp_risk": null,
+        "domain_match": false,
+        "matched_standard": "API 5L",
+        "matched_section": "7",
+        "top5_sources": [
+          "API 5L[7]",
+          "API 5L[7.T7]",
+          "API 5L[821]",
+          "API 5L[1]",
+          "API 5L[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q003",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 64.35,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "402",
+        "top5_sources": [
+          "API 5L[402]",
+          "API 5L[401]",
+          "API 5L[9]",
+          "API 5L[821]",
+          "API 5L[7]"
+        ]
+      },
+      {
+        "query_id": "Q004",
+        "difficulty": "medium",
+        "discipline": "welding",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 68.47,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "NACE MR0175",
+        "matched_section": "9",
+        "top5_sources": [
+          "NACE MR0175[9]",
+          "API 5L[9]",
+          "NACE MR0175[6]",
+          "NACE MR0175[5]",
+          "API 5L[10]"
+        ]
+      },
+      {
+        "query_id": "Q005",
+        "difficulty": "medium",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 64.52,
+        "fp_risk": "cyrillic_latin_overlap",
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "823",
+        "top5_sources": [
+          "API 5L[1]",
+          "API 5L[823]",
+          "API 5L[9]",
+          "API 5L[821]",
+          "NACE MR0175[5]"
+        ]
+      },
+      {
+        "query_id": "Q006",
+        "difficulty": "medium",
+        "discipline": "safety",
+        "recall_hit": true,
+        "precision": 0.8,
+        "latency_ms": 70.17,
+        "fp_risk": null,
+        "domain_match": false,
+        "matched_standard": "API 5L",
+        "matched_section": "821",
+        "top5_sources": [
+          "API 5L[821]",
+          "API 5L[419]",
+          "API 5L[437]",
+          "API 5L[9]",
+          "API 5L[7]"
+        ]
+      },
+      {
+        "query_id": "Q007",
+        "difficulty": "medium",
+        "discipline": "safety",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 53.1,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[n/a]",
+          "API 5L[10]",
+          "API 5L[1]",
+          "NACE MR0175[11]",
+          "API 5L[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q008",
+        "difficulty": "medium",
+        "discipline": "corrosion",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 64.39,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "419",
+        "top5_sources": [
+          "API 5L[419]",
+          "API 5L[7]",
+          "ASME B31.4[4]",
+          "API 5L[4]",
+          "ASME B31.4[6]"
+        ]
+      },
+      {
+        "query_id": "Q009",
+        "difficulty": "simple",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 64.44,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "402",
+        "top5_sources": [
+          "API 5L[821]",
+          "API 5L[401]",
+          "API 5L[402]",
+          "API 5L[A]",
+          "ASME B31.4[4]"
+        ]
+      },
+      {
+        "query_id": "Q010",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 61.03,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[7]",
+          "API 5L[821]",
+          "API 5L[401]",
+          "API 5L[9]",
+          "API 5L[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q011",
+        "difficulty": "simple",
+        "discipline": "structural",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 70.39,
+        "fp_risk": null,
+        "domain_match": false,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[n/a]",
+          "API 5L[9]",
+          "API 5L[401]",
+          "API 5L[4]",
+          "ASME B31.4[4]"
+        ]
+      },
+      {
+        "query_id": "Q012",
+        "difficulty": "medium",
+        "discipline": "structural",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 77.53,
+        "fp_risk": null,
+        "domain_match": false,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[821]",
+          "API 5L[7]",
+          "API 5L[4]",
+          "NACE MR0175[n/a]",
+          "NACE MR0175[6]"
+        ]
+      },
+      {
+        "query_id": "Q013",
+        "difficulty": "simple",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 65.05,
+        "fp_risk": null,
+        "domain_match": false,
+        "matched_standard": "API 5L",
+        "matched_section": "401",
+        "top5_sources": [
+          "API 5L[401]",
+          "API 5L[n/a]",
+          "API 5L[821]",
+          "API 5L[4]",
+          "API 5L[437]"
+        ]
+      },
+      {
+        "query_id": "Q014",
+        "difficulty": "medium",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 71.11,
+        "fp_risk": "cyrillic_latin_overlap",
+        "domain_match": false,
+        "matched_standard": "API 5L",
+        "matched_section": "9",
+        "top5_sources": [
+          "API 5L[9]",
+          "API 5L[823]",
+          "API 5L[7]",
+          "API 5L[4]",
+          "API 5L[401]"
+        ]
+      },
+      {
+        "query_id": "Q015",
+        "difficulty": "medium",
+        "discipline": "inspection",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 69.22,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "9",
+        "top5_sources": [
+          "API 5L[7]",
+          "API 5L[9]",
+          "NACE MR0175[11]",
+          "NACE MR0175[n/a]",
+          "API 5L[821]"
+        ]
+      },
+      {
+        "query_id": "Q016",
+        "difficulty": "medium",
+        "discipline": "welding",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 65.12,
+        "fp_risk": null,
+        "domain_match": false,
+        "matched_standard": "NACE MR0175",
+        "matched_section": "5",
+        "top5_sources": [
+          "NACE MR0175[5]",
+          "API 5L[821]",
+          "API 5L[7]",
+          "API 5L[401]",
+          "NACE MR0175[6]"
+        ]
+      },
+      {
+        "query_id": "Q017",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.8,
+        "latency_ms": 58.03,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "9",
+        "top5_sources": [
+          "API 5L[9]",
+          "API 5L[821]",
+          "API 5L[7]",
+          "NACE MR0175[11]",
+          "ASME B31.4[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q018",
+        "difficulty": "simple",
+        "discipline": "mechanical",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 66.56,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[9]",
+          "API 5L[4]",
+          "API 5L[1]",
+          "API 5L[401]",
+          "API 5L[821]"
+        ]
+      },
+      {
+        "query_id": "Q019",
+        "difficulty": "complex",
+        "discipline": "structural",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 71.35,
+        "fp_risk": "version_year_confusion",
+        "domain_match": false,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[n/a]",
+          "API 5L[403]",
+          "API 5L[n/a]",
+          "API 5L[7]",
+          "API 5L[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q020",
+        "difficulty": "complex",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 0.8,
+        "latency_ms": 63.55,
+        "fp_risk": "cyrillic_latin_overlap",
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "821",
+        "top5_sources": [
+          "API 5L[821]",
+          "API 5L[1]",
+          "API 5L[n/a]",
+          "API 5L[4]",
+          "ASME B31.4[5]"
+        ]
+      },
+      {
+        "query_id": "Q021",
+        "difficulty": "medium",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 63.38,
+        "fp_risk": "cyrillic_latin_overlap",
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "7.T7",
+        "top5_sources": [
+          "API 5L[7.T7]",
+          "API 5L[n/a]",
+          "API 5L[9]",
+          "API 5L[437]",
+          "API 5L[10]"
+        ]
+      },
+      {
+        "query_id": "Q022",
+        "difficulty": "medium",
+        "discipline": "corrosion",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 59.78,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "419",
+        "top5_sources": [
+          "API 5L[419]",
+          "ASME B31.4[n/a]",
+          "ASME B31.4[5]",
+          "ASME B31.4[10]",
+          "API 5L[821]"
+        ]
+      },
+      {
+        "query_id": "Q023",
+        "difficulty": "simple",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 59.97,
+        "fp_risk": "cyrillic_latin_overlap",
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "7",
+        "top5_sources": [
+          "API 5L[7]",
+          "API 5L[821]",
+          "API 5L[7]",
+          "API 5L[823]",
+          "API 5L[437]"
+        ]
+      },
+      {
+        "query_id": "Q024",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.2,
+        "latency_ms": 48.68,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "403",
+        "top5_sources": [
+          "API 5L[821]",
+          "API 5L[403]",
+          "API 5L[7.T7]",
+          "API 5L[845]",
+          "ASME B31.4[5]"
+        ]
+      },
+      {
+        "query_id": "Q025",
+        "difficulty": "simple",
+        "discipline": "inspection",
+        "recall_hit": true,
+        "precision": 0.8,
+        "latency_ms": 65.26,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "NACE MR0175",
+        "matched_section": "",
+        "top5_sources": [
+          "API 5L[n/a]",
+          "NACE MR0175[n/a]",
+          "API 5L[n/a]",
+          "API 5L[821]",
+          "API 5L[400]"
+        ]
+      },
+      {
+        "query_id": "Q026",
+        "difficulty": "medium",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 0.2,
+        "latency_ms": 61.15,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "ASME B31.4",
+        "matched_section": "",
+        "top5_sources": [
+          "ASME B31.4[n/a]",
+          "ASME B31.4[6]",
+          "API 5L[419]",
+          "API 5L[821]",
+          "NACE MR0175[6]"
+        ]
+      },
+      {
+        "query_id": "Q027",
+        "difficulty": "simple",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 62.83,
+        "fp_risk": "cyrillic_latin_overlap",
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "403",
+        "top5_sources": [
+          "API 5L[403]",
+          "API 5L[823]",
+          "API 5L[A]",
+          "API 5L[9]",
+          "API 5L[401]"
+        ]
+      },
+      {
+        "query_id": "Q028",
+        "difficulty": "medium",
+        "discipline": "inspection",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 72.08,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "9",
+        "top5_sources": [
+          "API 5L[9]",
+          "NACE MR0175[9]",
+          "API 5L[7]",
+          "NACE MR0175[11]",
+          "NACE MR0175[6]"
+        ]
+      },
+      {
+        "query_id": "Q029",
+        "difficulty": "medium",
+        "discipline": "corrosion",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 51.64,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "ASME B31.4",
+        "matched_section": "",
+        "top5_sources": [
+          "ASME B31.4[n/a]",
+          "ASME B31.4[5]",
+          "API 5L[419]",
+          "ASME B31.4[4]",
+          "ASME B31.4[6]"
+        ]
+      },
+      {
+        "query_id": "Q030",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.8,
+        "latency_ms": 63.92,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "821",
+        "top5_sources": [
+          "API 5L[821]",
+          "API 5L[n/a]",
+          "API 5L[401]",
+          "API 5L[7.T7]",
+          "API 5L[845]"
+        ]
+      },
+      {
+        "query_id": "Q031",
+        "difficulty": "complex",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 55.53,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "A",
+        "top5_sources": [
+          "API 5L[A]",
+          "ASME B31.4[n/a]",
+          "API 5L[n/a]",
+          "API 5L[n/a]",
+          "API 5L[403]"
+        ]
+      },
+      {
+        "query_id": "Q032",
+        "difficulty": "simple",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 0.2,
+        "latency_ms": 65.79,
+        "fp_risk": "cyrillic_latin_overlap",
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "7",
+        "top5_sources": [
+          "API 5L[7]",
+          "ASME B31.4[n/a]",
+          "API 5L[823]",
+          "ASME B31.4[4]",
+          "API 5L[9]"
+        ]
+      },
+      {
+        "query_id": "Q033",
+        "difficulty": "complex",
+        "discipline": "mechanical",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 62.09,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[821]",
+          "API 5L[401]",
+          "API 5L[n/a]",
+          "ASME B31.4[n/a]",
+          "API 5L[400]"
+        ]
+      },
+      {
+        "query_id": "Q034",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 52.99,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "9",
+        "top5_sources": [
+          "API 5L[9]",
+          "API 5L[10]",
+          "API 5L[n/a]",
+          "API 5L[437]",
+          "API 5L[7.T7]"
+        ]
+      },
+      {
+        "query_id": "Q035",
+        "difficulty": "complex",
+        "discipline": "inspection",
+        "recall_hit": true,
+        "precision": 0.8,
+        "latency_ms": 71.23,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "7",
+        "top5_sources": [
+          "API 5L[7]",
+          "API 5L[9]",
+          "ASME B31.4[4]",
+          "API 5L[419]",
+          "API 5L[10]"
+        ]
+      },
+      {
+        "query_id": "Q036",
+        "difficulty": "simple",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.8,
+        "latency_ms": 54.63,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "403",
+        "top5_sources": [
+          "API 5L[403]",
+          "API 5L[n/a]",
+          "API 5L[n/a]",
+          "API 5L[7.T7]",
+          "ASME B31.4[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q037",
+        "difficulty": "complex",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 68.77,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "",
+        "top5_sources": [
+          "API 5L[n/a]",
+          "API 5L[n/a]",
+          "API 5L[n/a]",
+          "API 5L[403]",
+          "API 5L[7]"
+        ]
+      },
+      {
+        "query_id": "Q038",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 66.22,
+        "fp_risk": null,
+        "domain_match": false,
+        "matched_standard": "API 5L",
+        "matched_section": "10",
+        "top5_sources": [
+          "API 5L[10]",
+          "API 5L[9]",
+          "API 5L[n/a]",
+          "NACE MR0175[6]",
+          "API 5L[D]"
+        ]
+      },
+      {
+        "query_id": "Q039",
+        "difficulty": "medium",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 0.2,
+        "latency_ms": 60.49,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "402",
+        "top5_sources": [
+          "API 5L[402]",
+          "API 5L[n/a]",
+          "API 5L[401]",
+          "API 5L[821]",
+          "API 5L[7]"
+        ]
+      },
+      {
+        "query_id": "Q040",
+        "difficulty": "simple",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 65.69,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "401",
+        "top5_sources": [
+          "API 5L[401]",
+          "API 5L[821]",
+          "API 5L[7.T7]",
+          "API 5L[n/a]",
+          "ASME B31.4[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q041",
+        "difficulty": "medium",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 50.15,
+        "fp_risk": "cyrillic_latin_overlap",
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "821",
+        "top5_sources": [
+          "API 5L[821]",
+          "API 5L[A]",
+          "API 5L[841]",
+          "API 5L[1]",
+          "API 5L[823]"
+        ]
+      },
+      {
+        "query_id": "Q042",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 52.11,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "ASME B31.4",
+        "matched_section": "",
+        "top5_sources": [
+          "ASME B31.4[n/a]",
+          "ASME B31.4[5]",
+          "NACE MR0175[9]",
+          "API 5L[7.T7]",
+          "ASME B31.4[6]"
+        ]
+      },
+      {
+        "query_id": "Q043",
+        "difficulty": "complex",
+        "discipline": "inspection",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 61.25,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[7]",
+          "API 5L[n/a]",
+          "API 5L[8]",
+          "API 5L[401]",
+          "API 5L[D]"
+        ]
+      },
+      {
+        "query_id": "Q044",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.2,
+        "latency_ms": 65.36,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "9",
+        "top5_sources": [
+          "API 5L[9]",
+          "NACE MR0175[5]",
+          "API 5L[7.T7]",
+          "API 5L[7]",
+          "ASME B31.4[5]"
+        ]
+      },
+      {
+        "query_id": "Q045",
+        "difficulty": "simple",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 68.12,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "9",
+        "top5_sources": [
+          "API 5L[9]",
+          "API 5L[845]",
+          "API 5L[7.T7]",
+          "API 5L[821]",
+          "API 5L[7]"
+        ]
+      },
+      {
+        "query_id": "Q046",
+        "difficulty": "simple",
+        "discipline": "welding",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 53.54,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "NACE MR0175",
+        "matched_section": "6",
+        "top5_sources": [
+          "NACE MR0175[6]",
+          "API 5L[437]",
+          "NACE MR0175[5]",
+          "API 5L[n/a]",
+          "NACE MR0175[11]"
+        ]
+      },
+      {
+        "query_id": "Q047",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 59.11,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "",
+        "top5_sources": [
+          "API 5L[n/a]",
+          "API 5L[n/a]",
+          "ASME B31.4[n/a]",
+          "API 5L[400]",
+          "NACE MR0175[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q048",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 66.16,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "A",
+        "top5_sources": [
+          "API 5L[A]",
+          "API 5L[402]",
+          "API 5L[n/a]",
+          "ASME B31.4[n/a]",
+          "API 5L[403]"
+        ]
+      },
+      {
+        "query_id": "Q049",
+        "difficulty": "simple",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 57.89,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "402",
+        "top5_sources": [
+          "API 5L[402]",
+          "API 5L[821]",
+          "API 5L[401]",
+          "API 5L[4]",
+          "ASME B31.4[4]"
+        ]
+      },
+      {
+        "query_id": "Q050",
+        "difficulty": "medium",
+        "discipline": "inspection",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 61.92,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "NACE MR0175",
+        "matched_section": "",
+        "top5_sources": [
+          "NACE MR0175[n/a]",
+          "API 5L[7]",
+          "NACE MR0175[5]",
+          "API 5L[9]",
+          "NACE MR0175[6]"
+        ]
+      },
+      {
+        "query_id": "Q051",
+        "difficulty": "simple",
+        "discipline": "mechanical",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 62.95,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[n/a]",
+          "ASME B31.4[n/a]",
+          "NACE MR0175[n/a]",
+          "API 5L[n/a]",
+          "API 5L[7]"
+        ]
+      },
+      {
+        "query_id": "Q052",
+        "difficulty": "medium",
+        "discipline": "inspection",
+        "recall_hit": true,
+        "precision": 0.2,
+        "latency_ms": 65.95,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "419",
+        "top5_sources": [
+          "API 5L[419]",
+          "API 5L[7]",
+          "API 5L[821]",
+          "API 5L[437]",
+          "API 5L[9]"
+        ]
+      },
+      {
+        "query_id": "Q053",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 60.44,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "10",
+        "top5_sources": [
+          "API 5L[10]",
+          "API 5L[4]",
+          "API 5L[1]",
+          "API 5L[403]",
+          "API 5L[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q054",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.4,
+        "latency_ms": 57.52,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "403",
+        "top5_sources": [
+          "API 5L[403]",
+          "API 5L[7.T7]",
+          "AGSK-3[n/a]",
+          "API 5L[n/a]",
+          "API 5L[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q055",
+        "difficulty": "simple",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 58.96,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "402",
+        "top5_sources": [
+          "API 5L[402]",
+          "API 5L[4]",
+          "API 5L[401]",
+          "API 5L[9]",
+          "API 5L[7]"
+        ]
+      },
+      {
+        "query_id": "Q056",
+        "difficulty": "complex",
+        "discipline": "mechanical",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 56.87,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[A]",
+          "API 5L[n/a]",
+          "API 5L[403]",
+          "API 5L[400]",
+          "API 5L[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q057",
+        "difficulty": "medium",
+        "discipline": "corrosion",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 68.95,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "",
+        "top5_sources": [
+          "API 5L[n/a]",
+          "ASME B31.4[n/a]",
+          "NACE MR0175[6]",
+          "NACE MR0175[9]",
+          "NACE MR0175[5]"
+        ]
+      },
+      {
+        "query_id": "Q058",
+        "difficulty": "medium",
+        "discipline": "welding",
+        "recall_hit": true,
+        "precision": 0.8,
+        "latency_ms": 61.94,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "NACE MR0175",
+        "matched_section": "9",
+        "top5_sources": [
+          "NACE MR0175[9]",
+          "NACE MR0175[6]",
+          "NACE MR0175[11]",
+          "API 5L[7]",
+          "API 5L[10]"
+        ]
+      },
+      {
+        "query_id": "Q059",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 69.65,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[403]",
+          "API 5L[845]",
+          "API 5L[n/a]",
+          "API 5L[821]",
+          "API 5L[9]"
+        ]
+      },
+      {
+        "query_id": "Q060",
+        "difficulty": "complex",
+        "discipline": "pipeline",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 58.37,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[7]",
+          "API 5L[4]",
+          "API 5L[823]",
+          "API 5L[9]",
+          "API 5L[1]"
+        ]
+      },
+      {
+        "query_id": "Q061",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 53.91,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[7.T7]",
+          "API 5L[n/a]",
+          "API 5L[821]",
+          "API 5L[4]",
+          "API 5L[7]"
+        ]
+      },
+      {
+        "query_id": "Q062",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 71.14,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "9",
+        "top5_sources": [
+          "API 5L[9]",
+          "API 5L[D]",
+          "API 5L[437]",
+          "API 5L[10]",
+          "NACE MR0175[6]"
+        ]
+      },
+      {
+        "query_id": "Q063",
+        "difficulty": "complex",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 59.9,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "9",
+        "top5_sources": [
+          "API 5L[7.T7]",
+          "API 5L[9]",
+          "API 5L[n/a]",
+          "API 5L[7]",
+          "API 5L[437]"
+        ]
+      },
+      {
+        "query_id": "Q064",
+        "difficulty": "simple",
+        "discipline": "safety",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 66.6,
+        "fp_risk": null,
+        "domain_match": false,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[1]",
+          "NACE MR0175[9]",
+          "API 5L[9]",
+          "NACE MR0175[6]",
+          "API 5L[823]"
+        ]
+      },
+      {
+        "query_id": "Q065",
+        "difficulty": "medium",
+        "discipline": "corrosion",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 53.77,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "419",
+        "top5_sources": [
+          "API 5L[419]",
+          "ASME B31.4[n/a]",
+          "ASME B31.4[4]",
+          "ASME B31.4[5]",
+          "ASME B31.4[6]"
+        ]
+      },
+      {
+        "query_id": "Q066",
+        "difficulty": "medium",
+        "discipline": "inspection",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 58.37,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "NACE MR0175",
+        "matched_section": "9",
+        "top5_sources": [
+          "NACE MR0175[9]",
+          "API 5L[9]",
+          "NACE MR0175[6]",
+          "NACE MR0175[5]",
+          "API 5L[10]"
+        ]
+      },
+      {
+        "query_id": "Q067",
+        "difficulty": "complex",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.2,
+        "latency_ms": 57.77,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "A",
+        "top5_sources": [
+          "API 5L[A]",
+          "API 5L[821]",
+          "API 5L[n/a]",
+          "API 5L[n/a]",
+          "API 5L[403]"
+        ]
+      },
+      {
+        "query_id": "Q068",
+        "difficulty": "medium",
+        "discipline": "corrosion",
+        "recall_hit": true,
+        "precision": 0.8,
+        "latency_ms": 66.14,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "4",
+        "top5_sources": [
+          "API 5L[4]",
+          "API 5L[n/a]",
+          "ASME B31.4[n/a]",
+          "NACE MR0175[n/a]",
+          "API 5L[8]"
+        ]
+      },
+      {
+        "query_id": "Q069",
+        "difficulty": "medium",
+        "discipline": "structural",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 59.23,
+        "fp_risk": null,
+        "domain_match": false,
+        "matched_standard": "NACE MR0175",
+        "matched_section": "11",
+        "top5_sources": [
+          "NACE MR0175[11]",
+          "API 5L[10]",
+          "API 5L[n/a]",
+          "API 5L[4]",
+          "API 5L[7.T7]"
+        ]
+      },
+      {
+        "query_id": "Q070",
+        "difficulty": "complex",
+        "discipline": "mechanical",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 61.1,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[4]",
+          "API 5L[403]",
+          "API 5L[D]",
+          "NACE MR0175[9]",
+          "API 5L[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q071",
+        "difficulty": "complex",
+        "discipline": "inspection",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 68.04,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[7]",
+          "API 5L[D]",
+          "NACE MR0175[5]",
+          "API 5L[419]",
+          "API 5L[821]"
+        ]
+      },
+      {
+        "query_id": "Q072",
+        "difficulty": "complex",
+        "discipline": "mechanical",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 68.76,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[n/a]",
+          "ASME B31.4[n/a]",
+          "API 5L[821]",
+          "API 5L[401]",
+          "API 5L[400]"
+        ]
+      },
+      {
+        "query_id": "Q073",
+        "difficulty": "medium",
+        "discipline": "inspection",
+        "recall_hit": true,
+        "precision": 0.6,
+        "latency_ms": 53.27,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "NACE MR0175",
+        "matched_section": "9",
+        "top5_sources": [
+          "NACE MR0175[9]",
+          "API 5L[9]",
+          "NACE MR0175[6]",
+          "API 5L[D]",
+          "API 5L[821]"
+        ]
+      },
+      {
+        "query_id": "Q074",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 49.74,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[7.T7]",
+          "API 5L[403]",
+          "NACE MR0175[5]",
+          "API 5L[n/a]",
+          "AGSK-3[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q075",
+        "difficulty": "medium",
+        "discipline": "pipeline",
+        "recall_hit": true,
+        "precision": 0.2,
+        "latency_ms": 56.42,
+        "fp_risk": "cyrillic_latin_overlap",
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "403",
+        "top5_sources": [
+          "API 5L[403]",
+          "API 5L[A]",
+          "API 5L[9]",
+          "API 5L[7]",
+          "ASME B31.4[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q076",
+        "difficulty": "complex",
+        "discipline": "safety",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 60.67,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[n/a]",
+          "API 5L[9]",
+          "API 5L[400]",
+          "API 5L[D]",
+          "ASME B31.4[6]"
+        ]
+      },
+      {
+        "query_id": "Q077",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.2,
+        "latency_ms": 60.67,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "",
+        "top5_sources": [
+          "API 5L[n/a]",
+          "ASME B31.4[n/a]",
+          "API 5L[n/a]",
+          "API 5L[7.T7]",
+          "API 5L[n/a]"
+        ]
+      },
+      {
+        "query_id": "Q078",
+        "difficulty": "simple",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 1,
+        "latency_ms": 65.89,
+        "fp_risk": null,
+        "domain_match": false,
+        "matched_standard": "API 5L",
+        "matched_section": "",
+        "top5_sources": [
+          "API 5L[n/a]",
+          "API 5L[1]",
+          "API 5L[7]",
+          "API 5L[403]",
+          "NACE MR0175[6]"
+        ]
+      },
+      {
+        "query_id": "Q079",
+        "difficulty": "medium",
+        "discipline": "mechanical",
+        "recall_hit": true,
+        "precision": 0.2,
+        "latency_ms": 68.39,
+        "fp_risk": "api_acronym_collision",
+        "domain_match": true,
+        "matched_standard": "API 5L",
+        "matched_section": "10",
+        "top5_sources": [
+          "API 5L[10]",
+          "API 5L[4]",
+          "API 5L[n/a]",
+          "API 5L[n/a]",
+          "API 5L[9]"
+        ]
+      },
+      {
+        "query_id": "Q080",
+        "difficulty": "complex",
+        "discipline": "inspection",
+        "recall_hit": false,
+        "precision": 0,
+        "latency_ms": 62.71,
+        "fp_risk": null,
+        "domain_match": true,
+        "matched_standard": null,
+        "matched_section": null,
+        "top5_sources": [
+          "API 5L[7]",
+          "API 5L[821]",
+          "API 5L[4]",
+          "NACE MR0175[n/a]",
+          "API 5L[n/a]"
+        ]
+      }
+    ],
+    "recall5": 0.75,
+    "precision5": 0.4775,
+    "latencies": [
+      94.51,
+      70.82,
+      64.35,
+      68.47,
+      64.52,
+      70.17,
+      53.1,
+      64.39,
+      64.44,
+      61.03,
+      70.39,
+      77.53,
+      65.05,
+      71.11,
+      69.22,
+      65.12,
+      58.03,
+      66.56,
+      71.35,
+      63.55,
+      63.38,
+      59.78,
+      59.97,
+      48.68,
+      65.26,
+      61.15,
+      62.83,
+      72.08,
+      51.64,
+      63.92,
+      55.53,
+      65.79,
+      62.09,
+      52.99,
+      71.23,
+      54.63,
+      68.77,
+      66.22,
+      60.49,
+      65.69,
+      50.15,
+      52.11,
+      61.25,
+      65.36,
+      68.12,
+      53.54,
+      59.11,
+      66.16,
+      57.89,
+      61.92,
+      62.95,
+      65.95,
+      60.44,
+      57.52,
+      58.96,
+      56.87,
+      68.95,
+      61.94,
+      69.65,
+      58.37,
+      53.91,
+      71.14,
+      59.9,
+      66.6,
+      53.77,
+      58.37,
+      57.77,
+      66.14,
+      59.23,
+      61.1,
+      68.04,
+      68.76,
+      53.27,
+      49.74,
+      56.42,
+      60.67,
+      60.67,
+      65.89,
+      68.39,
+      62.71
+    ],
+    "fpCases": 12,
+    "domainMatch": 68,
+    "corpusStandards": [
+      "API 5L",
+      "NACE MR0175",
+      "ASME B31.4",
+      "ГОСТ 20295-85",
+      "AGSK-3"
+    ],
+    "evalStandards": [
+      "ACI 318",
+      "AISC 360",
+      "API 1104",
+      "API 2000",
+      "API 513",
+      "API 520",
+      "API 570",
+      "API 579",
+      "API 580",
+      "API 5L",
+      "API 6D",
+      "ASCE 7",
+      "ASME B16.5",
+      "ASME B31.1",
+      "ASME B31.3",
+      "ASME B31.4",
+      "ASME B31.8",
+      "ASME B31.8S",
+      "ASME B36.10M",
+      "ASME PESC-1",
+      "ASME Section",
+      "ASTM A106",
+      "ASTM A370",
+      "ASTM A53",
+      "AWS D1.1",
+      "BS 7910",
+      "DNV GL-CP-0214",
+      "GOST 27751-2014",
+      "GOST 27751-2020",
+      "ISO 1219-1",
+      "International Fire",
+      "NACE MR0175",
+      "NACE RP0169",
+      "NACE SP0208",
+      "NACE SP0294",
+      "NIST SP",
+      "OSHA 1910.146"
+    ],
+    "byDifficulty": {
+      "simple": {
+        "total": 19,
+        "hits": 15
+      },
+      "medium": {
+        "total": 45,
+        "hits": 39
+      },
+      "complex": {
+        "total": 16,
+        "hits": 6
+      }
+    },
+    "byDiscipline": {
+      "pipeline": {
+        "total": 14,
+        "hits": 13
+      },
+      "structural": {
+        "total": 5,
+        "hits": 2
+      },
+      "mechanical": {
+        "total": 36,
+        "hits": 26
+      },
+      "welding": {
+        "total": 4,
+        "hits": 4
+      },
+      "safety": {
+        "total": 4,
+        "hits": 1
+      },
+      "corrosion": {
+        "total": 6,
+        "hits": 6
+      },
+      "inspection": {
+        "total": 11,
+        "hits": 8
+      }
+    }
+  },
+  "citation": {
+    "totalChunks": 24170,
+    "withCitationStd": 24170,
+    "withCitationSec": 3549,
+    "withCitationPage": 24170,
+    "citationAccuracy": 0.1468,
+    "byCorpusType": {
+      "normative": {
+        "chunks": 41,
+        "withSec": 33,
+        "fill": 0.805
+      },
+      "catalog": {
+        "chunks": 24129,
+        "withSec": 3516,
+        "fill": 0.146
+      }
+    }
+  },
+  "fp": {
+    "totalFPRisks": 12,
+    "fpRate": 0.15,
+    "catalogHeadingsFP": {
+      "before": 22769,
+      "after": 0,
+      "reduction": 9.4
+    },
+    "fpByType": {
+      "cyrillic_latin_overlap": 10,
+      "version_year_confusion": 1,
+      "api_acronym_collision": 1
+    },
+    "mitigations": [
+      "content-aware heading scorer penalises ≤5-word all-caps Cyrillic strings by -30 pts (catalog_product type)",
+      "API ambiguity: discipline metadata filter \"pipeline\" applied when query contains \"API 5L/1104\"",
+      "version confusion: citation_version stored as explicit metadata; BM25 tokens include version",
+      "Cyrillic/Latin overlap: BM25 tokenizes both scripts; shared technical terms boost correct results"
+    ]
+  },
+  "readiness": {
+    "verdict": "GO",
+    "score": 100,
+    "blockers": []
+  }
+}
