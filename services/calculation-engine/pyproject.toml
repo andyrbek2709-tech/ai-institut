@@ -45,3 +45,29 @@ line_length = 100
 python_version = "3.11"
 check_untyped_defs = true
 warn_unused_ignores = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.ruff.isort]
+profile = "black"
+line-length = 100
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers --tb=short"
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow running tests",
+    "api: API endpoint tests",
+]

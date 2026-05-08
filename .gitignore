@@ -1,13 +1,98 @@
-node_modules/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
 .env
 .env.local
 .env.*.local
-build/
-.vercel
-scripts/__pycache__/
-__pycache__/
-*.pyc
+venv/
+ENV/
+env/
+.venv
 *.pyo
+scripts/__pycache__/
+
+# Node / Frontend
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.vite
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
+*.iml
+.cursor/
+
+# Environment
+.envrc
+
+# OS
+Thumbs.db
+*.log
+*.pid
+
+# Build artifacts
+*.tgz
+*.tar.gz
 *.bundle
-*.ps1
+
+# Deprecated
+.vercel
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# App specific
 screenshots/
+
+# IDE workspace
+*.code-workspace
+
+# Keep necessary files
+!.gitkeep
+!.github/
+!.git/
