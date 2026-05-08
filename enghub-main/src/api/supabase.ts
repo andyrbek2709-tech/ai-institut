@@ -53,28 +53,13 @@ export const del = (path: string, token?: string) =>
   fetch(`${SURL}/rest/v1/${path}`, { method: 'DELETE', headers: H(token), signal: AbortSignal.timeout(30000) }).then(guardError);
 
 export const signIn = async (email: string, password: string) => {
-  const r = await fetch(`${SURL}/auth/v1/token?grant_type=password`, {
-    method: 'POST',
-    headers: H(),
-    body: JSON.stringify({ email, password }),
-  });
-
-  if (!r.ok) {
-    let msg = `HTTP ${r.status}: ${r.statusText}`;
-    try {
-      const j = await r.json();
-      msg = j?.error_description || j?.error || j?.message || msg;
-    } catch {
-      // If response is HTML or unparseable, use status message
-    }
-    throw new Error(msg);
-  }
-
-  try {
-    return await r.json();
-  } catch (e) {
-    throw new Error(`Failed to parse login response: ${e instanceof Error ? e.message : String(e)}`);
-  }
+  // Use Supabase JS client so autoRefreshToken keeps the session alive
+  const { getSupabaseAnonClient } = await import('./supabaseClient');
+  const sb = getSupabaseAnonClient();
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(error.message);
+  if (!data.session) throw new Error('Сессия не получена. Проверьте данные.');
+  return { access_token: data.session.access_token, user: data.user };
 };
 
 // Admin-операции через серверные /api endpoints (требуют admin role).

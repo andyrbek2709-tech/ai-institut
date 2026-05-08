@@ -199,6 +199,26 @@ router.post('/admin-users', async (req: Request, res: Response, next: NextFuncti
   }
 });
 
+// ── GET /api/admin/users ──────────────────────────────────────────────────────
+router.get('/admin/users', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const token = getToken(req);
+    if (!token) throw new ApiError(401, 'Missing token');
+    await verifyAdmin(token);
+
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('app_users')
+      .select('id, email, full_name, position, role, dept_id, supabase_uid, is_active, created_at, avatar_url')
+      .order('id');
+
+    if (error) throw new ApiError(500, error.message);
+    return res.json(data ?? []);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ── GET /api/admin/organization ───────────────────────────────────────────────
 router.get('/admin/organization', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -412,6 +432,27 @@ router.delete('/admin/departments/:id', async (req: Request, res: Response, next
 
     await writeAuditLog(appUserId, actorEmail, 'dept.delete', 'departments', id, {});
     return res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── GET /api/admin/archived-projects ─────────────────────────────────────────
+router.get('/admin/archived-projects', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const token = getToken(req);
+    if (!token) throw new ApiError(401, 'Missing token');
+    await verifyAdmin(token);
+
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, name, code, deadline, archived_at')
+      .eq('archived', true)
+      .order('id');
+
+    if (error) throw new ApiError(500, error.message);
+    return res.json(data ?? []);
   } catch (err) {
     next(err);
   }

@@ -4,6 +4,38 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-08 19:30 — CRITICAL AUTH PIPELINE FIX ✅
+
+**Статус:** ✅ **AUTH FIXED** — токен больше не истекает, AdminPanel работает end-to-end
+
+**Root cause:** `signIn()` использовал прямой REST-fetch, обходя Supabase JS client → `autoRefreshToken: true` не срабатывал → JWT истекал через 1 час → "Invalid token" на всех admin API вызовах.
+
+**Исправлено:**
+- ✅ `api/supabase.ts` — `signIn()` теперь использует `supabase.auth.signInWithPassword()` → сессия управляется JS-клиентом с автообновлением
+- ✅ `api/http.ts` — `getAccessToken()` приоритетно читает из Supabase JS-сессии (auto-refreshed), fallback на `enghub_token` в localStorage
+- ✅ `services/api-server/src/routes/admin.ts` — добавлен `GET /api/admin/users` и `GET /api/admin/archived-projects`
+- ✅ `AdminPanel.tsx` — полный переход на `apiGet/apiPost` (через API server с service key), убраны прямые Supabase REST вызовы с потенциально устаревшим токеном
+- ✅ `AdminPanel.tsx` — явная обработка ошибок в `load()`: при "Invalid token" → авто-logout с сообщением
+- ✅ `AdminPanel.tsx` — добавлена вкладка "Диагностика": статус токена, валидность сессии, доступность API, текущая роль
+- ✅ `AdminPanel.tsx` — кнопка создания показывает причину неактивности (tooltip + hint text)
+- ✅ `AdminPanel.tsx` — пароль placeholder: «Оставьте пустым для Enghub2025!» (no silent default)
+- ✅ `supabase/migrations/019_seed_default_departments.sql` — 3 дефолтных отдела: Engineering, Design, Management (applied to prod Supabase)
+- ✅ Supabase: 3 отдела созданы (id 3,4,5): Engineering, Design, Management
+
+**До фикса:**
+- POST `/api/admin-users` возвращал 401 "Invalid token" если сессия старше ~1 часа
+- `loadUsers()` падал с AuthError (прямой Supabase REST с устаревшим токеном)
+- Ошибки в `load()` были unhandled rejections (не видны пользователю)
+- Нет диагностики, нет объяснения disabled-кнопки
+
+**После фикса:**
+- Суpabase JS client управляет сессией → токен обновляется автоматически
+- Все data-загрузки через API server (service key) → нет зависимости от user JWT в браузере
+- При истечении сессии → автоматический logout с сообщением
+- Вкладка Диагностика даёт полную картину состояния auth
+
+---
+
 ### 2026-05-08 — ADMIN DOMAIN IMPLEMENTATION ✅
 
 **Статус:** ✅ **ADMIN DOMAIN DEPLOYED** — полная реализация организационного управления

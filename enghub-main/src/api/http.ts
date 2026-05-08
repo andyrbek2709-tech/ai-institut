@@ -4,22 +4,22 @@
 import { getSupabaseAnonClient } from './supabaseClient';
 
 async function getAccessToken(): Promise<string> {
+  // Primary: Supabase JS client session — auto-refreshed by autoRefreshToken:true
+  try {
+    const sb = getSupabaseAnonClient();
+    const { data } = await sb.auth.getSession();
+    if (data?.session?.access_token) return data.session.access_token;
+  } catch { /* ignore */ }
+
+  // Fallback: raw localStorage token (legacy sessions before JS-client login fix)
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       const stored = window.localStorage.getItem('enghub_token');
       if (stored) return stored;
     }
-  } catch {
-    /* SSR / privacy mode */
-  }
+  } catch { /* privacy mode */ }
 
-  try {
-    const sb = getSupabaseAnonClient();
-    const { data } = await sb.auth.getSession();
-    return data?.session?.access_token || '';
-  } catch {
-    return '';
-  }
+  return '';
 }
 
 function resolveUrl(path: string): string {
