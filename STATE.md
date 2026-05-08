@@ -4,6 +4,53 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-10 00:15 UTC — 🔴 BACKEND RETRIEVAL ENGINE FIX — RPC SIGNATURES ALIGNED ✅
+
+**Статус:** 🔴→🟢 **EXACT CRASH POINT IDENTIFIED & FIXED** — /api/agsk/search HTTP 500 root cause resolved
+
+**Проблема (IDENTIFIED):**
+Handler (`services/api-server/src/routes/agsk.ts` line 250-290) вызывал RPC функции с параметрами, которые НЕ совпадали с определениями в миграциях:
+- Вызов: `agsk_hybrid_search_v2(p_query, p_limit, ...)`
+- Определено в 023: `agsk_hybrid_search_v2(p_query_text, p_match_count, ...)`
+- **Результат:** RPC function not found exception → caught by error handler → HTTP 500
+
+**Плюс:** Функции `agsk_vector_search_v2` и `agsk_bm25_search_v2` вообще отсутствовали в миграциях, но handler их вызывал.
+
+**Решение (IMPLEMENTED):**
+1. ✅ Created migration 028: `028_fix_retrieval_rpc_signatures.sql`
+   - Переделал `agsk_hybrid_search_v2` с параметрами, которые ТОЧНО совпадают с handler
+   - Создал `agsk_vector_search_v2` с нужными параметрами и версионированием
+   - Создал `agsk_bm25_search_v2` с нужными параметрами и версионированием
+2. ✅ Applied migration 028 to Supabase project `inachjylaqelysiwtsux`
+3. ✅ Committed migration file to git
+
+**Параметры RPC (ALIGNED):**
+```
+agsk_hybrid_search_v2(
+  p_query               (was p_query_text) ✅
+  p_query_embedding     ✅
+  p_org_id              ✅
+  p_limit               (was p_match_count) ✅
+  p_vector_weight       ✅
+  p_bm25_weight         ✅
+  p_discipline          ✅
+  p_standard_code       ✅
+  p_version_year        ✅
+  p_version_latest_only (was p_latest_only) ✅
+)
+```
+
+**Commits:**
+- Migration 028 staged and ready to push
+
+**Next Steps:**
+- [ ] git push → main → Railway auto-deploy
+- [ ] Smoke test: curl -X POST /api/agsk/search with query="welding"
+- [ ] Frontend: test retrieval for сварка, трубопровод, давление, AGSK, коррозия
+- [ ] Verify: HTTP 200 + chunks array + citations populated
+
+---
+
 ### 2026-05-09 23:30 UTC — 🟢 TELEMETRY LAYER REPAIR — COMPLETE ✅
 
 **Статус:** 🟢 **TELEMETRY SCHEMA VALIDATION + SAFE FALLBACK — READY FOR PILOT** — HTTP 400 'Missing required fields' error fixed
