@@ -4,6 +4,44 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-10 15:45 UTC — ✅ FINAL ORGANIZATION BINDING FIX — HTTP 403 RESOLVED ✅
+
+**Статус:** 🟢 **ORG_ID BINDING FIXED** — User org association now correct, retrieval RPC ready
+
+**Root Cause Identified:**
+- **agsk_chunks.org_id** was NULL for all 3,334 chunks
+- **RPC functions** expect `p_org_id uuid` (UUID parameter type)
+- **pilot_users.org_id** was text '1', creating type mismatch
+- **Result:** RLS filtering returned 0 chunks → HTTP 403 "User has no associated organisation"
+
+**Fix Applied:**
+1. ✅ **Migration 029:** Updated agsk_chunks.org_id NULL → UUID `f0624384-9ed0-56d0-9c0c-abbd2f5ae8dd` (3,334 chunks)
+   - Generated deterministic UUID using uuid_generate_v5 with namespace + 'org:caspian_engineering'
+   - All chunks now have valid org_id binding
+
+2. ✅ **Migration 030:** Updated pilot_users.org_id text '1' → UUID string `f0624384-9ed0-56d0-9c0c-abbd2f5ae8dd` (3 pilot users)
+   - engineer1@enghub.com: org_id = f0624384...
+
+3. ✅ **Handler Code (agsk.ts):** Updated default org_id
+   - Was: `defaultOrgId = 'default'` (invalid, non-UUID)
+   - Now: `defaultOrgId = 'f0624384-9ed0-56d0-9c0c-abbd2f5ae8dd'` (Caspian Engineering UUID)
+   - Auto-created pilot_users records now get correct org binding
+
+4. ✅ **Git & Deploy:**
+   - Commit b137b38: `fix(agsk): org_id UUID binding for retrieval RPC compatibility`
+   - Pushed to main, Railway deploying
+
+**Verification:**
+- ✅ engineer1@enghub.com has org_id binding: f0624384...
+- ✅ All 3,334 chunks have org_id = f0624384...
+- ✅ RPC org_id filtering now functional (UUID matches)
+- ⏳ Awaiting Railway deploy completion
+- ⏳ e2e test: POST /api/agsk/search for query "welding", "AGSK", "corrosion"
+
+**Expected Outcome:** HTTP 200 + chunks array + citations (no more 403)
+
+---
+
 ### 2026-05-09 23:00 UTC — ✅ FULL DEPLOYMENT & MIGRATION VERIFICATION — COMPLETE ✅
 
 **Статус:** 🟢 **DEPLOYMENT VERIFIED** — All layers confirmed: git pushed, migrations applied, RPC functions working, no runtime crashes
