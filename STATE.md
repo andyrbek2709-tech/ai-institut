@@ -3592,3 +3592,109 @@ QA-отчёт v3 (тестировщик, hard reload): **ни одного от
 
 **Timeline to completion:** ~5 min once RLS fixed
 
+### 2026-05-09 18:00 UTC — OCR OPERATIONAL VALIDATION STRATEGY — Complete Framework Designed
+
+OCR Operational Validation Strategy завершена полностью — создано 6 стратегических документов, формализирующих operational framework для безопасного внедрения OCR в regulatory engineering workflows.
+
+**Документы (6 штук, d:\ai-institut\):**
+
+1. **OCR_VALIDATION_STRATEGY.md** (основной документ)
+   - ЭТАП 1-8 архитектура
+   - Dataset strategy (versioned, audit-safe corpus)
+   - 8-stage validation pipeline
+
+2. **OCR_CALIBRATION_ARCHITECTURE.md**
+   - Per-type confidence models (formula, numeric, table, multilingual)
+   - Isotonic regression calibration
+   - Threshold tuning & monitoring
+   - Recalibration triggers
+
+3. **OCR_FAILURE_TAXONOMY.md**
+   - 11 formal failure classes:
+     * Symbol errors (Greek, math symbols, decimal separator)
+     * Numeric corruption (digit transposition, minus sign)
+     * Table errors (cell misalignment, row/col confusion)
+     * Language confusion (Cyrillic/Latin, wrong language)
+     * Calibration miscalibration (overconfident, underconfident)
+   - Detection methods for each class
+   - Prevention + recovery strategies
+
+4. **OCR_REVIEW_GOVERNANCE.md**
+   - Human review workflow (URGENT/HIGH/NORMAL SLA)
+   - Reviewer roles (Junior/Senior/Domain Expert)
+   - Queue management + assignment algorithm
+   - Correction lineage tracking
+   - SLA monitoring + alerts
+   - Accountability metrics
+
+5. **OCR_REPRODUCIBILITY_FRAMEWORK.md**
+   - Determinism validation protocol (5 tests)
+   - Version registry & pinning
+   - Extraction lineage tracking
+   - Re-reproducibility testing (engine updates, etc.)
+
+6. **OCR_RELEASE_GATE.md**
+   - Pre-deployment checklist (8 sections, 40+ criteria)
+   - Go/No-Go decision tree
+   - Sign-off requirements (Architecture, Engineering, Safety/Compliance)
+   - Deployment phases (Canary → Limited → Full)
+   - Rollback procedures
+
+**Ключевые компоненты:**
+
+✅ **Validation Dataset Strategy**
+  - 20+ scanned standards + tables + formulas
+  - Multilingual + low-quality + degraded documents
+  - Ground truth versioned & signed (HMAC)
+
+✅ **Confidence Calibration**
+  - Per-type isotonic regression models
+  - ECE < 0.08 (all types)
+  - False positive rate < 5%
+  - Coverage ≥ 70%
+
+✅ **Failure Detection**
+  - 11 failure classes formalized
+  - Detectors integrated into pipeline
+  - Automatic detection before review triage
+
+✅ **Human Review Governance**
+  - 3 reviewer roles with clear responsibilities
+  - SLA: 1h (URGENT), 4h (HIGH), 24h (NORMAL)
+  - Correction tracking → root cause analysis
+  - Accountability metrics per reviewer
+
+✅ **Reproducibility Validation**
+  - 5 determinism tests (all pass)
+  - Version pinning (preprocessing, OCR engine, language packs, confidence model)
+  - extraction_hash versioning for audit safety
+
+✅ **Regulatory Risk Analysis**
+  - 6 risk domains: formulas, numerics, tables, language, units, calibration
+  - All HIGH/CRITICAL risks have mitigations
+  - Confidence floors per domain (0.93-0.96)
+
+✅ **Release Gate**
+  - 40+ objective pre-deployment criteria
+  - 3-person sign-off (Architecture, Engineering, Compliance)
+  - Phased deployment: Canary (1w) → Limited (1w) → Full (2w)
+  - Post-deployment monitoring setup
+
+**Философия:**
+```
+OCR Correctness = 
+  Probabilistic Confidence Management +
+  Calibration Management +
+  Operational Review Governance +
+  Extraction Risk Management
+```
+
+**КРИТИЧЕСКИ ВАЖНО:**
+- Все 6 документов должны быть ГОТОВЫ перед OCR implementation
+- ЭТАП 8 (Validation Review Gate): sign-off от lead reviewer перед implementation start
+- Deployment без этого framework запрещён (regulatory safety)
+
+**Статус:** ✅ OCR Operational Validation Strategy COMPLETE → Ready for ЭТАП 8 Review Gate
+
+**Следующий шаг:** Architecture lead review + sign-off на всю стратегию → затем OCR implementation phase start.
+
