@@ -1,9 +1,9 @@
 {
-  "status": "scraped",
-  "current_step": "Собрано 849 новых items",
-  "progress_pct": 100,
-  "items_processed": 849,
+  "status": "ai-processing",
+  "current_step": "Старт AI: 849 элементов",
+  "progress_pct": 0,
+  "items_processed": 0,
   "items_total": 849,
-  "updated_at": "2026-05-08T07:20:36Z",
-  "started_at": "2026-05-08T07:19:30Z"
+  "updated_at": "2026-05-08T07:20:38Z",
+  "started_at": "2026-05-08T07:20:38Z"
 }
