@@ -4,6 +4,42 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-08 23:55 — PRE-IMPLEMENTATION VALIDATION DATASET CREATED ✅
+
+**Статус:** ✅ **PHASE: PRE-IMPLEMENTATION VALIDATION** — Evaluation dataset для benchmarking готов перед Week 1.
+
+**Создано:**
+- ✅ `d:\ai-institut\AGSK_EVALUATION_DATASET.md` (14KB) — Complete evaluation framework:
+  - 80 concrete engineering queries (7 disciplines, 3 difficulty levels)
+  - RAGAS evaluation metrics (Faithfulness, Answer Relevance, Context Relevance, Context Recall)
+  - Acceptance criteria (Recall@5 ≥ 0.85, Precision@5 ≥ 0.80, RAGAS Faithfulness ≥ 0.85, Citation Accuracy ≥ 0.90)
+  - Latency targets (p50 ≤ 200ms, p95 ≤ 500ms, p99 ≤ 1000ms)
+  - Query categories: simple normative (24q), medium design (40q), complex multi-standard (16q)
+  - Edge cases/regression tests (8 queries): temporal ambiguity, acronym overloading, false positives, section notation, units, obsolete standards, cross-domain, vague requirements
+  - Evaluation workflow: baseline → optimization → final validation → go/no-go decision
+  
+- ✅ `d:\ai-institut\evaluation_dataset.json` (650KB) — 80 test queries with ground truth:
+  - Each entry: query_id, query_text, difficulty, discipline, topics, expected_standards, expected_keywords, ground_truth_answer, confidence_score, notes
+  - Standards: API 5L, ASME B31.4/B31.8/Section V/VIII/IX, ISO 1219, GOST, NACE (MR0175, RP0169, SP0208, SP0294), AWS D1.1, ACI 318, AISC 360, IFC, OSHA, BS 7910, DNV
+  - Disciplines: Pipeline (20q), Structural (15q), Mechanical (15q), Electrical (10q), Welding (10q), Corrosion (5q), Fire Safety (5q)
+  - Example: Q001 "What are minimum wall thickness requirements for API 5L Grade X52 at 1000 psi?" → API 5L 2018 Table 7, ASME B31.8 823.1-823.3
+  
+**Назначение:**
+- Baseline measurement (Week 4.1): benchmark retrieval quality before optimization
+- Regression testing: catch degradation in future changes
+- Citation accuracy validation: verify ground truth answers match actual standards
+- Production readiness: go/no-go decision support (2026-06-06)
+
+**Acceptance Ready:**
+- ✅ Hybrid retrieval (BM25 + Vector + RRF) validation queries included
+- ✅ RAGAS metrics calculable (faithfulness, relevance, recall, context)
+- ✅ Citation links verifiable (section numbers, standards versions)
+- ✅ Automated test runner templates included
+
+**Next Step:** Week 1 (2026-05-13) начнётся с миграций 021 + 022. Evaluation dataset будет использован в Week 4 для baseline measurement.
+
+---
+
 ### 2026-05-08 23:50 — PERSISTENT PROJECT MEMORY SYSTEM INSTALLED ✅
 
 **Статус:** ✅ **INFRASTRUCTURE: SESSION PERSISTENCE READY** — Полная система для сохранения контекста между сессиями.
