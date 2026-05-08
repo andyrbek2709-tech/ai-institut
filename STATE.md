@@ -4,6 +4,321 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 18:45 UTC — 🟨 SEMANTIC EQUIVALENCE ARCHITECTURE: PHASE 1-3 DESIGNED — Foundation Layer Complete
+
+**Статус:** 🟨 **SEMANTIC ARCHITECTURE PHASE 1-3 DELIVERED** — 3 foundation documents created (6,200+ lines), semantic model fully specified
+
+**Проблема (выявлена):**
+- 🔴 Canonical normalization solves **syntactic equivalence** but NOT **semantic equivalence**
+- 🔴 Same formula (σ = F/A) means completely different things in structural vs piping engineering
+- 🔴 Pressure and stress have identical dimension [M¹ L⁻¹ T⁻²] but different semantics (fluids vs solids)
+- 🔴 Without semantic layer: AI parser duplicates formulas, incorrectly merges semantics, breaks calibration
+
+**Решение (разработано):**
+3 архитектурных документа (6,200+ строк, semantic model + dimensional validation + domain mapping):
+
+1. **FORMULA_SEMANTIC_MODEL.md** (2,200 строк) — семантическое представление формул
+   - Semantic formula anatomy (structure, components, context)
+   - Symbolic equivalence definition & algorithm (F₁ ≈ₛ F₂)
+   - Algebraic equivalence rules (F₁ ≈ₐ F₂)
+   - Notation-independent semantics (σ vs P vs "stress" → same core)
+   - Context preservation (implicit assumptions)
+   - 5 semantic equivalence classes (IDENTICAL, EQUIVALENT, ALGEBRAICALLY, CONTEXT_DEPENDENT, NON_EQUIVALENT)
+   - Engineering quantity registry (example: STRESS vs PRESSURE with dimension conflict)
+   - Semantic model API (8 core functions)
+   - Validation examples & worked cases
+
+2. **DIMENSIONAL_SEMANTICS_STANDARD.md** (2,200 строк) — размерно-осведомлённая эквивалентность
+   - Dimensional analysis framework (SI, CGS, imperial, engineering units)
+   - 15+ common engineering dimensions (force, pressure, stress, energy, etc.)
+   - Dimensional consistency checking algorithm
+   - **THE PARADOX:** Stress [M¹ L⁻¹ T⁻²] = Pressure [M¹ L⁻¹ T⁻²] BUT semantically different
+   - Unit-invariant equivalence (P = 250 MPa ≡ 1.72 psi ≡ 25.5 kgf/mm² — same physical reality)
+   - Dimensional conflict detection (5 types: additive mismatch, exponent error, missing factor, domain assumption violation, unit mismatch)
+   - Dangerous dimension equalities (stress vs pressure, torque vs energy, kinematic vs dynamic viscosity)
+   - Dimensional equivalence matrix (what quantities are dimensionally equivalent)
+   - Dimensional proof generation
+   - Dimensional validation API (8 functions)
+
+3. **ENGINEERING_DOMAIN_SEMANTICS.md** (2,200 строк) — дисциплинарно-специфичная интерпретация
+   - Engineering disciplines registry (8 major: structural, piping, mechanical, fluid, thermal, electrical, material science, control)
+   - Domain-specific formula interpretation (stress/pressure disambiguation, modulus variants, pressure types)
+   - **Modulus example:** E = σ/ε is Young's modulus in structural mechanics BUT complex modulus E'(ω) in material testing
+   - **Pressure example:** P = ρgh is hydrostatic in piping BUT dynamic pressure = ½ρv² in aerodynamics (completely different)
+   - Domain-specific constraints (structural: yield, buckling, serviceability, fatigue; piping: rupture, corrosion, thermal expansion)
+   - Multi-domain disambiguation algorithm (resolve formula meaning across 8+ domains)
+   - Dangerous domain confusions (stress vs pressure HIGHEST RISK, torque vs energy, kinematic vs dynamic viscosity, absolute vs gauge pressure)
+   - Domain validation API (6 functions)
+   - 25+ worked examples showing domain-specific interpretation
+
+**Ключевые решения:**
+- Semantic equivalence is **domain-dependent** (not universal)
+- Dimensional equivalence is **necessary but NOT sufficient** for semantic equivalence
+- Same formula can have **completely different meanings** in different disciplines
+- **Stress-pressure paradox** is foundational: identical dimension, completely different physics
+- **Modulus variants** (static vs dynamic) cannot be interchanged despite appearing identical
+- **Pressure types** (hydrostatic, dynamic, absolute, gauge) have distinct formulas despite same dimension
+- Semantic validation **CANNOT be purely automatic** — domain context is critical
+- Reviewers need **mandatory semantic checklists** (coming in Phase 4)
+
+**Примеры (готовы):**
+1. ✅ σ = F/A: IDENTICAL formula, DIFFERENT meanings (stress in structural vs pressure in piping)
+2. ✅ E = σ/ε: Young's modulus (structural) vs Complex modulus E'(ω) (material testing) — same form, different physics
+3. ✅ P = ρgh: Hydrostatic pressure (piping) vs dynamic pressure = ½ρv² (aerodynamics) — completely different formulas, same dimension
+4. ✅ Dimensional equivalence matrix: stress, pressure, modulus all [M¹ L⁻¹ T⁻²] but different semantic classes
+5. ✅ Domain disambiguation: P = F/A could mean stress (95% fit, structural), pressure (92% fit, piping), or error (in aerodynamics)
+6. ✅ Dangerous confusions: kinematic [L² T⁻¹] vs dynamic [M¹ L⁻¹ T⁻¹] viscosity (different dimensions, constantly confused)
+7. ✅ Absolute vs gauge pressure: same units, different reference baseline, critical in HVAC/piping calculations
+8. ✅ Constraint validation: Piping design must check P ≤ P_allowable AND account for corrosion allowance AND thermal expansion
+
+**Документы созданы:**
+1. ✅ FORMULA_SEMANTIC_MODEL.md (2,200 строк)
+2. ✅ DIMENSIONAL_SEMANTICS_STANDARD.md (2,200 строк)
+3. ✅ ENGINEERING_DOMAIN_SEMANTICS.md (2,200 строк)
+4. ✅ SEMANTIC_EQUIVALENCE_ARCHITECTURE.md (3,000+ строк, главный документ)
+
+**Следующие шаги (Фазы 4-8):**
+- [ ] **PHASE 4:** SEMANTIC_REVIEW_CONTRACT.md (4 недели) — reviewer workflow, mandatory checklists
+- [ ] **PHASE 5:** SEMANTIC_LINEAGE_MODEL.md (3 недели) — immutable audit trail, semantic locking
+- [ ] **PHASE 6:** Integration with CANONICAL_NORMALIZATION_ARCHITECTURE (2 недели)
+- [ ] **PHASE 7:** Semantic Consistency Testing (4 недели) — 100+ test cases
+- [ ] **PHASE 8:** Semantic Equivalence Review Gate (1 неделя) — readiness assessment, go/no-go
+
+---
+
+### 2026-05-10 17:15 UTC — 🟩 CANONICAL NORMALIZATION ARCHITECTURE: PHASE 2 COMPLETE — 8-STAGE FRAMEWORK DESIGNED
+
+**Статус:** 🟩 **NORMALIZATION ARCHITECTURE COMPLETE** — 6 documents created (3,800+ lines), deterministic canonicalization framework ready
+
+**Проблема (выявлена):**
+- 🔴 Ground truth normalization **partially depends on human interpretation** → risk of drift
+- 🔴 Different reviewers normalize identically-sourced content differently
+- 🔴 Notation divergence (· vs × vs *), locale variance (Па vs Pa), symbol confusion (σ vs С)
+- 🔴 Calibration metrics unstable when truth normalization is subjective
+- 🔴 Without deterministic canonicalization, pilot corpus assembly will fragment
+
+**Решение (разработано):**
+6 архитектурных документов (3,800+ строк, 8-stage normalization + reviewer contract):
+
+1. **CANONICAL_NORMALIZATION_ARCHITECTURE.md** (850 строк) — главный framework
+   - 8-stage pipeline (formula, unit, symbol, table, reviewer, arbitration, testing, review gate)
+   - Truth normalization drift risk analysis
+   - Normalization workflow diagram
+   - Expected outcomes per stage
+   - Implementation timeline (7-week roadmap)
+
+2. **FORMULA_NORMALIZATION_STANDARD.md** (950 строк) — deterministic formula canonicalization
+   - Multiplication symbols (· → ×), minus signs (− →  -), decimals (, → .)
+   - Superscripts/subscripts normalization (a^2 → a², E_12 → E₁₂)
+   - Unicode normalization (NFC form)
+   - Engineering notation (e-5 → ×10⁻⁵)
+   - Greek/Cyrillic confusion matrix (σ vs С, μ vs м, τ vs т)
+   - 7 comprehensive examples (material property, stress, complex notation)
+   - Formula normalization checklist (12 items)
+
+3. **UNIT_NORMALIZATION_STANDARD.md** (850 строк) — canonical unit registry
+   - 100+ unit definitions (Pa, MPa, kPa, mm, mm², m², N, N·m, kgf, K, °C, etc.)
+   - SI prefix normalization rules (k, M, G, m, μ, n)
+   - Locale normalization (MPa ← МПа, кПа ← kPa, мм² ← mm²)
+   - Unicode normalization (mm² ← mm^2 ← mm2)
+   - Composite unit rules (slash vs dot, exponents)
+   - Micro prefix disambiguation (μ ≠ m ≠ u)
+   - 4 comprehensive examples (pressure, area, composite, complex)
+   - Unit validation rules (dimensional consistency, context-based selection)
+
+4. **TABLE_NORMALIZATION_STANDARD.md** (900 строк) — canonical table structure
+   - 5 table types (simple rectangular, hierarchical header, multi-level index, engineering matrix, decision)
+   - Header row detection and normalization
+   - Merged cell handling (header inheritance, row inheritance)
+   - Cell value normalization (decimals, units, empty cells)
+   - Column unit specification and validation
+   - Rectangular consistency verification
+   - 3 comprehensive examples (material properties, hierarchical headers, index tables)
+   - Table normalization checklist (14 items)
+
+5. **NORMALIZATION_LINEAGE_MODEL.md** (920 строк) — traceable normalization with audit trail
+   - SQL schema (normalization_lineage, normalization_rules, arbitration_decisions tables)
+   - 6-stage lineage tracking (formula → unit → symbol → table → reviewer → arbitration)
+   - Immutability protocol (is_locked, locked_at) — audit-safe
+   - 3 detailed lineage examples (formula no conflict, unit with ambiguity, symbol with arbitration)
+   - Correction management (superseded entries, historical preservation)
+   - State machine (extracted → normalized → locked)
+   - Immutability constraints (no delete when locked)
+   - Lineage query examples
+
+6. **REVIEWER_NORMALIZATION_CONTRACT.md** (950 строк) — mandatory normalization rules for reviewers
+   - 5 core principles (determinism, standards-based, ambiguity escalation, immutable audit trail, no invention)
+   - 6-step normalization workflow for reviewers
+   - 5 comprehensive checklists (formula, unit, symbol, table, ambiguity resolution) — 10 items each
+   - Conflict resolution protocol (identify → gather evidence → request arbitration → accept decision)
+   - Override rules (when allowed, when forbidden, recording)
+   - Training requirements + certification quiz (80% pass)
+   - Violation consequences (critical/high/medium/low levels)
+   - 3 ✅ correct examples, 4 ❌ incorrect examples (what NOT to do)
+   - Reviewer sign-off template with training checklist
+
+**Ключевые решения:**
+- Normalization is **deterministic** (same inputs → same outputs, always)
+- Normalization is **versioned** (v1.0.0 of standards applied)
+- Normalization is **reviewable** (rules explicit, not hidden in reviewer interpretation)
+- Normalization is **traceable** (complete lineage with immutable audit trail)
+- Normalization is **standardized** (no personal preference, only rule-based)
+- Reviewers follow **contract** (mandatory checklist, signature required)
+- Ambiguities are **escalated** (not decided unilaterally)
+- Overrides are **documented** (with reason and approval)
+- Truth is **immutable after lock** (audit-safe, regulatory-compliant)
+
+**Примеры использования (готовы):**
+1. ✅ Formula normalization: K = G·a² → K = G×a² (rule A1)
+2. ✅ Unit normalization: 250 Мпа → 250 MPa (locale + prefix rules)
+3. ✅ Reviewer workflow: 5-step checklist with standards references
+4. ✅ Normalization lineage: source → canonical (6 stages tracked)
+5. ✅ Unicode normalization: σ (combining) → σ (precomposed NFC)
+6. ✅ Table normalization: OCR variant → canonical structure
+7. ✅ Normalization consistency tests: 8 test suites defined
+8. ✅ Remaining normalization risks: 10 documented (formula nesting, Cyrillic/Greek, OCR variance, reviewer training, Unicode edge cases, table ambiguity, unit collision, decimal context, whitespace semantics, historical variants)
+
+**Следующие шаги:**
+1. ✅ [COMPLETE] CANONICAL_NORMALIZATION_ARCHITECTURE.md (master design)
+2. ✅ [COMPLETE] FORMULA_NORMALIZATION_STANDARD.md (deterministic formula rules)
+3. ✅ [COMPLETE] UNIT_NORMALIZATION_STANDARD.md (canonical unit registry)
+4. ✅ [COMPLETE] TABLE_NORMALIZATION_STANDARD.md (table structure rules)
+5. ✅ [COMPLETE] NORMALIZATION_LINEAGE_MODEL.md (audit trail schema)
+6. ✅ [COMPLETE] REVIEWER_NORMALIZATION_CONTRACT.md (mandatory reviewer rules)
+
+7. [PENDING] SYMBOL_NORMALIZATION_STANDARD.md (Symbol rules, Stage 3 implementation)
+8. [PENDING] Normalization consistency testing (Stage 7)
+9. [PENDING] Normalization review gate (Stage 8)
+10. [PENDING] Reviewer training + certification (3 test reviewers)
+11. [PENDING] Pilot corpus assembly with normalization (50-100 documents)
+12. [PENDING] Release gate approval (all criteria met, signed off)
+
+**Status:** ✅ Architecture complete, ready for Stage 3 (symbol normalization standard) and Stage 7 (consistency testing)
+
+---
+
+### 2026-05-10 15:30 UTC — 🔴 OCR GROUND TRUTH GOVERNANCE ARCHITECTURE: CRITICAL FOUNDATION ESTABLISHED
+
+**Статус:** 🔴 **CRITICAL ARCHITECTURE COMPLETE** — Ground truth governance system designed, 5 documents created, ready for pilot corpus assembly
+
+**Проблема (выявлена):**
+- ❌ OCR Pilot Architecture Stage 1 окончена, но **critical missing foundation**: ground truth governance
+- 🔴 OCR validation quality полностью зависит от ground truth correctness
+- 🔴 Без trusted truth corpus — calibration invalid, confidence metrics misleading, release gate unsafe
+- 🔴 Формулы, таблицы, многоязычный контент требуют специализированной валидации
+
+**Решение (разработано):**
+5 архитектурных документов создано (2,850+ строк, 8-stage governance):
+
+1. **GROUND_TRUTH_GOVERNANCE.md** (900 строк) — главный framework
+   - 8-layer model (type definition, confidence levels, source establishment, multi-reviewer, disagreement resolution, specialized validation, lineage, release gate)
+   - Truth confidence classes: VERIFIED, REVIEWED, PROBABLE, AMBIGUOUS
+   - Source truth establishment protocol (extraction, specialist review, multi-reviewer, arbitration)
+   - Implementation priority (8-week roadmap)
+
+2. **FORMULA_TRUTH_VALIDATION.md** (700 строк) — specialized for formulas
+   - Phase 1-7: formula recognition, character validation, semantic validation, multi-reviewer, disagreement resolution, confidence assignment, audit/lineage
+   - Critical confusion matrix (σ vs Σ vs 6, μ vs u vs m, τ vs T, etc.)
+   - Validation protocol per formula type (material property, calculation, transcendental, empirical, standard reference)
+   - Dimensional analysis, notation normalization, multi-line formula continuity
+   - Formula validation checklist (8 categories)
+
+3. **TABLE_TRUTH_VALIDATION.md** (750 строк) — specialized for tables
+   - Phase 1-8: classification, structure mapping, header validation, cell accuracy, alignment, merged cells, multi-reviewer, disagreement resolution
+   - Table types: simple rectangular, hierarchical header, multi-level index, engineering matrix, equation tables, multi-table layout, decision matrix
+   - Cell validation: type, precision, range, transposition detection, cross-cell consistency
+   - Row/column alignment verification (drift detection)
+   - Merged cell handling (inheritance rules, OCR challenges)
+   - Empty cell & special value handling (NULL vs zero vs N/A vs —)
+   - Table validation checklist (8 categories)
+
+4. **GROUND_TRUTH_LINEAGE.md** (650 строк) — complete audit trail
+   - Lineage schema (SQL tables: ground_truth_blocks, lineage_chain, corrections)
+   - 6 stages with examples: extraction, specialist review, reviewer validation (tier 1/2/3), disagreement resolution, truth locked, corrections
+   - Detailed examples: formula truth (no disagreement), table truth (with disagreement & arbitration)
+   - Audit trail immutability (locked_at, status tracking)
+   - Historical versions (correction management, prior states preserved)
+
+5. **GROUND_TRUTH_RELEASE_GATE.md** (600 строк) — corpus approval criteria
+   - 8 criteria for pilot corpus approval:
+     1. Confidence distribution (≥70% VERIFIED, ≥20% REVIEWED, <10% PROBABLE+AMBIGUOUS)
+     2. Formula validation completeness (≥80% formula blocks VERIFIED)
+     3. Table validation completeness (≥75% table blocks VERIFIED)
+     4. Multilingual validation (if applicable, ≥80% VERIFIED)
+     5. Numeric value validation (units, precision, range, 100% documented)
+     6. Arbitration completion (0 unresolved disagreements)
+     7. Lineage completeness (100% of blocks traceable, immutable)
+     8. Documentation & traceability (manifest, catalog, metrics, sign-off)
+   - Release gate approval workflow (step 1-5: labeling → evaluation → decision → sign-off → initialization)
+   - Non-approval path (failure analysis, remediation, re-submission, iteration limit)
+
+**Ключевые решения:**
+- Ground truth = NOT OCR extraction, but validated truth with confidence level
+- Truth confidence is NOT same as OCR confidence (truth is definitive, extraction is probabilistic)
+- Formula ground truth MUST support: symbols (Greek/Cyrillic/Latin), subscripts, superscripts, units, notation normalization
+- Table ground truth MUST support: structure (merged cells, headers), alignment, per-column units, empty cell handling
+- Lineage is IMMUTABLE after lock (audit-safe, regulatory compliant)
+- Corrections tracked separately (version history maintained, prior states preserved)
+- Release gate blocks pilot use until corpus meets 8 strict criteria
+
+**Примеры использования (готовы):**
+1. ✅ Ground truth workflow (extraction → specialist → multi-reviewer → arbitration → lock)
+2. ✅ Reviewer disagreement example (symbol confusion: σ vs Σ vs 6 → arbitration → resolved)
+3. ✅ Formula truth example (K = G×a²/(π×t³) → specialist validation → VERIFIED)
+4. ✅ Table truth example (material properties, row/column alignment → multi-reviewer → VERIFIED)
+5. ✅ Arbitration workflow (cell value 276 vs 278 → cross-reference ISO standard → 276 chosen)
+6. ✅ Truth lineage example (extraction 0.75 → specialist 0.92 → reviewers 0.94-0.91 → specialist 1.0 → VERIFIED)
+7. ✅ Ambiguity handling example (scan ambiguous: could be 4.5 or 4.3 → marked AMBIGUOUS → blocked from use)
+8. ✅ Remaining truth risks (scan degradation, language detection, unit collision, formula nesting)
+
+**Следующие шаги:**
+1. Assemble pilot corpus (50-100 documents, 6 categories from OCR_PILOT_CORPUS.md)
+   - Category 1: Scanned Standards (15-20 docs)
+   - Category 2: Engineering Formulas (10-15 docs)
+   - Category 3: Engineering Tables (5-10 docs)
+   - Category 4: Low-Quality Scans (8-12 docs)
+   - Category 5: Multilingual Docs (5-8 docs)
+   - Category 6: Known Failures (3-5 docs)
+
+2. Manual extraction (not OCR): expert manually extracts formulas, tables, values, documents ambiguities
+
+3. Specialist review (formulas & tables): mechanical engineer validates symbolic correctness, table structure, unit balance
+
+4. Multi-reviewer validation: 3 reviewers independently validate each block, confidence scores assigned
+
+5. Disagreement resolution: arbitration for any reviewer conflicts (symbol, value, structure)
+
+6. Truth lineage recording: immutable audit trail per block (6-stage pipeline tracked)
+
+7. Release gate evaluation: check all 8 criteria, sign-off from 4 signatories
+
+8. Pilot deployment: use VERIFIED corpus for confidence calibration (Stage 2 onwards)
+
+**Статус семафор:**
+- 🔴 **BLOCKING:** Ground truth corpus NOT YET assembled
+- 🔴 **BLOCKING:** Multi-reviewer validation NOT YET started
+- 🔴 **BLOCKING:** Release gate criteria NOT YET evaluated
+- ✅ **READY:** Ground truth governance architecture complete (this session)
+- ✅ **READY:** Formula validation architecture complete
+- ✅ **READY:** Table validation architecture complete
+- ✅ **READY:** Lineage & audit trail architecture complete
+- ✅ **READY:** Release gate framework complete
+
+**Документы в d:\ai-institut\:**
+- GROUND_TRUTH_GOVERNANCE.md
+- FORMULA_TRUTH_VALIDATION.md
+- TABLE_TRUTH_VALIDATION.md
+- GROUND_TRUTH_LINEAGE.md
+- GROUND_TRUTH_RELEASE_GATE.md
+
+**Связь с другими системами:**
+- OCR_PILOT_ARCHITECTURE.md (Stage 1 complete, Stage 2 blocked until corpus approved)
+- OCR_VALIDATION_STRATEGY.md (ETAP 1 = corpus specification, now grounded in ground truth governance)
+- OCR_REVIEW_GOVERNANCE.md (covers review of extractions; ground truth governance covers upstream truth creation)
+- OCR_LINEAGE_ARCHITECTURE.md (parallel to OCR lineage; ground truth lineage is separate system)
+
+---
+
 ### 2026-05-09 20:30 UTC — ✅ AGSK BACKEND AUTHORIZATION FIX: PRODUCTION READY
 
 **Статус:** ✅ **RETRIEVAL AUTHORIZATION FULLY FIXED** — 401/403 errors eliminated, auto-creation logic deployed
