@@ -104,9 +104,9 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
         },
         body: JSON.stringify({ audio_base64: base64, media_type: file.type || 'audio/mpeg', filename: file.name }),
       });
-      const data = await res.json();
-      if (data.text) {
-        setNewMeeting(prev => ({ ...prev, decisions: prev.decisions ? prev.decisions + '\n\n' + data.text : data.text }));
+      const transcriptionData = await res.json();
+      if (transcriptionData.text) {
+        setNewMeeting(prev => ({ ...prev, decisions: prev.decisions ? prev.decisions + '\n\n' + transcriptionData.text : transcriptionData.text }));
         addNotification('Транскрипция завершена', 'success');
       } else {
         addNotification('Не удалось транскрибировать аудио', 'warning');

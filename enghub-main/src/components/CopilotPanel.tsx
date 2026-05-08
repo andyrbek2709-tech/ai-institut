@@ -131,18 +131,18 @@ export function CopilotPanel({
         })
       });
 
-      const data = await res.json();
+      const responseData = await res.json();
       
-      if (data.blocked) {
-        const nextStepText = data.next_step ? `\n➡ ${data.next_step}` : '';
-        setMessages(prev => [...prev, { role: 'ai', text: `⛔ ${data.message || 'Действие заблокировано правилами.'}${nextStepText}` }]);
-      } else if (data.message) {
+      if (responseData.blocked) {
+        const nextStepText = data.next_step ? `\n➡ ${responseData.next_step}` : '';
+        setMessages(prev => [...prev, { role: 'ai', text: `⛔ ${responseData.message || 'Действие заблокировано правилами.'}${nextStepText}` }]);
+      } else if (responseData.message) {
         setMessages(prev => [...prev, { role: 'ai', text: data.message }]);
       } else {
         setMessages(prev => [...prev, { role: 'ai', text: 'Запрос обработан.' }]);
       }
       
-      if (data.action_id || data.action_count || ['task_manager', 'drawing_agent', 'review_agent', 'register_agent', 'smart_decompose_agent', 'smart_decompose_v2_agent', 'compliance_agent'].includes(data.agent)) {
+      if (responseData.action_id || responseData.action_count || ['task_manager', 'drawing_agent', 'review_agent', 'register_agent', 'smart_decompose_agent', 'smart_decompose_v2_agent', 'compliance_agent'].includes(responseData.agent)) {
           fetchActions();
       }
     } catch (e) {
