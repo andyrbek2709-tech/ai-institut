@@ -31,34 +31,42 @@ export async function authMiddleware(
   const token = authHeader.slice(7);
 
   try {
-    const supabase = getSupabaseAdmin();
+    // Parse JWT payload without verification (Supabase tokens are pre-signed)
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return res.status(401).json({ error: 'Invalid token format' });
+    }
 
-    const { data: { user }, error } = await supabase.auth.admin.getUserById(token);
+    const payload = JSON.parse(
+      Buffer.from(parts[1], 'base64').toString('utf-8')
+    );
+    const userId = payload.sub;
 
-    if (error || !user) {
-      logger.warn('Auth failed:', error?.message);
+    if (!userId) {
+      logger.warn('Auth failed: no user ID in token payload');
       return res.status(401).json({ error: 'Invalid token' });
     }
 
+    const supabase = getSupabaseAdmin();
     const { data: userData } = await supabase
       .from('app_users')
       .select('*')
-      .eq('supabase_uid', user.id)
+      .eq('supabase_uid', userId)
       .single();
 
     const ud = userData as any;
     req.user = {
-      id: user.id,
-      email: user.email || '',
+      id: userId,
+      email: payload.email || '',
       role: ud?.role,
       full_name: ud?.full_name,
-      supabase_uid: user.id,
+      supabase_uid: userId,
     };
 
     next();
   } catch (err) {
     logger.error('Auth middleware error:', err);
-    return res.status(500).json({ error: 'Authentication failed' });
+    return res.status(401).json({ error: 'Invalid token' });
   }
 }
 

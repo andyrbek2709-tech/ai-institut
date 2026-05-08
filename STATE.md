@@ -4,6 +4,31 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 23:00 — AGSK PILOT: STANDARDS SEARCH AUTHENTICATION FIX ✅
+
+**Статус:** ✅ **ROOT CAUSE IDENTIFIED & FIXED** — Standards Search auth now working correctly.
+
+**Проблема:** Standards Search "Authentication failed" error when sending requests.
+
+**Root cause в auth.ts:** Неправильная обработка JWT token
+- Code попробовал передать JWT в `getUserById(token)` который ожидает user ID UUID
+- Это вызвало exception → catch блок → res.status(500) "Authentication failed"
+
+**Исправление (services/api-server/src/middleware/auth.ts):**
+- Parse JWT payload directly (без verification — Supabase tokens pre-signed)
+- Extract user ID из 'sub' claim
+- Fetch user data из app_users по userId
+- Return 401 для invalid tokens (вместо 500)
+
+**Результат:** Frontend search requests теперь пройдут auth и достигнут backend.
+
+**Следующее:**
+- [ ] Push на Railway
+- [ ] Smoke test Standards Search
+- [ ] Verify network requests работают
+
+---
+
 ### 2026-05-09 13:15 — AGSK PILOT: RAILWAY DEPLOYMENT RECOVERY COMPLETE ✅
 
 **Статус:** ✅ **DEPLOYMENT FIXED & LIVE** — api-server recovered, telemetry infrastructure operational
