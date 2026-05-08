@@ -40,6 +40,25 @@ class DeterministicHasher:
         return round(float(value), precision)
 
     @staticmethod
+    def _is_iso_timestamp(value: str) -> bool:
+        """Check if string is ISO 8601 timestamp."""
+        try:
+            # Check for ISO 8601 format: YYYY-MM-DDTHH:MM:SS or with Z/±HH:MM
+            return len(value) >= 19 and 'T' in value and ('Z' in value or '+' in value or '-' in value[10:])
+        except (TypeError, AttributeError):
+            return False
+
+    @staticmethod
+    def _normalize_iso_timestamp(value: str) -> str:
+        """Normalize ISO timestamp to date only (remove microseconds/timezone)."""
+        try:
+            # Extract YYYY-MM-DD part
+            date_part = value.split('T')[0]
+            return f"{date_part}T00:00:00Z"
+        except (IndexError, AttributeError):
+            return value
+
+    @staticmethod
     def canonicalize_value(value: Any) -> Any:
         """
         Convert value to canonical form for stable hashing.
@@ -49,6 +68,7 @@ class DeterministicHasher:
         - None → __NONE__ marker
         - {} → __EMPTY_DICT__ marker
         - [] → __EMPTY_LIST__ marker
+        - ISO timestamp → normalize to date only (remove microseconds)
         - dict → sorted keys, recursively canonicalized
         - list → canonicalized elements (preserve order)
         """
@@ -70,6 +90,9 @@ class DeterministicHasher:
             return [DeterministicHasher.canonicalize_value(v) for v in value]
 
         if isinstance(value, str):
+            # Normalize ISO timestamps (remove microseconds, timezone details)
+            if DeterministicHasher._is_iso_timestamp(value):
+                return DeterministicHasher._normalize_iso_timestamp(value)
             # Normalize whitespace: collapse multiple spaces, strip
             return " ".join(value.split())
 

@@ -1,5 +1,6 @@
 """Unified reporting pipeline - orchestrates calculation → deterministic identity → report generation → lifecycle persistence."""
 
+import hashlib
 import logging
 import time
 from typing import Optional, Dict, Any
@@ -228,15 +229,63 @@ class UnifiedReportingPipeline:
                 f"Report registered, total generation time: {lifecycle_final.total_generation_time_ms:.1f}ms"
             )
 
-            # TODO: Persist report to database
-            # - Store ReportMetadata
-            # - Store lifecycle events
-            # - Store identity
-            # - Create database record linking calculation_id → report_id
-
-            # STAGE 9: Persist lifecycle metadata
-            # ===================================
+            # STAGE 8.5: RECOMPUTE lifecycle_hash with actual event count
+            # ===========================================================
             lifecycle_metadata = self.lifecycle_manager.get_lifecycle_metadata(identity.report_id)
+            if lifecycle_metadata and lifecycle_metadata.events:
+                # Recompute with actual event count (not placeholder 0)
+                actual_event_count = len(lifecycle_metadata.events)
+                actual_lifecycle_hash = self.identity_generator.compute_lifecycle_hash(
+                    num_stages=len(ReportLifecycleStage),  # All possible stages
+                    num_events=actual_event_count,
+                    final_stage=lifecycle_metadata.current_stage.value,
+                )
+
+                # Update identity with corrected lifecycle_hash
+                identity.lifecycle_hash = actual_lifecycle_hash
+
+                # Recompute identity_hash with all updated components
+                all_hashes = [
+                    identity.inputs_hash,
+                    identity.formula_hash,
+                    identity.execution_hash,
+                    identity.semantic_hash,
+                    identity.template_hash,
+                    identity.generation_hash,
+                    actual_lifecycle_hash,
+                ]
+                identity_components = "".join(all_hashes)
+                identity.identity_hash = hashlib.sha256(identity_components.encode()).hexdigest()
+
+                logger.info(
+                    f"[STAGE: LIFECYCLE_HASH_UPDATE] "
+                    f"Recomputed lifecycle_hash with {actual_event_count} events, "
+                    f"updated identity_hash={identity.identity_hash[:16]}..."
+                )
+
+            # STAGE 9: Verify identity reproducibility
+            # ========================================
+            is_reproducible, error_msg = self.verify_determinism(
+                calculation_id=calculation_id,
+                calculation_result=calculation_result,
+                original_identity=identity,
+                generation_context=generation_context,
+            )
+
+            if not is_reproducible:
+                logger.error(
+                    f"[STAGE: VERIFICATION_GATE] "
+                    f"Identity verification FAILED: {error_msg}"
+                )
+                raise RuntimeError(f"Identity reproducibility check failed: {error_msg}")
+
+            logger.info(
+                f"[STAGE: VERIFICATION_GATE] "
+                f"Identity verified as reproducible"
+            )
+
+            # STAGE 10: Persist lifecycle metadata
+            # ===================================
             if lifecycle_metadata:
                 self.persistence_store.save_lifecycle_metadata(
                     report_id=identity.report_id,
@@ -248,7 +297,7 @@ class UnifiedReportingPipeline:
                     f"Saved lifecycle metadata for {identity.report_id}"
                 )
 
-            # STAGE 10: Create response
+            # STAGE 11: Create response
             # =========================
             metadata = ReportMetadata(
                 report_id=identity.report_id,

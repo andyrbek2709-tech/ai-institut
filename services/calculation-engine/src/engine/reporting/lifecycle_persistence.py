@@ -1,6 +1,7 @@
 """Lifecycle persistence layer - saves report lifecycle events to database.
 
 Minimal foundation for deterministic persistence without enterprise workflow DB.
+Uses PostgreSQL (Supabase) as primary storage, with in-memory fallback.
 """
 
 import logging
@@ -10,6 +11,7 @@ from datetime import datetime, timezone
 from dataclasses import asdict
 
 from .lifecycle import ReportLifecycleMetadata, ReportLifecycleEvent, ReportLifecycleStage
+from .database import get_database_client
 
 logger = logging.getLogger(__name__)
 
@@ -18,13 +20,14 @@ class LifecyclePersistenceStore:
     """
     Stores and retrieves report lifecycle metadata.
 
-    Current implementation: in-memory dict
-    Future: PostgreSQL table `report_lifecycle_metadata`
+    Primary: PostgreSQL (Supabase) via DatabaseClient
+    Fallback: In-memory dict (if database unavailable)
     """
 
     def __init__(self):
         """Initialize persistence store."""
-        # In-memory storage (temporary)
+        self._db = get_database_client()
+        # In-memory fallback storage
         self._storage: Dict[str, Dict[str, Any]] = {}
 
     def save_lifecycle_metadata(
@@ -35,6 +38,9 @@ class LifecyclePersistenceStore:
     ) -> bool:
         """
         Save lifecycle metadata for a report.
+
+        Primary: PostgreSQL (Supabase)
+        Fallback: In-memory storage
 
         Args:
             report_id: Report identifier
@@ -83,11 +89,20 @@ class LifecyclePersistenceStore:
                 "persisted_at": datetime.now(timezone.utc).isoformat(),
             }
 
+            # Try to save to database first
+            db_saved = self._db.save_lifecycle_metadata(
+                report_id=report_id,
+                calculation_id=calculation_id,
+                metadata=serialized,
+            )
+
+            # Always also save to in-memory fallback
             self._storage[report_id] = serialized
 
             logger.info(
                 f"[LIFECYCLE PERSISTENCE] Saved metadata for report {report_id} "
-                f"({len(lifecycle_metadata.events)} events)"
+                f"({len(lifecycle_metadata.events)} events) "
+                f"(db: {'✓' if db_saved else '✗'})"
             )
 
             return True
@@ -100,12 +115,21 @@ class LifecyclePersistenceStore:
         """
         Retrieve lifecycle metadata for a report.
 
+        Primary: PostgreSQL (Supabase)
+        Fallback: In-memory storage
+
         Args:
             report_id: Report identifier
 
         Returns:
             Serialized lifecycle metadata, or None if not found
         """
+        # Try database first
+        db_result = self._db.get_lifecycle_metadata(report_id)
+        if db_result:
+            return db_result
+
+        # Fallback to in-memory
         if report_id not in self._storage:
             logger.debug(f"[LIFECYCLE PERSISTENCE] No metadata found for {report_id}")
             return None

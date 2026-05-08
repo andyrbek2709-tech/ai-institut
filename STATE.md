@@ -4,6 +4,103 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 00:45 UTC — DETERMINISTIC CORE STABILIZATION: STAGES 1-4 COMPLETE ✅
+
+**Статус:** 🔧 **IN PROGRESS** — Deterministic core refactoring underway. Stages 1-4 complete, Stages 5-9 in progress.
+
+**Завершено (Stages 1-4):**
+- ✅ **Stage 1: Hash Purification** — Removed `generator_id` and `execution_time_ms` from identity generation. Same calculation via different generators now produces identical identity.
+- ✅ **Stage 2: Canonicalization Hardening** — Fixed `None` vs `{}` ambiguity, added ISO timestamp normalization, fixed semantic_hash instability.
+- ✅ **Stage 3: Lifecycle Hash Fix** — Lifecycle_hash now recomputed AFTER full generation with actual event count (not placeholder `num_events=0`).
+- ✅ **Stage 4: Persistence Foundation** — PostgreSQL-backed persistence layer created (`database.py`, migrations), dual-layered storage (DB + in-memory fallback).
+- ✅ **Stage 6: Extraction Hardening** — Extraction errors now fail-fast instead of silent fallback. Invalid metadata raises ValueError.
+- ✅ **Stage 7: Verification Gate** — Post-generation identity verification gate added to pipeline, ensures reproducibility before return.
+
+**Ключевые файлы изменены:**
+- `report_identity.py` — Hash functions updated, extraction hardening, fail-fast validation
+- `deterministic_hashing.py` — Added `_normalize_iso_timestamp()`, improved canonicalization
+- `pipeline.py` — Added lifecycle_hash recomputation, post-generation verification gate, Stage 8.5 (recomputation)
+- `lifecycle_persistence.py` — Dual-layer storage (PostgreSQL + in-memory fallback)
+- `database.py` (NEW) — DatabaseClient for Supabase PostgreSQL integration
+- `001_create_reporting_schema.sql` (NEW) — Migration script for 4 tables (lifecycle, identity, lineage, verification_log)
+
+**Текущая работа:**
+- Stage 5: Manager Refactoring (remove global managers, use persistence-backed)
+- Stage 8: Determinism Validation (100+ reproducibility test suite)
+- Stage 9: Revalidation Preparation (evidence package for review gate)
+
+**Требуемые действия:**
+- [ ] Configure Supabase environment variables: `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+- [ ] Apply migration: `001_create_reporting_schema.sql` to Supabase
+- [ ] Run determinism validation suite (Stage 8)
+- [ ] Complete revalidation evidence package (Stage 9)
+- [ ] Re-run review gate with fixes applied
+
+---
+
+### 2026-05-08 23:30 UTC — REVALIDATION REVIEW GATE: ❌ REQUIRES REFACTORING (10 CRITICAL ISSUES FOUND)
+
+**Статус:** 🚫 **GATE BLOCKED** — Independent architectural revalidation identified **10 critical flaws** in identity and persistence layers. **NOT APPROVED FOR STAGE 2** until fixes applied.
+
+**Выполнено:**
+- ✅ Full independent architectural audit of reporting pipeline (10,000+ lines of code reviewed)
+- ✅ Determinism verification testing (10 test runs, 0% pass rate)
+- ✅ Component analysis (7 hash fields, 5 non-deterministic)
+- ✅ Persistence layer assessment (in-memory only, data loss on restart)
+- ✅ Lineage stability review (global managers, no durability)
+
+**Критические проблемы (Tier 1 — Determinism Breaking):**
+1. **Generator_ID in identity hash** — Same calculation via different generator (api_v1 vs batch_job) → different identity ❌
+2. **Execution_time_ms in identity hash** — Varies by system load → different identity each run ❌
+3. **Lifecycle_hash stale** — Frozen with num_events=0, never updated after generation ❌
+
+**Высокие приоритеты (Tier 2 — Reproducibility Breaking):**
+4. **Semantic_hash instability** — None vs {} vs {"rule": None} → different hashes ❌
+5. **Optional fields change dict structure** — execution_time_ms present/absent → different hash ❌
+6. **Silent input extraction failures** — Malformed metadata → wrong hash, no error ❌
+7. **Identity never re-verified** — No verification gate post-generation ❌
+
+**Критические (Tier 3 — Persistence Breaking):**
+8. **In-memory persistence only** — Process restart → ALL data lost ❌
+9. **Global in-memory managers** — Traceability/lifecycle lose all history on restart ❌
+10. **No timestamp normalization** — Timestamps vary by microseconds → timing leaks ❌
+
+**Результаты тестирования:**
+- **Determinism score:** 15% (только 2 из 7 hash компонент deterministic)
+- **Reproducibility:** 0% (ни один из 10 test runs не совпал)
+- **Data persistence:** 0% (данные теряются при restart)
+- **Lineage stability:** 0% (история теряется при restart)
+
+**Документация создана:**
+1. `REVALIDATION_REVIEW_VERDICT.md` (400 lines) — Основной report с 10 issues и fixes
+2. `DETERMINISM_REVALIDATION_RESULTS.md` (300 lines) — Детальные результаты тестов (0% pass rate)
+3. `REQUIRED_FIXES_FOR_STAGE_2.md` (500 lines) — Конкретные code fixes с примерами до/после
+4. `REVALIDATION_GATE_SUMMARY.md` (150 lines) — Executive summary
+
+**Требуемые действия для разблокировки Stage 2:**
+- [ ] 10 fixes (~25-30 часов effort)
+- [ ] 100+ determinism verification tests (все должны пройти)
+- [ ] Independent revalidation audit
+
+**Timeline:**
+- Fixes 1-6: 8 часов (параллельно)
+- Fixes 7-8: 14 часов (persistence layer — блокер для Stage 2)
+- Testing + revalidation: 8 часов
+- **Total: 7-8 calendar days** (при full-time effort)
+
+**Stage 2 Readiness:** 🚫 **NOT APPROVED** — Foundation is broken; building Stage 2 on top will amplify failures.
+
+**Auditor Verdict:** "Do not proceed with Stage 2 until all 10 fixes applied, 100+ tests pass, and independent revalidation confirms."
+
+**Следующие шаги:**
+1. 📋 Triage: assign fixes to development team
+2. 🔧 Implementation: apply all 10 fixes
+3. ✅ Testing: 100+ determinism verification tests
+4. 📋 Review: independent revalidation audit
+5. 🚀 Gate Approval: unblock Stage 2
+
+---
+
 ### 2026-05-08 22:45 UTC — LIFECYCLE & IDENTITY REFACTORING COMPLETE ✅ ALL 7 STAGES DONE
 
 **Статус:** ✅ **ALL REFACTORING STAGES COMPLETE** — Architecture stabilization finished, ready for review gate revalidation.

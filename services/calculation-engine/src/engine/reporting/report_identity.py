@@ -87,15 +87,13 @@ class ReportIdentityGenerator:
 
     @staticmethod
     def compute_execution_hash(
-        execution_time_ms: Optional[float],
         validation_status: str,
         num_validations: int
     ) -> str:
         """
-        Compute hash of execution context.
+        Compute hash of execution context (semantic validation results, not timing).
 
         Args:
-            execution_time_ms: Execution duration
             validation_status: Result status
             num_validations: Number of validation rules
 
@@ -106,10 +104,6 @@ class ReportIdentityGenerator:
             "validation_status": validation_status,
             "num_validations": num_validations,
         }
-        if execution_time_ms is not None:
-            # Round to nearest millisecond for reproducibility
-            context["execution_time_ms"] = round(execution_time_ms)
-
         return ReportIdentityGenerator._hash_dict(context)
 
     @staticmethod
@@ -119,14 +113,16 @@ class ReportIdentityGenerator:
         """
         Compute hash of semantic validation rules.
 
+        Canonical form: None → {} (canonical empty representation)
+
         Args:
             semantic_rules: Validation rules applied
 
         Returns:
             SHA256 hash of semantic rules
         """
-        if not semantic_rules:
-            return ReportIdentityGenerator._hash_string("")
+        if semantic_rules is None:
+            semantic_rules = {}
 
         return ReportIdentityGenerator._hash_dict(semantic_rules)
 
@@ -156,16 +152,16 @@ class ReportIdentityGenerator:
         engine_version: str,
         runner_version: str,
         template_version: str,
-        generator_id: str,
     ) -> str:
         """
-        Compute hash of generation context (versions and generator info).
+        Compute hash of generation context (versions only, not generator_id).
+
+        generator_id is operational context, not calculation semantics.
 
         Args:
             engine_version: Reporting engine version
             runner_version: Calculation runner version
             template_version: Template format version
-            generator_id: Who initiated generation
 
         Returns:
             SHA256 hash of generation context
@@ -174,7 +170,6 @@ class ReportIdentityGenerator:
             "engine_version": engine_version,
             "runner_version": runner_version,
             "template_version": template_version,
-            "generator_id": generator_id,
         }
         return ReportIdentityGenerator._hash_dict(generation_data)
 
@@ -254,28 +249,30 @@ class ReportIdentityGenerator:
         """
         logger.info(f"Generating identity for calculation {calculation_id}")
 
-        # Extract inputs from calculation result
-        inputs = {}
-        if hasattr(calculation_result, 'metadata') and isinstance(calculation_result.metadata, dict):
-            inputs = calculation_result.metadata.get('inputs', {})
+        # Extract inputs from calculation result (fail-fast on malformed data)
+        if not hasattr(calculation_result, 'metadata'):
+            raise ValueError(f"CalculationResult missing metadata: {calculation_id}")
+        if not isinstance(calculation_result.metadata, dict):
+            raise ValueError(f"CalculationResult.metadata not dict: {type(calculation_result.metadata)} for {calculation_id}")
 
-        # Compute individual hashes
+        inputs = calculation_result.metadata.get('inputs')
+        if inputs is None:
+            raise ValueError(f"No inputs found in metadata for {calculation_id}")
+
         inputs_hash = ReportIdentityGenerator.compute_inputs_hash(inputs)
 
-        formula = ""
-        if hasattr(calculation_result, 'metadata') and isinstance(calculation_result.metadata, dict):
-            formula = calculation_result.metadata.get('formula', '')
+        # Extract formula (fail-fast on missing)
+        formula = calculation_result.metadata.get('formula')
+        if formula is None:
+            raise ValueError(f"No formula found in metadata for {calculation_id}")
         formula_hash = ReportIdentityGenerator.compute_formula_hash(formula)
 
         execution_hash = ReportIdentityGenerator.compute_execution_hash(
-            execution_time_ms=getattr(calculation_result, 'execution_time_ms', None),
             validation_status=getattr(calculation_result, 'status', 'unknown'),
             num_validations=len(getattr(calculation_result, 'validation_results', []))
         )
 
-        semantic_rules = None
-        if hasattr(calculation_result, 'metadata') and isinstance(calculation_result.metadata, dict):
-            semantic_rules = calculation_result.metadata.get('semantic_rules')
+        semantic_rules = calculation_result.metadata.get('semantic_rules')
         semantic_hash = ReportIdentityGenerator.compute_semantic_hash(semantic_rules)
 
         template_hash = ReportIdentityGenerator.compute_template_hash(
@@ -287,7 +284,6 @@ class ReportIdentityGenerator:
             engine_version=context.engine_version,
             runner_version=context.runner_version,
             template_version=context.template_version,
-            generator_id=context.generator_id,
         )
 
         # Lifecycle hash computed with minimal events count (will be updated after full generation)
@@ -350,7 +346,7 @@ class ReportIdentityGenerator:
         context: ReportGenerationContext,
     ) -> tuple[bool, Optional[str]]:
         """
-        Verify identity consistency.
+        Verify identity consistency (fail-fast on extraction errors).
 
         Args:
             identity: ReportIdentity to verify
@@ -360,27 +356,36 @@ class ReportIdentityGenerator:
         Returns:
             (is_valid, error_message)
         """
-        # Recompute hashes
-        inputs = {}
-        if hasattr(calculation_result, 'metadata') and isinstance(calculation_result.metadata, dict):
-            inputs = calculation_result.metadata.get('inputs', {})
+        try:
+            # Recompute hashes with fail-fast extraction
+            if not hasattr(calculation_result, 'metadata'):
+                return False, "CalculationResult missing metadata"
+            if not isinstance(calculation_result.metadata, dict):
+                return False, f"CalculationResult.metadata not dict: {type(calculation_result.metadata)}"
 
-        current_inputs_hash = ReportIdentityGenerator.compute_inputs_hash(inputs)
-        if current_inputs_hash != identity.inputs_hash:
-            return False, f"Inputs hash mismatch: {current_inputs_hash} != {identity.inputs_hash}"
+            inputs = calculation_result.metadata.get('inputs')
+            if inputs is None:
+                return False, "No inputs found in metadata"
 
-        formula = ""
-        if hasattr(calculation_result, 'metadata') and isinstance(calculation_result.metadata, dict):
-            formula = calculation_result.metadata.get('formula', '')
-        current_formula_hash = ReportIdentityGenerator.compute_formula_hash(formula)
-        if current_formula_hash != identity.formula_hash:
-            return False, f"Formula hash mismatch: {current_formula_hash} != {identity.formula_hash}"
+            current_inputs_hash = ReportIdentityGenerator.compute_inputs_hash(inputs)
+            if current_inputs_hash != identity.inputs_hash:
+                return False, f"Inputs hash mismatch: {current_inputs_hash} != {identity.inputs_hash}"
 
-        # Verify template consistency
-        if context.template_type != identity.template_type:
-            return False, f"Template type mismatch: {context.template_type} != {identity.template_type}"
+            formula = calculation_result.metadata.get('formula')
+            if formula is None:
+                return False, "No formula found in metadata"
 
-        return True, None
+            current_formula_hash = ReportIdentityGenerator.compute_formula_hash(formula)
+            if current_formula_hash != identity.formula_hash:
+                return False, f"Formula hash mismatch: {current_formula_hash} != {identity.formula_hash}"
+
+            # Verify template consistency
+            if context.template_type != identity.template_type:
+                return False, f"Template type mismatch: {context.template_type} != {identity.template_type}"
+
+            return True, None
+        except Exception as e:
+            return False, f"Verification error: {str(e)}"
 
 
 # Global identity generator instance
