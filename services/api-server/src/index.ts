@@ -13,6 +13,7 @@ import metricsRouter from './routes/metrics.js';
 import autoRollbackRouter from './routes/auto-rollback.js';
 import diagnosticsRouter from './routes/diagnostics.js';
 import adminRouter from './routes/admin.js';
+import agskRouter from './routes/agsk.js';
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use('/api', tasksRouter);
 app.use('/api', metricsRouter);
 app.use('/api', autoRollbackRouter);
 app.use('/api', adminRouter);
+app.use('/api', agskRouter);
 app.use('/', diagnosticsRouter);
 
 // 404 handler

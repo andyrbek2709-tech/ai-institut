@@ -1,0 +1,1703 @@
+{
+  "metadata": {
+    "dataset_version": "1.0",
+    "created_date": "2026-05-08",
+    "total_queries": 80,
+    "disciplines": ["pipeline", "structural", "mechanical", "electrical", "welding", "corrosion", "safety"],
+    "evaluation_framework": "RAGAS + precision/recall metrics",
+    "purpose": "PRE-IMPLEMENTATION VALIDATION: benchmark retrieval quality before Week 3 production testing"
+  },
+  "queries": [
+    {
+      "query_id": "Q001",
+      "query_text": "What are the minimum wall thickness requirements for API 5L Grade X52 pipeline at 1000 psi pressure?",
+      "difficulty": "simple",
+      "discipline": "pipeline",
+      "topics": ["API 5L", "pressure", "wall thickness", "design"],
+      "expected_standards": [
+        {
+          "standard": "API 5L",
+          "version": "2018",
+          "sections": ["Table 7", "Section 7.1"],
+          "relevance_score": 0.95,
+          "reason": "Defines pressure/wall thickness tables for all grades including X52"
+        },
+        {
+          "standard": "ASME B31.8",
+          "version": "2020",
+          "sections": ["823.1", "823.3"],
+          "relevance_score": 0.70,
+          "reason": "Gas transmission code, provides supplemental design guidance"
+        }
+      ],
+      "expected_keywords": ["wall thickness", "API 5L", "X52", "pressure", "1000 psi", "design specification"],
+      "ground_truth_answer": "API 5L 2018 Table 7 specifies minimum wall thickness for Grade X52 based on OD and test pressure. At 1000 psi, refer to the grade-specific pressure-diameter tables in Section 7.",
+      "confidence": 0.92,
+      "notes": "Common design query, API 5L should rank first"
+    },
+    {
+      "query_id": "Q002",
+      "query_text": "What is the yield strength of ASTM A106 Grade B steel at room temperature?",
+      "difficulty": "simple",
+      "discipline": "structural",
+      "topics": ["A106", "yield strength", "material specification"],
+      "expected_standards": [
+        {
+          "standard": "ASTM A106",
+          "version": "latest",
+          "sections": ["3.4", "Table 1"],
+          "relevance_score": 0.98,
+          "reason": "Defines yield strength requirements for carbon steel pipe"
+        }
+      ],
+      "expected_keywords": ["yield strength", "A106", "Grade B", "room temperature", "material specification"],
+      "ground_truth_answer": "ASTM A106 Grade B specifies a minimum yield strength of 35 ksi (241 MPa) at room temperature.",
+      "confidence": 0.95,
+      "notes": "Straightforward material property lookup"
+    },
+    {
+      "query_id": "Q003",
+      "query_text": "How do I calculate combined stress in a pressure vessel per ASME Section VIII Division 1?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["ASME", "pressure vessel", "stress", "combined stress"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section VIII Division 1",
+          "version": "2023",
+          "sections": ["UG-23", "Part 3"],
+          "relevance_score": 0.95,
+          "reason": "Defines stress limits and combined stress calculations"
+        }
+      ],
+      "expected_keywords": ["combined stress", "ASME", "pressure vessel", "Von Mises", "stress limits", "UG-23"],
+      "ground_truth_answer": "ASME Section VIII-1 UG-23 requires combined stress calculations using the Von Mises criterion. Hoop stress + longitudinal stress + shear stress must be combined and compared to allowable stress per ASME tables.",
+      "confidence": 0.88,
+      "notes": "Requires understanding of ASME methodology"
+    },
+    {
+      "query_id": "Q004",
+      "query_text": "What are the acceptance criteria for ultrasonic testing of welds per ASME Section V?",
+      "difficulty": "medium",
+      "discipline": "welding",
+      "topics": ["ultrasonic testing", "ASME", "weld acceptance", "UT"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section V",
+          "version": "2023",
+          "sections": ["Article 4", "Table 4-1"],
+          "relevance_score": 0.96,
+          "reason": "Defines UT acceptance criteria for welds in ASME BPVC"
+        },
+        {
+          "standard": "AWS D1.1",
+          "version": "2015",
+          "sections": ["6.10"],
+          "relevance_score": 0.75,
+          "reason": "Structural welding standard with similar UT acceptance"
+        }
+      ],
+      "expected_keywords": ["ultrasonic testing", "UT", "ASME", "weld acceptance", "discontinuity", "amplitude"],
+      "ground_truth_answer": "ASME Section V Article 4 defines UT acceptance based on flaw size, depth, and type. Reference Tolerance Classes and amplitude acceptance levels in Table 4-1. Type and severity of discontinuity determines acceptance.",
+      "confidence": 0.89,
+      "notes": "Technical standard, requires knowledge of UT terminology"
+    },
+    {
+      "query_id": "Q005",
+      "query_text": "What is the proper field welding procedure for API 5L X-Grade pipeline?",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "topics": ["API 5L", "field welding", "procedure", "pre-heat"],
+      "expected_standards": [
+        {
+          "standard": "API 5L",
+          "version": "2018",
+          "sections": ["Section 8", "8.2"],
+          "relevance_score": 0.90,
+          "reason": "Defines welding requirements for X-grade steel"
+        },
+        {
+          "standard": "AWS D1.1",
+          "version": "2015",
+          "sections": ["5.26", "9.3"],
+          "relevance_score": 0.85,
+          "reason": "Structural welding procedures, applicable to pipeline field work"
+        }
+      ],
+      "expected_keywords": ["field welding", "X-grade", "API 5L", "pre-heat", "procedure", "PWHT"],
+      "ground_truth_answer": "API 5L Section 8 requires qualified WPS (Welding Procedure Specification) for X-grade field welding. Pre-heat is typically required (per AWS D1.1 5.26). Post-weld heat treatment (PWHT) may be required for high-strength grades and heavy wall thickness.",
+      "confidence": 0.85,
+      "notes": "Requires cross-reference between API 5L and AWS"
+    },
+    {
+      "query_id": "Q006",
+      "query_text": "What fire protection rating is required for pipelines in residential areas per IFC?",
+      "difficulty": "medium",
+      "discipline": "safety",
+      "topics": ["fire protection", "residential", "IFC", "pipeline safety"],
+      "expected_standards": [
+        {
+          "standard": "International Fire Code (IFC)",
+          "version": "2021",
+          "sections": ["Chapter 12", "1206"],
+          "relevance_score": 0.92,
+          "reason": "Defines fire protection requirements for fuel gas systems in residential areas"
+        }
+      ],
+      "expected_keywords": ["fire protection", "residential", "IFC", "pipeline", "fire rating", "exposed piping"],
+      "ground_truth_answer": "IFC Chapter 12 Section 1206 requires fuel gas pipelines in residential areas to have appropriate fire protection. Exposed piping typically requires 1-hour fire rating unless in concealed spaces.",
+      "confidence": 0.80,
+      "notes": "Local fire code compliance question"
+    },
+    {
+      "query_id": "Q007",
+      "query_text": "OSHA requirements for confined space entry during pipeline inspection?",
+      "difficulty": "medium",
+      "discipline": "safety",
+      "topics": ["OSHA", "confined space", "pipeline", "inspection safety"],
+      "expected_standards": [
+        {
+          "standard": "OSHA 1910.146",
+          "version": "current",
+          "sections": ["Definitions", "Entry Procedures"],
+          "relevance_score": 0.95,
+          "reason": "Directly defines confined space entry requirements"
+        },
+        {
+          "standard": "ASME PESC-1",
+          "version": "2020",
+          "sections": ["Section 6"],
+          "relevance_score": 0.80,
+          "reason": "Pipeline equipment safety requirements"
+        }
+      ],
+      "expected_keywords": ["confined space", "OSHA", "1910.146", "entry permit", "ventilation", "rescue"],
+      "ground_truth_answer": "OSHA 1910.146 requires: permit system, atmospheric testing, ventilation, rescue procedures, and trained personnel. For pipelines, also consider ASME PESC-1 Section 6 for equipment-specific requirements.",
+      "confidence": 0.91,
+      "notes": "Critical safety requirement"
+    },
+    {
+      "query_id": "Q008",
+      "query_text": "Can I use epoxy coating repair for a corroded carbon steel pipe per NACE MR0175?",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "topics": ["corrosion", "epoxy coating", "repair", "NACE", "carbon steel"],
+      "expected_standards": [
+        {
+          "standard": "NACE MR0175",
+          "version": "2015",
+          "sections": ["5.1", "5.2", "5.3"],
+          "relevance_score": 0.92,
+          "reason": "Defines material requirements for corrosion environments"
+        },
+        {
+          "standard": "NACE SP0294",
+          "version": "2019",
+          "sections": ["Section 7"],
+          "relevance_score": 0.85,
+          "reason": "Cathodic protection and coating guidance"
+        }
+      ],
+      "expected_keywords": ["epoxy coating", "corrosion", "NACE", "repair", "H2S", "mitigation"],
+      "ground_truth_answer": "NACE MR0175 defines material requirements for sour service. Epoxy repairs alone may not be sufficient; must consider: H2S partial pressure, material grade, coating thickness per NACE SP0294. Consult specific application requirements.",
+      "confidence": 0.78,
+      "notes": "Context-dependent; answer varies by service conditions"
+    },
+    {
+      "query_id": "Q009",
+      "query_text": "What is the allowable stress for ASTM A312 TP304 stainless steel at 400°F?",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "topics": ["ASTM A312", "stainless steel", "allowable stress", "temperature"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["Table 403.1"],
+          "relevance_score": 0.90,
+          "reason": "Provides allowable stresses for various materials and temperatures"
+        }
+      ],
+      "expected_keywords": ["allowable stress", "A312", "TP304", "400 degrees F", "stainless steel"],
+      "ground_truth_answer": "ASME B31.4 Table 403.1 specifies allowable stress for ASTM A312 TP304 at 400°F as approximately 17,500 psi (120 MPa).",
+      "confidence": 0.89,
+      "notes": "Material property lookup with temperature correction"
+    },
+    {
+      "query_id": "Q010",
+      "query_text": "How do I size a pressure relief valve according to API 2000?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["pressure relief valve", "API 2000", "sizing", "design"],
+      "expected_standards": [
+        {
+          "standard": "API 2000",
+          "version": "2020",
+          "sections": ["Section 5", "5.2"],
+          "relevance_score": 0.96,
+          "reason": "Directly defines PRV sizing methodology"
+        }
+      ],
+      "expected_keywords": ["pressure relief valve", "PRV", "API 2000", "sizing", "flow capacity", "relieving"],
+      "ground_truth_answer": "API 2000 Section 5.2 defines PRV sizing based on: overpressure scenarios, venting rate, relieving capacity, and margin. Must account for all potential overpressure sources (pump, thermal expansion, gas evolution).",
+      "confidence": 0.88,
+      "notes": "Requires understanding of PRV fundamentals"
+    },
+    {
+      "query_id": "Q011",
+      "query_text": "What is the minimum concrete cover for reinforcement exposed to marine environments per ACI 318?",
+      "difficulty": "simple",
+      "discipline": "structural",
+      "topics": ["ACI 318", "concrete cover", "marine exposure", "durability"],
+      "expected_standards": [
+        {
+          "standard": "ACI 318",
+          "version": "2019",
+          "sections": ["20.5", "Table 20.6.1"],
+          "relevance_score": 0.95,
+          "reason": "Specifies concrete cover requirements by exposure class"
+        }
+      ],
+      "expected_keywords": ["concrete cover", "marine", "ACI", "durability", "exposure class", "seawater"],
+      "ground_truth_answer": "ACI 318 Table 20.6.1 specifies minimum 2.5 inches cover for reinforcement exposed to seawater or saltwater spray (Exposure Class F).",
+      "confidence": 0.92,
+      "notes": "Marine durability is critical in coastal areas"
+    },
+    {
+      "query_id": "Q012",
+      "query_text": "What are the seismic design forces for a steel frame per AISC 360 and ASCE 7?",
+      "difficulty": "medium",
+      "discipline": "structural",
+      "topics": ["seismic design", "AISC", "ASCE 7", "base shear", "steel frame"],
+      "expected_standards": [
+        {
+          "standard": "ASCE 7",
+          "version": "2022",
+          "sections": ["Chapter 12", "12.8"],
+          "relevance_score": 0.95,
+          "reason": "Defines seismic load calculations and response spectra"
+        },
+        {
+          "standard": "AISC 360",
+          "version": "2022",
+          "sections": ["Chapter E", "F3"],
+          "relevance_score": 0.85,
+          "reason": "Steel design requirements for seismic-resistant structures"
+        }
+      ],
+      "expected_keywords": ["seismic", "base shear", "ASCE 7", "AISC", "response spectrum", "ductility"],
+      "ground_truth_answer": "ASCE 7 Chapter 12 defines base shear: V = (Cs × W). Where Cs depends on: spectral acceleration (SDS, SD1), response modification factor (R), importance factor (I), and weight (W). AISC 360 applies additional design checks for seismic frames.",
+      "confidence": 0.87,
+      "notes": "Multi-step calculation requiring cross-reference"
+    },
+    {
+      "query_id": "Q013",
+      "query_text": "What does ISO 1219-1 say about hydraulic pressure symbols?",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "topics": ["ISO 1219", "hydraulics", "symbols", "pressure notation"],
+      "expected_standards": [
+        {
+          "standard": "ISO 1219-1",
+          "version": "2012",
+          "sections": ["Section 4.2"],
+          "relevance_score": 0.95,
+          "reason": "Defines standard hydraulic circuit symbols and notation"
+        }
+      ],
+      "expected_keywords": ["ISO 1219", "hydraulic symbols", "pressure", "notation", "diagram"],
+      "ground_truth_answer": "ISO 1219-1 Section 4.2 defines pressure symbols using: pressure triangle pointing direction of flow, with pressure rating notation (e.g., P1, P2). Also defines pressure relief, reducing valve, and check valve symbols.",
+      "confidence": 0.91,
+      "notes": "Standard technical symbols reference"
+    },
+    {
+      "query_id": "Q014",
+      "query_text": "What is the maximum thickness of A53 Grade A pipe without requiring PWHT?",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "topics": ["ASTM A53", "PWHT", "wall thickness", "welding"],
+      "expected_standards": [
+        {
+          "standard": "ASTM A53",
+          "version": "2021",
+          "sections": ["11.3"],
+          "relevance_score": 0.85,
+          "reason": "Defines PWHT requirements for different wall thickness"
+        },
+        {
+          "standard": "AWS D1.1",
+          "version": "2015",
+          "sections": ["5.2"],
+          "relevance_score": 0.80,
+          "reason": "Structural welding procedure includes PWHT guidance"
+        }
+      ],
+      "expected_keywords": ["A53", "PWHT", "post-weld heat treatment", "wall thickness", "Grade A"],
+      "ground_truth_answer": "ASTM A53 typically does not require PWHT for Grade A pipe regardless of wall thickness, but AWS D1.1 and code applications may impose additional requirements based on service and thickness.",
+      "confidence": 0.72,
+      "notes": "Answer depends on application code (B31.4 vs. B31.8 vs. AWS)"
+    },
+    {
+      "query_id": "Q015",
+      "query_text": "How should I inspect a welds per API 579 fitness-for-service standard?",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "topics": ["API 579", "fitness for service", "weld inspection", "defect evaluation"],
+      "expected_standards": [
+        {
+          "standard": "API 579",
+          "version": "2021",
+          "sections": ["Part 2", "Section 5"],
+          "relevance_score": 0.94,
+          "reason": "Defines assessment procedures for defects including welds"
+        }
+      ],
+      "expected_keywords": ["API 579", "fitness for service", "inspection", "weld defect", "assessment", "crack"],
+      "ground_truth_answer": "API 579 Part 2 Section 5 provides a flowchart-based approach: 1) Detect defect, 2) Characterize (size, type, orientation), 3) Assess criticality, 4) Determine remaining life. For welds: evaluate crack-like, planar, and volumetric defects against acceptance criteria.",
+      "confidence": 0.83,
+      "notes": "Fitness-for-service is complex; requires domain expertise"
+    },
+    {
+      "query_id": "Q016",
+      "query_text": "What is the heat input limit for HSLA steel welding per AWS D1.1?",
+      "difficulty": "medium",
+      "discipline": "welding",
+      "topics": ["AWS D1.1", "HSLA", "heat input", "welding", "hardness"],
+      "expected_standards": [
+        {
+          "standard": "AWS D1.1",
+          "version": "2015",
+          "sections": ["3.10", "5.22"],
+          "relevance_score": 0.92,
+          "reason": "Defines welding procedures including heat input for HSLA steels"
+        }
+      ],
+      "expected_keywords": ["heat input", "HSLA", "AWS D1.1", "welding procedure", "hardness", "preheat"],
+      "ground_truth_answer": "AWS D1.1 Section 5.22 limits heat input for HSLA steels to prevent excessive hardness. Typical limit is 50-60 kJ/inch depending on specific grade. Preheat and interpass temperature also controlled to manage hardness.",
+      "confidence": 0.80,
+      "notes": "Requires knowledge of HSLA metallurgy"
+    },
+    {
+      "query_id": "Q017",
+      "query_text": "Can I repair a failed pressure vessel weld in-place per ASME Section VIII?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["ASME", "pressure vessel", "weld repair", "in-place repair"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section VIII Division 1",
+          "version": "2023",
+          "sections": ["UW-30"],
+          "relevance_score": 0.95,
+          "reason": "Explicitly addresses in-service weld repairs"
+        }
+      ],
+      "expected_keywords": ["in-place repair", "weld", "pressure vessel", "ASME", "UW-30", "hot tapping"],
+      "ground_truth_answer": "ASME Section VIII UW-30 allows in-place repairs if: vessel is depressurized, repair is qualified per Section IX, and resulting design meets current ASME requirements. Hot tapping procedures may be required if depressurizing not feasible.",
+      "confidence": 0.87,
+      "notes": "Safety-critical decision"
+    },
+    {
+      "query_id": "Q018",
+      "query_text": "What are the minimum venting requirements for a tank per API 2000?",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "topics": ["API 2000", "tank venting", "overpressure", "breathing"],
+      "expected_standards": [
+        {
+          "standard": "API 2000",
+          "version": "2020",
+          "sections": ["Section 3", "3.1"],
+          "relevance_score": 0.96,
+          "reason": "Defines venting requirements for all overpressure scenarios"
+        }
+      ],
+      "expected_keywords": ["tank venting", "overpressure", "API 2000", "breathing", "capacity", "pressure relief"],
+      "ground_truth_answer": "API 2000 Section 3 requires venting for: pump discharge overpressure, thermal expansion, gas evolution, and wind pressure. Total venting capacity must exceed the maximum relief rate of all scenarios combined.",
+      "confidence": 0.90,
+      "notes": "Common tank design requirement"
+    },
+    {
+      "query_id": "Q019",
+      "query_text": "Difference between GOST 27751-2014 and GOST 27751-2020 for load calculations?",
+      "difficulty": "complex",
+      "discipline": "structural",
+      "topics": ["GOST", "load calculation", "standards update", "version differences"],
+      "expected_standards": [
+        {
+          "standard": "GOST 27751-2014",
+          "version": "2014",
+          "sections": ["Section 5"],
+          "relevance_score": 0.85,
+          "reason": "Earlier version with specific load calculation rules"
+        },
+        {
+          "standard": "GOST 27751-2020",
+          "version": "2020",
+          "sections": ["Section 5"],
+          "relevance_score": 0.85,
+          "reason": "Current version with updated load factors"
+        }
+      ],
+      "expected_keywords": ["GOST", "load calculation", "version", "load factor", "temporary load"],
+      "ground_truth_answer": "GOST 27751-2020 updated load factors and live load categories. Key differences: increased wind load factors, updated temperature ranges, new seismic coefficient tables. Consult both versions for legacy vs. new designs.",
+      "confidence": 0.65,
+      "notes": "Ambiguous query; may need version specification from user"
+    },
+    {
+      "query_id": "Q020",
+      "query_text": "Is concrete or steel casing better for subsea pipeline crossings?",
+      "difficulty": "complex",
+      "discipline": "pipeline",
+      "topics": ["subsea pipeline", "casing", "material selection", "trade-offs"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.8S",
+          "version": "2020",
+          "sections": ["2.2"],
+          "relevance_score": 0.75,
+          "reason": "Provides guidance on casing material selection"
+        },
+        {
+          "standard": "DNV GL-CP-0214",
+          "version": "2016",
+          "sections": ["5.1"],
+          "relevance_score": 0.80,
+          "reason": "Subsea pipeline crossing standard"
+        }
+      ],
+      "expected_keywords": ["casing", "concrete", "steel", "subsea", "buoyancy", "corrosion protection"],
+      "ground_truth_answer": "Choice depends on: water depth (buoyancy), current (hydrodynamic), corrosion environment, thermal protection, and cost. Concrete offers buoyancy and thermal insulation; steel offers strength. ASME B31.8S and DNV guidelines provide trade-off analysis.",
+      "confidence": 0.70,
+      "notes": "Requires synthesis of multiple standards + engineering judgment"
+    },
+    {
+      "query_id": "Q021",
+      "query_text": "How to perform a pressure test of a new pipeline per ASME B31.4?",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "topics": ["ASME B31.4", "pressure test", "hydrostatic test", "procedure"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["435"],
+          "relevance_score": 0.96,
+          "reason": "Defines pressure testing procedures for liquid pipelines"
+        }
+      ],
+      "expected_keywords": ["pressure test", "hydrostatic", "ASME B31.4", "test pressure", "procedure", "inspection"],
+      "ground_truth_answer": "ASME B31.4 Section 435 requires: test pressure = 1.5 × design pressure (minimum), holding for 10 minutes, visual inspection for leaks, pressure relief at 90% test pressure. Comprehensive procedure in Section 435.5-435.9.",
+      "confidence": 0.91,
+      "notes": "Critical commissioning requirement"
+    },
+    {
+      "query_id": "Q022",
+      "query_text": "What are cathodic protection design requirements per NACE RP0169?",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "topics": ["cathodic protection", "NACE", "CP design", "corrosion control"],
+      "expected_standards": [
+        {
+          "standard": "NACE RP0169",
+          "version": "2013",
+          "sections": ["Section 5"],
+          "relevance_score": 0.95,
+          "reason": "Comprehensive CP design and application standard"
+        }
+      ],
+      "expected_keywords": ["cathodic protection", "CP", "NACE", "potential", "design", "anode"],
+      "ground_truth_answer": "NACE RP0169 Section 5 specifies: design potential -850 mV (CSE), current density 1-10 mA/m², anode selection, placement, and monitoring. Full design procedure in Section 5.1-5.5, including impressed current and galvanic systems.",
+      "confidence": 0.89,
+      "notes": "Highly technical corrosion engineering"
+    },
+    {
+      "query_id": "Q023",
+      "query_text": "Maximum temperature for API 5L X100 pipe in liquid service?",
+      "difficulty": "simple",
+      "discipline": "pipeline",
+      "topics": ["API 5L", "X100", "temperature limit", "material property"],
+      "expected_standards": [
+        {
+          "standard": "API 5L",
+          "version": "2018",
+          "sections": ["Section 3"],
+          "relevance_score": 0.92,
+          "reason": "Specifies temperature limits for each grade"
+        }
+      ],
+      "expected_keywords": ["API 5L", "X100", "maximum temperature", "service temperature", "liquid"],
+      "ground_truth_answer": "API 5L 2018 limits X100 to -4°F to +250°F (-20°C to 121°C) for normal service. Check 'Temperature Derating' tables in Section 3 for specific conditions.",
+      "confidence": 0.87,
+      "notes": "Standard material limit lookup"
+    },
+    {
+      "query_id": "Q024",
+      "query_text": "How should I design a flange connection per ASME B16.5?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["flange", "ASME B16.5", "connection design", "bolting"],
+      "expected_standards": [
+        {
+          "standard": "ASME B16.5",
+          "version": "2020",
+          "sections": ["Section 8"],
+          "relevance_score": 0.95,
+          "reason": "Defines flange pressure ratings and design requirements"
+        }
+      ],
+      "expected_keywords": ["flange", "ASME B16.5", "bolting", "gasket", "pressure rating", "Class 150"],
+      "ground_truth_answer": "ASME B16.5 Section 8 specifies: flange class rating (150, 300, 600, etc.), bolting requirements, gasket selection, and assembly procedures. Design pressure cannot exceed flange class rating for given fluid temperature.",
+      "confidence": 0.89,
+      "notes": "Industry-standard flange selection"
+    },
+    {
+      "query_id": "Q025",
+      "query_text": "What is the scope of API 570 inspection standard for pipelines?",
+      "difficulty": "simple",
+      "discipline": "inspection",
+      "topics": ["API 570", "inspection", "in-service pipeline", "scope"],
+      "expected_standards": [
+        {
+          "standard": "API 570",
+          "version": "2020",
+          "sections": ["Section 1", "1.1"],
+          "relevance_score": 0.97,
+          "reason": "Covers inspection of in-service pipelines and piping systems"
+        }
+      ],
+      "expected_keywords": ["API 570", "inspection", "in-service", "pipeline", "corrosion monitoring"],
+      "ground_truth_answer": "API 570 covers inspection, maintenance, and repair of in-service piping (pressure ≤3000 psi equivalent). Includes corrosion monitoring, thickness measurement, welding inspection. Scope explicitly stated in Section 1.1.",
+      "confidence": 0.92,
+      "notes": "Inspection program overview"
+    },
+    {
+      "query_id": "Q026",
+      "query_text": "How deep should underground pipelines be buried per ASME B31.4?",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "topics": ["ASME B31.4", "burial depth", "underground", "clearance"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["472.3"],
+          "relevance_score": 0.90,
+          "reason": "Specifies minimum burial depth for various conditions"
+        }
+      ],
+      "expected_keywords": ["burial depth", "underground", "ASME B31.4", "minimum cover", "traffic"],
+      "ground_truth_answer": "ASME B31.4 Section 472.3 requires minimum burial depth based on: road class (minimum 3 ft under major roads, 2 ft under normal roads), protection from external loads, and local requirements. Detailed in Table 472.3.",
+      "confidence": 0.84,
+      "notes": "Site-specific, depends on traffic and geography"
+    },
+    {
+      "query_id": "Q027",
+      "query_text": "What is the minimum bend radius for cold bending API 5L pipe?",
+      "difficulty": "simple",
+      "discipline": "pipeline",
+      "topics": ["API 5L", "bending", "bend radius", "cold forming"],
+      "expected_standards": [
+        {
+          "standard": "API 5L",
+          "version": "2018",
+          "sections": ["Section 6.2"],
+          "relevance_score": 0.90,
+          "reason": "Defines cold bending limitations"
+        }
+      ],
+      "expected_keywords": ["bend radius", "API 5L", "cold bending", "minimum radius"],
+      "ground_truth_answer": "API 5L 2018 Section 6.2 specifies minimum cold bend radius of 40 × OD (40 times outside diameter). For grades above X52, hot bending may be required.",
+      "confidence": 0.88,
+      "notes": "Installation procedure requirement"
+    },
+    {
+      "query_id": "Q028",
+      "query_text": "What NDT (non-destructive testing) methods are required per API 1104 for pipeline welds?",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "topics": ["API 1104", "NDT", "weld inspection", "pipeline"],
+      "expected_standards": [
+        {
+          "standard": "API 1104",
+          "version": "2021",
+          "sections": ["Section 9"],
+          "relevance_score": 0.96,
+          "reason": "Defines inspection methods and acceptance criteria for pipeline field welds"
+        }
+      ],
+      "expected_keywords": ["NDT", "API 1104", "weld inspection", "radiography", "ultrasonic", "visual"],
+      "ground_truth_answer": "API 1104 Section 9 allows: visual inspection (all), radiography (10% or per sample plan), ultrasonic (alternative to radiography), and magnetic particle (for surface defects). Selection per Section 9.2 and Table 9-1.",
+      "confidence": 0.90,
+      "notes": "Field weld inspection standard"
+    },
+    {
+      "query_id": "Q029",
+      "query_text": "Soil corrosivity classification and requirements per ASME B31.4?",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "topics": ["soil corrosion", "ASME B31.4", "classification", "protection"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["482"],
+          "relevance_score": 0.92,
+          "reason": "Classifies soil corrosivity and specifies protection measures"
+        }
+      ],
+      "expected_keywords": ["soil corrosion", "resistivity", "pH", "classification", "coating", "CP"],
+      "ground_truth_answer": "ASME B31.4 Section 482 classifies soil: Class 1 (non-corrosive), Class 2 (mildly corrosive), Class 3 (moderately corrosive), Class 4 (highly corrosive) based on: resistivity, pH, moisture. Protection: coating + CP per Section 482.4.",
+      "confidence": 0.87,
+      "notes": "Requires soil testing"
+    },
+    {
+      "query_id": "Q030",
+      "query_text": "What insulation thickness is needed for hot piping per ASME B31.3?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["insulation", "ASME B31.3", "thermal design", "hot piping"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.3",
+          "version": "2020",
+          "sections": ["308"],
+          "relevance_score": 0.85,
+          "reason": "Addresses thermal insulation requirements for process piping"
+        }
+      ],
+      "expected_keywords": ["insulation", "hot piping", "ASME B31.3", "thickness", "thermal"],
+      "ground_truth_answer": "ASME B31.3 Section 308 requires insulation based on: fluid temperature, ambient temperature, energy conservation, and personnel protection. Thickness per ASTM C168 and NBSIR standards. Check 308.2 for methodology.",
+      "confidence": 0.75,
+      "notes": "Depends on design conditions and local codes"
+    },
+    {
+      "query_id": "Q031",
+      "query_text": "How to calculate stress intensification factors (i-factors) per ASME B31.3?",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "topics": ["stress intensification", "i-factors", "piping flexibility", "ASME B31.3"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.3",
+          "version": "2020",
+          "sections": ["302.3.5"],
+          "relevance_score": 0.94,
+          "reason": "Defines i-factors for various fitting types"
+        }
+      ],
+      "expected_keywords": ["i-factor", "stress intensification", "ASME B31.3", "elbow", "tee", "flexibility"],
+      "ground_truth_answer": "ASME B31.3 302.3.5 provides i-factors for: elbows (0.9), tees (1.0), bends (0.9), reducers (1.0) at nominal thickness. Increase for thin wall or full-area connections. Used in flexibility analysis: stress = (I × M) / Z, where I = i-factor.",
+      "confidence": 0.82,
+      "notes": "Piping design engineering"
+    },
+    {
+      "query_id": "Q032",
+      "query_text": "Minimum thickness for carbon steel pipe in water service per ASME B31.4?",
+      "difficulty": "simple",
+      "discipline": "pipeline",
+      "topics": ["pipe thickness", "water service", "corrosion allowance", "ASME B31.4"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["403.4"],
+          "relevance_score": 0.90,
+          "reason": "Specifies minimum thickness with corrosion allowance"
+        }
+      ],
+      "expected_keywords": ["minimum thickness", "water service", "corrosion allowance", "carbon steel"],
+      "ground_truth_answer": "ASME B31.4 Section 403.4 requires minimum 1/32 inch corrosion allowance for carbon steel in water service. Total thickness = design thickness + 1/32 inch.",
+      "confidence": 0.88,
+      "notes": "Conservative thickness requirement for water"
+    },
+    {
+      "query_id": "Q033",
+      "query_text": "What is the fatigue design procedure for piping per ASME B31.3?",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "topics": ["fatigue", "piping design", "ASME B31.3", "cyclic loading"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.3",
+          "version": "2020",
+          "sections": ["302.3.4"],
+          "relevance_score": 0.92,
+          "reason": "Defines fatigue design rules for cyclic loading"
+        }
+      ],
+      "expected_keywords": ["fatigue", "cyclic stress", "ASME B31.3", "S-N curves", "safety factor"],
+      "ground_truth_answer": "ASME B31.3 302.3.4 addresses fatigue: evaluate cyclic stress range (De), compare to fatigue limit (Sf) from curves. Factor of safety ≥ 3 on stress or ≥ 3 on life. Full procedure in 302.3.4 (a) through (e).",
+      "confidence": 0.79,
+      "notes": "Advanced piping design"
+    },
+    {
+      "query_id": "Q034",
+      "query_text": "Requirements for hydrostatic testing of ASME pressure vessels?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["pressure vessel", "hydrostatic test", "ASME", "inspection"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section VIII Division 1",
+          "version": "2023",
+          "sections": ["UG-99"],
+          "relevance_score": 0.95,
+          "reason": "Defines hydrostatic testing requirements and acceptance"
+        }
+      ],
+      "expected_keywords": ["hydrostatic test", "pressure vessel", "ASME", "test pressure", "visual inspection"],
+      "ground_truth_answer": "ASME Section VIII UG-99 requires: test pressure ≥ 1.5 × design pressure, holding for time sufficient for inspection, visual inspection for leaks, relief valve at 90% test pressure. Detailed in UG-99 (a) through (c).",
+      "confidence": 0.90,
+      "notes": "Standard vessel commissioning procedure"
+    },
+    {
+      "query_id": "Q035",
+      "query_text": "How to evaluate remaining life of corroded pipe per API 579?",
+      "difficulty": "complex",
+      "discipline": "inspection",
+      "topics": ["fitness for service", "API 579", "remaining life", "corrosion"],
+      "expected_standards": [
+        {
+          "standard": "API 579",
+          "version": "2021",
+          "sections": ["Part 2", "Section 3"],
+          "relevance_score": 0.94,
+          "reason": "Comprehensive FFS methodology for corroded components"
+        }
+      ],
+      "expected_keywords": ["remaining life", "corrosion", "API 579", "assessment", "thickness"],
+      "ground_truth_answer": "API 579 Part 2 Section 3 uses: measured thickness, corrosion rate (mils/year), remaining life = (current thickness - minimum allowed) / corrosion rate (years). Includes probability of failure analysis per Section 3.5.",
+      "confidence": 0.80,
+      "notes": "Requires field thickness measurement"
+    },
+    {
+      "query_id": "Q036",
+      "query_text": "Bolting class and stud materials for ASME B31.4 connections?",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "topics": ["bolting", "ASME B31.4", "fasteners", "material"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["417"],
+          "relevance_score": 0.88,
+          "reason": "Specifies bolting requirements for pipeline connections"
+        }
+      ],
+      "expected_keywords": ["bolting", "studs", "ASME B31.4", "class", "material grade"],
+      "ground_truth_answer": "ASME B31.4 Section 417 specifies bolting per ASME B16.5 or B31.1, typically Grade B7 studs (ASTM A193). Flange class rating determines stud grade and quantity per ASME B16.5.",
+      "confidence": 0.85,
+      "notes": "Standard bolting selection"
+    },
+    {
+      "query_id": "Q037",
+      "query_text": "What are the differences between ASME B31.4 and B31.8 for pipeline design?",
+      "difficulty": "complex",
+      "discipline": "pipeline",
+      "topics": ["ASME B31.4", "B31.8", "liquid pipeline", "gas pipeline", "standards comparison"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["Chapter 1"],
+          "relevance_score": 0.80,
+          "reason": "Liquid pipeline standard (petroleum, anhydrous ammonia, etc.)"
+        },
+        {
+          "standard": "ASME B31.8",
+          "version": "2020",
+          "sections": ["Chapter 1"],
+          "relevance_score": 0.80,
+          "reason": "Gas transmission pipeline standard"
+        }
+      ],
+      "expected_keywords": ["B31.4", "B31.8", "liquid", "gas", "design pressure", "material"],
+      "ground_truth_answer": "B31.4 (liquids): pressure limit based on SMYS ≤ 72%, wall design per formulas. B31.8 (gas): allows ≤ 72% SMYS main lines, ≤ 60% branches, specific gas pressure limits per location class. Both use similar design philosophy but different equations.",
+      "confidence": 0.78,
+      "notes": "Major standard comparison; contextual differences"
+    },
+    {
+      "query_id": "Q038",
+      "query_text": "Tolerance and acceptance criteria for pipe mill tests per ASTM A370?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["ASTM A370", "mechanical properties", "mill test", "acceptance"],
+      "expected_standards": [
+        {
+          "standard": "ASTM A370",
+          "version": "2023",
+          "sections": ["Section 5"],
+          "relevance_score": 0.93,
+          "reason": "Defines mechanical testing methods and acceptance for steel pipe"
+        }
+      ],
+      "expected_keywords": ["mill test", "tensile", "yield strength", "ASTM A370", "tolerance", "acceptance"],
+      "ground_truth_answer": "ASTM A370 Section 5 specifies: tensile testing (yield, ultimate, elongation), hardness testing, acceptance per A53/A106 supplemental requirements. Typical yield tolerance ±5%, tensile ±7%. Full acceptance criteria in Section 5.2.",
+      "confidence": 0.84,
+      "notes": "Material quality control"
+    },
+    {
+      "query_id": "Q039",
+      "query_text": "How to calculate longitudinal stress in pipeline per ASME B31.4?",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "topics": ["longitudinal stress", "pipeline", "ASME B31.4", "pressure", "thermal"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["404"],
+          "relevance_score": 0.94,
+          "reason": "Defines combined stress analysis including longitudinal stress"
+        }
+      ],
+      "expected_keywords": ["longitudinal stress", "ASME B31.4", "pressure stress", "thermal stress", "combined"],
+      "ground_truth_answer": "ASME B31.4 Section 404 requires combined stress = hoop + longitudinal + torsional. Longitudinal stress from: pressure (Pr/2t), thermal expansion (E × ΔT × α), and misalignment. Total combined stress ≤ allowable per Section 404.1.",
+      "confidence": 0.87,
+      "notes": "Pipeline stress analysis"
+    },
+    {
+      "query_id": "Q040",
+      "query_text": "What is the service classification per ASME B31.1 for power plant boiler piping?",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "topics": ["ASME B31.1", "power plant", "boiler piping", "service class"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.1",
+          "version": "2020",
+          "sections": ["102.2"],
+          "relevance_score": 0.92,
+          "reason": "Defines service classifications for power plant piping"
+        }
+      ],
+      "expected_keywords": ["service classification", "B31.1", "power plant", "Class 1", "Class 2"],
+      "ground_truth_answer": "ASME B31.1 Section 102.2 defines Class 1 (high-pressure steam lines, main boiler discharge) and Class 2 (lower-pressure, more relaxed). Classification affects design pressure, wall thickness, and material limits.",
+      "confidence": 0.89,
+      "notes": "Power generation piping standard"
+    },
+    {
+      "query_id": "Q041",
+      "query_text": "Temperature derating factors for API 5L X-grade steel?",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "topics": ["API 5L", "temperature", "derating", "material property"],
+      "expected_standards": [
+        {
+          "standard": "API 5L",
+          "version": "2018",
+          "sections": ["Section 3", "Table 5"],
+          "relevance_score": 0.91,
+          "reason": "Provides temperature derating factors for all grades"
+        }
+      ],
+      "expected_keywords": ["temperature derating", "API 5L", "design pressure", "hot service"],
+      "ground_truth_answer": "API 5L Section 3 Table 5 provides derating factors for elevated temperatures. X52: 1.0 at <-4°F to 100°F, 0.5 at >200°F. Allowable design pressure = base pressure × derating factor.",
+      "confidence": 0.86,
+      "notes": "Hot service considerations for high-grade steel"
+    },
+    {
+      "query_id": "Q042",
+      "query_text": "Overpressure protection and relief valve sizing per ASME Section VIII?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["overpressure", "relief valve", "ASME", "sizing"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section VIII Division 1",
+          "version": "2023",
+          "sections": ["UG-134"],
+          "relevance_score": 0.95,
+          "reason": "Defines overpressure protection and relief valve requirements"
+        }
+      ],
+      "expected_keywords": ["overpressure protection", "relief valve", "ASME", "sizing", "capacity"],
+      "ground_truth_answer": "ASME Section VIII UG-134 requires relief valve capacity ≥ max inflow rate from all sources. Set pressure ≤ 1.1 × design pressure. Full sizing procedure in UG-134 (a) through (d). Accumulation ≤ 6% over design pressure.",
+      "confidence": 0.89,
+      "notes": "Critical safety device sizing"
+    },
+    {
+      "query_id": "Q043",
+      "query_text": "How to perform a fitness-for-service assessment per API 579 for a cracked component?",
+      "difficulty": "complex",
+      "discipline": "inspection",
+      "topics": ["fitness for service", "API 579", "crack", "assessment"],
+      "expected_standards": [
+        {
+          "standard": "API 579",
+          "version": "2021",
+          "sections": ["Part 2", "Section 4"],
+          "relevance_score": 0.94,
+          "reason": "Comprehensive crack assessment methodology"
+        }
+      ],
+      "expected_keywords": ["crack assessment", "API 579", "fitness", "stress intensity", "remaining life"],
+      "ground_truth_answer": "API 579 Part 2 Section 4 (Cracks): 1) Characterize (depth, length, orientation), 2) Calculate stress intensity factor (K), 3) Compare to fracture toughness (KIC), 4) Assess POF, 5) Determine remaining life. Flowchart in Section 4.1 guides analysis.",
+      "confidence": 0.81,
+      "notes": "Advanced FFS analysis"
+    },
+    {
+      "query_id": "Q044",
+      "query_text": "Minimum design metal temperature per ASME B31.3 for low-temperature service?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["MDMT", "low temperature", "ASME B31.3", "impact testing"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.3",
+          "version": "2020",
+          "sections": ["323"],
+          "relevance_score": 0.93,
+          "reason": "Defines MDMT requirements and impact testing"
+        }
+      ],
+      "expected_keywords": ["MDMT", "low temperature", "impact test", "Charpy", "toughness"],
+      "ground_truth_answer": "ASME B31.3 Section 323 requires MDMT calculation or impact testing per ASTM A370. Typical MDMT per Charpy V-notch energy requirements (35 ft-lb, 15 ft-lb depending on grade). For service below MDMT, use materials with adequate toughness.",
+      "confidence": 0.85,
+      "notes": "Critical for cryogenic service"
+    },
+    {
+      "query_id": "Q045",
+      "query_text": "How to select pipe schedule number per ASME or equivalent standards?",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "topics": ["pipe schedule", "wall thickness", "design", "pressure"],
+      "expected_standards": [
+        {
+          "standard": "ASME B36.10M",
+          "version": "2015",
+          "sections": ["Table 1"],
+          "relevance_score": 0.94,
+          "reason": "Defines standard pipe dimensions and wall thickness"
+        }
+      ],
+      "expected_keywords": ["schedule", "wall thickness", "ASME B36.10", "pipe size", "pressure"],
+      "ground_truth_answer": "ASME B36.10M Table 1 provides standard schedules (10, 20, 30, 40, 60, 80, 120, 160) for each nominal diameter. Selection based on: design pressure, fluid, temperature, and cost. Higher schedule = thicker wall.",
+      "confidence": 0.90,
+      "notes": "Practical pipe sizing reference"
+    },
+    {
+      "query_id": "Q046",
+      "query_text": "What welder certification is required for ASME Code welding?",
+      "difficulty": "simple",
+      "discipline": "welding",
+      "topics": ["welder certification", "ASME", "qualification", "test"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section IX",
+          "version": "2023",
+          "sections": ["QW-100", "QW-300"],
+          "relevance_score": 0.96,
+          "reason": "Defines welder qualification requirements"
+        }
+      ],
+      "expected_keywords": ["welder certification", "ASME Section IX", "qualification test", "FCAW", "GMAW"],
+      "ground_truth_answer": "ASME Section IX requires: welder qualifies per QW-301 or QW-302 procedure qualification record (PQR). Test pieces: plate thickness, diameter, position. Valid 1 year (or per ASME BPVC). Recertification required if >6 months gap.",
+      "confidence": 0.91,
+      "notes": "Mandatory code requirement"
+    },
+    {
+      "query_id": "Q047",
+      "query_text": "How to identify and prevent cavitation in piping systems?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["cavitation", "prevention", "pump", "piping design"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.1",
+          "version": "2020",
+          "sections": ["121.6"],
+          "relevance_score": 0.70,
+          "reason": "Addresses cavitation considerations in power plant piping"
+        }
+      ],
+      "expected_keywords": ["cavitation", "NPSH", "prevention", "pressure drop", "design"],
+      "ground_truth_answer": "Cavitation occurs when pressure < fluid vapor pressure. Prevention: ensure NPSH available > NPSH required, maintain ≥ 0.5 psi at pump inlet, minimize pressure drop. ASME B31.1 121.6 discusses velocity limits (8-10 ft/s for most fluids).",
+      "confidence": 0.76,
+      "notes": "Fluid mechanics fundamentals + piping design"
+    },
+    {
+      "query_id": "Q048",
+      "query_text": "Expansion/contraction allowance for hot piping per ASME B31.3?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["thermal expansion", "piping flexibility", "ASME B31.3", "stress relief"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.3",
+          "version": "2020",
+          "sections": ["302.3.3"],
+          "relevance_score": 0.92,
+          "reason": "Defines flexibility analysis and thermal stress requirements"
+        }
+      ],
+      "expected_keywords": ["thermal expansion", "flexibility", "stress relief", "loops", "ASME B31.3"],
+      "ground_truth_answer": "ASME B31.3 302.3.3 requires flexibility analysis for thermal changes. Design with: bends/loops to absorb expansion, supports every 4-8 ft, stress range ≤ allowable. Use U-bends or spiral coils if space limited. Full analysis per 302.3.3 (a).",
+      "confidence": 0.86,
+      "notes": "Piping layout and support design"
+    },
+    {
+      "query_id": "Q049",
+      "query_text": "What is the maximum allowable shear stress for pipe material per ASME?",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "topics": ["shear stress", "allowable stress", "ASME", "material"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["403"],
+          "relevance_score": 0.85,
+          "reason": "Specifies allowable stresses including shear"
+        }
+      ],
+      "expected_keywords": ["shear stress", "allowable", "ASME B31.4", "material stress"],
+      "ground_truth_answer": "ASME B31.4 Section 403 (and other B31 codes) typically limits shear stress to 0.8 × allowable tensile stress, or as defined in code tables. Example: A53 Grade B at 200°F = 0.8 × 17,500 = 14,000 psi shear limit.",
+      "confidence": 0.82,
+      "notes": "Material property limitation"
+    },
+    {
+      "query_id": "Q050",
+      "query_text": "Acceptability of repair welds in service pipelines per API 1104?",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "topics": ["API 1104", "repair welding", "in-service", "field weld"],
+      "expected_standards": [
+        {
+          "standard": "API 1104",
+          "version": "2021",
+          "sections": ["Section 4", "4.8"],
+          "relevance_score": 0.94,
+          "reason": "Addresses repair welding procedures and acceptance"
+        }
+      ],
+      "expected_keywords": ["repair weld", "in-service", "API 1104", "hot tapping", "acceptance"],
+      "ground_truth_answer": "API 1104 Section 4.8 covers repair welds: depressurize if possible, follow same procedure as construction welds, perform NDT per Section 9. For hot tapping repairs: follow hot tap procedure (Section 4.7), depressurization not required if safe.",
+      "confidence": 0.87,
+      "notes": "Field weld repair standard"
+    },
+    {
+      "query_id": "Q051",
+      "query_text": "Difference between pressure drop and head loss in piping calculations?",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "topics": ["pressure drop", "head loss", "fluid mechanics", "piping"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.1",
+          "version": "2020",
+          "sections": ["121.2"],
+          "relevance_score": 0.65,
+          "reason": "References fluid mechanics for piping design"
+        }
+      ],
+      "expected_keywords": ["pressure drop", "head loss", "fluid mechanics", "Darcy-Weisbach"],
+      "ground_truth_answer": "Head loss (feet of fluid) = pressure drop / (ρ × g). Pressure drop = f × (L/D) × (ρV²/2). Both describe friction losses in piping; pressure drop used in engineering (psi), head loss used in hydraulic systems (feet).",
+      "confidence": 0.88,
+      "notes": "Fundamental fluid mechanics"
+    },
+    {
+      "query_id": "Q052",
+      "query_text": "Required inspection frequency for in-service pipelines per API 570?",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "topics": ["API 570", "inspection interval", "monitoring frequency", "corrosion rate"],
+      "expected_standards": [
+        {
+          "standard": "API 570",
+          "version": "2020",
+          "sections": ["Section 5"],
+          "relevance_score": 0.94,
+          "reason": "Defines inspection intervals based on corrosion rate and criticality"
+        }
+      ],
+      "expected_keywords": ["inspection interval", "API 570", "frequency", "corrosion rate", "monitoring"],
+      "ground_truth_answer": "API 570 Section 5 specifies intervals based on corrosion rate: <0.05 mils/yr = 5 years, 0.05-0.1 = 3-4 years, >0.1 = annual or continuous monitoring. Critical lines inspected more frequently per Section 5.3.",
+      "confidence": 0.89,
+      "notes": "Condition-based inspection planning"
+    },
+    {
+      "query_id": "Q053",
+      "query_text": "How to specify and verify material traceability per ASME BPVC?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["material traceability", "ASME", "documentation", "mill certs"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section II",
+          "version": "2023",
+          "sections": ["Part C"],
+          "relevance_score": 0.85,
+          "reason": "Defines material specifications and certification requirements"
+        }
+      ],
+      "expected_keywords": ["material traceability", "mill certificate", "ASME", "material spec", "documentation"],
+      "ground_truth_answer": "ASME Section II Part C requires: mill test certificates per ASTM standards, heat number traceability, chemical analysis, mechanical properties. Verify: supplier certification, heat number on item, alignment of properties with spec.",
+      "confidence": 0.84,
+      "notes": "Quality assurance in materials procurement"
+    },
+    {
+      "query_id": "Q054",
+      "query_text": "Bolt preload and gasket seating per ASME B16.5 flanges?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["bolting", "preload", "gasket", "ASME B16.5", "flange"],
+      "expected_standards": [
+        {
+          "standard": "ASME B16.5",
+          "version": "2020",
+          "sections": ["Section 8"],
+          "relevance_score": 0.90,
+          "reason": "Specifies bolt preload and assembly requirements for flanges"
+        }
+      ],
+      "expected_keywords": ["bolt preload", "gasket seating", "ASME B16.5", "assembly", "torque"],
+      "ground_truth_answer": "ASME B16.5 Section 8 specifies: gasket seating pressure (to compress gasket) followed by operational loading. Typical procedure: apply 80% design load, then increase to full design load. Bolt preload = (class rating × area) / (1.5 × safety factor).",
+      "confidence": 0.83,
+      "notes": "Flange assembly procedure"
+    },
+    {
+      "query_id": "Q055",
+      "query_text": "How to calculate hoop stress in a cylindrical pipe under pressure?",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "topics": ["hoop stress", "pressure pipe", "Lamé equation", "formula"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["404"],
+          "relevance_score": 0.88,
+          "reason": "Applies hoop stress formula in design requirements"
+        }
+      ],
+      "expected_keywords": ["hoop stress", "pressure", "formula", "diameter", "wall thickness"],
+      "ground_truth_answer": "Hoop stress σ_h = Pr/t, where P = internal pressure, r = inner radius, t = wall thickness. For thin-wall pipes (r/t > 10), this formula applies directly. ASME uses: σ_h = Pr / t (inches and psi).",
+      "confidence": 0.93,
+      "notes": "Fundamental pipe stress formula"
+    },
+    {
+      "query_id": "Q056",
+      "query_text": "Vibration analysis and support design for high-frequency piping?",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "topics": ["vibration", "piping support", "dynamic analysis", "resonance"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.1",
+          "version": "2020",
+          "sections": ["121.7"],
+          "relevance_score": 0.75,
+          "reason": "Addresses vibration considerations in power plant piping"
+        }
+      ],
+      "expected_keywords": ["vibration", "support spacing", "natural frequency", "damping", "resonance"],
+      "ground_truth_answer": "ASME B31.1 121.7 requires: avoid natural frequency match with excitation (pump speed × harmonics). Support spacing per 121.7.2: maximum 10 feet for standard steel pipe, less for high-pressure/high-vibration lines. Use spring hangers to reduce stiffness.",
+      "confidence": 0.70,
+      "notes": "Specialized piping dynamics"
+    },
+    {
+      "query_id": "Q057",
+      "query_text": "What is the role of corrosion inhibitors in pipeline operation per NACE?",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "topics": ["corrosion inhibitor", "NACE", "chemical treatment", "pipeline"],
+      "expected_standards": [
+        {
+          "standard": "NACE SP0208",
+          "version": "2014",
+          "sections": ["Section 4"],
+          "relevance_score": 0.85,
+          "reason": "Addresses corrosion inhibitor use and effectiveness"
+        }
+      ],
+      "expected_keywords": ["corrosion inhibitor", "NACE", "chemical", "effectiveness", "monitoring"],
+      "ground_truth_answer": "NACE SP0208 Section 4 defines inhibitor types (film-forming, adsorption, precipitation). Effectiveness monitored via: coupon testing, electrical resistance probes, or weight loss. Typical inhibition efficiency >80% required. Reapplication per concentration monitoring.",
+      "confidence": 0.79,
+      "notes": "Chemical corrosion mitigation"
+    },
+    {
+      "query_id": "Q058",
+      "query_text": "Acceptable weld defects and sizing per ASME Section VIII Division 1?",
+      "difficulty": "medium",
+      "discipline": "welding",
+      "topics": ["weld defects", "acceptance criteria", "ASME", "porosity", "crack"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section VIII Division 1",
+          "version": "2023",
+          "sections": ["UW-50"],
+          "relevance_score": 0.95,
+          "reason": "Defines weld defect acceptance criteria for BPVC vessels"
+        }
+      ],
+      "expected_keywords": ["weld defects", "porosity", "crack", "ASME", "acceptance", "repair"],
+      "ground_truth_answer": "ASME Section VIII UW-50 specifies: porosity <3/16\" diameter acceptable if scattered; larger requires repair. Cracks NOT acceptable—repair required. Undercut <1/64\" acceptable. Full acceptance criteria in UW-50 (a) through (c).",
+      "confidence": 0.89,
+      "notes": "Vessel construction quality standards"
+    },
+    {
+      "query_id": "Q059",
+      "query_text": "How to design support brackets for suspended piping per ASME codes?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["support bracket", "suspended pipe", "design", "loads", "spring hanger"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.1",
+          "version": "2020",
+          "sections": ["121.2", "Appendix I"],
+          "relevance_score": 0.80,
+          "reason": "Provides support and hanger design guidelines"
+        }
+      ],
+      "expected_keywords": ["support bracket", "spring hanger", "load calculation", "anchor point", "flexibility"],
+      "ground_truth_answer": "ASME B31.1 121.2 and Appendix I: bracket designed for maximum load (weight + dynamic effects), anchor point rated for load + margin. Spring hangers used for thermal lines. Bracket stress ≤ allowable for material. Design per Appendix I formulas.",
+      "confidence": 0.78,
+      "notes": "Practical piping support design"
+    },
+    {
+      "query_id": "Q060",
+      "query_text": "Minimum wall thickness to prevent local buckling in pipeline compression?",
+      "difficulty": "complex",
+      "discipline": "pipeline",
+      "topics": ["buckling", "compression", "wall thickness", "D/t ratio", "instability"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["406"],
+          "relevance_score": 0.82,
+          "reason": "Addresses buckling and ovality limits in pipeline design"
+        }
+      ],
+      "expected_keywords": ["buckling", "compression", "D/t ratio", "ovality", "local buckling"],
+      "ground_truth_answer": "ASME B31.4 Section 406 limits: D/t < 96 for most service, D/t < 60 for aggressive conditions. Buckling governed by combined compression + bending. D/t ratio affects buckling thickness; higher D/t = thinner wall acceptable.",
+      "confidence": 0.72,
+      "notes": "Advanced pipeline design consideration"
+    },
+    {
+      "query_id": "Q061",
+      "query_text": "Valve selection and sizing for pressure control per API 520?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["relief valve", "API 520", "sizing", "pressure control"],
+      "expected_standards": [
+        {
+          "standard": "API 520",
+          "version": "2020",
+          "sections": ["Section 2"],
+          "relevance_score": 0.93,
+          "reason": "Comprehensive relief valve sizing and selection standard"
+        }
+      ],
+      "expected_keywords": ["relief valve", "API 520", "sizing", "flow capacity", "set pressure"],
+      "ground_truth_answer": "API 520 Section 2: valve capacity ≥ max inflow from all sources (pump, thermal, gas evolution). Set pressure ≤ 1.05 × design pressure (vessels) or 1.1 × (piping). Accumulation ≤ 6%. Full sizing in Section 2.1-2.3.",
+      "confidence": 0.88,
+      "notes": "Critical overpressure protection"
+    },
+    {
+      "query_id": "Q062",
+      "query_text": "How to perform hydrostatic leak testing of pump seals per ASME?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["leak test", "pump seal", "hydrostatic", "acceptance"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section IX",
+          "version": "2023",
+          "sections": ["QW-400"],
+          "relevance_score": 0.60,
+          "reason": "References leak testing procedures for sealed components"
+        }
+      ],
+      "expected_keywords": ["leak test", "hydrostatic", "pump seal", "acceptance", "pressure hold"],
+      "ground_truth_answer": "Typical procedure: 1) pressurize to 1.5 × max operating pressure, 2) hold 10 minutes, 3) visual inspection for weeping, 4) accept if <1 drop/minute. Exact criteria per equipment specification or ASME code.",
+      "confidence": 0.75,
+      "notes": "Operational acceptance testing"
+    },
+    {
+      "query_id": "Q063",
+      "query_text": "Material selection for cryogenic service per ASME/ASTM standards?",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "topics": ["cryogenic", "material selection", "ASME", "impact test", "toughness"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.3",
+          "version": "2020",
+          "sections": ["323"],
+          "relevance_score": 0.85,
+          "reason": "Defines material requirements for low-temperature service"
+        }
+      ],
+      "expected_keywords": ["cryogenic", "material selection", "Charpy test", "toughness", "ASTM"],
+      "ground_truth_answer": "ASME B31.3 Section 323: cryogenic service (LNG -300°F) requires: austenitic stainless (304, 316), aluminum alloys, or selected carbon steels with impact testing. Minimum Charpy V-notch energy per ASTM A370 at service temperature.",
+      "confidence": 0.82,
+      "notes": "Specialized for LNG applications"
+    },
+    {
+      "query_id": "Q064",
+      "query_text": "How to verify RLS (Row-Level Security) enforcement in multi-tenant database design?",
+      "difficulty": "simple",
+      "discipline": "safety",
+      "topics": ["security", "multi-tenant", "testing", "verification"],
+      "expected_standards": [
+        {
+          "standard": "NIST SP 800-53",
+          "version": "2020",
+          "sections": ["AC-3"],
+          "relevance_score": 0.75,
+          "reason": "Defines access control requirements"
+        }
+      ],
+      "expected_keywords": ["RLS", "security", "multi-tenant", "database", "access control"],
+      "ground_truth_answer": "Verify RLS: 1) Log in as Org A user, query should show only Org A data, 2) Log in as Org B user, should NOT see Org A data (error or empty), 3) Direct SQL as Org A should not bypass RLS. Test isolation per NIST AC-3.",
+      "confidence": 0.80,
+      "notes": "Database security verification"
+    },
+    {
+      "query_id": "Q065",
+      "query_text": "What standards govern buried pipeline corrosion prevention?",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "topics": ["buried pipeline", "corrosion protection", "coating", "cathodic"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["482"],
+          "relevance_score": 0.90,
+          "reason": "Specifies corrosion prevention for buried pipelines"
+        },
+        {
+          "standard": "NACE RP0169",
+          "version": "2013",
+          "sections": ["Section 3"],
+          "relevance_score": 0.85,
+          "reason": "CP design for buried pipelines"
+        }
+      ],
+      "expected_keywords": ["buried pipeline", "coating", "cathodic protection", "corrosion prevention"],
+      "ground_truth_answer": "ASME B31.4 Section 482: classifies soil corrosivity, requires external coating (FBE, polyethylene) + cathodic protection per NACE RP0169. Monitoring via coupons or potential measurements (-850 mV CSE).",
+      "confidence": 0.89,
+      "notes": "Comprehensive corrosion mitigation for buried service"
+    },
+    {
+      "query_id": "Q066",
+      "query_text": "Acceptance of discontinuities in welds via eddy current testing?",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "topics": ["eddy current", "weld inspection", "discontinuity", "acceptance"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section V",
+          "version": "2023",
+          "sections": ["Article 8"],
+          "relevance_score": 0.92,
+          "reason": "Defines eddy current testing procedure and acceptance"
+        }
+      ],
+      "expected_keywords": ["eddy current", "ET", "weld", "discontinuity", "acceptance"],
+      "ground_truth_answer": "ASME Section V Article 8 specifies: sensitivity calibration per standard, acceptance limits per Table 8-1 (dependent on thickness), reportable discontinuities if exceed amplitude thresholds. Surface cracks NOT acceptable.",
+      "confidence": 0.85,
+      "notes": "Surface defect detection method"
+    },
+    {
+      "query_id": "Q067",
+      "query_text": "Expansion joint design and installation for high-temperature piping?",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "topics": ["expansion joint", "thermal expansion", "anchor", "guide"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.1",
+          "version": "2020",
+          "sections": ["121.2.3"],
+          "relevance_score": 0.80,
+          "reason": "Provides guidance on expansion joint use and installation"
+        }
+      ],
+      "expected_keywords": ["expansion joint", "bellows", "thermal expansion", "anchor", "support"],
+      "ground_truth_answer": "ASME B31.1 121.2.3: expansion joints designed for pressure + axial movement, installed per manufacturer instructions. Require proper anchoring (force = pressure × area), guides every 3-5 diameters, and protection from whipping if fails.",
+      "confidence": 0.76,
+      "notes": "Specialized thermal accommodation device"
+    },
+    {
+      "query_id": "Q068",
+      "query_text": "How to prevent stress corrosion cracking in pipelines per NACE MR0175?",
+      "difficulty": "medium",
+      "discipline": "corrosion",
+      "topics": ["stress corrosion", "SCC", "material selection", "NACE", "stress"],
+      "expected_standards": [
+        {
+          "standard": "NACE MR0175",
+          "version": "2015",
+          "sections": ["Section 4"],
+          "relevance_score": 0.92,
+          "reason": "Defines material and design limits to prevent SCC"
+        }
+      ],
+      "expected_keywords": ["stress corrosion cracking", "SCC", "NACE", "H2S", "material grade"],
+      "ground_truth_answer": "NACE MR0175 Section 4: SCC prevented via 1) material selection (HV < 250 for H2S), 2) stress relief (PWHT for high-strength steels), 3) cathodic protection (-850 mV CSE). Hardness limit <250 HV mandatory in sour service.",
+      "confidence": 0.86,
+      "notes": "Critical for sour service pipelines"
+    },
+    {
+      "query_id": "Q069",
+      "query_text": "Inspection requirements after earthquakes per ASCE 7 and local codes?",
+      "difficulty": "medium",
+      "discipline": "structural",
+      "topics": ["seismic", "post-earthquake", "inspection", "damage", "ASCE"],
+      "expected_standards": [
+        {
+          "standard": "ASCE 7",
+          "version": "2022",
+          "sections": ["12.13"],
+          "relevance_score": 0.70,
+          "reason": "Seismic design and inspection considerations"
+        }
+      ],
+      "expected_keywords": ["post-earthquake", "inspection", "damage", "ASCE", "structural"],
+      "ground_truth_answer": "ASCE 7 Section 12.13 and local seismic codes require post-earthquake inspection for structural damage (cracks, deformation), connection slippage, and foundation settlement. Professional engineer assessment may be required before re-occupancy.",
+      "confidence": 0.72,
+      "notes": "Depends on local seismic zone and building importance"
+    },
+    {
+      "query_id": "Q070",
+      "query_text": "Thermal cycling fatigue resistance of materials per ASME standards?",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "topics": ["thermal cycling", "fatigue", "material properties", "low-cycle fatigue"],
+      "expected_standards": [
+        {
+          "standard": "ASME Section III",
+          "version": "2023",
+          "sections": ["5000"],
+          "relevance_score": 0.80,
+          "reason": "Addresses low-cycle fatigue from thermal transients"
+        }
+      ],
+      "expected_keywords": ["thermal cycling", "low-cycle fatigue", "ratcheting", "plastic strain"],
+      "ground_truth_answer": "ASME Section III 5000 includes thermal transient analysis: peak stress analysis + shakedown assessment + low-cycle fatigue check. Material S-N curves at operating temperature; fatigue limit depends on cycles and stress range.",
+      "confidence": 0.70,
+      "notes": "Advanced nuclear/thermal equipment design"
+    },
+    {
+      "query_id": "Q071",
+      "query_text": "Defect assessment procedure for pipelines per BS 7910 or API 579?",
+      "difficulty": "complex",
+      "discipline": "inspection",
+      "topics": ["defect assessment", "fitness for service", "fracture mechanics"],
+      "expected_standards": [
+        {
+          "standard": "API 579",
+          "version": "2021",
+          "sections": ["Part 2"],
+          "relevance_score": 0.94,
+          "reason": "Comprehensive defect assessment methodology"
+        },
+        {
+          "standard": "BS 7910",
+          "version": "2019",
+          "sections": ["Section 9"],
+          "relevance_score": 0.85,
+          "reason": "Alternative FFS approach used in UK and Europe"
+        }
+      ],
+      "expected_keywords": ["defect assessment", "API 579", "BS 7910", "FAD", "failure assessment"],
+      "ground_truth_answer": "API 579 Part 2 and BS 7910 provide similar defect assessment flowcharts: characterize defect → calculate stress intensity → evaluate fracture mechanics → determine acceptability. BS 7910 uses FAD (Failure Assessment Diagram); API 579 uses POF (Probability of Failure).",
+      "confidence": 0.75,
+      "notes": "Two major FFS standards with similar approaches"
+    },
+    {
+      "query_id": "Q072",
+      "query_text": "How to design for water hammer effects in piping systems?",
+      "difficulty": "complex",
+      "discipline": "mechanical",
+      "topics": ["water hammer", "surge pressure", "transient", "valve closing"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["405"],
+          "relevance_score": 0.75,
+          "reason": "References transient and surge pressure analysis"
+        }
+      ],
+      "expected_keywords": ["water hammer", "surge pressure", "transient", "check valve", "relief valve"],
+      "ground_truth_answer": "Water hammer from rapid valve closure: surge pressure = ρ × c × v (ρ = density, c = wave speed ~4700 ft/s, v = velocity change). Mitigation: slow valve closure, check valves, surge tanks. ASME B31.4 Section 405 requires transient analysis.",
+      "confidence": 0.73,
+      "notes": "Fluid dynamics + piping design"
+    },
+    {
+      "query_id": "Q073",
+      "query_text": "Acceptance criteria for field joint radiography per API 1104?",
+      "difficulty": "medium",
+      "discipline": "inspection",
+      "topics": ["radiography", "field weld", "acceptance", "API 1104", "defect"],
+      "expected_standards": [
+        {
+          "standard": "API 1104",
+          "version": "2021",
+          "sections": ["Section 9"],
+          "relevance_score": 0.95,
+          "reason": "Defines radiographic acceptance criteria for pipeline welds"
+        }
+      ],
+      "expected_keywords": ["radiography", "API 1104", "acceptance", "porosity", "crack"],
+      "ground_truth_answer": "API 1104 Section 9: radiographic acceptance per Table 9-1 (based on wall thickness). Porosity <3/16\" acceptable if scattered; cracks NOT acceptable. Undercut and lack of fusion limits defined. Rejection criteria explicit in 9.4.1-9.4.3.",
+      "confidence": 0.91,
+      "notes": "Standard field weld inspection"
+    },
+    {
+      "query_id": "Q074",
+      "query_text": "Flange face selection and gasket compatibility per ASME B16.5?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["flange face", "gasket", "compatibility", "ASME B16.5"],
+      "expected_standards": [
+        {
+          "standard": "ASME B16.5",
+          "version": "2020",
+          "sections": ["Section 6"],
+          "relevance_score": 0.92,
+          "reason": "Defines flange faces and gasket seating surfaces"
+        }
+      ],
+      "expected_keywords": ["flange face", "gasket", "RTJ", "flat face", "compatibility"],
+      "ground_truth_answer": "ASME B16.5 Section 6 specifies faces: flat face (most common), raised face, ring joint (RTJ—high pressure). Gasket type must match face: spiral wound for flat, O-ring for RTJ. Incompatible combinations lead to leaks.",
+      "confidence": 0.87,
+      "notes": "Critical flange interface design"
+    },
+    {
+      "query_id": "Q075",
+      "query_text": "Minimum bending stress in pipe bends per ASME B31 codes?",
+      "difficulty": "medium",
+      "discipline": "pipeline",
+      "topics": ["bending stress", "pipe bend", "ASME", "stress concentration"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.4",
+          "version": "2020",
+          "sections": ["404"],
+          "relevance_score": 0.85,
+          "reason": "Addresses combined stress including bending in piping design"
+        }
+      ],
+      "expected_keywords": ["bending stress", "bend radius", "stress concentration", "i-factor"],
+      "ground_truth_answer": "ASME B31.4 Section 404 bending stress σ_b = M × c / I, where M = bending moment, c = distance to neutral axis, I = second moment. Combined stress = hoop + bending + torsion ≤ allowable. Elbow bend radius affects stress concentration.",
+      "confidence": 0.80,
+      "notes": "Piping flexibility analysis"
+    },
+    {
+      "query_id": "Q076",
+      "query_text": "How to perform compliance assessment of legacy equipment per API 513?",
+      "difficulty": "complex",
+      "discipline": "safety",
+      "topics": ["legacy equipment", "compliance", "API 513", "refinery", "assessment"],
+      "expected_standards": [
+        {
+          "standard": "API 513",
+          "version": "2018",
+          "sections": ["Section 5"],
+          "relevance_score": 0.80,
+          "reason": "Addresses assessment of in-service refinery equipment"
+        }
+      ],
+      "expected_keywords": ["legacy equipment", "compliance assessment", "API 513", "risk-based"],
+      "ground_truth_answer": "API 513 Section 5 suggests risk-based assessment: evaluate equipment against current standards, assess consequence of failure, determine risk priority. Legacy equipment may be 'grandfathered' if risk acceptable, or upgraded if not.",
+      "confidence": 0.68,
+      "notes": "Policy/regulatory decision making"
+    },
+    {
+      "query_id": "Q077",
+      "query_text": "Allowable deflection of pipe supports and anchors per ASME B31.1?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["pipe support", "deflection", "anchor movement", "ASME B31.1"],
+      "expected_standards": [
+        {
+          "standard": "ASME B31.1",
+          "version": "2020",
+          "sections": ["121.2.2"],
+          "relevance_score": 0.85,
+          "reason": "Specifies support deflection limits"
+        }
+      ],
+      "expected_keywords": ["deflection", "support", "anchor", "movement", "ASME B31.1"],
+      "ground_truth_answer": "ASME B31.1 121.2.2: support deflection under load ≤ 1/4\" for normal service, ≤ 1/8\" for high-pressure steam. Anchor movement ≤ load-specific limits. Excessive deflection causes stress concentration and vibration.",
+      "confidence": 0.82,
+      "notes": "Support system design limit"
+    },
+    {
+      "query_id": "Q078",
+      "query_text": "What are the differences between seamless and welded pipe per ASTM standards?",
+      "difficulty": "simple",
+      "discipline": "mechanical",
+      "topics": ["seamless", "welded", "ASTM", "pipe type", "properties"],
+      "expected_standards": [
+        {
+          "standard": "ASTM A106",
+          "version": "2023",
+          "sections": ["1.1"],
+          "relevance_score": 0.90,
+          "reason": "Covers seamless carbon steel pipe"
+        },
+        {
+          "standard": "ASTM A53",
+          "version": "2021",
+          "sections": ["1.1"],
+          "relevance_score": 0.85,
+          "reason": "Covers seamless and welded carbon steel pipe"
+        }
+      ],
+      "expected_keywords": ["seamless", "welded", "ASTM", "strength", "weld seam"],
+      "ground_truth_answer": "ASTM A106 = seamless only (high-temperature service). ASTM A53 = both seamless and welded. Seamless generally slightly higher strength; welded requires weld seam inspection. Cost: seamless > welded. Selection by service requirements.",
+      "confidence": 0.88,
+      "notes": "Basic pipe type distinction"
+    },
+    {
+      "query_id": "Q079",
+      "query_text": "Traceability and documentation requirements for materials per API 6D or ASME?",
+      "difficulty": "medium",
+      "discipline": "mechanical",
+      "topics": ["material documentation", "traceability", "mill certs", "API 6D", "certification"],
+      "expected_standards": [
+        {
+          "standard": "API 6D",
+          "version": "2018",
+          "sections": ["Section 6"],
+          "relevance_score": 0.85,
+          "reason": "Pipeline valve standard with material documentation requirements"
+        }
+      ],
+      "expected_keywords": ["traceability", "documentation", "mill certificate", "heat number", "API 6D"],
+      "ground_truth_answer": "API 6D Section 6 and ASME standards require: mill test certificates per ASTM material spec, heat number identification, chemical analysis, mechanical properties per specification. Traceability from supplier through fabrication to installation.",
+      "confidence": 0.84,
+      "notes": "Quality control and compliance documentation"
+    },
+    {
+      "query_id": "Q080",
+      "query_text": "Risk-based inspection planning for in-service pipelines per API 580?",
+      "difficulty": "complex",
+      "discipline": "inspection",
+      "topics": ["risk-based inspection", "API 580", "criticality", "inspection priority"],
+      "expected_standards": [
+        {
+          "standard": "API 580",
+          "version": "2016",
+          "sections": ["Section 5"],
+          "relevance_score": 0.93,
+          "reason": "Comprehensive risk-based inspection methodology"
+        }
+      ],
+      "expected_keywords": ["risk-based inspection", "API 580", "RBI", "criticality", "consequence"],
+      "ground_truth_answer": "API 580 Section 5: RBI = (Probability of Failure) × (Consequence of Failure). Probability assessed from: age, corrosion rate, design margin. Consequence from: hazard severity, exposure area, mitigation systems. Priority inspection on highest risk items.",
+      "confidence": 0.82,
+      "notes": "Strategic inspection resource allocation"
+    }
+  ]
+}

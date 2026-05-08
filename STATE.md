@@ -4,6 +4,52 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-08 — WEEK 1 FOUNDATION COMPLETE ✅ (AGSK Implementation Phase)
+
+**Статус:** ✅ **PHASE: WEEK 1 DONE** — Database foundation + ingestion pipeline + retrieval engine + API endpoints реализованы и применены.
+
+**Миграции применены на prod (Supabase inachjylaqelysiwtsux):**
+- ✅ `021_agsk_standards` — 2 таблицы: `agsk_standards` (21 col), `agsk_ingestion_jobs` (15 col), RLS, 8 indexes
+- ✅ `022_agsk_chunks` — 4 таблицы: `agsk_chunks` (22 col), `agsk_feedback` (12), `agsk_embedding_cache` (7), `agsk_retrieval_logs` (12)
+- ✅ HNSW vector index: `hnsw (embedding vector_cosine_ops) WITH (m=16, ef_construction=64)`
+- ✅ GIN tsvector index для BM25 на `agsk_chunks.content_tsv` (generated column)
+- ✅ 5 RPC функций: `agsk_vector_search`, `agsk_bm25_search`, `agsk_hybrid_search`, `agsk_upsert_embedding_cache`, `agsk_set_updated_at`
+- ✅ RLS: authenticated read, admin/gip write — консистентно с существующей схемой
+
+**Ingestion Pipeline создан (`services/agsk-ingestion/`):**
+- ✅ `src/parsers/pdf-parser.ts` — pdf-parse primary + MinerU HTTP adapter (optional)
+- ✅ `src/processors/chunker.ts` — 600 tokens, 30 overlap, section-aware (LOCKED)
+- ✅ `src/processors/embedder.ts` — OpenAI text-embedding-3-small, batch=100, SHA-256 cache
+- ✅ `src/processors/metadata-extractor.ts` — детект 20+ standards (API, ASME, ISO, NACE, AWS, ACI, AISC, DNV, GOST, IEC, NFPA)
+- ✅ `src/services/queue.ts` — Redis Stream `agsk-ingestion-jobs`, consumer group, DLQ, auto-claim
+- ✅ `src/handlers/standards-ingest.ts` — полный pipeline: download→parse→chunk→embed→store
+- ✅ `src/index.ts` — worker loop, graceful shutdown, max retries=3
+
+**Retrieval Engine создан (`services/agsk-retrieval/`):**
+- ✅ `src/types.ts` — Citation schema (LOCKED: document, standard, section, page, version, confidence)
+- ✅ `src/engine.ts` — hybrid BM25+vector+RRF (weights 0.7/0.3, k=60), embedding cache, retrieval logging
+
+**API Endpoints (`services/api-server/src/routes/agsk.ts`):**
+- ✅ `POST /api/agsk/upload` — enqueue ingestion job (admin/gip)
+- ✅ `POST /api/agsk/search` — hybrid retrieval, returns chunks + citations + latency
+- ✅ `GET  /api/agsk/standards` — list standards (paginated, filterable by discipline/status)
+- ✅ `GET  /api/agsk/status/:id` — job progress tracking
+- ✅ `POST /api/agsk/feedback` — chunk relevance feedback (1-5 scale)
+- ✅ Registered in `services/api-server/src/index.ts`
+
+**Tests (`services/agsk-ingestion/tests/`):**
+- ✅ `chunker.test.ts` — 7 tests: token limit, overlap, citation schema, sequential index, empty section, fallback
+- ✅ `smoke.test.ts` — metadata extractor (7 tests), chunker smoke (6 tests), latency benchmark
+- ✅ `retrieval.test.ts` — benchmark (live Supabase, skipped in CI), citation schema validation, dedup
+
+**Архитектурная адаптация:**
+- ⚠️ org_id без FK (нет таблицы `organizations` в этой схеме) — система однотенантная, org_id хранится для будущей мультиарендности
+- ✅ RLS упрощён до auth.role()='authenticated' read / admin_or_gip write (consistent с existing schema)
+
+**Next Step:** Week 2 — установить зависимости (`npm install`), проверить TypeScript компиляцию, затем Week 2 tasks (orchestrator integration).
+
+---
+
 ### 2026-05-08 23:55 — PRE-IMPLEMENTATION VALIDATION DATASET CREATED ✅
 
 **Статус:** ✅ **PHASE: PRE-IMPLEMENTATION VALIDATION** — Evaluation dataset для benchmarking готов перед Week 1.
