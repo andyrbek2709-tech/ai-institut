@@ -48,17 +48,41 @@ export async function authMiddleware(
     }
 
     const supabase = getSupabaseAdmin();
-    const { data: userData } = await supabase
+    let { data: userData, error: selectErr } = await supabase
       .from('app_users')
       .select('*')
       .eq('supabase_uid', userId)
-      .single();
+      .maybeSingle();
+
+    // Auto-create app_users record if user doesn't exist
+    if (!userData && !selectErr) {
+      logger.info(`Creating missing app_users record for ${userId}`);
+      const { data: newUser, error: insertErr } = await supabase
+        .from('app_users')
+        .insert({
+          supabase_uid: userId,
+          email: payload.email || '',
+          full_name: payload.user_metadata?.full_name || payload.email || 'User',
+          role: 'engineer',  // Default role for new users
+        })
+        .select('*')
+        .maybeSingle();
+
+      if (insertErr) {
+        logger.error('Failed to create app_users record:', insertErr);
+        return res.status(401).json({ error: 'User initialization failed' });
+      }
+      userData = newUser;
+    } else if (selectErr) {
+      logger.error('app_users query error:', selectErr);
+      return res.status(401).json({ error: 'Invalid token' });
+    }
 
     const ud = userData as any;
     req.user = {
       id: userId,
       email: payload.email || '',
-      role: ud?.role,
+      role: ud?.role || 'engineer',
       full_name: ud?.full_name,
       supabase_uid: userId,
     };

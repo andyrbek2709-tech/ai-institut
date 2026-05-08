@@ -158,6 +158,18 @@ class ReportContext:
     calculation_engine_version: str = "0.3.0"
     calculation_time_ms: Optional[float] = None
 
+    # STAGE 1: LIFECYCLE METADATA (New)
+    report_id: Optional[str] = None  # Deterministic report ID from identity system
+    template_version: str = "1.0"  # Template format version
+    runner_version: str = "0.3.0"  # Calculation runner version
+    generator_id: str = "unknown"  # Who/what generated: "runner", "api_v1", "batch_job"
+    generation_timestamp: Optional[str] = None  # When report generation started
+
+    # Hashes for reproducibility (Stage 1 foundation)
+    inputs_hash: Optional[str] = None  # SHA256 of sorted inputs
+    formula_hash: Optional[str] = None  # SHA256 of formula expression
+    identity_hash: Optional[str] = None  # Combined reproducibility hash
+
 
 @dataclass
 class ReportTemplate:

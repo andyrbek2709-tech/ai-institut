@@ -71,7 +71,29 @@ async function getOrgId(supabaseUid: string): Promise<string | null> {
     .select('org_id')
     .eq('user_id', supabaseUid)
     .maybeSingle();
-  return (data as any)?.org_id ?? null;
+
+  if ((data as any)?.org_id) {
+    return (data as any).org_id;
+  }
+
+  // Auto-create pilot_users record with default org_id if doesn't exist
+  logger.info(`Creating missing pilot_users record for ${supabaseUid}`);
+  const defaultOrgId = 'default';
+  const { error: insertErr } = await sb
+    .from('pilot_users')
+    .insert({
+      user_id: supabaseUid,
+      org_id: defaultOrgId,
+      discipline: 'general',  // Default discipline
+      active: true,
+    });
+
+  if (insertErr) {
+    logger.error('Failed to create pilot_users record:', insertErr);
+    return null;
+  }
+
+  return defaultOrgId;
 }
 
 // ── Citation type (LOCKED SCHEMA) ────────────────────────────────────────

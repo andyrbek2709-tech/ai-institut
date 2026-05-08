@@ -11,6 +11,11 @@ from .report_identity import ReportIdentityGenerator, ReportIdentity
 from .lifecycle import get_lifecycle_manager
 from .lifecycle_persistence import get_persistence_store
 from .deterministic_hashing import DeterministicHasher
+<<<<<<< Updated upstream
+=======
+from .database import get_database_client, DatabaseClient
+from .determinism_tests import DeterminismTestSuite, DeterminismTestResult, DeterminismTestSummary
+>>>>>>> Stashed changes
 
 __all__ = [
     "ReportContext",
@@ -29,4 +34,12 @@ __all__ = [
     "get_lifecycle_manager",
     "get_persistence_store",
     "DeterministicHasher",
+<<<<<<< Updated upstream
+=======
+    "get_database_client",
+    "DatabaseClient",
+    "DeterminismTestSuite",
+    "DeterminismTestResult",
+    "DeterminismTestSummary",
+>>>>>>> Stashed changes
 ]

@@ -83,6 +83,7 @@ type Props = {
   onCreate: (payload: Partial<Drawing>) => Promise<void>;
   onUpdate: (id: string, payload: Partial<Drawing>) => Promise<void>;
   userRole?: string;
+  token?: string;
 };
 
 const emptyForm = {
@@ -93,7 +94,7 @@ const emptyForm = {
   due_date: '',
 };
 
-export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRole = 'engineer' }: Props) {
+export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRole = 'engineer', token = '' }: Props) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [form, setForm] = useState(emptyForm);
@@ -132,7 +133,10 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRo
       const apiUrl = `${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/orchestrator`;
       const res = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           action: 'analyze_drawing',
           image_base64: base64,
