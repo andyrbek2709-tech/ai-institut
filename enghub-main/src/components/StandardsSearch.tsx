@@ -51,23 +51,9 @@ export default function StandardsSearch() {
     setError(null);
     setResults([]);
     setSelectedResult(null);
+    const searchStartTime = Date.now();
 
     try {
-      console.log('[TRACE] handleSearch: AUTH CHECK START');
-      const user = await supabase.auth.getUser();
-      console.log('[TRACE] handleSearch: GOT USER:', user.data.user?.id);
-      const userId = user.data.user?.id;
-
-      console.log('[TRACE] handleSearch: TELEMETRY POST START');
-      // Log query to telemetry
-      const telRes = await apiPost('/api/telemetry/query', {
-        query_text: query,
-        discipline: filters.discipline,
-      });
-      console.log('[TRACE] handleSearch: TELEMETRY POST DONE:', telRes?.id);
-      const newQueryLogId = telRes?.id;
-      setQueryLogId(newQueryLogId);
-
       console.log('[TRACE] handleSearch: SEARCH POST START');
       // Execute search
       const searchRes = await apiPost('/api/agsk/search', {
@@ -75,11 +61,27 @@ export default function StandardsSearch() {
         org_id: 'default',
         ...filters,
       });
-      console.log('[TRACE] handleSearch: SEARCH POST DONE:', Array.isArray(searchRes));
+      const searchLatency = Date.now() - searchStartTime;
+      console.log('[TRACE] handleSearch: SEARCH POST DONE:', Array.isArray(searchRes), 'latency=' + searchLatency);
 
       if (Array.isArray(searchRes)) {
         console.log('[TRACE] handleSearch: VALID RESPONSE, RESULTS=' + searchRes.length);
         setResults(searchRes);
+
+        // Log query to telemetry (AFTER search, fire-and-forget, don't block retrieval)
+        console.log('[TRACE] handleSearch: TELEMETRY POST START (async, fire-and-forget)');
+        apiPost('/api/telemetry/query', {
+          query_text: query,
+          discipline: filters.discipline,
+          result_count: searchRes.length,
+          retrieval_latency_ms: searchLatency,
+        }).then((telRes) => {
+          console.log('[TRACE] handleSearch: TELEMETRY POST DONE:', telRes?.id);
+          if (telRes?.id) setQueryLogId(telRes.id);
+        }).catch((err) => {
+          console.log('[TRACE] handleSearch: TELEMETRY POST ERROR (ignored):', err instanceof Error ? err.message : String(err));
+          // Telemetry failure does not block retrieval
+        });
       } else {
         console.log('[TRACE] handleSearch: INVALID RESPONSE TYPE:', typeof searchRes);
         setError('Invalid response format');
@@ -98,17 +100,16 @@ export default function StandardsSearch() {
     setShowFeedback(true);
 
     if (queryLogId) {
-      try {
-        await apiPost('/api/telemetry/click', {
-          query_log_id: queryLogId,
-          result_rank: rank,
-          chunk_id: result.id,
-          standard_id: result.standard_id,
-          section_title: result.section_title,
-        });
-      } catch (err) {
-        console.error('Click telemetry failed:', err);
-      }
+      // Fire-and-forget: log click without blocking UI
+      apiPost('/api/telemetry/click', {
+        query_log_id: queryLogId,
+        result_rank: rank,
+        chunk_id: result.id,
+        standard_id: result.standard_id,
+        section_title: result.section_title,
+      }).catch((err) => {
+        console.warn('[TELEMETRY] Click logging failed (ignored):', err instanceof Error ? err.message : String(err));
+      });
     }
   }, [queryLogId]);
 
@@ -120,20 +121,21 @@ export default function StandardsSearch() {
   }) => {
     if (!selectedResult || !queryLogId) return;
 
-    try {
-      await apiPost('/api/telemetry/feedback', {
-        query_log_id: queryLogId,
-        result_id: selectedResult.id,
-        feedback_type: feedback.type,
-        citation_correct: feedback.citation_correct ?? null,
-        false_positive: feedback.false_positive ?? false,
-        comments: feedback.comments || null,
-      });
-      setShowFeedback(false);
-      setSelectedResult(null);
-    } catch (err) {
-      console.error('Feedback submission failed:', err);
-    }
+    // Always close feedback panel (regardless of telemetry success)
+    setShowFeedback(false);
+    setSelectedResult(null);
+
+    // Fire-and-forget: log feedback without blocking UI
+    apiPost('/api/telemetry/feedback', {
+      query_log_id: queryLogId,
+      result_id: selectedResult.id,
+      feedback_type: feedback.type,
+      citation_correct: feedback.citation_correct ?? null,
+      false_positive: feedback.false_positive ?? false,
+      comments: feedback.comments || null,
+    }).catch((err) => {
+      console.warn('[TELEMETRY] Feedback logging failed (ignored):', err instanceof Error ? err.message : String(err));
+    });
   }, [selectedResult, queryLogId]);
 
   return (

@@ -11,7 +11,6 @@ import { AdminPanel } from './pages/AdminPanel';
 import { useNotifications, ToastContainer } from './components/Notifications';
 import { CalculationView } from './calculations/CalculationView';
 import { calcRegistry } from './calculations/registry';
-import { CalculationsApp } from './calculations-platform/CalculationsApp';
 
 // #05 design diff: animated KPI numbers via useCountUp
 const StatNumber: React.FC<{ value: number; color: string }> = ({ value, color }) => {
@@ -1525,12 +1524,11 @@ export default function App() {
     { id: "projects_list", icon: "◈", label: "Проекты" },
     { id: "tasks", icon: "≡", label: "Задачи" },
     { id: "standards", icon: "⚙", label: "Стандарты" },
-    { id: "calculations", icon: "⎍", label: "Расчёты" },
     { id: "specifications", icon: "📋", label: "Спецификации" },
     { id: "normative", icon: "📄", label: "Нормативка" }
   ];
 
-  const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", standards: "Поиск Стандартов", calculations: "Инженерные расчёты", specifications: "Спецификации", normative: "База знаний (Нормативка)" };
+  const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", standards: "Поиск Стандартов", specifications: "Спецификации", normative: "База знаний (Нормативка)" };
 
   const calcTemplates = Object.values(calcRegistry);
   const calcCatLabels: Record<string, string> = { "ТХ": "ТХ — Технология", "ТТ": "ТТ — Теплотехника", "ЭО": "ЭО — Электрика", "ВК": "ВК — Водоснабжение", "ПБ": "ПБ — Пожарная безопасность", "Г": "Генплан", "КЖ / КМ": "КЖ / КМ — Конструктив", "КИПиА": "КИПиА", "ОВ": "ОВ — Отопление и вентиляция" };
@@ -3012,11 +3010,6 @@ export default function App() {
                 filterAssigned={filterAssigned}
               />
             </div>
-          )}
-
-          {/* ===== CALCULATIONS ===== */}
-          {screen === "calculations" && (
-            <CalculationsApp onClose={() => setScreen('dashboard')} />
           )}
 
           {/* ===== SPECIFICATIONS ===== */}
