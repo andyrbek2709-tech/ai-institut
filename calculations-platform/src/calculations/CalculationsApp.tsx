@@ -53,14 +53,21 @@ export const CalculationsApp: React.FC<CalculationsAppProps> = ({ onClose }) => 
   };
 
   const handleBackToHome = () => {
-    if (currentView === 'workspace') {
-      setSelectedCalculationId(null);
-      setPresetInputs(undefined);
-      setCurrentView('home');
-      // selectedCategory is preserved - user returns to filtered view
-    } else if (currentView === 'home' && selectedCategory !== null) {
-      // From filtered home view, allow clearing to "all calculations"
-      setSelectedCategory(null);
+    switch (currentView) {
+      case 'workspace':
+        setSelectedCalculationId(null);
+        setPresetInputs(undefined);
+        setCurrentView('home');
+        break;
+      case 'home':
+        if (selectedCategory !== null) {
+          setSelectedCategory(null);
+        }
+        break;
+      case 'history':
+      case 'upload':
+        setCurrentView('home');
+        break;
     }
   };
 
