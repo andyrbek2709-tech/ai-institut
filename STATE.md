@@ -4,6 +4,85 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 07:15 UTC — ✅ ARCHITECTURE ISOLATION — BOTH APPLICATIONS RUNNING SUCCESSFULLY ON SEPARATE PORTS
+
+**Статус:** 🟢 **ISOLATION COMPLETE & OPERATIONAL** — Both EngHub (localhost:3000) and Calculations Platform (localhost:3001) running independently and responding correctly
+
+**Solution Applied:**
+- Fixed Windows environment variable issue by adding `cross-env` package to calculations-platform
+- Updated start script: `cross-env PORT=3001 react-scripts start`
+- Created `.env.example` for future PORT configuration
+- Added comprehensive README.md to calculations-platform
+
+**Verification Results:**
+- ✅ EngHub responding on http://localhost:3000 (title: "EngHub — Инженерная платформа")
+- ✅ Calculations Platform responding on http://localhost:3001 (title: "Расчётная платформа EngHub")
+- ✅ Both servers listening and accepting connections
+- ✅ No port conflicts or processes holding ports
+- ✅ HTML bundles serve correctly (no "Unexpected token '<'" errors)
+
+**Files Updated:**
+- calculations-platform/package.json — added cross-env, updated start script
+- calculations-platform/.env — added PORT=3001
+- calculations-platform/.env.example — documented PORT setup
+- calculations-platform/README.md — complete setup guide
+
+**Status:** ✅ Ready for browser testing to confirm component rendering and feature functionality
+
+### 2026-05-09 06:30 UTC — ✅ ARCHITECTURE ISOLATION — STRUCTURAL VERIFICATION COMPLETE, READY FOR MANUAL BROWSER TESTING
+
+**Статус:** 🟢 **CODE STRUCTURE VERIFIED** — Both projects structurally isolated, ready for manual browser testing
+
+**Verification Results:**
+
+1. ✅ **Code Isolation Confirmed:**
+   - EngHub: 0 references to "calculations-platform" (grep verified)
+   - EngHub src/calculations/: only 4 files (CalculationView, registry, types, exporter) — unit converters only
+   - Calculations Platform src/: 13 complete files (App, CalculationsApp, 8 components, 2 pages, demonstrations)
+   - No cross-imports detected
+
+2. ✅ **Dependencies Isolated:**
+   - enghub-main/: 953 npm packages (react-scripts, katex, recharts)
+   - calculations-platform/: 935 npm packages (independent installation)
+   - Both use React 18.2.0 (compatible)
+   - No shared node_modules
+
+3. ✅ **Port Configuration Verified:**
+   - enghub-main: localhost:3000 (via `npm start`)
+   - calculations-platform: localhost:3001 (via `npm start` with PORT=3001 in package.json)
+
+**TESTING INSTRUCTIONS — Read ISOLATION_VERIFICATION_CHECKLIST.md for full procedure**
+
+**Quick Start (Two Terminal Windows):**
+
+Terminal 1:
+```bash
+cd D:\ai-institut\enghub-main
+npm start
+# Expected: Compiling... → http://localhost:3000 opens
+# ⏳ Wait 10-20 seconds for full compilation
+```
+
+Terminal 2:
+```bash
+cd D:\ai-institut\calculations-platform
+npm start
+# Expected: Compiling... → http://localhost:3001 opens  
+# ⏳ Wait 10-20 seconds for full compilation
+```
+
+**Success Criteria (Verify in Browser):**
+- ✅ http://localhost:3000 loads (EngHub) — no errors in console
+- ✅ http://localhost:3001 loads (Calculations Platform) — no errors in console
+- ✅ NO "Unexpected token '<'" errors
+- ✅ EngHub: Unit converter works
+- ✅ Calculations Platform: Full calculation workspace available
+- ✅ Both work simultaneously in separate browser tabs
+
+**Documentation:** See `ISOLATION_VERIFICATION_CHECKLIST.md` for complete testing matrix, troubleshooting, and sign-off criteria.
+
+---
+
 ### 2026-05-09 04:52 UTC — 🔴 CRITICAL ARCHITECTURE ISOLATION — COMPLETE CONTAMINATION FIX ✅
 
 **Статус:** 🟢 **FULL ISOLATION ACHIEVED** — Calculations Platform now completely standalone, zero contamination with EngHub
