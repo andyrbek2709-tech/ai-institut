@@ -4,6 +4,7 @@ import { TH_CALCULATIONS } from './th_methodologies';
 import { EO_CALCULATIONS } from './eo_methodologies';
 import { VK_CALCULATIONS } from './vk_methodologies';
 import { G_CALCULATIONS } from './g_methodologies';
+import { PB_CALCULATIONS } from './pb_methodologies';
 
 export const CALCULATION_CATEGORIES = [
   // Фаза 1: Тепловые системы
@@ -966,4 +967,7 @@ export const DEMO_CALCULATIONS: FullCalculation[] = [
 
   // Фаза 5: G — Геодезия и геометрия
   ...G_CALCULATIONS,
+
+  // Фаза 6: PB — Промышленная безопасность
+  ...PB_CALCULATIONS,
 ];
