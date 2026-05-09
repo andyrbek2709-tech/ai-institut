@@ -60,10 +60,13 @@ async function embedQuery(query: string): Promise<{ embedding: number[]; cache_h
     throw new Error('OpenAI embeddings failed: ' + (e?.message || 'unknown'));
   }
 
-  sb.rpc('agsk_upsert_embedding_cache', {
-    p_content_hash: hash,
-    p_embedding:    embedding,
-  }).catch(() => {});
+  // Fire-and-forget cache upsert — wrap in then() because Supabase rpc is thenable, not Promise
+  Promise.resolve(
+    sb.rpc('agsk_upsert_embedding_cache', {
+      p_content_hash: hash,
+      p_embedding:    embedding,
+    })
+  ).then(() => {}, (e: any) => { logger.warn({ err: e?.message }, 'embedding cache upsert failed'); });
 
   return { embedding, cache_hit: false };
 }
@@ -328,9 +331,9 @@ router.post(
         return true;
       });
 
-      // Log retrieval async (best-effort)
+      // Log retrieval async (best-effort) — wrap in Promise.resolve for thenable safety
       try {
-      sb.from('agsk_retrieval_logs').insert({
+      Promise.resolve(sb.from('agsk_retrieval_logs').insert({
         user_id:              req.user!.id,
         org_id:               orgId,
         query_text:           q,
@@ -345,7 +348,7 @@ router.post(
         reranker_type:        rerankMetrics?.reranker_type ?? null,
         reranker_latency_ms:  rerankMetrics?.latency_ms ?? null,
         retrieved_chunk_ids:  chunks.map((c: any) => c.id),
-      }).then().catch((e: any) => { logger.warn({ err: e?.message }, 'agsk_retrieval_logs insert failed'); });
+      })).then(() => {}, (e: any) => { logger.warn({ err: e?.message }, 'agsk_retrieval_logs insert failed'); });
       } catch (e: any) { logger.warn({ err: e?.message }, 'agsk_retrieval_logs sync error'); }
 
       res.json({
