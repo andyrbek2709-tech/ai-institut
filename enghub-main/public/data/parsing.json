@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-05-08T07:24:25Z",
+    "generated_at": "2026-05-09T07:47:41Z",
     "sources_used": [
       "extra",
       "habr",
@@ -12,9 +12,9 @@
       "vc"
     ],
     "stats": {
-      "total_scraped": 849,
-      "ai_processed": 849,
-      "confirmed_pain": 18,
+      "total_scraped": 891,
+      "ai_processed": 891,
+      "confirmed_pain": 15,
       "clusters": 1,
       "meta_clusters": 1
     },
@@ -28,631 +28,500 @@
       "ai": "AI-обработка",
       "ui": "Интерфейсы (бот/веб/форма)"
     },
-    "cost_usd": 0.039
+    "cost_usd": 0.0
   },
   "meta_clusters": [
     {
-      "id": "документация",
-      "label": "Документация",
+      "id": "автоматизация",
+      "label": "Автоматизация",
       "emoji": "🧩",
       "clusters_count": 1,
-      "items_count": 18,
-      "total_priority": 139.5
+      "items_count": 15,
+      "total_priority": 75.0
     }
   ],
   "clusters": [
     {
-      "id": "misc-other",
-      "label": "Прочее",
+      "id": "ручной-процесс",
+      "label": "Ручной-процесс",
       "category": "workflow",
-      "items_count": 18,
+      "items_count": 15,
       "examples_ids": [
-        "hn-48059756",
-        "hn-48055010",
-        "hn-48053673",
-        "hn-48053637",
-        "hn-48053531",
-        "hn-48052710",
-        "hn-48052476",
-        "habr-ies-ua-hosting-articles-1032534"
+        "hn-48072594",
+        "hn-48069218",
+        "hn-48068583",
+        "hn-48067343",
+        "hn-48066361"
       ],
-      "meta_cluster_id": "документация",
-      "avg_priority": 7.75
+      "meta_cluster_id": "автоматизация",
+      "avg_priority": 5.0
     }
   ],
   "items": [
     {
-      "id": "hn-48053531",
+      "id": "hn-48072594",
       "source": "hn",
       "source_label": "Hacker News",
-      "url": "https://mykanji.app/",
-      "title": "Show HN: DAG-based Kanji learning through components",
-      "text_excerpt": "Hi HN I built this app while learning Japanese kanji after struggling to find a tool that showed how kanji are structurally connected through their graphical components. The core feature is a recursive DAG-style component graph (“Kanji Atlas”) that breaks kanji down layer by layer into radicals and …",
-      "timestamp": "2026-05-07T19:13:58Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "parsing",
-      "category_label": "Парсинг и агрегация",
-      "priority": 9.0,
-      "problem_short": "Сложности с определением подделок картриджей.",
-      "automation_idea": "Создание веб-сайта, который будет автоматически проверять подлинность картриджей с помощью классификатора.",
-      "concrete_solution": [
-        "Собрать данные о настоящих и поддельных картриджах",
-        "Обучить классификатор на основе собранных данных",
-        "Интегрировать классификатор с веб-сайтом для проверки"
-      ],
-      "tools": [
-        "Python",
-        "OpenAI API",
-        "Webhook"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Сложности с определением подделок картриджей.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "habr-nies-simpleone-articles-1032660",
-      "source": "habr",
-      "source_label": "Habr",
-      "url": "https://habr.com/ru/companies/simpleone/articles/1032660/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032660",
-      "title": "«Какой у вас ноутбук?» — вопрос, который стоит компании миллион в год",
-      "text_excerpt": "Оператор техподдержки тратит 5 минут на каждый тикет, чтобы найти данные об активе. На трёх операторах это больше миллиона рублей в год — только на поиск. Считаем, откуда берётся эта цифра, и показываем формулу для ваших данных. Читать далее",
-      "timestamp": "2026-05-07T13:32:20Z",
-      "lang": "ru",
-      "is_pain": true,
-      "category": "mass-ops",
-      "category_label": "Массовые операции",
-      "priority": 9.0,
-      "problem_short": "Операторы техподдержки тратят много времени на поиск данных об активах.",
-      "automation_idea": "Автоматизировать процесс поиска данных об активах с помощью интеграции баз данных и чат-ботов.",
-      "concrete_solution": [
-        "Создать базу данных активов в PostgreSQL",
-        "Настроить API для доступа к базе данных",
-        "Разработать чат-бота для быстрого поиска информации"
-      ],
-      "tools": [
-        "PostgreSQL",
-        "Slack bot",
-        "Webhook"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Операторы техподдержки тратят много времени на поиск данных об активах.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "habr-ps-habr-com-ru-articles-1032366",
-      "source": "habr",
-      "source_label": "Habr",
-      "url": "https://habr.com/ru/articles/1032366/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032366",
-      "title": "Отказываемся от wkhtmltopdf: как мы искали решение для генерации нетривиальных PDF",
-      "text_excerpt": "wkhtmltopdf долгое время был одним из основных инструментов для генерации PDF из HTML. Мы столкнулись с ним на собственном проекте, но, когда потребовалось реализовать сложные макеты, колонтитулы и повторяющиеся заголовки в многостраничных документах — возникли проблемы. В этой статье — краткий обзо…",
-      "timestamp": "2026-05-07T10:30:52Z",
-      "lang": "ru",
-      "is_pain": true,
-      "category": "workflow",
-      "category_label": "Workflow-автоматизация",
-      "priority": 9.0,
-      "problem_short": "Необходимость оценки стоимости автоматизации процессов.",
-      "automation_idea": "Создать инструмент для расчета TCO автоматизации.",
-      "concrete_solution": [
-        "Собрать данные о затратах на автоматизацию",
-        "Разработать формулы для расчета TCO",
-        "Создать интерфейс для ввода данных"
-      ],
-      "tools": [
-        "Python",
-        "Google Sheets",
-        "Excel"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Необходимость оценки стоимости автоматизации процессов.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "hn-48059756",
-      "source": "hn",
-      "source_label": "Hacker News",
-      "url": "https://news.ycombinator.com/item?id=48059756",
-      "title": "Ask HN: How are you handling QA being bottlenecked with more AI-generated PRs?",
-      "text_excerpt": "At my company engineers are producing a high quantity of PRs with the help of AI agents. QA was already the bottleneck since the software involves camera flows across multiple devices, now this is more so the case.",
-      "timestamp": "2026-05-08T07:17:46Z",
+      "url": "https://news.ycombinator.com/item?id=48072594",
+      "title": "Claude's signup workflow is terrible",
+      "text_excerpt": "I used claude via the web console for a while, then thought I'd want to go for higher limits, and API usage. I click and end up here https://claude.ai/upgrade. Does it say anything about API or not? Does it explain what the usage limits are? How often they reset? No. Does it really tell me anything?…",
+      "timestamp": "2026-05-09T07:03:00Z",
       "lang": "en",
       "is_pain": true,
       "category": "workflow",
       "category_label": "Workflow-автоматизация",
-      "priority": 8.0,
-      "problem_short": "QA становится узким местом из-за увеличения количества PR с использованием AI.",
-      "automation_idea": "Автоматизировать процесс QA с помощью AI для обработки PR.",
+      "priority": 5.0,
+      "problem_short": "Claude's signup workflow is terrible",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
       "concrete_solution": [
-        "Интегрировать AI для автоматического тестирования PR",
-        "Настроить триггеры для запуска тестов при создании PR",
-        "Создать отчёты о тестировании и отправлять их команде"
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
       ],
       "tools": [
-        "OpenAI API",
-        "Zapier",
-        "Slack bot"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "QA становится узким местом из-за увеличения количества PR с использованием AI.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "hn-48053673",
-      "source": "hn",
-      "source_label": "Hacker News",
-      "url": "https://jack-clark.net/2026/05/04/import-ai-455-automating-ai-research/",
-      "title": "Automating AI Research",
-      "text_excerpt": "",
-      "timestamp": "2026-05-07T19:25:38Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "ai",
-      "category_label": "AI-обработка",
-      "priority": 8.0,
-      "problem_short": "Автоматизация исследований в области ИИ.",
-      "automation_idea": "Создание системы, которая будет автоматически собирать и анализировать данные для исследований в области ИИ.",
-      "concrete_solution": [
-        "Собрать данные из открытых источников",
-        "Обработать данные с помощью алгоритмов машинного обучения",
-        "Сформировать отчеты о результатах исследований"
-      ],
-      "tools": [
-        "Python",
-        "OpenAI API",
-        "Google Sheets"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Автоматизация исследований в области ИИ.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "hn-48052476",
-      "source": "hn",
-      "source_label": "Hacker News",
-      "url": "https://agent-data.dev/",
-      "title": "Show HN: Agent-data – a CLI for giving agents real-time, structured data",
-      "text_excerpt": "Hey HN, Justin here, and we’re building agent-data: a CLI tool that gives AI agents access to real-time, structured data without requiring them to use browser automation. The idea came from trying to get agents (e.g., OpenClaw, Hermes Agent) to perform more useful tasks than simply organizing our ca…",
-      "timestamp": "2026-05-07T17:50:14Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "ai",
-      "category_label": "AI-обработка",
-      "priority": 8.0,
-      "problem_short": "Необходимо предоставить агентам доступ к актуальным данным.",
-      "automation_idea": "Создать CLI инструмент, который будет интегрироваться с API для получения данных в реальном времени.",
-      "concrete_solution": [
-        "Разработать CLI инструмент для доступа к данным",
-        "Интегрировать API для получения актуальной информации",
-        "Настроить обработку запросов от агентов"
-      ],
-      "tools": [
-        "Node.js",
-        "Python",
-        "OpenAI API"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Необходимо предоставить агентам доступ к актуальным данным.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "habr-panies-yougile-articles-1032672",
-      "source": "habr",
-      "source_label": "Habr",
-      "url": "https://habr.com/ru/companies/yougile/articles/1032672/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032672",
-      "title": "Как я перестала вручную контролировать дедлайны в проекте",
-      "text_excerpt": "Привет! Я Вера, менеджер по продукту. Мне надоело узнавать о проблемах со сроками в момент, когда их уже надо срочно тушить. Поэтому я собрала простой план контроля дедлайнов: без ежедневного обхода команды, ручных напоминаний и ощущения, что проект держится только на руководителе. Читать далее",
-      "timestamp": "2026-05-07T13:46:17Z",
-      "lang": "ru",
-      "is_pain": true,
-      "category": "workflow",
-      "category_label": "Workflow-автоматизация",
-      "priority": 8.0,
-      "problem_short": "Необходимо контролировать дедлайны в проекте без ручного контроля.",
-      "automation_idea": "Создать автоматизированную систему напоминаний о дедлайнах с использованием ботов.",
-      "concrete_solution": [
-        "Настроить бота в Slack или Telegram для уведомлений о дедлайнах",
-        "Интегрировать с Google Calendar для автоматического получения сроков",
-        "Создать шаблон для регулярных отчетов о статусе задач"
-      ],
-      "tools": [
-        "Slack bot",
-        "Telegram bot",
-        "Google Calendar"
-      ],
-      "complexity": "easy",
-      "value": "medium",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Необходимо контролировать дедлайны в проекте без ручного контроля.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "habr-ps-habr-com-ru-articles-1032564",
-      "source": "habr",
-      "source_label": "Habr",
-      "url": "https://habr.com/ru/articles/1032564/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032564",
-      "title": "Парсинг данных: когда это законно, а когда нет — разбираю судебную практику",
-      "text_excerpt": "Парсинг используют тысячи компаний — для мониторинга цен, сбора контактов, агрегации данных. Большинство уверены: раз информация в открытом доступе, значит, брать её можно. Разбираю, почему это не так, на пяти правовых режимах и семи реальных судебных делах — от ВКонтакте против Double Data до Meta …",
-      "timestamp": "2026-05-07T11:06:00Z",
-      "lang": "ru",
-      "is_pain": true,
-      "category": "parsing",
-      "category_label": "Парсинг и агрегация",
-      "priority": 8.0,
-      "problem_short": "Многие компании не понимают правовые риски парсинга данных.",
-      "automation_idea": "Необходимо создать инструмент, который будет анализировать правовые аспекты парсинга данных в зависимости от источника.",
-      "concrete_solution": [
-        "Собрать данные о судебной практике по парсингу",
-        "Создать базу данных с правовыми режимами",
-        "Разработать интерфейс для проверки правовых рисков парсинга"
-      ],
-      "tools": [
-        "Python",
-        "PostgreSQL",
-        "Google Sheets"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Многие компании не понимают правовые риски парсинга данных.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "habr-panies-cloud4y-articles-1032316",
-      "source": "habr",
-      "source_label": "Habr",
-      "url": "https://habr.com/ru/companies/cloud4y/articles/1032316/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032316",
-      "title": "[Перевод] Декодируем трафик Zabbix Proxy для быстрого устранения неполадок",
-      "text_excerpt": "Обычно для базовой диагностики прокси достаточно просто заглянуть на страницу администрирования Zabbix proxy или посмотреть метрики состояния прокси. Однако бывают ситуации, когда требуется более глубокий анализ. Сегодня мы разберём взаимодействие между Zabbix server ↔ proxy и научимся интерпретиров…",
-      "timestamp": "2026-05-07T10:32:20Z",
-      "lang": "ru",
-      "is_pain": true,
-      "category": "workflow",
-      "category_label": "Workflow-автоматизация",
-      "priority": 8.0,
-      "problem_short": "Отсутствие единого плагина для безопасности Java проектов.",
-      "automation_idea": "Создать единый плагин для сканирования безопасности Java проектов в одном месте.",
-      "concrete_solution": [
-        "Разработать плагин для Maven",
-        "Интегрировать сканирование безопасности",
-        "Создать документацию для пользователей"
-      ],
-      "tools": [
-        "Maven",
-        "Java",
-        "PostgreSQL"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Отсутствие единого плагина для безопасности Java проектов.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "hn-48055010",
-      "source": "hn",
-      "source_label": "Hacker News",
-      "url": "https://play.google.com/apps/test/com.base69bf50b6337791963585c087.app/3",
-      "title": "Need Testers",
-      "text_excerpt": "",
-      "timestamp": "2026-05-07T21:06:16Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "docgen",
-      "category_label": "Генерация документов",
-      "priority": 7.5,
-      "problem_short": "Отсутствие инструмента для сравнения изменений в CAD моделях.",
-      "automation_idea": "Создать инструмент, который будет автоматически сравнивать изменения в CAD моделях и отображать их.",
-      "concrete_solution": [
-        "Разработать плагин для CAD программ",
-        "Использовать алгоритмы для сравнения моделей",
-        "Интегрировать с системой управления версиями"
-      ],
-      "tools": [
-        "Python",
-        "Node.js",
-        "Airtable"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Отсутствие инструмента для сравнения изменений в CAD моделях.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "hn-48052710",
-      "source": "hn",
-      "source_label": "Hacker News",
-      "url": "https://www.newscientist.com/article/2524042-a-lost-ancient-script-reveals-how-writing-as-we-know-it-really-began/",
-      "title": "A lost ancient script reveals how writing as we know it began",
-      "text_excerpt": "",
-      "timestamp": "2026-05-07T18:07:30Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "ui",
-      "category_label": "Интерфейсы (бот/веб/форма)",
-      "priority": 7.5,
-      "problem_short": "Отсутствие опции для не сенсорного дисплея на ноутбуке.",
-      "automation_idea": "Создать кастомизированный ноутбук с выбором дисплея.",
-      "concrete_solution": [
-        "Исследовать рынок дисплеев",
-        "Разработать конфигуратор для выбора дисплея",
-        "Запустить кампанию по сбору средств для производства"
-      ],
-      "tools": [
-        "Airtable",
-        "Google Sheets"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": false,
-      "cannot_automate_reason": "Требуется физическое производство и сборка ноутбуков.",
-      "summary_ru": "Отсутствие опции для не сенсорного дисплея на ноутбуке.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "habr-https-habr-com-ru-news-1031894",
-      "source": "habr",
-      "source_label": "Habr",
-      "url": "https://habr.com/ru/news/1031894/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1031894",
-      "title": "Пользователи раскритиковали Microsoft за удаление «чрезвычайно полезной» функции Outlook",
-      "text_excerpt": "Компания Microsoft столкнулась с негативной реакцией после удаления функции маскировки контактов в Outlook. Пользователи и IT-администраторы требуют вернуть эту опцию, пишет Neowin. Читать далее",
-      "timestamp": "2026-05-07T22:35:44Z",
-      "lang": "ru",
-      "is_pain": true,
-      "category": "ui",
-      "category_label": "Интерфейсы (бот/веб/форма)",
-      "priority": 7.5,
-      "problem_short": "Пользователи недовольны удалением функции маскировки контактов в Outlook.",
-      "automation_idea": "Можно создать плагин для Outlook, который восстанавливает эту функцию.",
-      "concrete_solution": [
-        "Разработать плагин для Outlook",
-        "Использовать API Outlook для интеграции",
-        "Добавить возможность маскировки контактов в интерфейс плагина"
-      ],
-      "tools": [
-        "Node.js",
-        "Outlook API",
-        "Python"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Пользователи недовольны удалением функции маскировки контактов в Outlook.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "ph-roducthunt-com-2005-Post-1136452",
-      "source": "ph",
-      "source_label": "ProductHunt",
-      "url": "https://www.producthunt.com/products/saolaai",
-      "title": "SaolaAI",
-      "text_excerpt": "Autonomous quality for engineering teams Discussion | Link",
-      "timestamp": "2026-05-01T01:50:56Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "workflow",
-      "category_label": "Workflow-автоматизация",
-      "priority": 7.5,
-      "problem_short": "Долгое время загрузки приложения на MacOS.",
-      "automation_idea": "Оптимизировать процесс загрузки приложения, чтобы он был быстрее.",
-      "concrete_solution": [
-        "Изучить и оптимизировать код загрузки приложения",
-        "Использовать кэширование для ускорения загрузки",
-        "Провести тестирование на разных устройствах для выявления узких мест"
-      ],
-      "tools": [
-        "Node.js",
-        "Python",
-        "Slack bot"
+        "n8n"
       ],
       "complexity": "medium",
       "value": "medium",
       "can_automate": true,
       "cannot_automate_reason": "",
-      "summary_ru": "Долгое время загрузки приложения на MacOS.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
+      "summary_ru": "Claude's signup workflow is terrible",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
     },
     {
-      "id": "hn-comment-48057566",
+      "id": "hn-48069218",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://discord.com/blog/how-discord-automates-scylladb-clusters-at-scale",
+      "title": "Discord Automates ScyllaDB Clusters at Scale",
+      "text_excerpt": "",
+      "timestamp": "2026-05-08T21:51:22Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Discord Automates ScyllaDB Clusters at Scale",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Discord Automates ScyllaDB Clusters at Scale",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48068583",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://github.com/Cyoda-platform/cyoda-go",
+      "title": "Show HN: Cyoda-go – application platform in Go without the Temporal/Kafka glue",
+      "text_excerpt": "This started out as an experiment. Reading Simon Willison's blog on where StrongDM was going with dark factories and Digital Twin Universes https://simonw.substack.com/p/how-strongdms-ai-team-build-se... I got thinking that, hey, what if we built a digital twin of our enterprise application platform…",
+      "timestamp": "2026-05-08T20:45:34Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Show HN: Cyoda-go – application platform in Go without the Temporal/Kafka glue",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Show HN: Cyoda-go – application platform in Go without the Temporal/Kafka glue",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48067343",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://tinyopsstudio.com/automation-roi-calculator",
+      "title": "Show HN: Automation ROI calculator for repetitive admin workflows",
+      "text_excerpt": "",
+      "timestamp": "2026-05-08T19:06:07Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Show HN: Automation ROI calculator for repetitive admin workflows",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Show HN: Automation ROI calculator for repetitive admin workflows",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-48066361",
+      "source": "hn",
+      "source_label": "Hacker News",
+      "url": "https://arxiv.org/abs/2605.03208",
+      "title": "Kerncap: Automated Kernel Extraction and Isolation for AMD GPUs",
+      "text_excerpt": "",
+      "timestamp": "2026-05-08T17:41:41Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Kerncap: Automated Kernel Extraction and Isolation for AMD GPUs",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Kerncap: Automated Kernel Extraction and Isolation for AMD GPUs",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "habr-ps-habr-com-ru-articles-1033184",
+      "source": "habr",
+      "source_label": "Habr",
+      "url": "https://habr.com/ru/articles/1033184/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1033184",
+      "title": "Cобрать агента для XAI и никогда больше не быть онлайн",
+      "text_excerpt": "Привет, друзья! Я, похоже, наконец пережила кризис пришествия агентов в нашу жизнь. Мне всегда безумно нравился процесс решения задач — этакий личный, удивительный мир, даже когда ты уже знаешь правило Лопиталя/Modus ponens/выберите то, которое заставило вас смеяться больше всего при изучении. А теп…",
+      "timestamp": "2026-05-08T18:29:19Z",
+      "lang": "ru",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Cобрать агента для XAI и никогда больше не быть онлайн",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Cобрать агента для XAI и никогда больше не быть онлайн",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "habr-ps-habr-com-ru-articles-1032496",
+      "source": "habr",
+      "source_label": "Habr",
+      "url": "https://habr.com/ru/articles/1032496/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032496",
+      "title": "Опыт написания компилятора вручную: Часть 2",
+      "text_excerpt": "Компилятор и главный репозиторий: GitHub Здесь я напишу о своём личном проекте — компиляторе к C-подобному языку. Я не являюсь профессиональным разработчиком, изучал эту тему почти самостоятельно и не читал никакие книги по написанию компиляторов (но читал по операционным системам). Читать далее",
+      "timestamp": "2026-05-08T10:47:32Z",
+      "lang": "ru",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Опыт написания компилятора вручную: Часть 2",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Опыт написания компилятора вручную: Часть 2",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "habr-ps-habr-com-ru-articles-1032902",
+      "source": "habr",
+      "source_label": "Habr",
+      "url": "https://habr.com/ru/articles/1032902/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032902",
+      "title": "GitPulse: как я перестал угадывать, что происходит в команде, и начал смотреть на данные",
+      "text_excerpt": "Меня зовут Игорь, я тимлид в e-commerce. Когда у меня появилась вторая команда, стало понятно, что вручную следить за двумя Jira, двумя GitLab и метриками одновременно — нереально. В итоге сделал инструмент, который собирает всё в одном месте Читать",
+      "timestamp": "2026-05-08T08:53:58Z",
+      "lang": "ru",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "GitPulse: как я перестал угадывать, что происходит в команде, и начал смотреть на данные",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "GitPulse: как я перестал угадывать, что происходит в команде, и начал смотреть на данные",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "habr-nies-simpleone-articles-1032618",
+      "source": "habr",
+      "source_label": "Habr",
+      "url": "https://habr.com/ru/companies/simpleone/articles/1032618/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032618",
+      "title": "Прошёл курс — получил оффер. Работает ли это?",
+      "text_excerpt": "Войти в ИТ через курсы это не новая идея. Льготная ипотека, отсрочка от армии, хорошие ЗП делают работу в ИТ привлекательной не только для студентов, но и специалистов из других отраслей. На рынке онлайн-обучения много курсов, обучающих ИТ-профессиям, и поток обучающихся на них с каждым годом растет…",
+      "timestamp": "2026-05-08T08:03:37Z",
+      "lang": "ru",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Прошёл курс — получил оффер. Работает ли это?",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Прошёл курс — получил оффер. Работает ли это?",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "habr-nies-simpleone-articles-1032618",
+      "source": "habr",
+      "source_label": "Habr",
+      "url": "https://habr.com/ru/companies/simpleone/articles/1032618/?utm_campaign=1032618&utm_source=habrahabr&utm_medium=rss",
+      "title": "Прошёл курс — получил оффер. Работает ли это?",
+      "text_excerpt": "Войти в ИТ через курсы это не новая идея. Льготная ипотека, отсрочка от армии, хорошие ЗП делают работу в ИТ привлекательной не только для студентов, но и специалистов из других отраслей. На рынке онлайн-обучения много курсов, обучающих ИТ-профессиям, и поток обучающихся на них с каждым годом растет…",
+      "timestamp": "2026-05-08T08:03:37Z",
+      "lang": "ru",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Прошёл курс — получил оффер. Работает ли это?",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Прошёл курс — получил оффер. Работает ли это?",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "devto-te-guide-to-laravelpasskeys-4151",
+      "source": "devto",
+      "source_label": "Dev.to",
+      "url": "https://dev.to/hafiz619/laravel-now-has-native-passkeys-a-complete-guide-to-laravelpasskeys-4151",
+      "title": "Laravel Now Has Native Passkeys: A Complete Guide to laravel/passkeys",
+      "text_excerpt": "Originally published at hafiz.dev For a long time, adding passkeys to a Laravel app meant reaching for a third-party package, assembling WebAuthn ceremonies by hand, or piecing together a tutorial that assumes you already know what a \"relying party ID\" is. That's done. In late April 2026, Laravel sh…",
+      "timestamp": "2026-05-09T07:24:25Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Laravel Now Has Native Passkeys: A Complete Guide to laravel/passkeys",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Laravel Now Has Native Passkeys: A Complete Guide to laravel/passkeys",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "devto-ware-design-and-its-awesome-4k4d",
+      "source": "devto",
+      "source_label": "Dev.to",
+      "url": "https://dev.to/somadevtoo/i-found-leetcode-for-software-design-and-its-awesome-4k4d",
+      "title": "I Found LeetCode for Software Design, and It’s Awesome",
+      "text_excerpt": "Disclosure: This post includes affiliate links; I may receive compensation if you purchase products or services from the different links provided in this article. If you're preparing for FAANG interviews , you already know that Data Structures & Algorithms (DSA) and System Design are the two critica…",
+      "timestamp": "2026-05-09T07:17:35Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "I Found LeetCode for Software Design, and It’s Awesome",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "I Found LeetCode for Software Design, and It’s Awesome",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-comment-48072610",
       "source": "hn-comment",
       "source_label": "HN comment",
-      "url": "https://news.ycombinator.com/item?id=48057566",
-      "title": "I built a simple, totally free family tree app after struggling to map my own family. I know Ancestr…",
-      "text_excerpt": "I built a simple, totally free family tree app after struggling to map my own family. I know Ancestry, MyHeritage, FamilySearch, etc. already exist. The issue for me was not historical records or DNA research. It was just creating a clear, shareable tree for a very large real-world family. My family…",
-      "timestamp": "2026-05-08T01:56:24.000Z",
+      "url": "https://news.ycombinator.com/item?id=48072610",
+      "title": "By analogy, you can imagine a mid-century human computer shouting \"I will never use computing machin…",
+      "text_excerpt": "By analogy, you can imagine a mid-century human computer shouting \"I will never use computing machines to perform numerical calculations! I must perform every addition by hand!\" You can even imagine a commune forming around \"hand-made calculation\" and trying to sell services that are certified \"auto…",
+      "timestamp": "2026-05-09T07:05:43.000Z",
       "lang": "en",
       "is_pain": true,
-      "category": "ui",
-      "category_label": "Интерфейсы (бот/веб/форма)",
-      "priority": 7.5,
-      "problem_short": "Сложно создать простое и понятное семейное древо для большой семьи.",
-      "automation_idea": "Можно создать веб-приложение для автоматического построения семейного древа с возможностью делиться им.",
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "By analogy, you can imagine a mid-century human computer shouting \"I will never use computing machin…",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
       "concrete_solution": [
-        "Разработать веб-приложение для создания семейного древа",
-        "Использовать базу данных для хранения информации о родственниках",
-        "Добавить возможность делиться деревом через ссылки"
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
       ],
       "tools": [
-        "Node.js",
-        "PostgreSQL",
-        "Google Sheets"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Сложно создать простое и понятное семейное древо для большой семьи.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "hn-48053637",
-      "source": "hn",
-      "source_label": "Hacker News",
-      "url": "https://www.swipecopilot.com/",
-      "title": "Show HN: Swipe Copilot – Less time on Tinder, more dates worth going on",
-      "text_excerpt": "I was tired of spending hours swiping just to get 1 or 2 decent matches. So... I built this Chrome extension that does the filtering and swiping for me. I'm male/36 btw. Several Chrome extensions already do this, but their UIs are terrible, the filters you can apply are limited, and there's no way t…",
-      "timestamp": "2026-05-07T19:22:48Z",
-      "lang": "en",
-      "is_pain": true,
-      "category": "ui",
-      "category_label": "Интерфейсы (бот/веб/форма)",
-      "priority": 7.0,
-      "problem_short": "Проблема с ручным фильтром и свайпом на Tinder.",
-      "automation_idea": "Создание расширения для браузера, которое автоматически фильтрует и свайпит профили на Tinder и Bumble.",
-      "concrete_solution": [
-        "Разработать расширение для Chrome",
-        "Использовать алгоритмы для фильтрации профилей",
-        "Интегрировать с API Tinder и Bumble"
-      ],
-      "tools": [
-        "Python",
-        "Chrome Extension",
-        "Webhook"
+        "n8n"
       ],
       "complexity": "medium",
       "value": "medium",
       "can_automate": true,
       "cannot_automate_reason": "",
-      "summary_ru": "Проблема с ручным фильтром и свайпом на Tinder.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
+      "summary_ru": "By analogy, you can imagine a mid-century human computer shouting \"I will never use computing machin…",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
     },
     {
-      "id": "habr-ies-ua-hosting-articles-1032534",
-      "source": "habr",
-      "source_label": "Habr",
-      "url": "https://habr.com/ru/companies/ua-hosting/articles/1032534/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032534",
-      "title": "Карта обоняния: закономерности распределения обонятельных рецепторов",
-      "text_excerpt": "То, каким является окружающий мир, зависит от того, как мы его воспринимаем. И дело не о психологии, а о сенсорике. Слух, зрение, прикосновение, вкус и запах — все эти чувства являются результатом совместной работы соответствующих органов чувств, собирающих сенсорную информацию, и мозга, обрабатываю…",
-      "timestamp": "2026-05-08T07:10:05Z",
-      "lang": "ru",
-      "is_pain": true,
-      "category": "parsing",
-      "category_label": "Парсинг и агрегация",
-      "priority": 7.0,
-      "problem_short": "Сложности с поиском нужных документов в большом объёме данных.",
-      "automation_idea": "Автоматизировать поиск и классификацию документов с помощью ML.",
-      "concrete_solution": [
-        "Собрать все документы в единую базу",
-        "Настроить алгоритмы для классификации документов",
-        "Создать интерфейс для поиска по ключевым словам"
-      ],
-      "tools": [
-        "PostgreSQL",
-        "Python",
-        "OpenAI API"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Сложности с поиском нужных документов в большом объёме данных.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "habr-ps-habr-com-ru-articles-1032520",
-      "source": "habr",
-      "source_label": "Habr",
-      "url": "https://habr.com/ru/articles/1032520/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032520",
-      "title": "Обзор панельной дискуссии «Токсичная среда»: удержание и увольнение сотрудников",
-      "text_excerpt": "Привет, Хабр! Давно не было обзоров отраслевых мероприятий. Решил исправить этот момент и рассказать о панельной дискуссии «Токсичная среда» бизнес-клуба Selecty, посвящённой одной из самых болезненных тем IT-менеджмента — удержанию и увольнению сотрудников. Многие знают, что это за проблематика, но…",
-      "timestamp": "2026-05-07T10:32:51Z",
-      "lang": "ru",
-      "is_pain": true,
-      "category": "docgen",
-      "category_label": "Генерация документов",
-      "priority": 7.0,
-      "problem_short": "Проблемы с генерацией сложных PDF-документов.",
-      "automation_idea": "Необходимо создать инструмент для генерации PDF с поддержкой сложных макетов.",
-      "concrete_solution": [
-        "Исследовать альтернативы wkhtmltopdf",
-        "Выбрать подходящий инструмент для генерации PDF",
-        "Разработать шаблоны для сложных документов"
-      ],
-      "tools": [
-        "Headless Chrome",
-        "Puppeteer",
-        "Playwright"
-      ],
-      "complexity": "medium",
-      "value": "high",
-      "can_automate": true,
-      "cannot_automate_reason": "",
-      "summary_ru": "Проблемы с генерацией сложных PDF-документов.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
-    },
-    {
-      "id": "habr-mpanies-teamly-articles-1032136",
-      "source": "habr",
-      "source_label": "Habr",
-      "url": "https://habr.com/ru/companies/teamly/articles/1032136/?utm_source=habrahabr&utm_medium=rss&utm_campaign=1032136",
-      "title": "Корпоративная память против галлюцинаций: как RAG возвращает бизнесу здравый смысл",
-      "text_excerpt": "В какой‑то момент почти у каждой компании появляется ощущение, что она захлебнулась в собственных данных. Переезд в «корпоративное облако», внедрение модных DMS и BI‑систем, аккуратные регламенты по наименованию файлов — кажется, вот‑вот наступит порядок, но в реальности растёт только число папок «а…",
-      "timestamp": "2026-05-08T07:05:05Z",
-      "lang": "ru",
+      "id": "hn-comment-48072510",
+      "source": "hn-comment",
+      "source_label": "HN comment",
+      "url": "https://news.ycombinator.com/item?id=48072510",
+      "title": "I love using AI to code, as it saves me a lot of boring and repetitive typing. I only commit code th…",
+      "text_excerpt": "I love using AI to code, as it saves me a lot of boring and repetitive typing. I only commit code that is roughly the same as I would have written anyway. It feels as good for developer ergonomics as the move away from CRT monitors.",
+      "timestamp": "2026-05-09T06:49:20.000Z",
+      "lang": "en",
       "is_pain": true,
       "category": "workflow",
       "category_label": "Workflow-автоматизация",
-      "priority": 6.0,
-      "problem_short": "Сложности с управлением данными и документами в компании.",
-      "automation_idea": "Создать систему для автоматизации управления документами и данными.",
+      "priority": 5.0,
+      "problem_short": "I love using AI to code, as it saves me a lot of boring and repetitive typing. I only commit code th…",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
       "concrete_solution": [
-        "Разработать систему управления документами",
-        "Интегрировать с существующими DMS",
-        "Настроить автоматические уведомления о новых документах"
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
       ],
       "tools": [
-        "Notion",
-        "Airtable",
-        "Zapier"
+        "n8n"
       ],
       "complexity": "medium",
-      "value": "high",
+      "value": "medium",
       "can_automate": true,
       "cannot_automate_reason": "",
-      "summary_ru": "Сложности с управлением данными и документами в компании.",
-      "cluster_id": "misc-other",
-      "meta_cluster_id": "документация"
+      "summary_ru": "I love using AI to code, as it saves me a lot of boring and repetitive typing. I only commit code th…",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
+    },
+    {
+      "id": "hn-comment-48072410",
+      "source": "hn-comment",
+      "source_label": "HN comment",
+      "url": "https://news.ycombinator.com/item?id=48072410",
+      "title": "Ah yes, the most pressing issue of our times. Mandatory surveillance of every person's activities is…",
+      "text_excerpt": "Ah yes, the most pressing issue of our times. Mandatory surveillance of every person's activities is a reasonable solution to the critical issue of teenagers watching porn, who totally won't be able to bypass this by... grabbing Dad's phone. Obviously, it's not about the children. It was never about…",
+      "timestamp": "2026-05-09T06:32:48.000Z",
+      "lang": "en",
+      "is_pain": true,
+      "category": "workflow",
+      "category_label": "Workflow-автоматизация",
+      "priority": 5.0,
+      "problem_short": "Ah yes, the most pressing issue of our times. Mandatory surveillance of every person's activities is…",
+      "automation_idea": "Перенести ручной процесс в автоматический workflow.",
+      "concrete_solution": [
+        "Описать шаги вручную",
+        "Подобрать инструмент",
+        "Реализовать пилот"
+      ],
+      "tools": [
+        "n8n"
+      ],
+      "complexity": "medium",
+      "value": "medium",
+      "can_automate": true,
+      "cannot_automate_reason": "",
+      "summary_ru": "Ah yes, the most pressing issue of our times. Mandatory surveillance of every person's activities is…",
+      "cluster_id": "ручной-процесс",
+      "meta_cluster_id": "автоматизация"
     }
   ]
 }
