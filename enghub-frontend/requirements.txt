@@ -1,5 +1,0 @@
-PyMuPDF
-pdfplumber
-openpyxl
-python-docx
-Pillow
