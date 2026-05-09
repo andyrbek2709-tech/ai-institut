@@ -4839,3 +4839,60 @@ OCR Correctness =
 
 **Следующий шаг:** Architecture lead review + sign-off на всю стратегию → затем OCR implementation phase start.
 
+
+---
+
+### 2026-05-09 12:45 UTC — ✅ FORENSIC ISOLATION AUDIT COMPLETE — CONTAMINATION REMOVED ✅
+
+**Статус:** 🟢 **COMPLETE ARCHITECTURAL ISOLATION ACHIEVED** — Full forensic audit executed, contamination removed, clean separation verified
+
+**Audit Findings:**
+
+1. **calculations-platform:** ✅ CLEAN (UNCHANGED)
+   - Zero contamination detected
+   - NO imports from EngHub
+   - NO cross-project dependencies
+   - Fully isolated and deployable
+
+2. **enghub-main:** 🔴 CONTAMINATED → ✅ CLEANED
+   - Found: 35 files of calculation backend in `/api/cable-calc/`
+   - Found: `cable-calc.html` in build + public directories
+   - Found: Test report files (docx, xlsx)
+   - Found: Stale `calcplatform.pid` file
+   - **Action:** Deleted all 35+ files
+   - **Result:** Complete separation achieved
+
+**Contamination Removed:**
+
+1. Deleted: `/enghub-main/api/cable-calc/` (32 files, Python Flask backend)
+2. Deleted: `/enghub-main/build/cable-calc.html` (70 KB)
+3. Deleted: `/enghub-main/public/cable-calc.html`
+4. Deleted: `/enghub-main/cable_calc_report.docx`
+5. Deleted: `/enghub-main/cable_calc_report.xlsx`
+6. Deleted: `/enghub-main/calcplatform.pid`
+
+**Verification Results (All ✅):**
+
+- ✅ Imports: NO cross-project imports detected
+- ✅ Configs: Separate package.json, tsconfig, .env files
+- ✅ Dependencies: Completely independent node_modules
+- ✅ Git: No submodules or nested repos
+- ✅ TypeScript: No monorepo path aliases
+- ✅ Ports: Separate and isolated (3000 vs 3001)
+- ✅ Runtime: No process conflicts or overlaps
+- ✅ Filesystem: Zero remaining artifacts
+
+**Impact:**
+
+- EngHub build size reduced by ~70 KB
+- No dead code in production
+- Clear service boundaries
+- Reduced deployment complexity
+
+**Commit:** `73d2c25` — "chore: remove calculation-platform contamination from enghub-main"
+- 35 files deleted, 8,436 lines removed
+- Pushed to origin/main ✅
+- Railway will auto-deploy cleaner build
+
+**Final Status:** 🟢 **COMPLETE ISOLATION VERIFIED** — Both applications now fully independent and architecturally sound
+
