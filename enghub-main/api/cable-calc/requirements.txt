@@ -1,7 +1,0 @@
-pdfplumber
-openpyxl
-python-docx
-Pillow
-PyMuPDF
-Flask
-flask-cors
