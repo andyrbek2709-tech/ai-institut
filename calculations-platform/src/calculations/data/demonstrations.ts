@@ -1,6 +1,7 @@
 import { FullCalculation } from '../types';
 import { TX_CALCULATIONS } from './tx_methodologies';
 import { TH_CALCULATIONS } from './th_methodologies';
+import { EO_CALCULATIONS } from './eo_methodologies';
 
 export const CALCULATION_CATEGORIES = [
   // Фаза 1: Тепловые системы
@@ -954,4 +955,7 @@ export const DEMO_CALCULATIONS: FullCalculation[] = [
 
   // Фаза 2: TH — Теплотехнические расчёты
   ...TH_CALCULATIONS,
+
+  // Фаза 3: EO — Электротехнические расчёты
+  ...EO_CALCULATIONS,
 ];
