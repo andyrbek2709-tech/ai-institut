@@ -178,6 +178,21 @@ router.post(
         'timestamp',   Date.now().toString(),
       );
 
+      // Publish agsk.standard.uploaded event for orchestrator (best-effort)
+      try {
+        await redis.xadd(
+          'task-events', '*',
+          'event_type',  'agsk.standard.uploaded',
+          'task_id',     standardId,
+          'project_id',  String((req.body && req.body.project_id) || ''),
+          'user_id',     userId,
+          'metadata',    JSON.stringify({ standard_code: standard_code ?? null, filename, org_id: orgId }),
+          'timestamp',   Date.now().toString(),
+        );
+      } catch (publishErr: any) {
+        logger.warn({ err: publishErr?.message }, 'Failed to publish agsk.standard.uploaded event');
+      }
+
       logger.info({ standard_id: standardId, job_id: jobId }, 'AGSK ingestion job enqueued');
 
       res.status(202).json({

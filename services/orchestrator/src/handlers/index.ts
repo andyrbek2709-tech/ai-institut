@@ -9,6 +9,12 @@ import { handleTaskSubmitted } from './task-submitted';
 import { handleTaskReviewReturned } from './task-review-returned';
 import { handleTaskApproved } from './task-approved';
 import { handleDeadlineApproaching } from './deadline-approaching';
+import { handleAgskStandardUploaded } from './agsk-standard-uploaded';
+import { handleAgskStandardReady } from './agsk-standard-ready';
+import { handleDrawingSubmittedForReview } from './drawing-submitted';
+import { handleDrawingApproved } from './drawing-approved';
+import { handleMeetingRecorded } from './meeting-recorded';
+import { handleCalculationCompleted } from './calculation-completed';
 
 export async function processEvent(
   event: Partial<StreamEvent>,
@@ -81,6 +87,26 @@ export async function processEvent(
 
       case EventType.DEADLINE_EXCEEDED:
         await handleDeadlineApproaching(task_id, project_id, 0, logger, db, notifications);
+        break;
+
+      // ── New: AGSK / Drawings / Meetings / Calculations ──
+      case EventType.AGSK_STANDARD_UPLOADED:
+        await handleAgskStandardUploaded(task_id, project_id, user_id || '', metadata, logger, db, notifications);
+        break;
+      case EventType.AGSK_STANDARD_READY:
+        await handleAgskStandardReady(task_id, project_id, user_id || '', metadata, logger, db, notifications);
+        break;
+      case EventType.DRAWING_SUBMITTED_FOR_REVIEW:
+        await handleDrawingSubmittedForReview(task_id, project_id, user_id || '', metadata, logger, db, notifications);
+        break;
+      case EventType.DRAWING_APPROVED:
+        await handleDrawingApproved(task_id, project_id, user_id || '', metadata, logger, db, notifications);
+        break;
+      case EventType.MEETING_RECORDED:
+        await handleMeetingRecorded(task_id, project_id, user_id || '', metadata, logger, db, notifications);
+        break;
+      case EventType.CALCULATION_COMPLETED:
+        await handleCalculationCompleted(task_id, project_id, user_id || '', metadata, logger, db, notifications);
         break;
 
       default:

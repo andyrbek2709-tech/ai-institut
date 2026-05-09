@@ -13,9 +13,18 @@ interface AIAction {
   created_at: string;
 }
 
+interface Citation {
+  document: string;
+  standard: string;
+  section: string;
+  page: number;
+  text?: string;
+}
+
 interface ChatMsg {
   role: 'user' | 'ai';
   text: string;
+  citations?: Citation[];
 }
 
 const renderMd = (text: string): string => {
@@ -137,7 +146,7 @@ export function CopilotPanel({
         const nextStepText = data.next_step ? `\n➡ ${responseData.next_step}` : '';
         setMessages(prev => [...prev, { role: 'ai', text: `⛔ ${responseData.message || 'Действие заблокировано правилами.'}${nextStepText}` }]);
       } else if (responseData.message) {
-        setMessages(prev => [...prev, { role: 'ai', text: data.message }]);
+        setMessages(prev => [...prev, { role: 'ai', text: responseData.message, citations: responseData.citations || [] }]);
       } else {
         setMessages(prev => [...prev, { role: 'ai', text: 'Запрос обработан.' }]);
       }
@@ -345,7 +354,7 @@ export function CopilotPanel({
       {/* Action Feed & Chat Area */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
         {messages.map((m, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
             <div style={{
               background: m.role === 'user' ? C.accent : C.surface2,
               color: m.role === 'user' ? '#fff' : C.text,
