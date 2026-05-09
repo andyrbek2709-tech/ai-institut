@@ -3,6 +3,7 @@ import { TX_CALCULATIONS } from './tx_methodologies';
 import { TH_CALCULATIONS } from './th_methodologies';
 import { EO_CALCULATIONS } from './eo_methodologies';
 import { VK_CALCULATIONS } from './vk_methodologies';
+import { G_CALCULATIONS } from './g_methodologies';
 
 export const CALCULATION_CATEGORIES = [
   // Фаза 1: Тепловые системы
@@ -962,4 +963,7 @@ export const DEMO_CALCULATIONS: FullCalculation[] = [
 
   // Фаза 4: VK — Водоснабжение и канализация
   ...VK_CALCULATIONS,
+
+  // Фаза 5: G — Геодезия и геометрия
+  ...G_CALCULATIONS,
 ];
