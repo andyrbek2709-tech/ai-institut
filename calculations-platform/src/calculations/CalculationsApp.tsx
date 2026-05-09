@@ -32,6 +32,7 @@ const NavButton: React.FC<{
 export const CalculationsApp: React.FC<CalculationsAppProps> = ({ onClose }) => {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [selectedCalculationId, setSelectedCalculationId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [presetInputs, setPresetInputs] = useState<Record<string, number> | undefined>(undefined);
   const [recentEntries, setRecentEntries] = useState<HistoryEntry[]>([]);
 
@@ -52,9 +53,15 @@ export const CalculationsApp: React.FC<CalculationsAppProps> = ({ onClose }) => 
   };
 
   const handleBackToHome = () => {
-    setSelectedCalculationId(null);
-    setPresetInputs(undefined);
-    setCurrentView('home');
+    if (currentView === 'workspace') {
+      setSelectedCalculationId(null);
+      setPresetInputs(undefined);
+      setCurrentView('home');
+      // selectedCategory is preserved - user returns to filtered view
+    } else if (currentView === 'home' && selectedCategory !== null) {
+      // From filtered home view, allow clearing to "all calculations"
+      setSelectedCategory(null);
+    }
   };
 
   const isWorkspace = currentView === 'workspace' && !!selectedCalculationId;
@@ -170,7 +177,11 @@ export const CalculationsApp: React.FC<CalculationsAppProps> = ({ onClose }) => 
           {/* HOME */}
           {currentView === 'home' && (
             <div className="p-4 max-w-7xl mx-auto w-full pb-8">
-              <CalculationsHome onSelectCalculation={handleSelectCalculation} />
+              <CalculationsHome
+                onSelectCalculation={handleSelectCalculation}
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+              />
             </div>
           )}
 

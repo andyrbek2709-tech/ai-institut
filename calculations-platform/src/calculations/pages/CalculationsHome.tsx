@@ -4,10 +4,15 @@ import { CalculationCard } from '../components/CalculationCard';
 
 interface CalculationsHomeProps {
   onSelectCalculation: (calculationId: string) => void;
+  selectedCategory: string | null;
+  onCategoryChange: (category: string | null) => void;
 }
 
-export const CalculationsHome: React.FC<CalculationsHomeProps> = ({ onSelectCalculation }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+export const CalculationsHome: React.FC<CalculationsHomeProps> = ({
+  onSelectCalculation,
+  selectedCategory,
+  onCategoryChange,
+}) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredCalcs = DEMO_CALCULATIONS.filter((calc) => {
@@ -51,7 +56,7 @@ export const CalculationsHome: React.FC<CalculationsHomeProps> = ({ onSelectCalc
         <div className="mb-3">
           <div className="flex flex-wrap gap-1.5">
             <button
-              onClick={() => setSelectedCategory(null)}
+              onClick={() => onCategoryChange(null)}
               className={`px-2 py-1 rounded border transition-all text-xs ${
                 selectedCategory === null
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/50 dark:border-blue-500 font-semibold text-blue-700 dark:text-blue-300'
@@ -66,7 +71,7 @@ export const CalculationsHome: React.FC<CalculationsHomeProps> = ({ onSelectCalc
               return (
                 <button
                   key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
+                  onClick={() => onCategoryChange(category.id)}
                   className={`px-2 py-1 rounded border transition-all text-xs ${
                     selectedCategory === category.id
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/50 dark:border-blue-500 font-semibold text-blue-700 dark:text-blue-300'
