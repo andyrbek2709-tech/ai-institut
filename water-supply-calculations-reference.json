@@ -1,0 +1,415 @@
+{
+  "water_supply_calculations": {
+    "title": "Методики и стандарты расчётов водоснабжения и канализации",
+    "version": "1.0",
+    "standards": [
+      {
+        "code": "СНиП 2.04.01-85",
+        "name": "Внутренний водопровод и канализация зданий",
+        "update": "СП 31.13330.2012",
+        "scope": "Гидравлические расчёты, нормативные скорости, потери давления"
+      },
+      {
+        "code": "СНиП 2.04.02-84",
+        "name": "Водоснабжение. Наружные сети и сооружения",
+        "update": "СП 32.13330.2012",
+        "scope": "Водопотребление, резервуары, насосные станции"
+      },
+      {
+        "code": "ГОСТ 3185-2006",
+        "name": "Трубы стальные электросварные",
+        "scope": "Стальные трубопроводы, диаметры, материалы"
+      },
+      {
+        "code": "ГОСТ 6867-2006",
+        "name": "Трубы из полиэтилена",
+        "scope": "Пластиковые трубопроводы, класс прочности"
+      }
+    ],
+    "water_consumption": {
+      "daily_consumption_formula": "Q_сут = (q_м × n × K_загр) / 1000",
+      "unit": "м³/сут",
+      "variables": {
+        "q_м": {
+          "description": "Удельное потребление воды на 1 человека",
+          "unit": "л/чел·сут",
+          "ranges": {
+            "minimum": {
+              "value": 60,
+              "description": "Минимум, без дополнительных удобств"
+            },
+            "standard": {
+              "value": 160,
+              "description": "С ванной и горячим водоснабжением"
+            },
+            "comfort": {
+              "value": 200,
+              "description": "С центральным отоплением и ГВС"
+            },
+            "maximum": {
+              "value": 240,
+              "description": "Максимум для эвакуированных зданий"
+            }
+          }
+        },
+        "n": {
+          "description": "Численность населения (пользователей)",
+          "unit": "человек"
+        },
+        "K_загр": {
+          "description": "Коэффициент загрузки сооружения",
+          "range": {
+            "min": 0.5,
+            "max": 1.0
+          },
+          "typical": {
+            "residential": 0.85,
+            "office": 0.50,
+            "hospital": 0.80
+          }
+        }
+      },
+      "hourly_consumption": {
+        "max_formula": "Q_ч_макс = (Q_сут × K_макс) / 24",
+        "min_formula": "Q_ч_мин = (Q_сут × K_мин) / 24",
+        "K_макс_values": {
+          "small": {
+            "population": "до 100",
+            "coefficient": "2.4-3.0"
+          },
+          "medium": {
+            "population": "100-500",
+            "coefficient": "2.0-2.4"
+          },
+          "large": {
+            "population": "1000-5000",
+            "coefficient": "1.5-1.8"
+          },
+          "very_large": {
+            "population": "свыше 5000",
+            "coefficient": "1.3-1.5"
+          }
+        },
+        "K_мин_typical": 0.4
+      },
+      "fixture_flow": {
+        "formula": "Q_расч = Σ(K_в × q_пр)",
+        "simultaneity_coefficient": {
+          "fixtures_2_3": 0.6,
+          "fixtures_4_6": 0.55,
+          "fixtures_7_10": 0.45,
+          "fixtures_over_10": 0.35
+        },
+        "typical_fixtures": {
+          "washbasin_tap": {
+            "flow_min": 3,
+            "flow_max": 4,
+            "unit": "л/мин"
+          },
+          "kitchen_sink": {
+            "flow_min": 3,
+            "flow_max": 5,
+            "unit": "л/мин"
+          },
+          "toilet_tank": {
+            "flow": "0.5-2.0",
+            "unit": "л/смыв"
+          },
+          "bathtub": {
+            "flow_min": 10,
+            "flow_max": 15,
+            "unit": "л/мин"
+          },
+          "shower": {
+            "flow_min": 5,
+            "flow_max": 10,
+            "unit": "л/мин"
+          }
+        }
+      }
+    },
+    "hydraulics": {
+      "velocity_formula": "v = Q / A = (4 × Q) / (π × d²)",
+      "unit": "м/с",
+      "normative_velocities": {
+        "cold_water_riser": {
+          "v_min": 0.5,
+          "v_max": 1.0,
+          "note": "Основной критерий - шум"
+        },
+        "cold_water_main": {
+          "v_min": 0.7,
+          "v_max": 1.5,
+          "note": "Учёт потерь энергии"
+        },
+        "hot_water": {
+          "v_min": 0.7,
+          "v_max": 1.2,
+          "note": "Ниже холодной из-за тепловых потерь"
+        },
+        "circulation_line": {
+          "v_min": 0.3,
+          "v_max": 0.6,
+          "note": "Низкая скорость для ГВС"
+        },
+        "sewerage": {
+          "v_min": 0.6,
+          "v_max": 1.5,
+          "note": "Самоочистка - минимум"
+        }
+      },
+      "pressure_loss": {
+        "darcy_weisbach_formula": "Δh = λ × (L / d) × (v² / (2g))",
+        "unit": "м вод. ст.",
+        "local_resistances": {
+          "pipe_entrance": 0.5,
+          "elbow_90_degrees": 0.3,
+          "elbow_45_degrees": 0.15,
+          "tee_junction": 0.6,
+          "fully_open_gate_valve": 0.15,
+          "ball_valve": 0.05,
+          "check_valve": 2.5,
+          "reduction_valve": 3.0
+        },
+        "friction_coefficient": {
+          "reynolds_number_formula": "Re = (v × d) / ν",
+          "kinematic_viscosity_water": {
+            "at_0C": "1.787 мм²/с",
+            "at_10C": "1.307 мм²/с",
+            "at_20C": "1.002 мм²/с",
+            "at_60C": "0.474 мм²/с"
+          },
+          "material_roughness": {
+            "polyethylene_new": {
+              "k_e": 0.001,
+              "lambda_at_10000": 0.040
+            },
+            "copper_new": {
+              "k_e": 0.0015,
+              "lambda_at_10000": 0.038
+            },
+            "galvanized_steel_new": {
+              "k_e": 0.015,
+              "lambda_at_10000": 0.045
+            },
+            "galvanized_steel_10years": {
+              "k_e": 0.1,
+              "lambda_at_10000": 0.053
+            },
+            "cast_iron_new": {
+              "k_e": 0.05,
+              "lambda_at_10000": 0.048
+            }
+          }
+        }
+      },
+      "standard_diameters": [
+        {"DN": 6, "d_internal": 5.5, "type": "steel"},
+        {"DN": 8, "d_internal": 7.5, "type": "steel"},
+        {"DN": 10, "d_internal": 9.5, "type": "steel"},
+        {"DN": 16, "d_internal": 14.5, "type": "steel"},
+        {"DN": 20, "d_internal": 18, "type": "both"},
+        {"DN": 25, "d_internal": 23, "type": "both"},
+        {"DN": 32, "d_internal": 30, "type": "both"},
+        {"DN": 40, "d_internal": 38, "type": "both"},
+        {"DN": 50, "d_internal": 46, "type": "sewerage"},
+        {"DN": 63, "d_internal": 60, "type": "sewerage"},
+        {"DN": 75, "d_internal": 71, "type": "sewerage"}
+      ]
+    },
+    "reservoirs": {
+      "volume_formula": "V_рез = Q_сут × K_рез",
+      "unit": "м³",
+      "reserve_coefficient": {
+        "residential_complex": {
+          "K_рез": 0.20,
+          "note": "Полнота регулирования"
+        },
+        "office_building": {
+          "K_рез": 0.12,
+          "note": "Низкие колебания потребления"
+        },
+        "hospital": {
+          "K_рез": 0.30,
+          "note": "Критичность снабжения"
+        },
+        "production": {
+          "K_рез": 0.40,
+          "note": "Технологический расход"
+        },
+        "remote_settlement": {
+          "K_рез": 0.50,
+          "note": "Полный запас на 12-24 часа"
+        }
+      },
+      "fill_time_formula": "t_запол = V_рез / Q_подачи",
+      "unit": "часы",
+      "empty_time_formula": "t_опор = V_рез / Q_потреб_макс",
+      "pressure_requirement": {
+        "formula": "p_насоса = p_потреб_мин + Δh + h_гид",
+        "min_pressure_for_users": {
+          "residential": 10,
+          "technical_needs": 5,
+          "unit": "м вод. ст."
+        },
+        "pressure_conversions": {
+          "1_m_water_column": "9.81 кПа",
+          "1_atm": "10.33 м вод. ст.",
+          "1_bar": "10.2 м вод. ст."
+        }
+      }
+    },
+    "sewerage": {
+      "manning_formula": "Q = A × v = A × (1/n) × √(R × i)",
+      "unit": "м³/с",
+      "roughness_coefficient": {
+        "ceramic_new": 0.014,
+        "concrete_new": 0.013,
+        "pvc_plastic": 0.010,
+        "asbestos_cement": 0.012,
+        "ceramic_aged_5_10_years": 0.017,
+        "earth_channel": 0.03
+      },
+      "velocity_norms": {
+        "min_self_cleaning": {
+          "value": 0.6,
+          "unit": "м/с",
+          "note": "Частицы не оседают"
+        },
+        "max_ceramic_concrete": {
+          "value": 1.5,
+          "unit": "м/с"
+        },
+        "max_plastic_steel": {
+          "value": 2.0,
+          "unit": "м/с"
+        }
+      },
+      "slope_requirements": {
+        "clay_soil": {
+          "i_min": 0.002,
+          "i_max": 0.005
+        },
+        "sand": {
+          "i_min": 0.005,
+          "i_max": 0.010
+        },
+        "gravel": {
+          "i_min": 0.010,
+          "i_max": 0.020
+        },
+        "rock": {
+          "i_min": 0.020,
+          "i_max": 0.050
+        }
+      },
+      "depth_of_laying": {
+        "moscow_region": {
+          "frost_depth": 1.2,
+          "min_depth": 1.5,
+          "unit": "м"
+        },
+        "st_petersburg": {
+          "frost_depth": 1.4,
+          "min_depth": 1.7,
+          "unit": "м"
+        }
+      }
+    },
+    "calculation_examples": {
+      "residential_complex_800_people": {
+        "daily_consumption": 136,
+        "unit": "м³/сут",
+        "hourly_max": 9.07,
+        "pump_pressure": 110.5,
+        "pressure_unit": "м вод. ст.",
+        "reservoir_volume": 30,
+        "reservoir_unit": "м³",
+        "main_diameter": 63,
+        "diameter_unit": "мм",
+        "sewer_diameter": 100,
+        "sewer_unit": "мм"
+      },
+      "office_building_250_people": {
+        "daily_consumption": 3.75,
+        "unit": "м³/рабочий день",
+        "peak_hourly": 0.94,
+        "pressure": 22,
+        "pressure_unit": "м вод. ст.",
+        "reservoir_volume": 1,
+        "reservoir_unit": "м³",
+        "main_diameter": 25,
+        "diameter_unit": "мм"
+      },
+      "production_facility": {
+        "technical_water": 50,
+        "domestic_water": 7.5,
+        "maintenance_water": 10,
+        "total_hourly": 67.5,
+        "unit": "м³/ч",
+        "reservoir_volume": 200,
+        "reservoir_unit": "м³",
+        "pump_power": 20,
+        "power_unit": "кВт"
+      }
+    },
+    "quick_reference_tables": {
+      "population_to_daily_consumption": {
+        "columns": ["Population", "q=160 l/person", "q=200 l/person", "q=240 l/person"],
+        "unit": "м³/сут",
+        "data": [
+          {"n": 100, "160": 13.6, "200": 17, "240": 20.4},
+          {"n": 250, "160": 34, "200": 42.5, "240": 51},
+          {"n": 500, "160": 68, "200": 85, "240": 102},
+          {"n": 800, "160": 109, "200": 136, "240": 163},
+          {"n": 1000, "160": 136, "200": 170, "240": 204},
+          {"n": 1500, "160": 204, "200": 255, "240": 306}
+        ]
+      },
+      "flow_to_diameter": {
+        "columns": ["Flow l/min", "Flow m³/h", "Calc diameter mm", "Standard DN mm", "Actual velocity m/s"],
+        "note": "Для холодного ВС, v = 0.8 м/с",
+        "data": [
+          {"flow_lpm": 10, "flow_m3h": 0.6, "d_calc": 11, "DN": 16, "v": 0.6},
+          {"flow_lpm": 20, "flow_m3h": 1.2, "d_calc": 16, "DN": 20, "v": 0.64},
+          {"flow_lpm": 30, "flow_m3h": 1.8, "d_calc": 19, "DN": 25, "v": 0.60},
+          {"flow_lpm": 50, "flow_m3h": 3.0, "d_calc": 25, "DN": 32, "v": 0.63},
+          {"flow_lpm": 100, "flow_m3h": 6.0, "d_calc": 35, "DN": 40, "v": 0.76},
+          {"flow_lpm": 150, "flow_m3h": 9.0, "d_calc": 43, "DN": 50, "v": 0.73},
+          {"flow_lpm": 200, "flow_m3h": 12.0, "d_calc": 50, "DN": 63, "v": 0.77}
+        ]
+      },
+      "pressure_conversion": {
+        "unit_1": "м вод. ст.",
+        "unit_2": "кПа",
+        "unit_3": "бар",
+        "unit_4": "атм",
+        "data": [
+          {"m_ws": 1, "kpa": 9.81, "bar": 0.0981, "atm": 0.097},
+          {"m_ws": 5, "kpa": 49.05, "bar": 0.4905, "atm": 0.484},
+          {"m_ws": 10, "kpa": 98.1, "bar": 0.981, "atm": 0.968},
+          {"m_ws": 20, "kpa": 196.2, "bar": 1.962, "atm": 1.937},
+          {"m_ws": 50, "kpa": 490.5, "bar": 4.905, "atm": 4.842},
+          {"m_ws": 100, "kpa": 981, "bar": 9.81, "atm": 9.684}
+        ]
+      }
+    },
+    "validation_rules": {
+      "velocity_checks": [
+        {"condition": "v < 0.5 m/s", "problem": "Застой, отложения в трубе", "action": "Уменьшить диаметр"},
+        {"condition": "v > 1.5 m/s", "problem": "Высокий шум, абразивный износ", "action": "Увеличить диаметр"},
+        {"condition": "0.5 <= v <= 1.5 m/s", "result": "OK"}
+      ],
+      "sewer_velocity_checks": [
+        {"condition": "v < 0.6 m/s", "problem": "Самоочистка неадекватна, илование", "action": "Увеличить уклон"},
+        {"condition": "v > 1.5 m/s", "problem": "Абразивный износ труб", "action": "Увеличить диаметр"},
+        {"condition": "0.6 <= v <= 1.5 m/s", "result": "OK"}
+      ],
+      "pressure_checks": [
+        {"condition": "p < 10 m ws (residential)", "problem": "Недостаточный напор на верхних этажах"},
+        {"condition": "p > 60 m ws", "problem": "Избыточное давление, риск разрывов"},
+        {"condition": "10-50 m ws", "result": "OK"}
+      ]
+    }
+  }
+}

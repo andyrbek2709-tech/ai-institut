@@ -4,23 +4,26 @@ import 'katex/dist/katex.min.css';
 
 interface FormulaRendererProps {
   formula: string;
+  display?: boolean;
   className?: string;
 }
 
 export const FormulaRenderer: React.FC<FormulaRendererProps> = ({
   formula,
+  display = true,
   className = '',
 }) => {
   const html = useMemo(() => {
     try {
       return katex.renderToString(formula, {
         throwOnError: false,
-        displayMode: true,
+        displayMode: display,
+        output: 'html',
       });
-    } catch (e) {
-      return `<span class="text-red-600">Error: ${formula}</span>`;
+    } catch {
+      return `<span style="color: #b91c1c">Ошибка рендера: ${formula}</span>`;
     }
-  }, [formula]);
+  }, [formula, display]);
 
   return (
     <div
@@ -29,8 +32,8 @@ export const FormulaRenderer: React.FC<FormulaRendererProps> = ({
       style={{
         display: 'flex',
         justifyContent: 'center',
-        overflow: 'auto',
-        padding: '1rem',
+        overflowX: 'auto',
+        padding: '0.5rem 0',
       }}
     />
   );

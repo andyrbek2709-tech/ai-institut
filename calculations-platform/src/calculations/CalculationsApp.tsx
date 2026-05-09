@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CalculationsHome } from './pages/CalculationsHome';
 import { CalculationWorkspace } from './pages/CalculationWorkspace';
-import { FileUpload } from './components/FileUpload';
-import { ReportGenerator } from './components/ReportGenerator';
 import { CalculationHistory } from './components/CalculationHistory';
 import { DEMO_CALCULATIONS } from './data/demonstrations';
+import { getHistory } from './storage/history';
+import { HistoryEntry } from './types';
 
 type AppView = 'home' | 'workspace' | 'upload' | 'history';
 
@@ -12,76 +12,83 @@ interface CalculationsAppProps {
   onClose?: () => void;
 }
 
+const NavButton: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}> = ({ active, onClick, children }) => (
+  <button
+    onClick={onClick}
+    className={`px-2.5 py-1 rounded transition-colors text-xs font-medium ${
+      active
+        ? 'bg-blue-600 text-white'
+        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+    }`}
+  >
+    {children}
+  </button>
+);
+
 export const CalculationsApp: React.FC<CalculationsAppProps> = ({ onClose }) => {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [selectedCalculationId, setSelectedCalculationId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [presetInputs, setPresetInputs] = useState<Record<string, number> | undefined>(undefined);
+  const [recentEntries, setRecentEntries] = useState<HistoryEntry[]>([]);
+
+  useEffect(() => {
+    setRecentEntries(getHistory().slice(0, 5));
+  }, [currentView]);
 
   const handleSelectCalculation = (calcId: string) => {
     setSelectedCalculationId(calcId);
+    setPresetInputs(undefined);
+    setCurrentView('workspace');
+  };
+
+  const handleOpenHistoryEntry = (entry: HistoryEntry) => {
+    setSelectedCalculationId(entry.calculationId);
+    setPresetInputs({ ...entry.inputs });
     setCurrentView('workspace');
   };
 
   const handleBackToHome = () => {
     setSelectedCalculationId(null);
+    setPresetInputs(undefined);
     setCurrentView('home');
   };
 
-  const currentCalculation = DEMO_CALCULATIONS.find(
-    (c) => c.id === selectedCalculationId,
-  );
+  const isWorkspace = currentView === 'workspace' && !!selectedCalculationId;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-lg"
-            >
-              ☰
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              ⚙️ Расчётная платформа
-            </h1>
-          </div>
+    /* Root: полная высота экрана, flex-col — nav сверху, контент снизу */
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentView('home')}
-              className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
-                currentView === 'home'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              🏠 Главная
-            </button>
-            <button
-              onClick={() => setCurrentView('history')}
-              className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
-                currentView === 'history'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              📜 История
-            </button>
-            <button
-              onClick={() => setCurrentView('upload')}
-              className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
-                currentView === 'upload'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              📤 Загрузить
-            </button>
+      {/* ── NAV ── shrink-0, высота зафиксирована */}
+      <nav className="shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-30">
+        <div className="px-3 py-1.5 flex items-center justify-between">
+          <button
+            onClick={handleBackToHome}
+            className="flex items-center gap-1.5 text-xs font-bold text-gray-900 dark:text-white hover:opacity-75 transition-opacity"
+          >
+            ⚙️ <span className="hidden sm:inline">Расчётная платформа</span>
+          </button>
+
+          <div className="flex items-center gap-1">
+            <NavButton active={currentView === 'home'} onClick={() => setCurrentView('home')}>
+              🏠 <span className="hidden sm:inline">Каталог</span>
+            </NavButton>
+            <NavButton active={currentView === 'history'} onClick={() => setCurrentView('history')}>
+              📜 <span className="hidden sm:inline">История</span>
+            </NavButton>
+            <NavButton active={currentView === 'upload'} onClick={() => setCurrentView('upload')}>
+              📤 <span className="hidden sm:inline">Загрузить</span>
+              <span className="ml-1 text-[10px] text-amber-500">🚧</span>
+            </NavButton>
             {onClose && (
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="ml-1.5 px-2 py-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-xs"
+                aria-label="Закрыть"
               >
                 ✕
               </button>
@@ -90,128 +97,131 @@ export const CalculationsApp: React.FC<CalculationsAppProps> = ({ onClose }) => 
         </div>
       </nav>
 
-      <div className="flex">
-        {sidebarOpen && currentView === 'home' && (
-          <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-6 hidden lg:block">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              ⚡ Быстрые действия
-            </h2>
-            <div className="space-y-3">
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm">
-                + Новый расчёт
-              </button>
-              <button className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium text-sm">
-                📤 Загрузить PDF/DOCX
-              </button>
-              <button className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium text-sm">
-                📊 Экспортировать результат
-              </button>
-            </div>
+      {/* ── BODY ── flex-1 min-h-0: занимает всё оставшееся место */}
+      <div className="flex-1 min-h-0 flex overflow-hidden">
 
-            <hr className="my-6 border-gray-200 dark:border-gray-700" />
+        {/* Sidebar — только на xl, только на главной */}
+        {currentView === 'home' && (
+          <aside className="hidden xl:flex xl:flex-col w-44 shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+            <div className="p-3 flex flex-col gap-3 min-h-0">
+              <div>
+                <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">
+                  Действия
+                </p>
+                <div className="space-y-1">
+                  <button
+                    onClick={() => setCurrentView('home')}
+                    className="w-full px-2.5 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium text-xs text-left"
+                  >
+                    + Открыть каталог
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('upload')}
+                    className="w-full px-2.5 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-xs text-left"
+                  >
+                    📤 Загрузить методику 🚧
+                  </button>
+                </div>
+              </div>
 
-            <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-3 text-sm">
-              Недавние расчёты
-            </h3>
-            <div className="space-y-2">
-              {DEMO_CALCULATIONS.slice(0, 3).map((calc) => (
-                <button
-                  key={calc.id}
-                  onClick={() => handleSelectCalculation(calc.id)}
-                  className="w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm text-gray-700 dark:text-gray-300"
-                >
-                  {calc.name.slice(0, 25)}...
-                </button>
-              ))}
+              <div className="flex-1 min-h-0">
+                <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">
+                  Последние
+                </p>
+                {recentEntries.length === 0 ? (
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 leading-relaxed">
+                    Пока пусто. Сохраните результат расчёта.
+                  </p>
+                ) : (
+                  <div className="space-y-0.5">
+                    {recentEntries.map((e) => (
+                      <button
+                        key={e.id}
+                        onClick={() => handleOpenHistoryEntry(e)}
+                        className="w-full text-left px-1.5 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="text-xs text-gray-800 dark:text-gray-200 truncate leading-tight">
+                          {e.calculationName}
+                        </div>
+                        <div className="text-[10px] text-gray-400 dark:text-gray-500">
+                          {new Date(e.timestampISO).toLocaleString('ru-RU')}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="text-[10px] text-gray-400 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 pt-2">
+                {DEMO_CALCULATIONS.length} расчётов · ГОСТ/СП/ПУЭ
+              </div>
             </div>
-          </div>
+          </aside>
         )}
 
-        <div className="flex-1 p-6">
+        {/* ── MAIN CONTENT ── */}
+        <div
+          className={`flex-1 min-w-0 min-h-0 ${
+            isWorkspace
+              ? 'overflow-hidden flex flex-col'   /* workspace: колонки скроллятся сами */
+              : 'overflow-y-auto'                  /* остальные: страница скроллится */
+          }`}
+        >
+          {/* HOME */}
           {currentView === 'home' && (
-            <CalculationsHome onSelectCalculation={handleSelectCalculation} />
-          )}
-
-          {currentView === 'workspace' && selectedCalculationId && (
-            <div>
-              <CalculationWorkspace
-                calculationId={selectedCalculationId}
-                onBack={handleBackToHome}
-              />
+            <div className="p-4 max-w-7xl mx-auto w-full pb-8">
+              <CalculationsHome onSelectCalculation={handleSelectCalculation} />
             </div>
           )}
 
+          {/* WORKSPACE — без p-4 здесь, он внутри Workspace */}
+          {isWorkspace && (
+            <CalculationWorkspace
+              calculationId={selectedCalculationId}
+              onBack={handleBackToHome}
+              presetInputs={presetInputs}
+            />
+          )}
+
+          {/* UPLOAD */}
           {currentView === 'upload' && (
-            <div className="max-w-2xl">
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  📤 Загрузка файлов расчётов
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-8">
-                  Загрузите методику расчёта или результаты в PDF, DOCX или XLSX формате.
-                  Система автоматически распознает формулы и параметры.
-                </p>
-
-                <FileUpload />
-
-                <hr className="my-8 border-gray-200 dark:border-gray-700" />
-
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  📋 Что произойдёт после загрузки?
-                </h2>
-                <ol className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
-                  <li className="flex gap-3">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">1.</span>
-                    <span>Система распознает документ и извлекает формулы</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">2.</span>
-                    <span>
-                      Проверит расчёты и обозначит найденные переменные
-                    </span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">3.</span>
-                    <span>Создаст интерактивную форму для ввода параметров</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">4.</span>
-                    <span>
-                      Позволит вам генерировать отчёты с новыми значениями
-                    </span>
-                  </li>
-                </ol>
+            <div className="p-4 max-w-2xl mx-auto w-full">
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex items-start gap-4 mb-5">
+                  <div className="text-4xl">🚧</div>
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                      Загрузка методик расчёта
+                    </h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Функция в разработке</p>
+                  </div>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg p-4 mb-5 text-sm text-amber-900 dark:text-amber-100">
+                  <p className="font-semibold mb-1">Что должно работать:</p>
+                  <p>Загружаешь методичку (ГОСТ/СНиП/стандарт) в PDF, DOCX или XLSX → система распознаёт формулы, создаёт интерактивный расчёт в каталоге.</p>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-5 text-sm text-blue-900 dark:text-blue-100">
+                  <p className="font-semibold mb-1">Почему пока недоступно:</p>
+                  <p>Распознавание формул из PDF — отдельный проект EngHub Platform (PDF Parser Phase 3 / OCR Hardening). Архитектура спроектирована, реализация запланирована отдельным этапом.</p>
+                </div>
+                <button
+                  onClick={() => setCurrentView('home')}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                >
+                  🏠 Перейти в каталог
+                </button>
               </div>
             </div>
           )}
 
+          {/* HISTORY */}
           {currentView === 'history' && (
-            <div className="max-w-5xl">
-              <CalculationHistory onSelectCalculation={handleSelectCalculation} />
+            <div className="p-4 max-w-5xl mx-auto w-full pb-8">
+              <CalculationHistory onOpenEntry={handleOpenHistoryEntry} />
             </div>
           )}
         </div>
       </div>
-
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center text-xs text-gray-600 dark:text-gray-400">
-          <div>
-            © 2026 EngHub Calculations Platform. Все расчёты соответствуют ГОСТам и строительным
-            нормам.
-          </div>
-          <div className="flex gap-4">
-            <button className="hover:text-gray-900 dark:hover:text-white transition-colors">
-              Справка
-            </button>
-            <button className="hover:text-gray-900 dark:hover:text-white transition-colors">
-              О платформе
-            </button>
-            <button className="hover:text-gray-900 dark:hover:text-white transition-colors">
-              Контакты
-            </button>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

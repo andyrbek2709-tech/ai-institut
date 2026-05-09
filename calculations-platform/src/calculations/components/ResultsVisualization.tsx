@@ -1,91 +1,73 @@
 import React from 'react';
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
 } from 'recharts';
+import { Severity } from '../types';
 
-interface ResultValue {
-  label: string;
+interface BarPoint {
+  name: string;
   value: number;
   unit: string;
-  warning?: boolean;
-  safe?: boolean;
+  severity: Severity;
 }
 
 interface ResultsVisualizationProps {
-  results: ResultValue[];
+  data: BarPoint[];
 }
 
-export const ResultsVisualization: React.FC<ResultsVisualizationProps> = ({
-  results,
-}) => {
-  // Prepare data for chart
-  const chartData = results.map((r) => ({
-    name: r.label,
-    value: r.value,
-    safe: r.safe,
-    warning: r.warning,
-  }));
+const severityFill: Record<Severity, string> = {
+  safe: '#22c55e',
+  warning: '#f59e0b',
+  critical: '#ef4444',
+};
 
-  if (results.length === 0) return null;
+export const ResultsVisualization: React.FC<ResultsVisualizationProps> = ({ data }) => {
+  if (data.length === 0) return null;
+  const finiteData = data.filter((d) => Number.isFinite(d.value));
+  if (finiteData.length === 0) return null;
 
-  if (results.length === 1) {
-    // Single result: show large display
-    const result = results[0];
-    return (
-      <div className="flex items-baseline gap-3 mb-6">
-        <div
-          className={`text-5xl font-bold ${
-            result.warning
-              ? 'text-amber-600 dark:text-amber-400'
-              : result.safe
-                ? 'text-green-600 dark:text-green-400'
-                : 'text-blue-600 dark:text-blue-400'
-          }`}
-        >
-          {typeof result.value === 'number' ? result.value.toFixed(2) : 'N/A'}
-        </div>
-        <div className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-          {result.unit}
-        </div>
-      </div>
-    );
-  }
-
-  // Multiple results: show chart
   return (
-    <div className="w-full h-64 mb-6">
+    <div className="w-full h-44">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
-          <CartesianGrid strokeDasharray="3 3" />
+        <BarChart data={finiteData} margin={{ top: 6, right: 12, left: 0, bottom: 48 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#9ca3af" opacity={0.3} />
           <XAxis
             dataKey="name"
-            angle={-45}
+            angle={-30}
             textAnchor="end"
-            height={80}
+            height={56}
             interval={0}
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 10 }}
           />
-          <YAxis />
+          <YAxis tick={{ fontSize: 10 }} />
           <Tooltip
-            formatter={(value) => value.toFixed(2)}
+            formatter={(value, _name, item) => {
+              const point = (item as { payload: BarPoint }).payload;
+              const num = typeof value === 'number' ? value : Number(value);
+              return [
+                `${Number.isFinite(num) ? num.toFixed(3) : '—'} ${point.unit}`,
+                point.name,
+              ];
+            }}
             contentStyle={{
-              backgroundColor: '#fff',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              fontSize: 12,
             }}
           />
-          <Bar
-            dataKey="value"
-            fill="#3b82f6"
-            radius={[8, 8, 0, 0]}
-          />
+          <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+            {finiteData.map((d, idx) => (
+              <Cell key={idx} fill={severityFill[d.severity]} />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
