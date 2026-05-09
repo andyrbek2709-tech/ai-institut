@@ -333,7 +333,7 @@ export default function App() {
   const [activeCalc, setActiveCalc] = useState<string | null>(null);
   const [calcSearch, setCalcSearch] = useState("");
 
-  // Copilot AI Module States
+  // ChatGPT 4.0 AI Module States
   const [showCopilot, setShowCopilot] = useState(false);
   const [showTabHelp, setShowTabHelp] = useState(false);
 
@@ -2584,7 +2584,7 @@ export default function App() {
                   onClick={() => setShowCopilot(!showCopilot)}
                   className={`btn ${showCopilot ? "btn-primary" : "btn-secondary"}`}
                 >
-                  <span style={{ fontSize: 14 }}>✨</span> AI Copilot
+                  <span style={{ fontSize: 14 }}>✨</span> ChatGPT 4.0
                 </button>
 
                 <div className="project-stats-bar">

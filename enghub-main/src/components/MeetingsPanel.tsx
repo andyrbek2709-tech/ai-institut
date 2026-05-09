@@ -120,6 +120,25 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
 
   return (
     <div className="screen-fade">
+      {/* Banner: модуль в разработке */}
+      <div style={{
+        background: 'linear-gradient(90deg, #f5a62315, #d08a3815)',
+        border: `1px solid #d08a3850`,
+        borderRadius: 12,
+        padding: '10px 14px',
+        marginBottom: 14,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        fontSize: 13,
+        color: C.text,
+      }}>
+        <span style={{ fontSize: 18 }}>🚧</span>
+        <div>
+          <strong style={{ color: '#d08a38' }}>Модуль в разработке.</strong>{' '}
+          Совещания и транскрипция доступны частично — функционал дорабатывается.
+        </div>
+      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Протоколы совещаний</div>
         {(isGip || isLead) && <button className="btn btn-primary" onClick={() => setShowNewMeeting(true)}>+ Новый протокол</button>}

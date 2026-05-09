@@ -1,4 +1,4 @@
-import { drawingStatusMap, taskWorkflowTransitions, copilotRolePrompts } from './constants';
+import { drawingStatusMap, taskWorkflowTransitions, assistantRolePrompts } from './constants';
 import { describe, test, expect } from '@jest/globals';
 
 describe('EngHub constants baseline', () => {
@@ -21,8 +21,8 @@ describe('EngHub constants baseline', () => {
   });
 
   test('copilot role prompts exist for all runtime roles', () => {
-    expect(copilotRolePrompts.gip).toBeTruthy();
-    expect(copilotRolePrompts.lead).toBeTruthy();
-    expect(copilotRolePrompts.engineer).toBeTruthy();
+    expect(assistantRolePrompts.gip).toBeTruthy();
+    expect(assistantRolePrompts.lead).toBeTruthy();
+    expect(assistantRolePrompts.engineer).toBeTruthy();
   });
 });

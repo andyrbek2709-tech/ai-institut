@@ -4,6 +4,63 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-09 12:00 UTC — ✅ COPILOT → CHATGPT 4.0 REBRAND + BACKEND OPENAI INTEGRATION
+
+**Статус:** 🟢 **REBRAND COMPLETE + OPENAI gpt-4o WIRED** — typecheck чист в обеих проектах (enghub-main + api-server)
+
+**Что сделано:**
+
+- ✅ **UI rebrand:** все упоминания `AI Copilot` / `Orchestrator v1.0` / `AI-Оркестратор` заменены на `ChatGPT 4.0` / `GPT-4o` в `enghub-main/src/components/CopilotPanel.tsx` (header, приветствие, error-сообщение) и `enghub-main/src/App.tsx` (кнопка)
+- ✅ **constants.ts:** `copilotRolePrompts` → `assistantRolePrompts` (+ обновлён `constants.test.ts`)
+- ✅ **Backend OpenAI:** создан `services/api-server/src/routes/orchestrator.ts` — реальный `/api/orchestrator` endpoint c OpenAI `gpt-4o`, role-aware system prompts (gip/lead/engineer), ориентир на нормативную базу (ГОСТ/СНиП/EN/AGSK)
+- ✅ **Router:** orchestrator зарегистрирован в `services/api-server/src/index.ts` (раньше `/api/orchestrator` возвращал 404)
+- ✅ **Заглушки помечены:** MeetingsPanel — баннер «🚧 Модуль в разработке» сверху; CalculationView (для всех 274 расчётов в registry.ts) — badge «🚧 В разработке» в header
+- ✅ **Typecheck OK:** `enghub-main` (tsc --noEmit) — 0 ошибок; `services/api-server` — 0 ошибок
+
+**Что НЕ сделано (требует PAT для push):**
+
+- 🟡 Удаление `enghub-frontend/` (мёртвый Vercel-остаток, mount не разрешает rm — снос через клон + git rm + push)
+- 🟡 Push в `andyrbek2709-tech/ai-institut@main` (нужен PAT)
+- 🟡 Установка `OPENAI_API_KEY` в Railway env (если ещё не выставлен) — нужно подтверждение пользователя
+
+**Действия Cowork mount:**
+
+- Edit/Write tool через MCP режут хвосты файлов на смонтированном диске → правки делал через `python3` heredoc в bash (нативный sandbox-fs без обрезаний). Восстановление пострадавших файлов сделано через `git cat-file -p HEAD:<file>`. Это инцидент по правилу #4 (CLAUDE.md) — клон в /tmp обязателен только для git-операций; для самих правок python через bash оказался достаточным.
+
+**Архитектура AI помощника (после деплоя):**
+
+```
+CopilotPanel.tsx → POST /api/orchestrator
+  body: {user_id, project_id, message, use_rag, role}
+  ↓
+api-server/routes/orchestrator.ts (authMiddleware)
+  ↓
+OpenAI Chat Completions (gpt-4o, temp=0.3, max_tokens=1200)
+  system_prompt: role-aware (gip/lead/engineer) — фокус на нормативку (ГОСТ/СНиП/EN)
+  ↓
+{message, agent: 'chatgpt4', model: 'gpt-4o', usage}
+```
+
+**Файлы изменены:**
+
+- `enghub-main/src/components/CopilotPanel.tsx` — 4 правки UI
+- `enghub-main/src/App.tsx` — кнопка + комментарий
+- `enghub-main/src/constants.ts` — переименование экспорта
+- `enghub-main/src/constants.test.ts` — синхронизация теста
+- `enghub-main/src/components/MeetingsPanel.tsx` — banner
+- `enghub-main/src/calculations/CalculationView.tsx` — badge
+- `services/api-server/src/index.ts` — register orchestrator router
+- `services/api-server/src/routes/orchestrator.ts` — НОВЫЙ файл (123 строки)
+
+**Следующие шаги:**
+
+- [ ] Push изменений (PAT)
+- [ ] `git rm -rf enghub-frontend/` через клон (Vercel-наследие)
+- [ ] Verify Railway env: `OPENAI_API_KEY` присутствует
+- [ ] Browser smoke: открыть AI кнопку → отправить «Что говорит ГОСТ 32569 о толщине стенки трубы?» → проверить что приходит ответ от gpt-4o
+
+---
+
 ### 2026-05-09 07:15 UTC — ✅ ARCHITECTURE ISOLATION — BOTH APPLICATIONS RUNNING SUCCESSFULLY ON SEPARATE PORTS
 
 **Статус:** 🟢 **ISOLATION COMPLETE & OPERATIONAL** — Both EngHub (localhost:3000) and Calculations Platform (localhost:3001) running independently and responding correctly

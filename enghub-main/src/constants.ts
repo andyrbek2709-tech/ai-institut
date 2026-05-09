@@ -120,8 +120,8 @@ export const taskWorkflowTransitions: Record<string, string[]> = {
   done: ["revision"],
 };
 
-// Ролевые системные инструкции для Copilot (Phase 8)
-export const copilotRolePrompts: Record<string, string> = {
+// Ролевые системные инструкции для ChatGPT 4.0 ассистента (Phase 8)
+export const assistantRolePrompts: Record<string, string> = {
   gip: "Приоритизируй сроки, междисциплинарные коллизии и контроль выдачи документации.",
   lead: "Фокусируйся на загрузке инженеров, качестве проверок и возвратах на доработку.",
   engineer: "Фокусируйся на конкретных шагах выполнения, входных данных и критериях готовности.",

@@ -72,7 +72,7 @@ export function CopilotPanel({
   onDataChanged // Callback to refresh drawings/reviews/revisions/transmittals
 }: any) {
   const [messages, setMessages] = useState<ChatMsg[]>([
-    { role: 'ai', text: 'Привет! Я AI-Оркестратор. Могу проанализировать проект, распределить задачи или проверить сроки. Чем могу помочь?' }
+    { role: 'ai', text: 'Привет! Я ChatGPT 4.0 — помощник по нормативной базе и проектной работе. Спросите про ГОСТ, СНиП, EN или попросите помочь с задачами и расчётами.' }
   ]);
   const [input, setInput] = useState('');
   const [actions, setActions] = useState<AIAction[]>([]);
@@ -147,7 +147,7 @@ export function CopilotPanel({
       }
     } catch (e) {
       console.error("Orchestrator error:", e);
-      setMessages(prev => [...prev, { role: 'ai', text: 'Ошибка соединения с Оркестратором. Пожалуйста, попробуйте позже.' }]);
+      setMessages(prev => [...prev, { role: 'ai', text: 'Ошибка соединения с ChatGPT 4.0. Пожалуйста, попробуйте позже.' }]);
     } finally {
       setLoading(false);
     }
@@ -316,8 +316,8 @@ export function CopilotPanel({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: `linear-gradient(135deg, ${C.accent}, #4f7fd8)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>AI</div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>AI Copilot</div>
-            <div style={{ fontSize: 12, color: C.textMuted }}>Orchestrator v1.0 · {roleTitleMap[userRole || 'engineer']}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>ChatGPT 4.0</div>
+            <div style={{ fontSize: 12, color: C.textMuted }}>GPT-4o · {roleTitleMap[userRole || 'engineer']}</div>
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 20 }}>✕</button>

@@ -196,7 +196,14 @@ export const CalculationView = ({ calcId, C }: { calcId: string, C: any }) => {
       {/* HEADER */}
       <div style={{ padding: "24px 32px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>{template.name}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>{template.name}</div>
+            <span title="Модуль расчётов в разработке — формулы и методология верифицируются" style={{
+              fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 999,
+              background: "#d08a3815", color: "#d08a38", border: "1px solid #d08a3850",
+              whiteSpace: "nowrap"
+            }}>🚧 В разработке</span>
+          </div>
           <div style={{ fontSize: 13, color: C.textMuted, marginTop: 4 }}>{template.desc} | {template.normativeReference}</div>
         </div>
         {applicableConverters.length > 0 && (

@@ -15,6 +15,7 @@ import diagnosticsRouter from './routes/diagnostics.js';
 import adminRouter from './routes/admin.js';
 import agskRouter from './routes/agsk.js';
 import telemetryRouter from './routes/telemetry.js';
+import orchestratorRouter from './routes/orchestrator.js';
 
 const app = express();
 
@@ -75,6 +76,7 @@ app.use('/api', metricsRouter);
 app.use('/api', autoRollbackRouter);
 app.use('/api', adminRouter);
 app.use('/api', agskRouter);
+app.use('/api', orchestratorRouter);
 app.use('/api/telemetry', telemetryRouter);
 app.use('/', diagnosticsRouter);
 
