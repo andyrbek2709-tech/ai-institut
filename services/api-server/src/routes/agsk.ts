@@ -259,7 +259,10 @@ router.post(
           p_version_year:    version_year ?? null,
           p_version_latest_only: version_latest_only,
         });
-        if (error) throw new Error(error.message);
+        if (error) {
+          logger.error({ rpc: 'agsk_hybrid_search_v2', err: error, params: { p_org_id: orgId, p_limit: preRerankLimit, p_discipline: discipline ?? null, p_standard_code: standard_code ?? null } }, 'AGSK hybrid RPC failed');
+          throw new ApiError(500, 'AGSK hybrid search failed', { rpc_error: error.message, code: error.code, hint: error.hint });
+        }
         chunks = data ?? [];
 
       } else if (retrieval_type === 'vector') {
@@ -273,7 +276,10 @@ router.post(
           p_version_latest_only: version_latest_only,
           p_min_similarity:  min_similarity ?? 0.5,
         });
-        if (error) throw new Error(error.message);
+        if (error) {
+          logger.error({ rpc: 'agsk_vector_search_v2', err: error }, 'AGSK vector RPC failed');
+          throw new ApiError(500, 'AGSK vector search failed', { rpc_error: error.message, code: error.code, hint: error.hint });
+        }
         chunks = data ?? [];
 
       } else {
@@ -286,7 +292,10 @@ router.post(
           p_version_year:    version_year ?? null,
           p_version_latest_only: version_latest_only,
         });
-        if (error) throw new Error(error.message);
+        if (error) {
+          logger.error({ rpc: 'agsk_bm25_search_v2', err: error }, 'AGSK BM25 RPC failed');
+          throw new ApiError(500, 'AGSK BM25 search failed', { rpc_error: error.message, code: error.code, hint: error.hint });
+        }
         chunks = data ?? [];
       }
 

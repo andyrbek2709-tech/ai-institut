@@ -145,14 +145,14 @@ export default function StandardsSearch() {
         {/* Header */}
         <div style={{ padding: '20px', background: '#fff', borderBottom: '1px solid #e0e6ed' }}>
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 16px 0', color: '#1a1a1a' }}>
-            🔍 Standards Retrieval
+            🔍 Поиск нормативов
           </h1>
 
           {/* Search Form */}
           <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <input
               type="text"
-              placeholder="Search standards, sections, requirements..."
+              placeholder="Поиск стандартов, разделов, требований..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               style={{
@@ -196,10 +196,10 @@ export default function StandardsSearch() {
                 background: '#fff',
               }}
             >
-              <option value="">All Disciplines</option>
-              <option value="pipeline">Pipeline</option>
-              <option value="welding">Welding</option>
-              <option value="corrosion">Corrosion</option>
+              <option value="">Все дисциплины</option>
+              <option value="pipeline">Трубопроводы</option>
+              <option value="welding">Сварка</option>
+              <option value="corrosion">Коррозия</option>
             </select>
 
             <select
@@ -213,10 +213,10 @@ export default function StandardsSearch() {
                 background: '#fff',
               }}
             >
-              <option value="">All Types</option>
-              <option value="normative">Normative</option>
-              <option value="catalog">Catalog</option>
-              <option value="reference">Reference</option>
+              <option value="">Все типы</option>
+              <option value="normative">Нормативный документ</option>
+              <option value="catalog">Каталог</option>
+              <option value="reference">Справочный</option>
             </select>
           </div>
         </div>
@@ -253,7 +253,7 @@ export default function StandardsSearch() {
           {!loading && results.length === 0 && !query && (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>🔎</div>
-              <div>Enter a search query to get started</div>
+              <div>Введите запрос для начала поиска</div>
             </div>
           )}
 
