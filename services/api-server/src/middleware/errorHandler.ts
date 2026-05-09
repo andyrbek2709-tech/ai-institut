@@ -26,9 +26,13 @@ export function errorHandler(
     });
   }
 
-  logger.error('Unexpected error:', err);
+  // Pino best practice: pass err as object so it's serialized properly
+  logger.error({ err: { name: err.name, message: err.message, stack: err.stack } }, 'Unexpected error');
+  // Surface message/stack for debugging (will tighten later if abuse appears)
   res.status(500).json({
     error: 'Internal server error',
+    message: err.message,
+    name: err.name,
   });
 }
 

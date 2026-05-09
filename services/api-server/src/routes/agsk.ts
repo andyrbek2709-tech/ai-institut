@@ -48,11 +48,17 @@ async function embedQuery(query: string): Promise<{ embedding: number[]; cache_h
     return { embedding: vec, cache_hit: true };
   }
 
-  const resp = await getOpenAI().embeddings.create({
-    model: 'text-embedding-3-small',
-    input: query,
-  });
-  const embedding = resp.data[0].embedding;
+  let embedding: number[];
+  try {
+    const resp = await getOpenAI().embeddings.create({
+      model: 'text-embedding-3-small',
+      input: query,
+    });
+    embedding = resp.data[0].embedding;
+  } catch (e: any) {
+    logger.error({ err: { name: e?.name, message: e?.message, code: e?.code, status: e?.status, response_data: e?.response?.data }, query_len: query.length }, 'OpenAI embeddings.create failed');
+    throw new Error('OpenAI embeddings failed: ' + (e?.message || 'unknown'));
+  }
 
   sb.rpc('agsk_upsert_embedding_cache', {
     p_content_hash: hash,
@@ -322,7 +328,8 @@ router.post(
         return true;
       });
 
-      // Log retrieval async
+      // Log retrieval async (best-effort)
+      try {
       sb.from('agsk_retrieval_logs').insert({
         user_id:              req.user!.id,
         org_id:               orgId,
@@ -338,7 +345,8 @@ router.post(
         reranker_type:        rerankMetrics?.reranker_type ?? null,
         reranker_latency_ms:  rerankMetrics?.latency_ms ?? null,
         retrieved_chunk_ids:  chunks.map((c: any) => c.id),
-      }).then().catch(() => {});
+      }).then().catch((e: any) => { logger.warn({ err: e?.message }, 'agsk_retrieval_logs insert failed'); });
+      } catch (e: any) { logger.warn({ err: e?.message }, 'agsk_retrieval_logs sync error'); }
 
       res.json({
         chunks,
