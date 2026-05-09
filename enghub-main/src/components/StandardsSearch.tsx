@@ -56,24 +56,25 @@ export default function StandardsSearch() {
     try {
       console.log('[TRACE] handleSearch: SEARCH POST START');
       // Execute search
-      const searchRes = await apiPost('/api/agsk/search', {
+      const searchRes: any = await apiPost('/api/agsk/search', {
         query: query,
-        org_id: 'default',
         ...filters,
       });
       const searchLatency = Date.now() - searchStartTime;
-      console.log('[TRACE] handleSearch: SEARCH POST DONE:', Array.isArray(searchRes), 'latency=' + searchLatency);
+      // API returns { chunks, citations, query, retrieval_type, latency_ms, result_count, ... }
+      const chunks = (searchRes && Array.isArray(searchRes.chunks)) ? searchRes.chunks : (Array.isArray(searchRes) ? searchRes : null);
+      console.log('[TRACE] handleSearch: SEARCH POST DONE: chunks=' + (chunks ? chunks.length : 'null') + ' latency=' + searchLatency);
 
-      if (Array.isArray(searchRes)) {
-        console.log('[TRACE] handleSearch: VALID RESPONSE, RESULTS=' + searchRes.length);
-        setResults(searchRes);
+      if (chunks) {
+        console.log('[TRACE] handleSearch: VALID RESPONSE, RESULTS=' + chunks.length);
+        setResults(chunks);
 
         // Log query to telemetry (AFTER search, fire-and-forget, don't block retrieval)
         console.log('[TRACE] handleSearch: TELEMETRY POST START (async, fire-and-forget)');
         apiPost('/api/telemetry/query', {
           query_text: query,
           discipline: filters.discipline,
-          result_count: searchRes.length,
+          result_count: chunks.length,
           retrieval_latency_ms: searchLatency,
         }).then((telRes) => {
           console.log('[TRACE] handleSearch: TELEMETRY POST DONE:', telRes?.id);
