@@ -201,7 +201,7 @@ async function execSearchNormativka(args: { query: string; limit?: number }, org
       standard: c.citation_standard || '',
       section: c.citation_section || '',
       page: c.citation_page || 0,
-      text: (c.chunk_text || c.text || '').slice(0, 500),
+      text: (c.content || c.chunk_text || c.text || '').slice(0, 500),
       score: c.score ?? c.similarity ?? null,
     })),
   };
