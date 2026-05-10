@@ -4,6 +4,18 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-10 — Dashboard ГИП редизайн: анимации + цвета дедлайнов
+
+- **Project cards (App.tsx, 2 блока):** добавлен `borderLeft: 3px solid _deadlineColor` — цвет по дедлайну
+- **Deadline color logic:** красный <30 дней (или просрочен), оранжевый <90, зелёный иначе — применяется к тексту и borderLeft карточки
+- **Deadline label:** fontWeight:700 если <30 дней
+- **KPI-анимация:** уже реализована через `StatNumber + useCountUp` (без изменений)
+- **Dept progress bars:** уже реализованы через `deptBarsAnimated` (без изменений)
+- **GipDashboard.tsx:** файл не содержит StatCard/KPI карточек — они в App.tsx; файл без изменений
+
+---
+
+
 ### 2026-05-10 12:30 UTC — ✅ ТЗ: загрузка при создании проекта
 
 - **Добавлено:** в модалке «Новый проект» — опциональное поле «Задание на проектирование (PDF)»
@@ -4172,6 +4184,18 @@ The Railway service at `api-server-production-8157.up.railway.app` is running **
 **Коммит:** `perf: API latency optimization — cache + SQL select + parallelization`
 
 ## Последние изменения (новые сверху)
+
+### 2026-05-10 — Dashboard ГИП редизайн: анимации + цвета дедлайнов
+
+- **Project cards (App.tsx, 2 блока):** добавлен `borderLeft: 3px solid _deadlineColor` — цвет по дедлайну
+- **Deadline color logic:** красный <30 дней (или просрочен), оранжевый <90, зелёный иначе — применяется к тексту и borderLeft карточки
+- **Deadline label:** fontWeight:700 если <30 дней
+- **KPI-анимация:** уже реализована через `StatNumber + useCountUp` (без изменений)
+- **Dept progress bars:** уже реализованы через `deptBarsAnimated` (без изменений)
+- **GipDashboard.tsx:** файл не содержит StatCard/KPI карточек — они в App.tsx; файл без изменений
+
+---
+
 
 ### 2026-05-06 13:45 UTC — PRODUCTION DISCOVERY: Полный аудит выявил критические проблемы 🔴
 

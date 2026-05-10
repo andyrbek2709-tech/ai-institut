@@ -2114,6 +2114,11 @@ export default function App() {
         </div>
 
         <div className="sidebar-bottom">
+          <div style={{ padding: "10px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 5, flexShrink: 0 }}>
+            <button className="sidebar-btn" style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.04)", color: "#8896a8", fontSize: 12, fontFamily: "inherit", cursor: "pointer" }}>
+              ⚙ Настройки
+            </button>
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px" }}>
             <AvatarComp user={currentUserData} size={34} C={C} />
             <div style={{ flex: 1, overflow: "hidden" }}>
@@ -2553,15 +2558,20 @@ export default function App() {
                 )}
                 {projects.filter(p => { if (!searchQuery) return true; const sq = searchQuery.toLowerCase(); return p.name.toLowerCase().includes(sq) || p.code.toLowerCase().includes(sq); }).map(p => {
                   const progress = getAutoProgress(p.id);
+                  const _dl = parseDeadline(p.deadline);
+                  const _daysLeft = _dl ? Math.ceil((_dl.getTime() - Date.now()) / 86400000) : null;
+                  const _isDoneOrArchived = p.status === 'done' || p.archived;
+                  const _deadlineColor = _daysLeft === null ? C.textMuted : (_daysLeft < 0 && !_isDoneOrArchived) ? C.red : _daysLeft < 30 ? C.red : _daysLeft < 90 ? C.orange : C.green;
                   return (
-                    <div key={p.id} className={`project-card ${activeProject?.id === p.id ? "active" : ""}`} onClick={() => { setActiveProject(p); setScreen("project"); setSideTab("tasks"); }}>
+                    <div key={p.id} className={`project-card ${activeProject?.id === p.id ? "active" : ""}`} onClick={() => { setActiveProject(p); setScreen("project"); setSideTab("tasks"); }}
+                      style={{ borderLeft: `3px solid ${_deadlineColor}` }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, alignItems: "center" }}>
                         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                           <span style={{ fontWeight: 600, fontSize: 15, color: C.text }}>{p.name}</span>
                           <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: "3px 10px", borderRadius: 6 }}>{p.code}</span>
                         </div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <span style={{ fontSize: 12, color: (() => { const dl = parseDeadline(p.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {p.deadline}</span>
+                          <span style={{ fontSize: 12, color: _deadlineColor, fontWeight: _daysLeft !== null && _daysLeft < 30 ? 700 : 400 }}>до {p.deadline}</span>
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); promptArchiveProject(p); }}>→ Архив</button>}
                         </div>
                       </div>
@@ -2969,15 +2979,20 @@ export default function App() {
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {projects.filter(p => { if (!searchQuery) return true; const sq = searchQuery.toLowerCase(); return p.name.toLowerCase().includes(sq) || p.code.toLowerCase().includes(sq); }).map(p => {
                   const progress = getAutoProgress(p.id);
+                  const _dl = parseDeadline(p.deadline);
+                  const _daysLeft = _dl ? Math.ceil((_dl.getTime() - Date.now()) / 86400000) : null;
+                  const _isDoneOrArchived = p.status === 'done' || p.archived;
+                  const _deadlineColor = _daysLeft === null ? C.textMuted : (_daysLeft < 0 && !_isDoneOrArchived) ? C.red : _daysLeft < 30 ? C.red : _daysLeft < 90 ? C.orange : C.green;
                   return (
-                    <div key={p.id} className={`project-card ${activeProject?.id === p.id ? "active" : ""}`} onClick={() => { setActiveProject(p); setScreen("project"); setSideTab("tasks"); }}>
+                    <div key={p.id} className={`project-card ${activeProject?.id === p.id ? "active" : ""}`} onClick={() => { setActiveProject(p); setScreen("project"); setSideTab("tasks"); }}
+                      style={{ borderLeft: `3px solid ${_deadlineColor}` }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, alignItems: "center" }}>
                         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                           <span style={{ fontWeight: 600, fontSize: 15, color: C.text }}>{p.name}</span>
                           <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: "3px 10px", borderRadius: 6 }}>{p.code}</span>
                         </div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <span style={{ fontSize: 12, color: (() => { const dl = parseDeadline(p.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {p.deadline}</span>
+                          <span style={{ fontSize: 12, color: _deadlineColor, fontWeight: _daysLeft !== null && _daysLeft < 30 ? 700 : 400 }}>до {p.deadline}</span>
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); promptArchiveProject(p); }}>→ Архив</button>}
                         </div>
                       </div>
