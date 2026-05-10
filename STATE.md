@@ -4,6 +4,17 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-10 — 🔧 STORAGE: добавлены endpoint-ы для файлового хранилища
+
+- **Добавлен** `POST /api/storage-sign-url` — создаёт подписанный URL для файла из приватного bucket (service_role)
+- **Добавлен** `POST /api/storage-delete` — удаляет файл из bucket (service_role)
+- **Добавлен** `GET /api/assignment?project_id=X` — возвращает текущее ТЗ проекта + разделы + signed URL
+- **Добавлен** `POST /api/assignment` — загружает PDF в bucket `project-assignments`, парсит разделы, сохраняет в БД
+- **Файлы:** `services/api-server/src/routes/storage.ts`, `services/api-server/src/routes/assignment.ts`
+- **Причина ошибки «Не удалось получить ссылку»:** `/api/storage-sign-url` не существовал → signed URL = null → popup с ошибкой
+
+---
+
 ### 2026-05-10 18:30 — ✅ AUTH: баг выброса с логина УСТРАНЁН (коммит e32ae6c)
 
 - **Деплой:** Railway `enghub-frontend` — бандл `main.9224d080.js` — ACTIVE
