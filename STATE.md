@@ -4,6 +4,14 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-10 18:30 — ✅ AUTH: баг выброса с логина УСТРАНЁН (коммит e32ae6c)
+
+- **Деплой:** Railway `enghub-frontend` — бандл `main.9224d080.js` — ACTIVE
+- **Проверка:** `dmitry.orlov@enghub.com` / `123456` — остаётся в приложении 32+ секунд
+- **Коммит:** `e32ae6ce` — patched App.tsx из базы GitHub (без truncation), ghost purge + 10s age-check + AUTH logging
+- **Причина truncation в `27d90c3e`:** Cowork mount кэширует размер файла; `wc -c` вернул stale 231644, а `cat` вывел новое (большее) содержимое → fast-import обрезал
+- **Решение:** читать базу из `git cat-file blob`, патчить Python в `/tmp`, fast-import из `/tmp` файла
+
 ### 2026-05-10 16:21 — 🔧 AUTH: ghost channel fix (коммит 10db529c)
 
 - **Root cause (финальный):** Phoenix WebSocket auto-reconnect поднимает удалённые Supabase Realtime каналы. Ревайвнутый ghost-канал старой сессии (sid `n49wk07v`) стреляет SUBSCRIBED→broadcast в moment нового логина → `handleLogout()` выбивает пользователя
@@ -5371,26 +5379,4 @@ OCR Correctness =
 
 ---
 
-### 2026-05-09 12:45 UTC — ✅ FORENSIC ISOLATION AUDIT COMPLETE — CONTAMINATION REMOVED ✅
-
-**Статус:** 🟢 **COMPLETE ARCHITECTURAL ISOLATION ACHIEVED** — Full forensic audit executed, contamination removed, clean separation verified
-
-**Audit Findings:**
-
-1. **calculations-platform:** ✅ CLEAN (UNCHANGED)
-   - Zero contamination detected
-   - NO imports from EngHub
-   - NO cross-project dependencies
-   - Fully isolated and deployable
-
-2. **enghub-main:** 🔴 CONTAMINATED → ✅ CLEANED
-   - Found: 35 files of calculation backend in `/api/cable-calc/`
-   - Found: `cable-calc.html` in build + public directories
-   - Found: Test report files (docx, xlsx)
-   - Found: Stale `calcplatform.pid` file
-   - **Action:** Deleted all 35+ files
-   - **Result:** Complete separation achieved
-
-**Contamination Removed:**
-
-1. Deleted: `
+### 2026-05-09 12:45 U
