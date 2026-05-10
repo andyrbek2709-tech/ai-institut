@@ -719,6 +719,7 @@ export default function App() {
   const msgsRef = useRef<any[]>([]);
   const projectsRef = useRef<any[]>([]);
   const sideTabRef = useRef(sideTab);
+  const tzFileRef = useRef<HTMLInputElement>(null);
   useEffect(() => { activeProjectRef.current = activeProject; }, [activeProject]);
   useEffect(() => { currentUserDataRef.current = currentUserData; }, [currentUserData]);
   useEffect(() => { appUsersRef.current = appUsers; }, [appUsers]);
@@ -1056,7 +1057,22 @@ export default function App() {
     try {
       // B4: gip_id ставим текущим пользователем — он становится владельцем проекта.
       // RLS projects_insert требует, чтобы gip_id = auth_app_user_id() для роли gip.
-      await post("projects", { ...newProject, gip_id: currentUserData?.id, progress: 0, archived: false }, token!);
+      const created = await post("projects", { ...newProject, gip_id: currentUserData?.id, progress: 0, archived: false }, token!);
+      // Загружаем ТЗ если выбран файл
+      const tzFile = tzFileRef.current?.files?.[0];
+      if (tzFile && created?.[0]?.id) {
+        try {
+          const fd = new FormData();
+          fd.append('project_id', String(created[0].id));
+          fd.append('file', tzFile, tzFile.name);
+          await fetch(`https://api-server-production-8157.up.railway.app/api/assignment`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: fd,
+          });
+        } catch (_) { /* ТЗ не критично — проект уже создан */ }
+        if (tzFileRef.current) tzFileRef.current.value = '';
+      }
       setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] });
       setShowNewProject(false);
       loadProjects();
@@ -1562,6 +1578,15 @@ export default function App() {
             </Field>
             <Field label="ДЕДЛАЙН" C={C}><RuDateInput value={newProject.deadline} onChange={v => setNewProject({ ...newProject, deadline: v })} C={C} /></Field>
             <Field label="СТАТУС" C={C}><select value={newProject.status} onChange={e => setNewProject({ ...newProject, status: e.target.value })} style={getInp(C)}><option value="active">В работе</option><option value="review">На проверке</option></select></Field>
+            <Field label="ЗАДАНИЕ НА ПРОЕКТИРОВАНИЕ (необязательно)" C={C}>
+              <input
+                ref={tzFileRef}
+                type="file"
+                accept=".pdf"
+                style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, color: C.text, padding: '6px 8px', fontSize: 13, width: '100%', boxSizing: 'border-box' as const }}
+              />
+              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>PDF — будет автоматически разобран на разделы</div>
+            </Field>
             <button className="btn btn-primary" onClick={createProject} disabled={saving || !newProject.name || !newProject.code} style={{ width: "100%", opacity: (!newProject.name || !newProject.code) ? 0.5 : 1 }}>{saving ? "Создаётся..." : "Создать проект"}</button>
           </div>
         </Modal>
