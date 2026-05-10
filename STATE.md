@@ -4,6 +4,19 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-10 12:00 UTC — ✅ ЗАДАНИЕ НА ПРОЕКТИРОВАНИЕ: фича реализована
+
+- **Задача:** хранить PDF с ТЗ (заданием на проектирование) в проекте; все участники могут видеть, агент — проверять
+- **Суть:** PDF загружается ГИПом/admin → текст извлекается через pdf-parse → разделы автопарсятся по нумерованным заголовкам → дисциплина определяется по ключевым словам
+- **Миграция `028_project_assignments`:** 2 таблицы (`project_assignments`, `assignment_sections`) + RLS + bucket `project-assignments` в Supabase Storage (применена в prod)
+- **API `api/assignment.js`:** GET (assignment + sections + signed URL) / POST (multipart upload, pdf-parse, versioning)
+- **Фронт `AssignmentTab.tsx`:** вкладка «📋 ТЗ» во всех проектах — раскладка разделов по дисциплинам, inline PDF iframe, upload form для ГИП/admin
+- **App.tsx:** добавлен import, таб `"tz"` с лейблом `"📋 ТЗ"`, render block
+- **FK типы:** `project_id bigint`, `uploaded_by bigint` (под схему projects.id / app_users.id)
+- **Коммит:** (готовится)
+
+---
+
 ### 2026-05-10 09:15 UTC — ✅ СПЕЦИФИКАЦИИ: Ст.2/Ст.3 отображение исправлено
 
 - **Баг:** `isSizeOnlyName()` использовала `\b` в regex — не работает с кириллицей в JS (`\b` = ASCII word boundary, кириллица всегда `\W` → `\W\W` = нет границы)

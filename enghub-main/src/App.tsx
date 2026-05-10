@@ -28,6 +28,7 @@ import { RevisionsTab } from './components/RevisionsTab';
 import { ReviewsTab } from './components/ReviewsTab';
 import { TransmittalsTab } from './components/TransmittalsTab';
 import { AssignmentsTab } from './components/AssignmentsTab';
+import { AssignmentTab } from './components/AssignmentTab';
 import { SpecificationsTab } from './components/SpecificationsTab';
 import { DocumentsPanel } from './components/DocumentsPanel';
 import { TaskAttachments } from './components/TaskAttachments';
@@ -2659,9 +2660,9 @@ export default function App() {
               <div style={{ display: conferenceScreenActive ? 'none' : 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
                 <div className="tab-strip-wrap" style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                   <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch', flex: 1, marginBottom: 0 } as React.CSSProperties}>
-                    {["conference","tasks","documents","activity","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
+                    {["conference","tasks","documents","activity","drawings","revisions","reviews","transmittals","assignments","tz","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
                       <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        {t === "tasks" ? "⊙ Задачи" : t === "documents" ? "📁 Документы" : t === "activity" ? "📰 Активность" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
+                        {t === "tasks" ? "⊙ Задачи" : t === "documents" ? "📁 Документы" : t === "activity" ? "📰 Активность" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "tz" ? "📋 ТЗ" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
                       </button>
                     ))}
                   </div>
@@ -2837,6 +2838,16 @@ export default function App() {
                   getDeptNameById={getDeptNameById}
                   getDeptName={getDeptName}
                   handleAssignmentResponse={handleAssignmentResponse}
+                />
+              )}
+
+              {sideTab === "tz" && (
+                <AssignmentTab
+                  C={C}
+                  token={token!}
+                  project={activeProject}
+                  isGip={isGip}
+                  isAdmin={currentUserData?.role === 'admin'}
                 />
               )}
 
