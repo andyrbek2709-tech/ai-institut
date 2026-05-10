@@ -1,15 +1,19 @@
-### 2026-05-10 14:00 UTC — fix(spec): исправлен `isSizeOnlyName` — \\b не работает с кириллицей в JS
-
-- Баг: regex `/^размерами\\b/` не матчил кириллицу т.к. \\b не распознаёт Cyrillic \\w в JS
-- Фикс: заменён \\b на [\\ \\s\\d] → `/^размерами[\\s\\d]/`
-- Теперь Ст.2 = полное наименование материала (из header группы), Ст.3 = размер
-
-
 # STATE — EngHub
 
 > Живой журнал. Обновляется при каждом значимом изменении. Источник правды между сессиями Claude.
 
 ## Последние изменения (новые сверху)
+
+### 2026-05-10 09:15 UTC — ✅ СПЕЦИФИКАЦИИ: Ст.2/Ст.3 отображение исправлено
+
+- **Баг:** `isSizeOnlyName()` использовала `\b` в regex — не работает с кириллицей в JS (`\b` = ASCII word boundary, кириллица всегда `\W` → `\W\W` = нет границы)
+- **Фикс:** заменили `\b` на `[\s\d]` после кириллических слов (`^размерами[\s\d]` и др.)
+- **Побочный баг:** commit `23c1701` случайно обрезал 4 закрывающие строки компонента → Railway build failed → исправлено в `093507f`
+- **Результат:** Ст.2 = полное наименование (напр. "Труба стальная сварная водогазопроводная легкая ГОСТ 3262-75"), Ст.3 = размер ("размерами 25х3,0 мм")
+- **Dropdown:** disabled-заголовки групп `── Название ──`, варианты без тире `код  размер`
+- **Коммиты:** `faf6a30` (enrichCatalogItems), `23c1701` (regex fix, build failed), `093507f` (restore closing braces, ✅ deployed)
+
+---
 
 ### 2026-05-10 — ✅ AGSK-3 КАТАЛОГ ЗАЛИТ В SUPABASE (96 572 позиции)
 
@@ -5286,35 +5290,4 @@ OCR Correctness =
 
 **Contamination Removed:**
 
-1. Deleted: `/enghub-main/api/cable-calc/` (32 files, Python Flask backend)
-2. Deleted: `/enghub-main/build/cable-calc.html` (70 KB)
-3. Deleted: `/enghub-main/public/cable-calc.html`
-4. Deleted: `/enghub-main/cable_calc_report.docx`
-5. Deleted: `/enghub-main/cable_calc_report.xlsx`
-6. Deleted: `/enghub-main/calcplatform.pid`
-
-**Verification Results (All ✅):**
-
-- ✅ Imports: NO cross-project imports detected
-- ✅ Configs: Separate package.json, tsconfig, .env files
-- ✅ Dependencies: Completely independent node_modules
-- ✅ Git: No submodules or nested repos
-- ✅ TypeScript: No monorepo path aliases
-- ✅ Ports: Separate and isolated (3000 vs 3001)
-- ✅ Runtime: No process conflicts or overlaps
-- ✅ Filesystem: Zero remaining artifacts
-
-**Impact:**
-
-- EngHub build size reduced by ~70 KB
-- No dead code in production
-- Clear service boundaries
-- Reduced deployment complexity
-
-**Commit:** `73d2c25` — "chore: remove calculation-platform contamination from enghub-main"
-- 35 files deleted, 8,436 lines removed
-- Pushed to origin/main ✅
-- Railway will auto-deploy cleaner build
-
-**Final Status:** 🟢 **COMPLETE ISOLATION VERIFIED** — Both applications now fully independent and architecturally sound
-
+1. Deleted: `
