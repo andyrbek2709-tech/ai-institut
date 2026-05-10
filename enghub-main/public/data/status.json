@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Источник 3/9: vc.ru (4 feeds)",
-  "progress_pct": 22,
-  "items_processed": 562,
+  "current_step": "Источник 4/9: ProductHunt",
+  "progress_pct": 33,
+  "items_processed": 568,
   "items_total": 0,
-  "updated_at": "2026-05-10T08:00:06Z",
+  "updated_at": "2026-05-10T08:00:11Z",
   "started_at": "2026-05-10T07:59:41Z"
 }
