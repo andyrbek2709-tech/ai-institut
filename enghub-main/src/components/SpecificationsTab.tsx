@@ -96,7 +96,7 @@ const ROWS_PER_PAGE = DEFAULT_ROWS_PER_PAGE;
 /** Имя вида "размерами 25х3,0 мм" — дочерний вариант, не полное название */
 function isSizeOnlyName(name: string): boolean {
   const n = name.trim();
-  return /^размерами\b|^диаметром\b|^длиной\b|^шириной\b|^сечением\b|^типа\b|^марки\b|^\d+[×хxX]/i.test(n);
+  return /^размерами[\s\d]|^диаметром[\s\d]|^длиной[\s\d]|^шириной[\s\d]|^сечением[\s\d]|^типа[\s\d]|^марки[\s\d]|^\d+[×хxX]/i.test(n);
 }
 
 /**
@@ -1049,7 +1049,4 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
             ))}
           </div>
         </div>
-      )}
-    </div>
-  );
-}
+   
