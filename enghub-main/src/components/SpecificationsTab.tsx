@@ -93,6 +93,45 @@ function inferPlantFromCatalog(name: string, typeMark: string, _code: string, cu
 
 const ROWS_PER_PAGE = DEFAULT_ROWS_PER_PAGE;
 
+/** Имя вида "размерами 25х3,0 мм" — дочерний вариант, не полное название */
+function isSizeOnlyName(name: string): boolean {
+  const n = name.trim();
+  return /^размерами\b|^диаметром\b|^длиной\b|^шириной\b|^сечением\b|^типа\b|^марки\b|^\d+[×хxX]/i.test(n);
+}
+
+/**
+ * Для каждой группы первый элемент с «полным» именем становится заголовком.
+ * Дочерние (size-only) элементы получают:
+ *   displayName = имя заголовка группы (Ст.2)
+ *   typeMark    = собственное имя (Ст.3)
+ *   isVariant   = true
+ * Заголовок получает isHeader = true (показывается как disabled-разделитель).
+ */
+function enrichCatalogItems(rawItems: any[]): any[] {
+  const groupHeaders: Record<string, string> = {};
+  for (const item of rawItems) {
+    const gid = String(item.group_id);
+    const name = String(item.name || '');
+    if (!isSizeOnlyName(name) && !groupHeaders[gid]) {
+      groupHeaders[gid] = name;
+    }
+  }
+  const groupHasVariants: Record<string, boolean> = {};
+  for (const item of rawItems) {
+    if (isSizeOnlyName(String(item.name || ''))) {
+      groupHasVariants[String(item.group_id)] = true;
+    }
+  }
+  return rawItems.map((item) => {
+    const name = String(item.name || '');
+    const gid = String(item.group_id);
+    if (isSizeOnlyName(name)) {
+      return { ...item, displayName: groupHeaders[gid] || name, typeMark: name, isVariant: true };
+    }
+    return { ...item, displayName: name, typeMark: '', isHeader: !!groupHasVariants[gid] };
+  });
+}
+
 function AutoTextarea({
   value,
   onChange,
@@ -256,7 +295,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
         );
         const found = Array.isArray(i) ? i : [];
         if (found.length > 0) {
-          setItems(found);
+          setItems(enrichCatalogItems(found));
           return;
         }
         const ql = q.toLowerCase();
@@ -277,7 +316,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
           `catalog_items?group_id=in.(${matchedGroupIds.slice(0, 1500).join(',')})&select=id,group_id,code,name,unit,standard&order=code.asc&limit=600`,
           token
         );
-        setItems(Array.isArray(fallback) ? fallback : []);
+        setItems(enrichCatalogItems(Array.isArray(fallback) ? fallback : []));
         return;
       }
 
@@ -297,7 +336,7 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
         `catalog_items?group_id=in.(${groupIds.join(',')})&select=id,group_id,code,name,unit,standard&order=code.asc&limit=600`,
         token
       );
-      setItems(Array.isArray(i) ? i : []);
+      setItems(enrichCatalogItems(Array.isArray(i) ? i : []));
     } finally {
       setItemsLoading(false);
     }
@@ -443,7 +482,11 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
     if (!sid) return;
     const item = items.find((x: any) => String(x.id) === String(selectedItemId));
     if (!item) return;
-    const inferredUnit = inferUnitFromText(String(item.name || ''), String(item.standard || ''), String(item.unit || ''));
+    // Ст.2 — полное наименование материала (из заголовка группы для дочерних вариантов)
+    const st2 = String((item as any).displayName || item.name || '');
+    // Ст.3 — тип/марка/размер (собственное имя для дочерних, иначе пусто)
+    const st3 = String((item as any).typeMark || item.standard || '');
+    const inferredUnit = inferUnitFromText(st2, st3, String(item.unit || ''));
     const nextLine = (specRows[specRows.length - 1]?.line_no || 0) + 1;
     await post(
       'spec_items',
@@ -451,8 +494,8 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
         spec_id: Number(sid),
         line_no: nextLine,
         item_id: item.id ? Number(item.id) : null,
-        name: item.name,
-        type: item.standard || '',
+        name: st2,
+        type: st3,
         code: item.code,
         factory: inferPlantFromCatalog(
           String(item.name || ''),
@@ -818,9 +861,21 @@ export function SpecificationsTab({ C, token, project, projects, onProjectChange
             style={{ ...inp, fontSize: 12 }}
           >
             <option value="">— Выбрать из каталога —</option>
-            {items.slice(0, 1000).map((it: any) => (
-              <option key={it.id} value={it.id}>{it.code} — {it.name}</option>
-            ))}
+            {items.slice(0, 1000).map((it: any) => {
+              // Заголовок группы — показываем как неинтерактивный разделитель
+              if ((it as any).isHeader) {
+                return (
+                  <option key={`hdr-${it.id}`} disabled value="">
+                    ── {it.name} ──
+                  </option>
+                );
+              }
+              // Дочерний вариант — показываем код + размер (Ст.3)
+              const label = (it as any).typeMark
+                ? `${it.code}  ${(it as any).typeMark}`
+                : `${it.code} — ${it.name}`;
+              return <option key={it.id} value={it.id}>{label}</option>;
+            })}
           </select>
         </div>
         {itemsLoading && <div style={{ fontSize: 11, color: C.textMuted }}>Загрузка позиций…</div>}
