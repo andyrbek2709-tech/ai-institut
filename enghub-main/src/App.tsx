@@ -290,11 +290,13 @@ export default function App() {
     });
     // Keep token fresh: fires on login, token refresh, and logout
     const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+      console.log('[AUTH_CHANGE] event:', _event, 'hasSession:', !!session, 'email:', session?.user?.email ?? 'none');
       if (session) {
         setToken(session.access_token);
         setUserEmail(session.user.email ?? '');
         localStorage.setItem('enghub_email', session.user.email ?? '');
       } else {
+        console.warn('[AUTH_CHANGE] session is null → clearing token');
         setToken(null);
         setUserEmail('');
       }
@@ -304,14 +306,28 @@ export default function App() {
 
   useEffect(() => {
     if (token && !isAdmin) {
-      Promise.all([loadAppUsers(), loadDepts(), loadProjects(), loadNormativeDocs(), loadBranding()])
+      console.log('[AUTH] Loading app data, token prefix:', token.slice(0, 20));
+      Promise.all([
+        loadAppUsers().catch((e: any) => { console.error('[AUTH] loadAppUsers failed:', e?.constructor?.name, e?.message); throw e; }),
+        loadDepts().catch((e: any) => { console.error('[AUTH] loadDepts failed:', e?.constructor?.name, e?.message); throw e; }),
+        loadProjects().catch((e: any) => { console.error('[AUTH] loadProjects failed:', e?.constructor?.name, e?.message); throw e; }),
+        loadNormativeDocs().catch((e: any) => { console.error('[AUTH] loadNormativeDocs failed:', e?.constructor?.name, e?.message); throw e; }),
+        loadBranding(),
+      ])
+        .then(() => console.log('[AUTH] All data loaded OK'))
         .catch(async (e: any) => {
           setLoading(false);
+          console.error('[AUTH] Data load catch:', e?.constructor?.name, e?.message, 'isAuthError:', e instanceof AuthError);
           if (e instanceof AuthError) {
+            // Verify the Supabase session is actually invalid before logging out.
+            // A transient 401 (e.g. RLS misconfiguration) should not kick the user out.
             try {
               const { data: sessionData } = await getSupabaseAnonClient().auth.getSession();
               if (!sessionData?.session) {
+                console.warn('[AUTH] Session confirmed invalid → logging out');
                 handleLogout();
+              } else {
+                console.warn('[AUTH] Got 401 but session is still valid — NOT logging out. Token:', sessionData.session.access_token.slice(0, 20));
               }
             } catch {
               handleLogout();
@@ -319,7 +335,7 @@ export default function App() {
           }
         });
     }
-  }, [token]);
+  }, [token]); // eslint-disable-line
   useEffect(() => {
     if (activeProject && token) {
       loadAllTasks(activeProject.id);
@@ -370,15 +386,21 @@ export default function App() {
   const sessionChannelRef = useRef<any>(null);
 
   // ── Одна сессия на пользователя: при новом входе выбиваем старые сессии ──
+  // token in deps: ensures channel is torn down on logout and rebuilt on re-login.
+  // Without token here, the channel persists after SIGNED_OUT (token→null doesn't
+  // trigger the effect), leaving a stale subscription that triggers handleLogout
+  // when Supabase Realtime reconnects and re-fires the SUBSCRIBED broadcast.
   useEffect(() => {
     if (!currentUserData?.id || !token) {
       if (sessionChannelRef.current) {
         const { ch, supa } = sessionChannelRef.current;
+        console.log('[SESSION] Cleanup: removing stale channel for user', currentUserData?.id, 'token=', !!token);
         supa.removeChannel(ch);
         sessionChannelRef.current = null;
       }
       return;
     }
+    console.log('[SESSION] Creating channel for user', currentUserData.id, 'sid:', sessionId.current.slice(0, 8));
     const supa = getSupabaseAnonClient();
     const topic = `session:${currentUserData.id}`;
     // Purge ghost subscriptions — Phoenix auto-reconnect revives removed channels;
@@ -393,18 +415,22 @@ export default function App() {
     });
     ch.on('broadcast', { event: 'login' }, ({ payload }: any) => {
       const age = Date.now() - (payload?.timestamp ?? 0);
+      console.warn('[SESSION] Broadcast received — age:', age, 'ms, incoming sid:', payload?.sessionId?.slice(0, 8), 'mine:', sessionId.current.slice(0, 8));
+      // Ignore stale broadcasts (e.g. ghost channels replaying on reconnect).
       if (age > 10_000) { return; }
       if (payload?.sessionId && payload.sessionId !== sessionId.current) {
         // Другое устройство/вкладка вошло под этим аккаунтом — выходим
         handleLogout();
       }
     }).subscribe((status: string) => {
+      console.log('[SESSION] Channel status:', status, 'for user', currentUserData.id);
       if (status === 'SUBSCRIBED') {
         ch.send({ type: 'broadcast', event: 'login', payload: { sessionId: sessionId.current, timestamp: Date.now() } });
         sessionChannelRef.current = { ch, supa };
       }
     });
     return () => {
+      console.log('[SESSION] useEffect cleanup: removing channel for user', currentUserData.id);
       supa.removeChannel(ch);
       sessionChannelRef.current = null;
     };
@@ -1475,6 +1501,9 @@ export default function App() {
   const handleLogout = () => {
     // Sign out from Supabase JS — onAuthStateChange will clear token + userEmail.
     // Clear token immediately too so UI switches to login without waiting for async signOut.
+    // scope:'local' avoids revoking the refresh token on the server (global wipe caused other
+    // tabs / next logins to also lose their session).
+    console.warn('[AUTH] handleLogout called', new Error().stack?.split('\n').slice(1, 4).join(' | '));
     setToken(null);
     setUserEmail('');
     getSupabaseAnonClient().auth.signOut({ scope: 'local' }).catch(() => {});
@@ -3217,21 +3246,39 @@ export default function App() {
                 )}
               </div>
 
-              {/* Search bar */}
-              <div style={{ display: 'flex', gap: 12, background: C.surface2, padding: 10, borderRadius: 12 }}>
-                <input
-                  placeholder="Поиск по тексту документов..."
-                  value={normSearchQuery}
-                  onChange={e => { setNormSearchQuery(e.target.value); if (!e.target.value.trim()) setNormSearchResults(null); }}
-                  onKeyDown={e => { if (e.key === 'Enter') searchNormative(normSearchQuery); }}
-                  style={{ ...getInp(C), flex: 1, height: 40, fontSize: 14 }}
-                />
-                {normSearchResults !== null && (
-                  <button className="btn btn-secondary" style={{ height: 40, fontSize: 13 }} onClick={() => { setNormSearchQuery(''); setNormSearchResults(null); }}>✕ Сбросить</button>
-                )}
-                <button className="btn btn-primary" style={{ height: 40, width: 40, padding: 0 }} onClick={() => searchNormative(normSearchQuery)} disabled={normSearching}>
-                  {normSearching ? '…' : '🔍'}
-                </button>
+              {/* AI Search bar */}
+              <div style={{
+                background: C.surface,
+                border: `1px solid ${useKb ? C.accent : C.border}`,
+                borderRadius: 14, padding: '18px 20px', marginBottom: 4,
+                boxShadow: useKb ? `0 0 0 3px ${C.accent}18` : '0 1px 3px rgba(0,0,0,0.10)',
+                transition: 'all 0.25s'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>★ AI-поиск по нормативке</span>
+                  {/* RAG toggle */}
+                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 11, color: C.textMuted }}>RAG-поиск</span>
+                    <div onClick={() => setUseKb(!useKb)} style={{ width: 36, height: 20, borderRadius: 10, background: useKb ? C.accent : C.border, cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                      <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: useKb ? 18 : 3, transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <input
+                    placeholder={useKb ? 'Семантический поиск по документам (RAG)...' : 'Поиск по тексту документов...'}
+                    value={normSearchQuery}
+                    onChange={e => { setNormSearchQuery(e.target.value); if (!e.target.value.trim()) setNormSearchResults(null); }}
+                    onKeyDown={e => { if (e.key === 'Enter') searchNormative(normSearchQuery); }}
+                    style={{ ...getInp(C), flex: 1, height: 40, fontSize: 14 }}
+                  />
+                  {normSearchResults !== null && (
+                    <button className="btn btn-secondary" style={{ height: 40, fontSize: 13 }} onClick={() => { setNormSearchQuery(''); setNormSearchResults(null); }}>✕ Сбросить</button>
+                  )}
+                  <button className="btn btn-primary" style={{ height: 40, width: 40, padding: 0 }} onClick={() => searchNormative(normSearchQuery)} disabled={normSearching}>
+                    {normSearching ? '…' : '🔍'}
+                  </button>
+                </div>
               </div>
 
               {/* Search results */}
@@ -3452,23 +3499,4 @@ export default function App() {
           )}
 
           {/* ===== STANDARDS RETRIEVAL (Pilot Phase) ===== */}
-          {screen === "standards" && (
-            <StandardsSearch />
-          )}
-
-        </div>
-      </div>
-      <ToastContainer notifications={notifications} onRemove={removeNotification} />
-
-      {/* ── Mobile Bottom Navigation ── */}
-      <nav className="mobile-nav">
-        {navItems.map(n => (
-          <button key={n.id} className={`mobile-nav-btn ${screen === n.id || (screen === 'project' && n.id === 'projects_list') ? 'active' : ''}`} onClick={() => setScreen(n.id)}>
-            <span className="mnav-icon">{n.icon}</span>
-            <span>{n.label}</span>
-          </button>
-        ))}
-      </nav>
-    </div>
-  );
-}
+          {screen === "st
