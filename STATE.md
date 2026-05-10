@@ -1,3 +1,9 @@
+## 2026-05-10
+
+- **fix(auth): scope:'local' для signOut** — App.tsx: `handleLogout` теперь вызывает `signOut({ scope: 'local' })` чтобы не инвалидировать refresh token глобально; добавлен `console.warn` со стектрейсом при logout — коммит 01f395dc9542
+- **fix(auth): defensive getSession check** — перед вызовом logout при 401 проверяем `getSession()`; если сессия валидна — logout не вызывается (transient 401 не выбрасывает юзера)
+- **fix(auth): logging в onAuthStateChange и useEffect([token])** — каждый auth-event логируется с `[AUTH_CHANGE]` и `[AUTH]` префиксами для диагностики регрессии (dmitry.orlov@enghub.com выкидывало на логин)
+
 # STATE — EngHub
 
 > Живой журнал. Обновляется при каждом значимом изменении. Источник правды между сессиями Claude.
