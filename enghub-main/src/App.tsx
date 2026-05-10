@@ -3198,21 +3198,39 @@ export default function App() {
                 )}
               </div>
 
-              {/* Search bar */}
-              <div style={{ display: 'flex', gap: 12, background: C.surface2, padding: 10, borderRadius: 12 }}>
-                <input
-                  placeholder="Поиск по тексту документов..."
-                  value={normSearchQuery}
-                  onChange={e => { setNormSearchQuery(e.target.value); if (!e.target.value.trim()) setNormSearchResults(null); }}
-                  onKeyDown={e => { if (e.key === 'Enter') searchNormative(normSearchQuery); }}
-                  style={{ ...getInp(C), flex: 1, height: 40, fontSize: 14 }}
-                />
-                {normSearchResults !== null && (
-                  <button className="btn btn-secondary" style={{ height: 40, fontSize: 13 }} onClick={() => { setNormSearchQuery(''); setNormSearchResults(null); }}>✕ Сбросить</button>
-                )}
-                <button className="btn btn-primary" style={{ height: 40, width: 40, padding: 0 }} onClick={() => searchNormative(normSearchQuery)} disabled={normSearching}>
-                  {normSearching ? '…' : '🔍'}
-                </button>
+              {/* AI Search bar */}
+              <div style={{
+                background: C.surface,
+                border: `1px solid ${useKb ? C.accent : C.border}`,
+                borderRadius: 14, padding: '18px 20px', marginBottom: 4,
+                boxShadow: useKb ? `0 0 0 3px ${C.accent}18` : '0 1px 3px rgba(0,0,0,0.10)',
+                transition: 'all 0.25s'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>★ AI-поиск по нормативке</span>
+                  {/* RAG toggle */}
+                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 11, color: C.textMuted }}>RAG-поиск</span>
+                    <div onClick={() => setUseKb(!useKb)} style={{ width: 36, height: 20, borderRadius: 10, background: useKb ? C.accent : C.border, cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                      <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: useKb ? 18 : 3, transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <input
+                    placeholder={useKb ? 'Семантический поиск по документам (RAG)...' : 'Поиск по тексту документов...'}
+                    value={normSearchQuery}
+                    onChange={e => { setNormSearchQuery(e.target.value); if (!e.target.value.trim()) setNormSearchResults(null); }}
+                    onKeyDown={e => { if (e.key === 'Enter') searchNormative(normSearchQuery); }}
+                    style={{ ...getInp(C), flex: 1, height: 40, fontSize: 14 }}
+                  />
+                  {normSearchResults !== null && (
+                    <button className="btn btn-secondary" style={{ height: 40, fontSize: 13 }} onClick={() => { setNormSearchQuery(''); setNormSearchResults(null); }}>✕ Сбросить</button>
+                  )}
+                  <button className="btn btn-primary" style={{ height: 40, width: 40, padding: 0 }} onClick={() => searchNormative(normSearchQuery)} disabled={normSearching}>
+                    {normSearching ? '…' : '🔍'}
+                  </button>
+                </div>
               </div>
 
               {/* Search results */}

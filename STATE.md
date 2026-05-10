@@ -4,6 +4,17 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-10 — ✅ РАСЧЁТЫ + НОРМАТИВКА: дизайн-хэндофф UI обновлён
+
+- **Расчёты:** добавлен экран `screen === "calculations"` с grid-карточками (`repeat(auto-fill, minmax(280px,1fr))`, `borderTop: 3px solid catColor`, badge категории, фильтр по категориям + поиск)
+- **Расчёты:** правая панель — `<CalculationView calcId={activeCalc} C={C} />` (сплит-макет)
+- **Nav:** добавлен пункт `{ id: "calculations", icon: "∑", label: "Расчёты" }` в `navItems` и `screenTitles`
+- **Нормативка:** блок поиска заменён на AI-поиск с RAG-toggle (пилл с анимацией on/off, акцентная рамка при `useKb=true`)
+- **State:** добавлены `useKb` (default: true), `calcActiveCat` (null = все категории)
+- **Файл:** `enghub-main/src/App.tsx`
+
+---
+
 ### 2026-05-10 14:00 UTC — ✅ РЕДИЗАЙН: хэндофф реализован
 
 - SVG иконки, CSS анимации (screenEnter, pulseDot, hover), sidebar section labels
