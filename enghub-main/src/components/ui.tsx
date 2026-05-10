@@ -142,16 +142,27 @@ export function RuDateInput({
     }
   };
 
+  const dateRef = React.useRef<HTMLInputElement>(null);
+  const toIso = (ru: string): string => {
+    const m = ru.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : "";
+  };
+  const handleDatePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const iso = e.target.value;
+    if (iso) { setText(toRu(iso)); onChange(iso); }
+  };
   return (
-    <input
-      type="text"
-      value={text}
-      onChange={(e) => handleChange(e.target.value)}
-      placeholder={placeholder || "ДД.ММ.ГГГГ"}
-      style={getInp(C)}
-      inputMode="numeric"
-      maxLength={10}
-    />
+    <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 6 }}>
+      <input type="text" value={text} onChange={(e) => handleChange(e.target.value)}
+        placeholder={placeholder || "ДД.ММ.ГГГГ"} style={{ ...getInp(C), flex: 1 }}
+        inputMode="numeric" maxLength={10} />
+      <button type="button"
+        onClick={() => { try { (dateRef.current as any)?.showPicker(); } catch { dateRef.current?.click(); } }}
+        style={{ background: (C as any).surface2||(C as any).surface, border: `1.5px solid ${(C as any).border}`, borderRadius: 8, padding: "9px 10px", cursor: "pointer", color: (C as any).accent||(C as any).textMuted, fontSize: 16, lineHeight: 1, flexShrink: 0 }}
+        title="Выбрать дату">📅</button>
+      <input ref={dateRef} type="date" value={toIso(text)||value} onChange={handleDatePick}
+        style={{ position:"absolute", opacity:0, width:1, height:1, pointerEvents:"none" }} tabIndex={-1} />
+    </div>
   );
 }
 
