@@ -13,7 +13,7 @@
 - **Фронт `AssignmentTab.tsx`:** вкладка «📋 ТЗ» во всех проектах — раскладка разделов по дисциплинам, inline PDF iframe, upload form для ГИП/admin
 - **App.tsx:** добавлен import, таб `"tz"` с лейблом `"📋 ТЗ"`, render block
 - **FK типы:** `project_id bigint`, `uploaded_by bigint` (под схему projects.id / app_users.id)
-- **Коммит:** (готовится)
+- **Коммит:** `0b0dc51` ✅ pushed → Railway building
 
 ---
 
