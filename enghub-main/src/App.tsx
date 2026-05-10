@@ -398,6 +398,7 @@ export default function App() {
       config: { broadcast: { self: false, ack: false } }
     });
     ch.on('broadcast', { event: 'login' }, ({ payload }: any) => {
+      console.warn('[SESSION] Broadcast received, incoming sid:', payload?.sessionId?.slice(0,8), 'mine:', sessionId.current.slice(0,8));
       if (payload?.sessionId && payload.sessionId !== sessionId.current) {
         // ÐÑÑÐ³Ð¾Ðµ ÑÑÑÑÐ¾Ð¹ÑÑÐ²Ð¾/Ð²ÐºÐ»Ð°Ð´ÐºÐ° Ð²Ð¾ÑÐ»Ð¾ Ð¿Ð¾Ð´ ÑÑÐ¸Ð¼ Ð°ÐºÐºÐ°ÑÐ½ÑÐ¾Ð¼ â Ð²ÑÑÐ¾Ð´Ð¸Ð¼
         handleLogout();
@@ -409,10 +410,11 @@ export default function App() {
       }
     });
     return () => {
+      console.log('[SESSION] useEffect cleanup: removing channel for user', currentUserData.id);
       supa.removeChannel(ch);
       sessionChannelRef.current = null;
     };
-  }, [currentUserData?.id]); // eslint-disable-line
+  }, [currentUserData?.id, token]); // eslint-disable-line
 
   // ââ Ð£Ð²ÐµÐ´Ð¾Ð¼Ð»ÐµÐ½Ð¸Ñ Ð¾ Ð²ÑÐ¾Ð´ÑÑÐ¸Ñ Ð²ÑÐ·Ð¾Ð²Ð°Ñ (bypass RLS ÑÐµÑÐµÐ· broadcast) ââ
   useEffect(() => {
