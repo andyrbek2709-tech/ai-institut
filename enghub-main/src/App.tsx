@@ -305,9 +305,18 @@ export default function App() {
   useEffect(() => {
     if (token && !isAdmin) {
       Promise.all([loadAppUsers(), loadDepts(), loadProjects(), loadNormativeDocs(), loadBranding()])
-        .catch((e: any) => {
+        .catch(async (e: any) => {
           setLoading(false);
-          if (e instanceof AuthError) handleLogout();
+          if (e instanceof AuthError) {
+            try {
+              const { data: sessionData } = await getSupabaseAnonClient().auth.getSession();
+              if (!sessionData?.session) {
+                handleLogout();
+              }
+            } catch {
+              handleLogout();
+            }
+          }
         });
     }
   }, [token]);
@@ -1468,7 +1477,7 @@ export default function App() {
     // Clear token immediately too so UI switches to login without waiting for async signOut.
     setToken(null);
     setUserEmail('');
-    getSupabaseAnonClient().auth.signOut().catch(() => {});
+    getSupabaseAnonClient().auth.signOut({ scope: 'local' }).catch(() => {});
     setCurrentUserData(null); setProjects([]); setTasks([]); setAllTasks([]); setMsgs([]); setChatInput(""); setTaskComment("");
     setDrawings([]); setRevisions([]); setReviews([]); setTransmittals([]); setTransmittalItems({}); setArchivedProjects([]);
     setSearchQuery(""); setFilterStatus("all"); setFilterPriority("all"); setFilterAssigned("all");
