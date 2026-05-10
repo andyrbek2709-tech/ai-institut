@@ -207,6 +207,8 @@ export default function App() {
   const [normSearchQuery, setNormSearchQuery] = useState("");
   const [normSearchResults, setNormSearchResults] = useState<any[] | null>(null);
   const [normSearching, setNormSearching] = useState(false);
+  const [useKb, setUseKb] = useState(true);
+  const [calcActiveCat, setCalcActiveCat] = useState<string | null>(null);
   const [showDupModal, setShowDupModal] = useState(false);
   const [dupConflicts, setDupConflicts] = useState<{file: File, existing: any}[]>([]);
   const [dupDecisions, setDupDecisions] = useState<Record<string, 'overwrite' | 'skip'>>({});
@@ -1542,10 +1544,11 @@ export default function App() {
     { id: "tasks", icon: "≡", label: "Задачи" },
     { id: "standards", icon: "⚙", label: "Стандарты" },
     { id: "specifications", icon: "📋", label: "Спецификации" },
-    { id: "normative", icon: "📄", label: "Нормативка" }
+    { id: "normative", icon: "📄", label: "Нормативка" },
+    { id: "calculations", icon: "∑", label: "Расчёты" }
   ];
 
-  const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", standards: "Поиск Стандартов", specifications: "Спецификации", normative: "База знаний (Нормативка)" };
+  const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", standards: "Поиск Стандартов", specifications: "Спецификации", normative: "База знаний (Нормативка)", calculations: "Расчёты" };
 
   const calcTemplates = Object.values(calcRegistry);
   const calcCatLabels: Record<string, string> = { "ТХ": "ТХ — Технология", "ТТ": "ТТ — Теплотехника", "ЭО": "ЭО — Электрика", "ВК": "ВК — Водоснабжение", "ПБ": "ПБ — Пожарная безопасность", "Г": "Генплан", "КЖ / КМ": "КЖ / КМ — Конструктив", "КИПиА": "КИПиА", "ОВ": "ОВ — Отопление и вентиляция" };
@@ -3335,6 +3338,95 @@ export default function App() {
                       ))}
                     </>
                   )}
+                </div>
+              )}
+            </div>
+          )}
+
+
+          {/* ===== CALCULATIONS SCREEN ===== */}
+          {screen === "calculations" && (
+            <div className="screen-fade" style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+              {/* Left sidebar: category filter + card grid */}
+              <div style={{ width: activeCalc ? 380 : '100%', minWidth: 280, borderRight: activeCalc ? `1px solid ${C.border}` : 'none', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width 0.25s' }}>
+                {/* Search + filters */}
+                <div style={{ padding: '18px 18px 12px', borderBottom: `1px solid ${C.border}`, background: C.surface }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12, fontFamily: "'Manrope',sans-serif" }}>Библиотека расчётов</div>
+                  <input
+                    placeholder="Поиск расчёта..."
+                    value={calcSearch}
+                    onChange={e => setCalcSearch(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface2, color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                  />
+                  {/* Category pills */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+                    <button
+                      onClick={() => setCalcActiveCat(null)}
+                      style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: calcActiveCat === null ? C.accent : C.surface2, color: calcActiveCat === null ? '#fff' : C.textMuted, transition: 'all 0.15s' }}
+                    >Все</button>
+                    {calcAllCats.filter(cat => calcTemplates.some(t => t.cat === cat)).map(cat => {
+                      const CALC_CAT_COLORS: Record<string,string> = { 'ТХ': '#2b5bb5', 'ТТ': '#2f9e62', 'ОВ': '#2f9e62', 'ЭО': '#f5a623', 'ВК': '#06b6d4', 'КЖ / КМ': '#a855f7', 'КЖ': '#a855f7', 'КМ': '#a855f7', 'ПБ': '#ef4444', 'Г': '#22c55e', 'КИПиА': '#8b5cf6' };
+                      const cc = CALC_CAT_COLORS[cat] || C.accent;
+                      const isActive = calcActiveCat === cat;
+                      return (
+                        <button key={cat} onClick={() => setCalcActiveCat(isActive ? null : cat)}
+                          style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: isActive ? cc : cc + '20', color: isActive ? '#fff' : cc, transition: 'all 0.15s' }}>
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Cards grid */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: 14 }}>
+                  {(() => {
+                    const CALC_CAT_COLORS: Record<string,string> = { 'ТХ': '#2b5bb5', 'ТТ': '#2f9e62', 'ОВ': '#2f9e62', 'ЭО': '#f5a623', 'ВК': '#06b6d4', 'КЖ / КМ': '#a855f7', 'КЖ': '#a855f7', 'КМ': '#a855f7', 'ПБ': '#ef4444', 'Г': '#22c55e', 'КИПиА': '#8b5cf6' };
+                    const filtered = calcTemplates.filter(t => {
+                      const matchCat = !calcActiveCat || t.cat === calcActiveCat;
+                      const q = calcSearch.toLowerCase().trim();
+                      const matchQ = !q || t.name.toLowerCase().includes(q) || (t.desc || '').toLowerCase().includes(q) || t.cat.toLowerCase().includes(q);
+                      return matchCat && matchQ;
+                    });
+                    if (filtered.length === 0) return (
+                      <div style={{ padding: 40, textAlign: 'center', color: C.textMuted, fontSize: 13 }}>Расчётов не найдено</div>
+                    );
+                    return (
+                      <div style={{ display: 'grid', gridTemplateColumns: activeCalc ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                        {filtered.map(calc => {
+                          const catColor = CALC_CAT_COLORS[calc.cat] || C.accent;
+                          const isActive = activeCalc === calc.id;
+                          return (
+                            <div key={calc.id}
+                              onClick={() => setActiveCalc(isActive ? null : calc.id)}
+                              style={{
+                                background: isActive ? (catColor + '10') : C.surface,
+                                border: isActive ? `1px solid ${catColor}60` : `1px solid ${C.border}`,
+                                borderRadius: 12, padding: '16px 18px', cursor: 'pointer',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                                transition: 'all 0.22s', borderTop: `3px solid ${catColor}`,
+                                position: 'relative', overflow: 'hidden'
+                              }}>
+                              {/* Badge + standard */}
+                              <div style={{ display: 'flex', gap: 7, alignItems: 'center', marginBottom: 9 }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, background: catColor + '20', color: catColor, padding: '2px 8px', borderRadius: 20 }}>{calc.cat}</span>
+                                <span style={{ fontSize: 9, color: C.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{calc.normativeReference}</span>
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 5, lineHeight: 1.3, fontFamily: "'Manrope',sans-serif" }}>{calc.name}</div>
+                              <div style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.5 }}>{calc.desc}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Right panel: CalculationView detail */}
+              {activeCalc && (
+                <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                  <CalculationView calcId={activeCalc} C={C} />
                 </div>
               )}
             </div>

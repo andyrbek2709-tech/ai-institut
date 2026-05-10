@@ -4,6 +4,21 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-10 14:00 UTC — ✅ РЕДИЗАЙН: хэндофф реализован
+
+- SVG иконки, CSS анимации (screenEnter, pulseDot, hover), sidebar section labels
+- useCountUp на KPI карточках, анимированные прогресс-бары отделов
+- Deadline цвета на карточках проектов (красный <30д, оранжевый <90д, зелёный)
+- LeadDashboard: KPI, нагрузка инженеров, очередь на проверке
+- EngineerDashboard: KPI, задачи с prioritet-цветом, проекты с дедлайном
+- Расчёты: grid карточек с borderTop по категории + фильтр
+- Нормативка: стиль AI-поиска с RAG-тоглом
+- ActivityFeed.tsx: читает реальные данные из activity_log через /api/activity-log (без mock)
+- Миграция 029_activity_log: таблица уже существовала в prod; добавлены индексы (project_id, actor_id, created_at) + insert RLS policy через Supabase MCP
+- Коммит: 6bc0fa3 ✅
+
+---
+
 ### 2026-05-10 — Dashboard ГИП редизайн: анимации + цвета дедлайнов
 
 - **Project cards (App.tsx, 2 блока):** добавлен `borderLeft: 3px solid _deadlineColor` — цвет по дедлайну
@@ -2055,7 +2070,6 @@ Aggressive (Multi-org integration, Year 2+):
 
 ---
 
->>>>>>> f1bf7c1 (feat(determinism): Operational determinism proof — all 4 phases PASSED in real Python runtime (100 runs, edge cases, process restart, persistence integrity))
 ### 2026-05-09 00:45 UTC — DETERMINISTIC CORE STABILIZATION: STAGES 1-4 COMPLETE ✅
 
 **Статус:** 🔧 **IN PROGRESS** — Deterministic core refactoring underway. Stages 1-4 complete, Stages 5-9 in progress.
@@ -4184,6 +4198,21 @@ The Railway service at `api-server-production-8157.up.railway.app` is running **
 **Коммит:** `perf: API latency optimization — cache + SQL select + parallelization`
 
 ## Последние изменения (новые сверху)
+
+### 2026-05-10 14:00 UTC — ✅ РЕДИЗАЙН: хэндофф реализован
+
+- SVG иконки, CSS анимации (screenEnter, pulseDot, hover), sidebar section labels
+- useCountUp на KPI карточках, анимированные прогресс-бары отделов
+- Deadline цвета на карточках проектов (красный <30д, оранжевый <90д, зелёный)
+- LeadDashboard: KPI, нагрузка инженеров, очередь на проверке
+- EngineerDashboard: KPI, задачи с prioritet-цветом, проекты с дедлайном
+- Расчёты: grid карточек с borderTop по категории + фильтр
+- Нормативка: стиль AI-поиска с RAG-тоглом
+- ActivityFeed.tsx: читает реальные данные из activity_log через /api/activity-log (без mock)
+- Миграция 029_activity_log: таблица уже существовала в prod; добавлены индексы (project_id, actor_id, created_at) + insert RLS policy через Supabase MCP
+- Коммит: 6bc0fa3 ✅
+
+---
 
 ### 2026-05-10 — Dashboard ГИП редизайн: анимации + цвета дедлайнов
 

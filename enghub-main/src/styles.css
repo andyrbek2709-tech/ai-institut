@@ -1397,3 +1397,29 @@ select.input option { background: var(--surface); color: var(--text); }
   0%, 100% { transform: scale(1); opacity: 1; }
   50%      { transform: scale(1.3); opacity: 0.6; }
 }
+
+/* ── Redesign 2026: additional animations & hovers ── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Sidebar btn hover (sbn alias) */
+.sbn:hover {
+  transform: translateX(2px);
+}
+
+/* Feed / kanban / proj-card hovers */
+.feed-item:hover {
+  background: rgba(255,255,255,0.025);
+}
+.kcard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+}
+.proj-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.38);
+}
+.tbtn:hover {
+  background: rgba(255,255,255,0.05) !important;
+}
