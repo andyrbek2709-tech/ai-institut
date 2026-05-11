@@ -1688,7 +1688,7 @@ export default function App() {
                       📎 {taskFile.name}
                     </span>
                     <button type="button" onClick={() => setTaskFile(null)}
-                      style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: `1px solid ${C.danger || '#e53e3e'}`, background: 'transparent', color: C.danger || '#e53e3e', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '1px solid #e53e3e', background: 'transparent', color: '#e53e3e', cursor: 'pointer', fontFamily: 'inherit' }}>
                       ✕
                     </button>
                   </>
