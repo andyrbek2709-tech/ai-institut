@@ -1,33 +1,39 @@
 # AGSK Engineering AI Platform — Production Evaluation Dataset
 
-**Status:** PRE-IMPLEMENTATION VALIDATION PHASE  
-**Date:** 2026-05-08  
-**Purpose:** Benchmark retrieval quality, citation accuracy, and relevance before deployment  
-**Timeline:** Use for Week 3-4 (production readiness checks)
+**Status:** PRE-IMPLEMENTATION VALIDATION + ASSIGNMENT-ANALYSIS SUBSET  
+**Date:** 2026-05-08 (создано), 2026-05-11 (расширено до 100)  
+**Purpose:** Benchmark retrieval quality, citation accuracy, relevance, и качество анализа разделов ТЗ  
+**Timeline:** Use for Week 3-4 (production readiness checks) + ongoing для `/api/assignment/analyze`
 
 ---
 
 ## 📋 DATASET OVERVIEW
 
-This dataset contains **80 realistic engineering queries** organized by discipline and complexity level. Each query has:
-- Expected standards (ISO, ASME, GOST, API, etc.)
+This dataset contains **100 engineering queries** organized by discipline and complexity:
+- **Q001-Q080** — Pre-implementation validation, international standards (API/ASME/ASTM/ISO/EN)
+- **Q081-Q100** — Assignment-analysis subset, российские/казахстанские нормы (СП/ГОСТ/ПУЭ/СО/123-ФЗ) — для фичи `POST /api/assignment/analyze` (Phase 5 плана federated-wondering-hinton)
+
+Each query has:
+- Expected standards (ISO, ASME, GOST, СП, ПУЭ, etc.)
 - Expected sections (with hierarchy)
 - Expected citations (exact location in standards)
 - Expected keywords (for BM25 matching)
-- Expected discipline (structural, pipeline, electrical, etc.)
+- Expected discipline (structural, pipeline, electrical, fire_safety, etc.)
+- Q081-Q100 also have `ru_discipline` (ЭС/ОВ/ВК/ПБ/КР) и `subset: "assignment_analysis"`
 - Confidence score (how confident we are in the ground truth)
 
 ### Dataset Statistics
 
 | Metric | Value |
 |--------|-------|
-| Total Queries | 80 |
-| Disciplines | 7 (pipeline, structural, mechanical, electrical, geotechnical, fire safety, inspection) |
-| Difficulty Levels | 3 (simple=30%, medium=50%, complex=20%) |
-| Standards Covered | 20+ (API, ASME, ISO, GOST, EN, etc.) |
-| Total Expected Citations | 150+ |
+| Total Queries | 100 (80 base + 20 assignment-analysis) |
+| Disciplines | 8 (pipeline, structural, mechanical, electrical, geotechnical, fire_safety, corrosion, inspection) |
+| Difficulty Levels | 3 (simple, medium, complex) |
+| Standards Covered | 30+ (API, ASME, ISO, GOST, СП, ПУЭ, СО, ТР ТС, EN) |
+| Total Expected Citations | 200+ |
 | Ambiguous Queries (edge cases) | 8 |
 | Version Conflict Queries | 5 |
+| Assignment-Analysis Cases (Q081-Q100) | 20 (4 на дисциплину: ЭС/ОВ/ВК/ПБ/КР) |
 
 ---
 

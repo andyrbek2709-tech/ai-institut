@@ -4,6 +4,75 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-11 — 🗺️ HYGIENE: knowledge graph + cleanup (Phase 1 плана federated-wondering-hinton)
+
+- **Cleanup:** удалены 3 `.bak` файла (`CALCULATION_EXAMPLES_AND_FORMULAS.md.bak`, `ELECTRICAL_ENGINEERING_METHODS.md.bak`, `REPORTING_ARCHITECTURE_REPORT.md.bak`) и битый файл со склеенным путём `d<U+FF1A>ai-institutenghub-mainsupabasemigrations026_api_performance_indexes.sql` (правильный находится в `enghub-main/supabase/migrations/026_api_performance_indexes.sql`)
+- **`PROJECT_MAP.md`:** добавлена секция «📚 КОРПУС ЗНАНИЙ (Knowledge Corpus)» — группировка ~150 markdown-документов в корне репо по 10 тематикам:
+  - AGSK (RAG-инфра, evaluation, hardening) — якорь `AGSK_INTEGRATION_README.md`
+  - Расчёты — якорь `CALCULATIONS_PLATFORM_AUDIT.md`
+  - Тепло / Вода / Электрика / ПромБ / Геодезия — дисциплинарные методологии (используются клонами ChatGPT 4.0)
+  - OCR (архитектура, lineage, детерминизм, валидация, gates)
+  - Ground truth & lineage
+  - Determinism (parser, PDF, identity)
+  - Semantic identity & normalization
+  - Auth & architecture
+  - ТЗ / Анализ (Phase 2 фичи)
+  - Phase/Stage/ETAP reports
+  - Governance & resilience
+  - Pilot Program
+- **Cross-links:** в 7 anchor-документов добавлен блок `## 📎 Связанные документы` со ссылками на родственные файлы и упоминанием связанного кода/eval-кейсов:
+  - `AGSK_INTEGRATION_README.md`
+  - `OCR_PILOT_QUICK_START.md`
+  - `GROUND_TRUTH_GOVERNANCE.md`
+  - `CALCULATION_EXAMPLES_AND_FORMULAS.md`
+  - `THERMAL_ENGINEERING_STANDARDS.md` (с упоминанием клон Phase 3 и eval кейсов Q085-Q088)
+  - `WATER_SUPPLY_SEWERAGE_STANDARDS.md` (клон + Q089-Q092)
+  - `ELECTRICAL_ENGINEERING_METHODS.md` (клон + Q081-Q084)
+- **Эффект:** для людей-навигаторов появилась единая точка входа в корпус; AGSK retrieval может в будущем использовать ссылки как «expand context» (Phase 6 roadmap)
+- **Не сделано:** расширение cross-links на все 150 файлов — точечно в anchor-доках достаточно для MVP; CI-проверка битых ссылок (R6 рисков плана) — отложено
+
+### 2026-05-11 — 📊 EVAL: датасет расширен до 100 кейсов (Phase 5 плана federated-wondering-hinton)
+
+- **`evaluation_dataset.json`:** добавлены Q081-Q100 — 20 кейсов «assignment analysis» по российским/казахстанским нормам
+- **Покрытие по дисциплинам (4 кейса на каждую = клоны Phase 3):**
+  - `electrical` (ru: ЭС): Q081-Q084 — ПУЭ категории надёжности, расчёт нагрузок/сечений, молниезащита СО 153-34, заземление ПС
+  - `mechanical` (ru: ОВ): Q085-Q088 — отопление СП 60.13330, ИТП СП 124.13330, вентиляция, теплоизоляция СП 61.13330
+  - `pipeline` (ru: ВК): Q089-Q092 — водопровод СП 30/31, канализация СП 32, очистные сооружения
+  - `fire_safety` (ru: ПБ): Q093-Q096 — АПС/СОУЭ СП 484/3, АУВПТ СП 485, эвакуация СП 1.13130, дымоудаление СП 7.13130
+  - `structural` (ru: КР): Q097-Q100 — стальной каркас СП 16, фундаменты СП 22, сейсмика СП 14, ж/б плита СП 63
+- **Новые поля в Q081-Q100:** `ru_discipline` (русский код из assignment_sections), `subset: "assignment_analysis"`
+- **Metadata:** version 1.0 → 1.1, disciplines расширены до 8 (добавлен `fire_safety`), добавлены `subsets` и `updated_date`
+- **`AGSK_EVALUATION_DATASET.md`:** заголовок и stats обновлены под Q001-Q100; явно описаны два подмножества (international vs assignment-analysis)
+- **Применение:** датасет используется для измерения качества retrieval при изменениях в `/api/assignment/analyze` и при добавлении новых нормативных документов в АГСК
+- **Целевые метрики (без изменений):** Recall@5 ≥ 0.85, Precision@5 ≥ 0.80, Citation Precision ≥ 0.90
+
+### 2026-05-11 — 🧠 CLONES: дисциплинарные AI-клоны в ChatGPT 4.0 (Phase 3 плана federated-wondering-hinton)
+
+- **Backend `services/api-server/src/routes/orchestrator.ts`:**
+  - Добавлен экспорт `DISCIPLINE_CLONES` — 5 клонов: `thermal` (Тепловик), `electrical` (Электрик), `water` (ВК), `fire_safety` (ПБ), `structural` (Конструктор)
+  - Каждый клон: `label`, `defaultDiscipline` (один из AGSK CHECK-кодов: mechanical/electrical/pipeline/fire_safety/structural), `prompt` со специализацией и приоритетными нормативными документами
+  - Функция `buildSystemPrompt(role, clone)` — клон append-ится к базовому role-промпту секцией «Специализация»
+  - Функция `getCloneDiscipline(clone)` — возвращает default discipline для AGSK-фильтра
+  - `execSearchNormativka` принимает `cloneDiscipline` — приоритет: явный `args.discipline` > клон > null
+  - Endpoint `/api/orchestrator` принимает `clone` в body и возвращает его обратно для аудита; логи включают `clone`
+- **Frontend `enghub-main/src/components/CopilotPanel.tsx` (внутреннее имя файла — UI это ChatGPT 4.0 панель):**
+  - Добавлен dropdown «Спросить:» между header и RAG-toggle с 6 опциями (Универсальный + 5 клонов с эмодзи)
+  - State `clone` (default: пустая строка = Универсальный)
+  - `clone || undefined` передаётся в body запроса `/api/orchestrator`
+- **Эффект:** инженер выбирает «Тепловик» → AGSK retrieval автоматически фильтруется по `discipline=mechanical` + system prompt напоминает про СП 60/124, ГОСТ 30494, ASME VIII
+
+### 2026-05-11 — 🤖 ANALYZE: MVP анализа ТЗ через AGSK RAG (Phase 2 плана federated-wondering-hinton)
+
+- **Добавлен** `POST /api/assignment/analyze` — для каждой дисциплины раздела ТЗ выполняет AGSK hybrid search + GPT-4o синтез рекомендаций; on-demand, без хранения
+- **Новый файл** `services/api-server/src/utils/disciplines.ts` — централизованный маппинг RU→EN дисциплин (10 RU → 5 EN AGSK-кодов), `mapDiscipline()` и `disciplineTitle()` (изначально планировался в `lib/`, но `lib/` в `.gitignore` — перенесён в `utils/`)
+- **Экспортированы** `embedQuery()` и `getOrgId()` из `services/api-server/src/routes/agsk.ts` для переиспользования в assignment-роуте (кэш embeddings через `agsk_embedding_cache` работает)
+- **Endpoint логика:** загрузка `assignment_sections` → группировка по дисциплине → `Promise.all` по дисциплинам с `Promise.race`-таймаутом 25 сек → embedding + RPC `agsk_hybrid_search_v2` (с `p_discipline = mapDiscipline(ru)`) → GPT-4o (model: gpt-4o, max_tokens: 400, temperature: 0.2) с жёстким system prompt «цитируй только переданные фрагменты»
+- **Frontend `AssignmentTab.tsx`:** кнопка «🤖 Анализ ТЗ» в header (видна при `assignment && sections.length > 0`); collapsible cards по дисциплинам с summary + списком цитат (стандарт · §раздел · стр.); disclaimer «Сгенерировано AI, проверьте цитаты»
+- **Edge cases:** sections=[] → warning, дисциплина не маппится → `p_discipline=null` (broader search), AGSK пусто → «Применимых норм не найдено», timeout/LLM-fail per discipline → `error` в карточке, остальные дисциплины проходят
+- **Известная проблема (не блокирует):** `parseSections()` пишет в `section_text` только заголовок раздела (assignment.ts:163) — query для AGSK собирается из section_titles; улучшение парсера в Roadmap (Phase 6 плана)
+- **План:** `/root/.claude/plans/federated-wondering-hinton.md` — фазы 1-6 (knowledge graph, MVP, клоны, кэш, eval, roadmap)
+- **Ветка:** `claude/analyze-ai-knowledge-base-Ce5B0` (НЕ main — feature-ветка для review)
+
 ### 2026-05-10 — 🔧 STORAGE: добавлены endpoint-ы для файлового хранилища
 
 - **Добавлен** `POST /api/storage-sign-url` — создаёт подписанный URL для файла из приватного bucket (service_role)

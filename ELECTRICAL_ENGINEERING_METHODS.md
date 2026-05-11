@@ -1442,3 +1442,13 @@ Q_итого = 5250 + 475 = 5725 Вт ≈ 6.5 кВт
 **Статус документа:** ✅ Полная методическая база для Calculations Platform  
 **Последнее обновление:** 2026-05-09  
 **Язык:** Русский
+
+---
+
+## 📎 Связанные документы (Электрик-клон, discipline=electrical)
+
+- Общая платформа расчётов: [`CALCULATION_EXAMPLES_AND_FORMULAS.md`](./CALCULATION_EXAMPLES_AND_FORMULAS.md), [`CALCULATIONS_LIST.md`](./CALCULATIONS_LIST.md), [`CALCULATIONS_STANDARDS_INDEX.md`](./CALCULATIONS_STANDARDS_INDEX.md)
+- Безопасность (смежная): [`INDUSTRIAL_SAFETY_STANDARDS.md`](./INDUSTRIAL_SAFETY_STANDARDS.md)
+- Дисциплинарный клон в ChatGPT 4.0: `services/api-server/src/routes/orchestrator.ts` (`DISCIPLINE_CLONES.electrical`)
+- Eval кейсы: `evaluation_dataset.json` Q081-Q084
+- Hub: [`PROJECT_MAP.md`](./PROJECT_MAP.md)
