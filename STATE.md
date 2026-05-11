@@ -4,7 +4,22 @@
 
 ## Последние изменения (новые сверху)
 
-### 2026-05-11 — 🧠 CLONES: дисциплинарные AI-клоны в copilot-панели (Phase 3 плана federated-wondering-hinton)
+### 2026-05-11 — 📊 EVAL: датасет расширен до 100 кейсов (Phase 5 плана federated-wondering-hinton)
+
+- **`evaluation_dataset.json`:** добавлены Q081-Q100 — 20 кейсов «assignment analysis» по российским/казахстанским нормам
+- **Покрытие по дисциплинам (4 кейса на каждую = клоны Phase 3):**
+  - `electrical` (ru: ЭС): Q081-Q084 — ПУЭ категории надёжности, расчёт нагрузок/сечений, молниезащита СО 153-34, заземление ПС
+  - `mechanical` (ru: ОВ): Q085-Q088 — отопление СП 60.13330, ИТП СП 124.13330, вентиляция, теплоизоляция СП 61.13330
+  - `pipeline` (ru: ВК): Q089-Q092 — водопровод СП 30/31, канализация СП 32, очистные сооружения
+  - `fire_safety` (ru: ПБ): Q093-Q096 — АПС/СОУЭ СП 484/3, АУВПТ СП 485, эвакуация СП 1.13130, дымоудаление СП 7.13130
+  - `structural` (ru: КР): Q097-Q100 — стальной каркас СП 16, фундаменты СП 22, сейсмика СП 14, ж/б плита СП 63
+- **Новые поля в Q081-Q100:** `ru_discipline` (русский код из assignment_sections), `subset: "assignment_analysis"`
+- **Metadata:** version 1.0 → 1.1, disciplines расширены до 8 (добавлен `fire_safety`), добавлены `subsets` и `updated_date`
+- **`AGSK_EVALUATION_DATASET.md`:** заголовок и stats обновлены под Q001-Q100; явно описаны два подмножества (international vs assignment-analysis)
+- **Применение:** датасет используется для измерения качества retrieval при изменениях в `/api/assignment/analyze` и при добавлении новых нормативных документов в АГСК
+- **Целевые метрики (без изменений):** Recall@5 ≥ 0.85, Precision@5 ≥ 0.80, Citation Precision ≥ 0.90
+
+### 2026-05-11 — 🧠 CLONES: дисциплинарные AI-клоны в ChatGPT 4.0 (Phase 3 плана federated-wondering-hinton)
 
 - **Backend `services/api-server/src/routes/orchestrator.ts`:**
   - Добавлен экспорт `DISCIPLINE_CLONES` — 5 клонов: `thermal` (Тепловик), `electrical` (Электрик), `water` (ВК), `fire_safety` (ПБ), `structural` (Конструктор)
@@ -13,7 +28,7 @@
   - Функция `getCloneDiscipline(clone)` — возвращает default discipline для AGSK-фильтра
   - `execSearchNormativka` принимает `cloneDiscipline` — приоритет: явный `args.discipline` > клон > null
   - Endpoint `/api/orchestrator` принимает `clone` в body и возвращает его обратно для аудита; логи включают `clone`
-- **Frontend `enghub-main/src/components/CopilotPanel.tsx`:**
+- **Frontend `enghub-main/src/components/CopilotPanel.tsx` (внутреннее имя файла — UI это ChatGPT 4.0 панель):**
   - Добавлен dropdown «Спросить:» между header и RAG-toggle с 6 опциями (Универсальный + 5 клонов с эмодзи)
   - State `clone` (default: пустая строка = Универсальный)
   - `clone || undefined` передаётся в body запроса `/api/orchestrator`

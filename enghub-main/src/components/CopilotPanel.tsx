@@ -343,7 +343,7 @@ export function CopilotPanel({
         <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 20 }}>✕</button>
       </div>
 
-      {/* Clone Selector (дисциплинарные клоны Phase 3) */}
+      {/* Clone Selector — выбор специализации ChatGPT 4.0 (Phase 3) */}
       <div style={{ padding: '10px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ fontSize: 12, color: C.textMuted, whiteSpace: 'nowrap' }}>Спросить:</div>
         <select
