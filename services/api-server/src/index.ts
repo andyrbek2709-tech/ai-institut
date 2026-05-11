@@ -16,6 +16,7 @@ import adminRouter from './routes/admin.js';
 import agskRouter from './routes/agsk.js';
 import telemetryRouter from './routes/telemetry.js';
 import orchestratorRouter from './routes/orchestrator.js';
+import normativeDocsRouter from './routes/normative-docs.js';
 import storageRouter from './routes/storage.js';
 import assignmentRouter from './routes/assignment.js';
 
@@ -79,6 +80,7 @@ app.use('/api', autoRollbackRouter);
 app.use('/api', adminRouter);
 app.use('/api', agskRouter);
 app.use('/api', orchestratorRouter);
+app.use('/api', normativeDocsRouter);
 app.use('/api', storageRouter);
 app.use('/api', assignmentRouter);
 app.use('/api/telemetry', telemetryRouter);
