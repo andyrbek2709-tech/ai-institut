@@ -52,6 +52,15 @@ const rolePlaceholderMap: Record<string, string> = {
   engineer: "Напр.: 'Нормоконтроль ОВ-001' / 'Найди мои задачи в очереди' / 'Анализ проекта'",
 };
 
+const CLONE_OPTIONS: { value: string; label: string; emoji: string }[] = [
+  { value: '',           label: 'Универсальный', emoji: '🤖' },
+  { value: 'thermal',    label: 'Тепловик',      emoji: '🔥' },
+  { value: 'electrical', label: 'Электрик',      emoji: '⚡' },
+  { value: 'water',      label: 'ВК',             emoji: '💧' },
+  { value: 'fire_safety',label: 'Пожарная безопасность', emoji: '🚒' },
+  { value: 'structural', label: 'Конструктор',   emoji: '🏗️' },
+];
+
 const agentLabelMap: Record<string, string> = {
   task_manager: 'Task Manager',
   drawing_agent: 'Drawing Agent',
@@ -87,6 +96,7 @@ export function CopilotPanel({
   const [actions, setActions] = useState<AIAction[]>([]);
   const [loading, setLoading] = useState(false);
   const [useKB, setUseKB] = useState(false);
+  const [clone, setClone] = useState<string>('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const applyInFlightRef = useRef<Set<string>>(new Set());
 
@@ -136,7 +146,8 @@ export function CopilotPanel({
           project_id: projectId,
           message: userText,
           use_rag: useKB,
-          role: userRole || 'engineer'
+          role: userRole || 'engineer',
+          clone: clone || undefined
         })
       });
 
@@ -330,6 +341,31 @@ export function CopilotPanel({
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 20 }}>✕</button>
+      </div>
+
+      {/* Clone Selector (дисциплинарные клоны Phase 3) */}
+      <div style={{ padding: '10px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ fontSize: 12, color: C.textMuted, whiteSpace: 'nowrap' }}>Спросить:</div>
+        <select
+          value={clone}
+          onChange={e => setClone(e.target.value)}
+          style={{
+            flex: 1,
+            background: C.surface2,
+            border: `1px solid ${C.border}`,
+            color: C.text,
+            padding: '6px 10px',
+            borderRadius: 6,
+            fontSize: 13,
+            outline: 'none',
+            cursor: 'pointer',
+          }}
+          title="Выберите специализацию AI-ассистента — фильтрует поиск по нормативке и тематические подсказки"
+        >
+          {CLONE_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.emoji} {opt.label}</option>
+          ))}
+        </select>
       </div>
 
       {/* RAG Toggle */}

@@ -4,6 +4,21 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-11 — 🧠 CLONES: дисциплинарные AI-клоны в copilot-панели (Phase 3 плана federated-wondering-hinton)
+
+- **Backend `services/api-server/src/routes/orchestrator.ts`:**
+  - Добавлен экспорт `DISCIPLINE_CLONES` — 5 клонов: `thermal` (Тепловик), `electrical` (Электрик), `water` (ВК), `fire_safety` (ПБ), `structural` (Конструктор)
+  - Каждый клон: `label`, `defaultDiscipline` (один из AGSK CHECK-кодов: mechanical/electrical/pipeline/fire_safety/structural), `prompt` со специализацией и приоритетными нормативными документами
+  - Функция `buildSystemPrompt(role, clone)` — клон append-ится к базовому role-промпту секцией «Специализация»
+  - Функция `getCloneDiscipline(clone)` — возвращает default discipline для AGSK-фильтра
+  - `execSearchNormativka` принимает `cloneDiscipline` — приоритет: явный `args.discipline` > клон > null
+  - Endpoint `/api/orchestrator` принимает `clone` в body и возвращает его обратно для аудита; логи включают `clone`
+- **Frontend `enghub-main/src/components/CopilotPanel.tsx`:**
+  - Добавлен dropdown «Спросить:» между header и RAG-toggle с 6 опциями (Универсальный + 5 клонов с эмодзи)
+  - State `clone` (default: пустая строка = Универсальный)
+  - `clone || undefined` передаётся в body запроса `/api/orchestrator`
+- **Эффект:** инженер выбирает «Тепловик» → AGSK retrieval автоматически фильтруется по `discipline=mechanical` + system prompt напоминает про СП 60/124, ГОСТ 30494, ASME VIII
+
 ### 2026-05-11 — 🤖 ANALYZE: MVP анализа ТЗ через AGSK RAG (Phase 2 плана federated-wondering-hinton)
 
 - **Добавлен** `POST /api/assignment/analyze` — для каждой дисциплины раздела ТЗ выполняет AGSK hybrid search + GPT-4o синтез рекомендаций; on-demand, без хранения

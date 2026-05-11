@@ -79,6 +79,51 @@ const ROLE_SYSTEM_PROMPTS: Record<string, string> = {
 
 const DEFAULT_SYSTEM_PROMPT = ROLE_SYSTEM_PROMPTS.engineer;
 
+// ── Дисциплинарные клоны (Phase 3 плана federated-wondering-hinton) ──────
+// `defaultDiscipline` — значение для p_discipline в AGSK hybrid search.
+// Совпадает с CHECK constraint agsk_standards (миграция 021).
+
+export const DISCIPLINE_CLONES: Record<string, { prompt: string; defaultDiscipline: string; label: string }> = {
+  thermal: {
+    label: 'Тепловик',
+    defaultDiscipline: 'mechanical',
+    prompt: 'Специализация: инженер-теплотехник. Фокус на тепловых расчётах, котельные/ИТП, теплоснабжение, теплоизоляция. По нормативке — приоритет СП 60.13330, СП 124.13330, ГОСТ 30494, ASME Section VIII.',
+  },
+  electrical: {
+    label: 'Электрик',
+    defaultDiscipline: 'electrical',
+    prompt: 'Специализация: инженер-электрик. Фокус на электроснабжении, заземлении, молниезащите, КИПиА. По нормативке — приоритет ПУЭ, СП 76.13330, ГОСТ Р 50571, IEC 60364.',
+  },
+  water: {
+    label: 'ВК (вода/канализация)',
+    defaultDiscipline: 'pipeline',
+    prompt: 'Специализация: инженер ВК. Фокус на водоснабжении, водоотведении, насосных, очистных сооружениях, трубопроводах. По нормативке — приоритет СП 30.13330, СП 31.13330, СП 32.13330, API 570.',
+  },
+  fire_safety: {
+    label: 'Пожарная безопасность',
+    defaultDiscipline: 'fire_safety',
+    prompt: 'Специализация: инженер по пожарной безопасности. Фокус на 123-ФЗ, расчётах пожарных рисков, СОУЭ, АПС, дымоудалении. По нормативке — приоритет СП 1-13.13130, ГОСТ 12.1.004, NFPA.',
+  },
+  structural: {
+    label: 'Конструктор',
+    defaultDiscipline: 'structural',
+    prompt: 'Специализация: инженер-конструктор. Фокус на расчётах строительных конструкций, фундаментах, сейсмостойкости, металлоконструкциях, железобетоне. По нормативке — приоритет СП 16.13330, СП 63.13330, СП 14.13330, Eurocode 3.',
+  },
+};
+
+export function buildSystemPrompt(role: string | undefined, clone: string | undefined): string {
+  const base = (role && ROLE_SYSTEM_PROMPTS[role]) || DEFAULT_SYSTEM_PROMPT;
+  if (!clone) return base;
+  const c = DISCIPLINE_CLONES[clone];
+  if (!c) return base;
+  return `${base}\n\n## Специализация (дисциплинарный клон): ${c.label}\n${c.prompt}\n\nПри вызове search_normativka — НЕ указывай discipline явно в args, оркестратор сам применит фильтр по твоей специализации.`;
+}
+
+export function getCloneDiscipline(clone: string | undefined): string | null {
+  if (!clone) return null;
+  return DISCIPLINE_CLONES[clone]?.defaultDiscipline ?? null;
+}
+
 // ── Function calling tools ────────────────────────────────────────────────
 
 const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
@@ -170,7 +215,7 @@ async function getOrgIdForUser(userId: string): Promise<string> {
 
 // ── TOOL: search_normativka ────────────────────────────────────────────────
 
-async function execSearchNormativka(args: { query: string; limit?: number }, orgId: string) {
+async function execSearchNormativka(args: { query: string; limit?: number; discipline?: string | null }, orgId: string, cloneDiscipline: string | null = null) {
   const sb = getSupabaseAdmin();
   const limit = Math.min(Math.max(1, args.limit || 5), 10);
 
@@ -190,10 +235,13 @@ async function execSearchNormativka(args: { query: string; limit?: number }, org
     }
   }
 
+  // Дисциплина: явный args.discipline > клон > null (broader search)
+  const effectiveDiscipline = (args.discipline ?? null) || cloneDiscipline;
+
   const { data, error } = await sb.rpc('agsk_hybrid_search_v2', {
     p_query: args.query, p_query_embedding: embedding, p_org_id: orgId,
     p_limit: limit, p_vector_weight: 0.7, p_bm25_weight: 0.3,
-    p_discipline: null, p_standard_code: null, p_version_year: null, p_version_latest_only: true,
+    p_discipline: effectiveDiscipline, p_standard_code: null, p_version_year: null, p_version_latest_only: true,
   });
   if (error) {
     logger.error({ err: error.message, code: error.code }, 'AGSK RPC in tool failed');
@@ -291,14 +339,15 @@ async function execListDrawings(args: { discipline?: string; status?: string }, 
 // ── POST /api/orchestrator ────────────────────────────────────────────────
 
 router.post('/orchestrator', authMiddleware, async (req: Request, res: Response) => {
-  const { project_id, message, role } = req.body || {};
+  const { project_id, message, role, clone } = req.body || {};
   if (!message || typeof message !== 'string' || !message.trim()) {
     throw new ApiError(400, 'message is required');
   }
   const callerId = req.user?.id;
   if (!callerId) throw new ApiError(401, 'Authenticated user required');
 
-  const systemPrompt = ROLE_SYSTEM_PROMPTS[role as string] || DEFAULT_SYSTEM_PROMPT;
+  const systemPrompt = buildSystemPrompt(role, clone);
+  const cloneDiscipline = getCloneDiscipline(clone);
   const orgId = await getOrgIdForUser(callerId);
   const token = req.headers.authorization?.replace('Bearer ', '');
 
@@ -330,11 +379,12 @@ router.post('/orchestrator', authMiddleware, async (req: Request, res: Response)
 
       if (!msg.tool_calls || msg.tool_calls.length === 0) {
         const reply = msg.content?.trim() || 'Не удалось сформировать ответ.';
-        logger.info({ msg: 'orchestrator.chatgpt4', user_id: callerId, project_id, role, turns: turn + 1, citations: collectedCitations.length, actions: collectedActions.length, tokens: totalUsage }, 'ChatGPT 4.0 reply generated');
+        logger.info({ msg: 'orchestrator.chatgpt4', user_id: callerId, project_id, role, clone: clone || null, turns: turn + 1, citations: collectedCitations.length, actions: collectedActions.length, tokens: totalUsage }, 'ChatGPT 4.0 reply generated');
         return res.json({
           message: reply, agent: 'chatgpt4', model: 'gpt-4o',
           citations: collectedCitations, actions: collectedActions,
           tool_turns: turn, usage: totalUsage,
+          clone: clone || null,
         });
       }
 
@@ -343,7 +393,7 @@ router.post('/orchestrator', authMiddleware, async (req: Request, res: Response)
         try {
           const args = JSON.parse(tc.function.arguments || '{}');
           if (tc.function.name === 'search_normativka') {
-            toolResult = await execSearchNormativka(args, orgId);
+            toolResult = await execSearchNormativka(args, orgId, cloneDiscipline);
             if (toolResult?.results) {
               for (const r of toolResult.results) {
                 const key = `${r.standard}::${r.section}::${r.page}`;
