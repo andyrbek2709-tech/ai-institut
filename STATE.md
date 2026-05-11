@@ -4,6 +4,13 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-12 — fixes: normative-docs bucket + task file attachment
+
+- **fix(storage):** создан bucket `normative-docs` в Supabase (50MB, private) + RLS INSERT/SELECT/DELETE для authenticated — устранена ошибка «Storage недоступен» при загрузке ГОСТов в Нормативку
+- **feat(tasks):** поле «ВЛОЖЕНИЕ» в модалке «Новая задача» — ГИП/руководитель отдела может прикрепить файл при создании задачи; файл загружается в `project-files/{project_id}/tasks/{task_id}/` после создания задачи
+- **Коммит:** 5064570
+
+
 ### 2026-05-12 — feat(drawings): file storage upload/download/delete
 
 - **feat(db):** migration 030_drawings_file_storage.sql — добавлены колонки `file_name TEXT`, `file_size BIGINT` в таблицу `drawings`; RLS policies включены
