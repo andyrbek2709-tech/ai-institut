@@ -3,6 +3,7 @@
  *
  * POST /api/normative-docs  { action: 'upload_init', name, file_type, file_path, overwrite_id? }
  * POST /api/normative-docs  { action: 'vectorize', doc_id }
+ * POST /api/normative-docs  { action: 'retry_pending' }  — re-queue all pending
  * GET  /api/normative-docs?ilike=query
  */
 
@@ -14,6 +15,7 @@ import { ApiError } from '../middleware/errorHandler.js';
 import { env } from '../config/environment.js';
 import OpenAI from 'openai';
 import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
 
 const router = Router();
 
@@ -23,8 +25,8 @@ function getOpenAI(): OpenAI {
   return _openai;
 }
 
-// ── Chunk text into ~400 token pieces (~1600 chars) ──────────────────────
-function chunkText(text: string, maxChars = 1600): string[] {
+// ── Chunk text ────────────────────────────────────────────────────────────
+function chunkText(text: string, maxChars = 1500): string[] {
   const chunks: string[] = [];
   const paragraphs = text.split(/\n{2,}/);
   let current = '';
@@ -37,42 +39,57 @@ function chunkText(text: string, maxChars = 1600): string[] {
     }
   }
   if (current.trim()) chunks.push(current.trim());
-  return chunks.filter(c => c.length > 50);
+  return chunks.filter(c => c.length > 30);
 }
 
-// ── Extract text from file in Supabase storage ──────────────────────────
+// ── Extract text from storage ─────────────────────────────────────────────
 async function extractText(filePath: string, fileType: string): Promise<string> {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb.storage.from('normative-docs').download(filePath);
   if (error || !data) throw new Error(`Storage download failed: ${error?.message}`);
-
   const buf = Buffer.from(await data.arrayBuffer());
 
-  if (fileType.includes('pdf')) {
+  const lowerType = (fileType || '').toLowerCase();
+  const lowerPath = filePath.toLowerCase();
+
+  if (lowerType.includes('pdf') || lowerPath.endsWith('.pdf')) {
     const parsed = await pdfParse(buf);
-    return parsed.text;
+    return parsed.text || '';
   }
-  // For docx/txt — basic buffer-to-string (plain text extraction)
-  return buf.toString('utf-8').replace(/[^\x20-\x7EЀ-ӿ\n\r\t]/g, ' ');
+
+  if (lowerType.includes('wordprocessingml') || lowerPath.endsWith('.docx')) {
+    const result = await mammoth.extractRawText({ buffer: buf });
+    return result.value || '';
+  }
+
+  if (lowerPath.endsWith('.doc')) {
+    // Basic .doc: strip binary, keep printable Russian/Latin text
+    return buf.toString('latin1').replace(/[^\x20-\x7EЀ-ӿ\n\r\t]/g, ' ').replace(/ {3,}/g, ' ');
+  }
+
+  // Plain text fallback
+  return buf.toString('utf-8');
 }
 
-// ── Vectorise doc (background, fire-and-forget friendly) ────────────────
+// ── Vectorise one doc ─────────────────────────────────────────────────────
 async function vectorizeDoc(docId: string): Promise<void> {
   const sb = getSupabaseAdmin();
-
   await sb.from('normative_docs').update({ status: 'processing', updated_at: new Date().toISOString() }).eq('id', docId);
 
-  const { data: doc } = await sb.from('normative_docs').select('*').eq('id', docId).single();
-  if (!doc) throw new Error('Doc not found');
+  const { data: doc, error: docErr } = await sb.from('normative_docs').select('*').eq('id', docId).single();
+  if (docErr || !doc) throw new Error('Doc not found');
 
   const text = await extractText(doc.file_path, doc.file_type || '');
-  const chunks = chunkText(text);
+  if (!text || text.trim().length < 20) throw new Error('Не удалось извлечь текст из документа');
 
-  // Delete old chunks if re-vectorizing
+  const chunks = chunkText(text);
+  if (!chunks.length) throw new Error('Текст разбит на 0 чанков');
+
+  // Delete old chunks
   await sb.from('normative_chunks').delete().eq('doc_id', docId);
 
   let stored = 0;
-  const BATCH = 10;
+  const BATCH = 8;
   for (let i = 0; i < chunks.length; i += BATCH) {
     const batch = chunks.slice(i, i + BATCH);
     const embedResp = await getOpenAI().embeddings.create({
@@ -89,13 +106,27 @@ async function vectorizeDoc(docId: string): Promise<void> {
     stored += batch.length;
   }
 
+  // Store full text in content column for keyword search
+  const contentSnippet = text.slice(0, 8000);
   await sb.from('normative_docs').update({
     status: 'ready',
     chunks_count: stored,
+    content: contentSnippet,
     updated_at: new Date().toISOString(),
   }).eq('id', docId);
 
   logger.info({ docId, chunks: stored }, 'normative doc vectorized');
+}
+
+async function runVectorize(docId: string, sb: any) {
+  vectorizeDoc(docId).catch(async (e: any) => {
+    logger.error({ err: e?.message, docId }, 'vectorize failed');
+    await sb.from('normative_docs').update({
+      status: 'error',
+      error_text: e?.message || 'unknown',
+      updated_at: new Date().toISOString(),
+    }).eq('id', docId);
+  });
 }
 
 // ── GET /api/normative-docs?ilike=query ──────────────────────────────────
@@ -103,7 +134,9 @@ router.get('/normative-docs', authMiddleware, async (req: Request, res: Response
   try {
     const sb = getSupabaseAdmin();
     const q = (req.query.ilike as string || '').trim();
-    let query = sb.from('normative_docs').select('id,name,file_type,file_path,status,chunks_count,created_at').order('name');
+    let query = sb.from('normative_docs')
+      .select('id,name,file_type,file_path,status,chunks_count,error_text,created_at')
+      .order('name');
     if (q) query = query.ilike('name', `%${q}%`);
     const { data, error } = await query;
     if (error) throw new ApiError(500, error.message);
@@ -117,31 +150,38 @@ router.post('/normative-docs', authMiddleware, async (req: Request, res: Respons
     const sb = getSupabaseAdmin();
     const { action, name, file_type, file_path, overwrite_id, doc_id } = req.body;
 
+    // Upload init — create DB record
     if (action === 'upload_init') {
       if (!name || !file_path) throw new ApiError(400, 'name and file_path required');
-      // Delete overwritten doc
       if (overwrite_id) {
         const { data: old } = await sb.from('normative_docs').select('file_path').eq('id', overwrite_id).single();
         if (old?.file_path) await sb.storage.from('normative-docs').remove([old.file_path]);
         await sb.from('normative_docs').delete().eq('id', overwrite_id);
       }
       const { data, error } = await sb.from('normative_docs').insert({
-        name, file_type: file_type || null, file_path, status: 'pending',
+        name,
+        file_type: file_type || null,
+        file_path,
+        status: 'pending',
       }).select().single();
       if (error) throw new ApiError(500, error.message);
       return res.json(data);
     }
 
+    // Vectorize one doc — fire and forget
     if (action === 'vectorize') {
       if (!doc_id) throw new ApiError(400, 'doc_id required');
-      // Fire-and-forget — don't await, return immediately
-      vectorizeDoc(doc_id).catch(async (e: any) => {
-        logger.error({ err: e?.message, doc_id }, 'vectorize failed');
-        await getSupabaseAdmin().from('normative_docs').update({
-          status: 'error', error_text: e?.message || 'unknown', updated_at: new Date().toISOString(),
-        }).eq('id', doc_id);
-      });
+      await runVectorize(doc_id, sb);
       return res.json({ ok: true, doc_id });
+    }
+
+    // Retry all pending docs
+    if (action === 'retry_pending') {
+      const { data: pending } = await sb.from('normative_docs')
+        .select('id').eq('status', 'pending');
+      const ids = (pending || []).map((d: any) => d.id);
+      for (const id of ids) await runVectorize(id, sb);
+      return res.json({ ok: true, queued: ids.length });
     }
 
     throw new ApiError(400, `Unknown action: ${action}`);
