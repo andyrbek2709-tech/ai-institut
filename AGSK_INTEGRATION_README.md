@@ -391,3 +391,15 @@ enghub-main/src/styles.css                         ← add .standards-assistant 
 **Status:** All planning complete, all code ready, all documentation provided.
 
 🚀 **Let's build this!**
+
+---
+
+## 📎 Связанные документы
+
+- Исследование подходов: [`AGSK_RAG_INTEGRATION_RESEARCH.md`](./AGSK_RAG_INTEGRATION_RESEARCH.md)
+- Спецификация: [`AGSK_FINAL_TECHNICAL_SPECIFICATION.md`](./AGSK_FINAL_TECHNICAL_SPECIFICATION.md)
+- Eval dataset (100 кейсов): [`AGSK_EVALUATION_DATASET.md`](./AGSK_EVALUATION_DATASET.md), [`evaluation_dataset.json`](./evaluation_dataset.json)
+- Деплой/быстрый старт: [`AGSK_DEPLOYMENT_CHECKLIST.md`](./AGSK_DEPLOYMENT_CHECKLIST.md), [`AGSK_QUICK_START.md`](./AGSK_QUICK_START.md)
+- Валидация: [`AGSK_RETRIEVAL_VALIDATION_REPORT.md`](./AGSK_RETRIEVAL_VALIDATION_REPORT.md), [`AGSK_HARDENING_REPORT.md`](./AGSK_HARDENING_REPORT.md)
+- Использование в коде: `services/api-server/src/routes/agsk.ts` (search/upload), `services/api-server/src/routes/orchestrator.ts` (RAG в ChatGPT 4.0), `services/api-server/src/routes/assignment.ts` (анализ ТЗ)
+- Hub: [`PROJECT_MAP.md`](./PROJECT_MAP.md)

@@ -603,3 +603,18 @@ Q_итого_с_рекуп = 11.5 + 0.9 = 12.4 кВт
 
 **Статус:** ✅ Полный набор примеров и справочников для реализации.  
 **Последнее обновление:** 2026-05-09
+
+---
+
+## 📎 Связанные документы
+
+- Список расчётов: [`CALCULATIONS_LIST.md`](./CALCULATIONS_LIST.md)
+- Foundation / implementation планы: [`CALCULATIONS_FOUNDATION_PLAN.md`](./CALCULATIONS_FOUNDATION_PLAN.md), [`CALCULATIONS_IMPLEMENTATION_PLAN.md`](./CALCULATIONS_IMPLEMENTATION_PLAN.md)
+- Аудит платформы: [`CALCULATIONS_PLATFORM_AUDIT.md`](./CALCULATIONS_PLATFORM_AUDIT.md)
+- Индекс стандартов: [`CALCULATIONS_STANDARDS_INDEX.md`](./CALCULATIONS_STANDARDS_INDEX.md)
+- Дисциплинарные методологии:
+  - Тепло: [`THERMAL_CALCULATIONS_INDEX.md`](./THERMAL_CALCULATIONS_INDEX.md), [`THERMAL_ENGINEERING_STANDARDS.md`](./THERMAL_ENGINEERING_STANDARDS.md)
+  - Вода: [`WATER_SUPPLY_RESOURCES_INDEX.md`](./WATER_SUPPLY_RESOURCES_INDEX.md), [`WATER_SUPPLY_SEWERAGE_STANDARDS.md`](./WATER_SUPPLY_SEWERAGE_STANDARDS.md)
+  - Электрика: [`ELECTRICAL_ENGINEERING_METHODS.md`](./ELECTRICAL_ENGINEERING_METHODS.md)
+  - Безопасность: [`INDUSTRIAL_SAFETY_STANDARDS.md`](./INDUSTRIAL_SAFETY_STANDARDS.md)
+- Hub: [`PROJECT_MAP.md`](./PROJECT_MAP.md)

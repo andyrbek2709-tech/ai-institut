@@ -165,3 +165,14 @@ D (мм) | t (мм) | m (кг/м)
 3. Рассчитать гидравлику
 4. Проверить прочность
 5. Учесть системные эффекты
+
+---
+
+## 📎 Связанные документы (Тепловик-клон, discipline=mechanical)
+
+- Методы: [`THERMAL_METHODS_STANDARDS.md`](./THERMAL_METHODS_STANDARDS.md)
+- Индексы и quick guides: [`THERMAL_CALCULATIONS_INDEX.md`](./THERMAL_CALCULATIONS_INDEX.md), [`THERMAL_CALCULATIONS_QUICK_GUIDE.md`](./THERMAL_CALCULATIONS_QUICK_GUIDE.md)
+- Общая платформа расчётов: [`CALCULATION_EXAMPLES_AND_FORMULAS.md`](./CALCULATION_EXAMPLES_AND_FORMULAS.md), [`CALCULATIONS_LIST.md`](./CALCULATIONS_LIST.md), [`CALCULATIONS_STANDARDS_INDEX.md`](./CALCULATIONS_STANDARDS_INDEX.md)
+- Дисциплинарный клон в ChatGPT 4.0: `services/api-server/src/routes/orchestrator.ts` (`DISCIPLINE_CLONES.thermal`)
+- Eval кейсы: `evaluation_dataset.json` Q085-Q088
+- Hub: [`PROJECT_MAP.md`](./PROJECT_MAP.md)

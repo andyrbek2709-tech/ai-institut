@@ -828,3 +828,13 @@ d, мм | Q, л/мин | λ   | Δp, кПа/100м | v, м/с
 3. Добавить валидационные правила (v_мин ≥ 0,5 м/с, i ≥ 0,003 и т.д.)
 4. Генерировать отчёты с рекомендациями по ГОСТ/СНиП
 
+---
+
+## 📎 Связанные документы (ВК-клон, discipline=pipeline)
+
+- Ресурсы: [`WATER_SUPPLY_RESOURCES_INDEX.md`](./WATER_SUPPLY_RESOURCES_INDEX.md), [`WATER_SUPPLY_QUICKSTART.md`](./WATER_SUPPLY_QUICKSTART.md), [`WATER_SUPPLY_EXAMPLES.md`](./WATER_SUPPLY_EXAMPLES.md)
+- Общая платформа расчётов: [`CALCULATION_EXAMPLES_AND_FORMULAS.md`](./CALCULATION_EXAMPLES_AND_FORMULAS.md), [`CALCULATIONS_STANDARDS_INDEX.md`](./CALCULATIONS_STANDARDS_INDEX.md)
+- Дисциплинарный клон в ChatGPT 4.0: `services/api-server/src/routes/orchestrator.ts` (`DISCIPLINE_CLONES.water`)
+- Eval кейсы: `evaluation_dataset.json` Q089-Q092
+- Hub: [`PROJECT_MAP.md`](./PROJECT_MAP.md)
+

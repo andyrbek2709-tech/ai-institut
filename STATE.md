@@ -4,6 +4,33 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-11 — 🗺️ HYGIENE: knowledge graph + cleanup (Phase 1 плана federated-wondering-hinton)
+
+- **Cleanup:** удалены 3 `.bak` файла (`CALCULATION_EXAMPLES_AND_FORMULAS.md.bak`, `ELECTRICAL_ENGINEERING_METHODS.md.bak`, `REPORTING_ARCHITECTURE_REPORT.md.bak`) и битый файл со склеенным путём `d<U+FF1A>ai-institutenghub-mainsupabasemigrations026_api_performance_indexes.sql` (правильный находится в `enghub-main/supabase/migrations/026_api_performance_indexes.sql`)
+- **`PROJECT_MAP.md`:** добавлена секция «📚 КОРПУС ЗНАНИЙ (Knowledge Corpus)» — группировка ~150 markdown-документов в корне репо по 10 тематикам:
+  - AGSK (RAG-инфра, evaluation, hardening) — якорь `AGSK_INTEGRATION_README.md`
+  - Расчёты — якорь `CALCULATIONS_PLATFORM_AUDIT.md`
+  - Тепло / Вода / Электрика / ПромБ / Геодезия — дисциплинарные методологии (используются клонами ChatGPT 4.0)
+  - OCR (архитектура, lineage, детерминизм, валидация, gates)
+  - Ground truth & lineage
+  - Determinism (parser, PDF, identity)
+  - Semantic identity & normalization
+  - Auth & architecture
+  - ТЗ / Анализ (Phase 2 фичи)
+  - Phase/Stage/ETAP reports
+  - Governance & resilience
+  - Pilot Program
+- **Cross-links:** в 7 anchor-документов добавлен блок `## 📎 Связанные документы` со ссылками на родственные файлы и упоминанием связанного кода/eval-кейсов:
+  - `AGSK_INTEGRATION_README.md`
+  - `OCR_PILOT_QUICK_START.md`
+  - `GROUND_TRUTH_GOVERNANCE.md`
+  - `CALCULATION_EXAMPLES_AND_FORMULAS.md`
+  - `THERMAL_ENGINEERING_STANDARDS.md` (с упоминанием клон Phase 3 и eval кейсов Q085-Q088)
+  - `WATER_SUPPLY_SEWERAGE_STANDARDS.md` (клон + Q089-Q092)
+  - `ELECTRICAL_ENGINEERING_METHODS.md` (клон + Q081-Q084)
+- **Эффект:** для людей-навигаторов появилась единая точка входа в корпус; AGSK retrieval может в будущем использовать ссылки как «expand context» (Phase 6 roadmap)
+- **Не сделано:** расширение cross-links на все 150 файлов — точечно в anchor-доках достаточно для MVP; CI-проверка битых ссылок (R6 рисков плана) — отложено
+
 ### 2026-05-11 — 📊 EVAL: датасет расширен до 100 кейсов (Phase 5 плана federated-wondering-hinton)
 
 - **`evaluation_dataset.json`:** добавлены Q081-Q100 — 20 кейсов «assignment analysis» по российским/казахстанским нормам
