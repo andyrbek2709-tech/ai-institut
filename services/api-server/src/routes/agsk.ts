@@ -31,7 +31,7 @@ function getOpenAI(): OpenAI {
 
 // ── Embed query with cache ────────────────────────────────────────────────
 
-async function embedQuery(query: string): Promise<{ embedding: number[]; cache_hit: boolean }> {
+export async function embedQuery(query: string): Promise<{ embedding: number[]; cache_hit: boolean }> {
   const sb   = getSupabaseAdmin();
   const hash = createHash('sha256').update(query, 'utf8').digest('hex');
 
@@ -73,7 +73,7 @@ async function embedQuery(query: string): Promise<{ embedding: number[]; cache_h
 
 // ── Helper: resolve caller's org_id ──────────────────────────────────────
 
-async function getOrgId(supabaseUid: string): Promise<string | null> {
+export async function getOrgId(supabaseUid: string): Promise<string | null> {
   const sb = getSupabaseAdmin();
   const { data } = await sb
     .from('pilot_users')

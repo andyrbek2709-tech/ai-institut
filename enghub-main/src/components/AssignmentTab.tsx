@@ -19,6 +19,32 @@ type Assignment = {
   uploaded_at: string;
 };
 
+type Citation = {
+  document: string;
+  standard: string;
+  section: string;
+  page: number;
+  version: string;
+  confidence: number;
+};
+
+type DisciplineAnalysis = {
+  discipline: string;
+  title: string;
+  sections: Section[];
+  citations: Citation[];
+  summary: string | null;
+  error: string | null;
+};
+
+type AnalysisResult = {
+  assignment_id: string;
+  version?: number;
+  analyses: DisciplineAnalysis[];
+  warning?: string;
+  generated_at: string;
+};
+
 type Props = {
   C: any;
   token: string;
@@ -56,6 +82,11 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [openAnalysisDisc, setOpenAnalysisDisc] = useState<string | null>(null);
+
   const canUpload = isGip || isAdmin;
 
   const load = async () => {
@@ -78,6 +109,43 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
   };
 
   useEffect(() => { load(); }, [project.id]); // eslint-disable-line
+
+  // Сбрасываем результат анализа при смене проекта / новой загрузке ТЗ
+  useEffect(() => {
+    setAnalysis(null);
+    setAnalysisError(null);
+    setOpenAnalysisDisc(null);
+  }, [project.id, assignment?.id, assignment?.version]);
+
+  const handleAnalyze = async () => {
+    if (!assignment) return;
+    setAnalyzing(true);
+    setAnalysisError(null);
+    setAnalysis(null);
+    try {
+      const r = await fetch(`${API}/api/assignment/analyze`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ assignment_id: assignment.id }),
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        setAnalysisError(j.error || 'Ошибка анализа');
+        return;
+      }
+      setAnalysis(j);
+      // Авто-раскрытие первой дисциплины
+      const first = j.analyses?.find((a: DisciplineAnalysis) => a.summary || a.error);
+      if (first) setOpenAnalysisDisc(first.discipline);
+    } catch (e: any) {
+      setAnalysisError(e.message);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   const handleUpload = async () => {
     const file = fileRef.current?.files?.[0];
@@ -162,6 +230,23 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
               {showPdf ? '✕ Закрыть PDF' : '📄 Открыть PDF'}
             </button>
           )}
+          {assignment && sections.length > 0 && (
+            <button
+              className="btn"
+              style={{
+                background: analyzing ? C.surface : (C.accent || '#3b82f6'),
+                color: analyzing ? C.textMuted : '#fff',
+                border: `1px solid ${analyzing ? C.border : (C.accent || '#3b82f6')}`,
+                padding: '6px 14px', borderRadius: 6, cursor: analyzing ? 'wait' : 'pointer', fontSize: 13,
+                opacity: analyzing ? 0.7 : 1,
+              }}
+              onClick={handleAnalyze}
+              disabled={analyzing}
+              title="Подобрать применимые нормы по разделам ТЗ"
+            >
+              {analyzing ? '⏳ Анализирую…' : '🤖 Анализ ТЗ'}
+            </button>
+          )}
           {canUpload && (
             <button
               className="btn btn-primary"
@@ -231,6 +316,101 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
           {assignment.notes && (
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13, color: C.textMuted }}>
               💬 {assignment.notes}
+            </div>
+          )}
+
+          {/* ── Analyze result ── */}
+          {analysisError && (
+            <div style={{
+              background: 'rgba(239,68,68,0.1)', border: `1px solid ${C.red}`, color: C.red,
+              borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13,
+            }}>
+              ⚠ {analysisError}
+            </div>
+          )}
+          {analysis && (
+            <div style={{
+              background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8,
+              padding: 14, marginBottom: 16,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>
+                  🤖 Применимые нормы по разделам ТЗ
+                </span>
+                <span style={{ fontSize: 11, color: C.textMuted }}>
+                  · v{analysis.version} · {new Date(analysis.generated_at).toLocaleString('ru-RU')}
+                </span>
+              </div>
+              {analysis.warning && (
+                <div style={{ color: C.textMuted, fontSize: 13, padding: '6px 0' }}>
+                  {analysis.warning}
+                </div>
+              )}
+              {analysis.analyses.map(a => {
+                const color = DISC_COLORS[a.discipline] || C.textMuted;
+                const isOpen = openAnalysisDisc === a.discipline;
+                return (
+                  <div key={a.discipline} style={{ marginBottom: 6 }}>
+                    <div
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
+                        background: 'transparent', border: `1px solid ${C.border}`,
+                        borderRadius: isOpen ? '6px 6px 0 0' : 6,
+                        cursor: 'pointer', userSelect: 'none',
+                      }}
+                      onClick={() => setOpenAnalysisDisc(isOpen ? null : a.discipline)}
+                    >
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                      <div style={{ fontWeight: 600, fontSize: 12.5, color: C.text }}>{a.title}</div>
+                      <div style={{ fontSize: 11, color: C.textMuted }}>
+                        {a.sections.length} разд. · {a.citations.length} цит.{a.error ? ' · ⚠' : ''}
+                      </div>
+                      <div style={{ marginLeft: 'auto', color: C.textMuted, fontSize: 11 }}>
+                        {isOpen ? '▲' : '▼'}
+                      </div>
+                    </div>
+                    {isOpen && (
+                      <div style={{
+                        border: `1px solid ${C.border}`, borderTop: 'none',
+                        borderRadius: '0 0 6px 6px', padding: '10px 12px',
+                      }}>
+                        {a.error ? (
+                          <div style={{ color: C.red, fontSize: 12.5 }}>⚠ {a.error}</div>
+                        ) : (
+                          <>
+                            <div style={{
+                              whiteSpace: 'pre-wrap', fontSize: 12.5, color: C.text,
+                              lineHeight: 1.6, marginBottom: a.citations.length > 0 ? 10 : 0,
+                            }}>
+                              {a.summary}
+                            </div>
+                            {a.citations.length > 0 && (
+                              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
+                                <div style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6 }}>
+                                  Источники:
+                                </div>
+                                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11.5, color: C.textMuted, lineHeight: 1.7 }}>
+                                  {a.citations.map((c, i) => (
+                                    <li key={i}>
+                                      <strong style={{ color: C.text }}>{c.standard || '—'}</strong>
+                                      {c.section && <> · §{c.section}</>}
+                                      {c.page > 0 && <> · стр. {c.page}</>}
+                                      {c.version && <> · {c.version}</>}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 10, fontStyle: 'italic' }}>
+                ⓘ Сгенерировано AI на основе АГСК. Проверьте цитаты по первоисточникам.
+              </div>
             </div>
           )}
 

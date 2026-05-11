@@ -4,6 +4,18 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-11 — 🤖 ANALYZE: MVP анализа ТЗ через AGSK RAG (Phase 2 плана federated-wondering-hinton)
+
+- **Добавлен** `POST /api/assignment/analyze` — для каждой дисциплины раздела ТЗ выполняет AGSK hybrid search + GPT-4o синтез рекомендаций; on-demand, без хранения
+- **Новый файл** `services/api-server/src/utils/disciplines.ts` — централизованный маппинг RU→EN дисциплин (10 RU → 5 EN AGSK-кодов), `mapDiscipline()` и `disciplineTitle()` (изначально планировался в `lib/`, но `lib/` в `.gitignore` — перенесён в `utils/`)
+- **Экспортированы** `embedQuery()` и `getOrgId()` из `services/api-server/src/routes/agsk.ts` для переиспользования в assignment-роуте (кэш embeddings через `agsk_embedding_cache` работает)
+- **Endpoint логика:** загрузка `assignment_sections` → группировка по дисциплине → `Promise.all` по дисциплинам с `Promise.race`-таймаутом 25 сек → embedding + RPC `agsk_hybrid_search_v2` (с `p_discipline = mapDiscipline(ru)`) → GPT-4o (model: gpt-4o, max_tokens: 400, temperature: 0.2) с жёстким system prompt «цитируй только переданные фрагменты»
+- **Frontend `AssignmentTab.tsx`:** кнопка «🤖 Анализ ТЗ» в header (видна при `assignment && sections.length > 0`); collapsible cards по дисциплинам с summary + списком цитат (стандарт · §раздел · стр.); disclaimer «Сгенерировано AI, проверьте цитаты»
+- **Edge cases:** sections=[] → warning, дисциплина не маппится → `p_discipline=null` (broader search), AGSK пусто → «Применимых норм не найдено», timeout/LLM-fail per discipline → `error` в карточке, остальные дисциплины проходят
+- **Известная проблема (не блокирует):** `parseSections()` пишет в `section_text` только заголовок раздела (assignment.ts:163) — query для AGSK собирается из section_titles; улучшение парсера в Roadmap (Phase 6 плана)
+- **План:** `/root/.claude/plans/federated-wondering-hinton.md` — фазы 1-6 (knowledge graph, MVP, клоны, кэш, eval, roadmap)
+- **Ветка:** `claude/analyze-ai-knowledge-base-Ce5B0` (НЕ main — feature-ветка для review)
+
 ### 2026-05-10 — 🔧 STORAGE: добавлены endpoint-ы для файлового хранилища
 
 - **Добавлен** `POST /api/storage-sign-url` — создаёт подписанный URL для файла из приватного bucket (service_role)
