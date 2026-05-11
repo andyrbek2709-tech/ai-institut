@@ -377,6 +377,9 @@ export const uploadTaskAttachment = async (
 };
 
 export const deleteTaskAttachment = async (id: string, storagePath: string, token: string) => {
+  await del(`task_attachments?id=eq.${id}`, token);
+  await removeFromBucket(storagePath);
+};
 
 // ----- Drawings file storage -------------------------------------------------
 
@@ -408,8 +411,6 @@ export const uploadDrawingFile = async (
 
 export const deleteDrawingFile = async (drawingId: string, storagePath: string, token?: string): Promise<void> => {
   await patch(`drawings?id=eq.${drawingId}`, { file_url: null, file_name: null, file_size: null, updated_at: new Date().toISOString() }, token);
-  await removeFromBucket(storagePath);
-};
   await removeFromBucket(storagePath);
 };
 
