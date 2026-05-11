@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef } from 'react';
+import { uploadDrawingFile, deleteDrawingFile, signProjectFileUrl } from '../api/supabase';
 import { drawingStatusMap } from '../constants';
 import { getInp, RuDateInput } from './ui';
 
@@ -6,6 +7,44 @@ const STATUS_ORDER = ['draft', 'in_work', 'review', 'approved', 'issued'];
 
 function DrawingStatusPipeline({ drawings, C, activeFilter, onFilter }: { drawings: any[]; C: any; activeFilter: string; onFilter: (s: string) => void }) {
   const total = drawings.length;
+  const handleUploadClick = (d: Drawing) => {
+    uploadDrawingRef.current = d;
+    uploadInputRef.current?.click();
+  };
+
+  const handleUploadFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const drawing = uploadDrawingRef.current;
+    if (!file || !drawing) return;
+    e.target.value = '';
+    setFileUploading(drawing.id);
+    try {
+      await uploadDrawingFile(drawing.id, drawing.project_id, file, token);
+      await onUpdate(drawing.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка загрузки файла');
+    } finally {
+      setFileUploading(null);
+    }
+  };
+
+  const handleDownloadDrawing = async (d: Drawing) => {
+    if (!d.file_url) return;
+    const url = await signProjectFileUrl(d.file_url, 3600);
+    if (url) window.open(url, '_blank');
+  };
+
+  const handleDeleteDrawingFile = async (d: Drawing) => {
+    if (!d.file_url) return;
+    if (!confirm(`Удалить файл "${d.file_name || d.file_url}"?`)) return;
+    try {
+      await deleteDrawingFile(d.id, d.file_url, token);
+      await onUpdate(d.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка удаления файла');
+    }
+  };
+
   return (
     <div style={{ display: 'flex', gap: 4, alignItems: 'stretch', marginBottom: 14, borderRadius: 12, overflow: 'hidden', border: `1px solid ${C.border}` }}>
       {STATUS_ORDER.map((key, idx) => {
@@ -13,7 +52,45 @@ function DrawingStatusPipeline({ drawings, C, activeFilter, onFilter }: { drawin
         const count = drawings.filter(d => (d.status || 'draft') === key).length;
         const pct = total > 0 ? Math.round((count / total) * 100) : 0;
         const isActive = activeFilter === key;
-        return (
+        const handleUploadClick = (d: Drawing) => {
+    uploadDrawingRef.current = d;
+    uploadInputRef.current?.click();
+  };
+
+  const handleUploadFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const drawing = uploadDrawingRef.current;
+    if (!file || !drawing) return;
+    e.target.value = '';
+    setFileUploading(drawing.id);
+    try {
+      await uploadDrawingFile(drawing.id, drawing.project_id, file, token);
+      await onUpdate(drawing.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка загрузки файла');
+    } finally {
+      setFileUploading(null);
+    }
+  };
+
+  const handleDownloadDrawing = async (d: Drawing) => {
+    if (!d.file_url) return;
+    const url = await signProjectFileUrl(d.file_url, 3600);
+    if (url) window.open(url, '_blank');
+  };
+
+  const handleDeleteDrawingFile = async (d: Drawing) => {
+    if (!d.file_url) return;
+    if (!confirm(`Удалить файл "${d.file_name || d.file_url}"?`)) return;
+    try {
+      await deleteDrawingFile(d.id, d.file_url, token);
+      await onUpdate(d.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка удаления файла');
+    }
+  };
+
+  return (
           <button
             key={key}
             onClick={() => onFilter(isActive ? 'all' : key)}
@@ -40,13 +117,89 @@ function DrawingStatusPipeline({ drawings, C, activeFilter, onFilter }: { drawin
 
 function DrawingStatusStepper({ status, C }: { status: string; C: any }) {
   const idx = STATUS_ORDER.indexOf(status || 'draft');
+  const handleUploadClick = (d: Drawing) => {
+    uploadDrawingRef.current = d;
+    uploadInputRef.current?.click();
+  };
+
+  const handleUploadFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const drawing = uploadDrawingRef.current;
+    if (!file || !drawing) return;
+    e.target.value = '';
+    setFileUploading(drawing.id);
+    try {
+      await uploadDrawingFile(drawing.id, drawing.project_id, file, token);
+      await onUpdate(drawing.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка загрузки файла');
+    } finally {
+      setFileUploading(null);
+    }
+  };
+
+  const handleDownloadDrawing = async (d: Drawing) => {
+    if (!d.file_url) return;
+    const url = await signProjectFileUrl(d.file_url, 3600);
+    if (url) window.open(url, '_blank');
+  };
+
+  const handleDeleteDrawingFile = async (d: Drawing) => {
+    if (!d.file_url) return;
+    if (!confirm(`Удалить файл "${d.file_name || d.file_url}"?`)) return;
+    try {
+      await deleteDrawingFile(d.id, d.file_url, token);
+      await onUpdate(d.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка удаления файла');
+    }
+  };
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       {STATUS_ORDER.map((key, i) => {
         const st = drawingStatusMap[key];
         const done = i < idx;
         const current = i === idx;
-        return (
+        const handleUploadClick = (d: Drawing) => {
+    uploadDrawingRef.current = d;
+    uploadInputRef.current?.click();
+  };
+
+  const handleUploadFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const drawing = uploadDrawingRef.current;
+    if (!file || !drawing) return;
+    e.target.value = '';
+    setFileUploading(drawing.id);
+    try {
+      await uploadDrawingFile(drawing.id, drawing.project_id, file, token);
+      await onUpdate(drawing.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка загрузки файла');
+    } finally {
+      setFileUploading(null);
+    }
+  };
+
+  const handleDownloadDrawing = async (d: Drawing) => {
+    if (!d.file_url) return;
+    const url = await signProjectFileUrl(d.file_url, 3600);
+    if (url) window.open(url, '_blank');
+  };
+
+  const handleDeleteDrawingFile = async (d: Drawing) => {
+    if (!d.file_url) return;
+    if (!confirm(`Удалить файл "${d.file_name || d.file_url}"?`)) return;
+    try {
+      await deleteDrawingFile(d.id, d.file_url, token);
+      await onUpdate(d.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка удаления файла');
+    }
+  };
+
+  return (
           <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <div title={st.label} style={{
               width: 8, height: 8, borderRadius: '50%',
@@ -74,6 +227,9 @@ type Drawing = {
   status?: string;
   revision?: string;
   due_date?: string;
+  file_url?: string;
+  file_name?: string;
+  file_size?: number;
 };
 
 type Props = {
@@ -102,6 +258,9 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRo
   const [aiAnalyzing, setAiAnalyzing] = useState<string | null>(null); // drawing id being analyzed
   const [aiResult, setAiResult] = useState<{ drawingCode: string; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileUploading, setFileUploading] = useState<string | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const uploadDrawingRef = useRef<Drawing | null>(null);
   const analyzeDrawingRef = useRef<Drawing | null>(null);
 
   const handleAnalyzeClick = (d: Drawing) => {
@@ -184,6 +343,44 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRo
     }
   };
 
+  const handleUploadClick = (d: Drawing) => {
+    uploadDrawingRef.current = d;
+    uploadInputRef.current?.click();
+  };
+
+  const handleUploadFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const drawing = uploadDrawingRef.current;
+    if (!file || !drawing) return;
+    e.target.value = '';
+    setFileUploading(drawing.id);
+    try {
+      await uploadDrawingFile(drawing.id, drawing.project_id, file, token);
+      await onUpdate(drawing.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка загрузки файла');
+    } finally {
+      setFileUploading(null);
+    }
+  };
+
+  const handleDownloadDrawing = async (d: Drawing) => {
+    if (!d.file_url) return;
+    const url = await signProjectFileUrl(d.file_url, 3600);
+    if (url) window.open(url, '_blank');
+  };
+
+  const handleDeleteDrawingFile = async (d: Drawing) => {
+    if (!d.file_url) return;
+    if (!confirm(`Удалить файл "${d.file_name || d.file_url}"?`)) return;
+    try {
+      await deleteDrawingFile(d.id, d.file_url, token);
+      await onUpdate(d.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка удаления файла');
+    }
+  };
+
   return (
     <div className="screen-fade">
       {/* Hidden file input for AI drawing analysis */}
@@ -256,7 +453,45 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRo
             )}
             {filtered.map((d) => {
               const st = drawingStatusMap[d.status || 'draft'] || drawingStatusMap.draft;
-              return (
+              const handleUploadClick = (d: Drawing) => {
+    uploadDrawingRef.current = d;
+    uploadInputRef.current?.click();
+  };
+
+  const handleUploadFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const drawing = uploadDrawingRef.current;
+    if (!file || !drawing) return;
+    e.target.value = '';
+    setFileUploading(drawing.id);
+    try {
+      await uploadDrawingFile(drawing.id, drawing.project_id, file, token);
+      await onUpdate(drawing.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка загрузки файла');
+    } finally {
+      setFileUploading(null);
+    }
+  };
+
+  const handleDownloadDrawing = async (d: Drawing) => {
+    if (!d.file_url) return;
+    const url = await signProjectFileUrl(d.file_url, 3600);
+    if (url) window.open(url, '_blank');
+  };
+
+  const handleDeleteDrawingFile = async (d: Drawing) => {
+    if (!d.file_url) return;
+    if (!confirm(`Удалить файл "${d.file_name || d.file_url}"?`)) return;
+    try {
+      await deleteDrawingFile(d.id, d.file_url, token);
+      await onUpdate(d.id, {});
+    } catch (err: any) {
+      alert(err.message || 'Ошибка удаления файла');
+    }
+  };
+
+  return (
                 <tr key={d.id}>
                   <td style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}`, color: C.text, fontWeight: 600 }}>{d.code}</td>
                   <td style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}`, color: C.text }}>{d.title}</td>
@@ -303,6 +538,14 @@ export function DrawingsPanel({ C, canEdit, drawings, onCreate, onUpdate, userRo
           </tbody>
         </table>
       </div>
+
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx"
+        style={{ display: 'none' }}
+        onChange={handleUploadFileChange}
+      />
     </div>
   );
 }

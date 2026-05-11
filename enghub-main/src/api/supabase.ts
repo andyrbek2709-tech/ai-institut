@@ -377,7 +377,39 @@ export const uploadTaskAttachment = async (
 };
 
 export const deleteTaskAttachment = async (id: string, storagePath: string, token: string) => {
-  await del(`task_attachments?id=eq.${id}`, token);
+
+// ----- Drawings file storage -------------------------------------------------
+
+export const uploadDrawingFile = async (
+  drawingId: string,
+  projectId: number,
+  file: File,
+  token?: string,
+): Promise<string> => {
+  const FILE_SIZE_LIMIT_DRAWINGS = 50 * 1024 * 1024;
+  if (file.size > FILE_SIZE_LIMIT_DRAWINGS) {
+    throw new Error(`Файл слишком большой (${(file.size / 1024 / 1024).toFixed(1)} МБ). Лимит — 50 МБ.`);
+  }
+  const safe = sanitizeName(file.name);
+  const path = `${projectId}/drawings/${Date.now()}_${safe}`;
+  await uploadToBucket(path, file, token);
+  try {
+    await patch(
+      `drawings?id=eq.${drawingId}`,
+      { file_url: path, file_name: file.name, file_size: file.size, updated_at: new Date().toISOString() },
+      token,
+    );
+  } catch (e) {
+    await removeFromBucket(path);
+    throw e;
+  }
+  return path;
+};
+
+export const deleteDrawingFile = async (drawingId: string, storagePath: string, token?: string): Promise<void> => {
+  await patch(`drawings?id=eq.${drawingId}`, { file_url: null, file_name: null, file_size: null, updated_at: new Date().toISOString() }, token);
+  await removeFromBucket(storagePath);
+};
   await removeFromBucket(storagePath);
 };
 
