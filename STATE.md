@@ -4,6 +4,18 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-12 — feat(drawings): file storage upload/download/delete
+
+- **feat(db):** migration 030_drawings_file_storage.sql — добавлены колонки `file_name TEXT`, `file_size BIGINT` в таблицу `drawings`; RLS policies включены
+- **feat(api):** `uploadDrawingFile`, `deleteDrawingFile` в `enghub-main/src/api/supabase.ts` — загрузка/удаление файлов в bucket `project-files` по пути `{project_id}/drawings/{ts}_{name}`
+- **feat(ui):** DrawingsPanel.tsx — кнопка «📎 Прикрепить файл» на каждой карточке чертежа; после загрузки — badge с именем файла + кнопка ✕ удаления; download через signed URL 1h
+- **fix:** Haiku оставил handlers в неправильном компоненте (DrawingStatusPipeline вместо DrawingsPanel) — rebuild DrawingsPanel.tsx из чистого base (d50409f), fix TS2552
+- **fix:** supabase.ts — deleteTaskAttachment имела пустое тело после Haiku; orphan lines удалены
+- **fix(api-server):** pdf-parse добавлен в package-lock.json (d50409f) — Railway npm ci больше не падает
+- **Коммиты:** b2212bf (Haiku migration+api), 15fee63 (supabase.ts fix), 37a908f (DrawingsPanel rebuild)
+- **Деплой:** Railway enghub-frontend auto-deploy triggered by 37a908f
+
+
 ### 2026-05-11 22:50 — feat(assignment): pdf-parse + analyze endpoint + UI кнопка
 
 - feat(assignment): pdf-parse вместо latin1 — русский текст PDF читается корректно
