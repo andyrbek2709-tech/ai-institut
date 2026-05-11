@@ -54,6 +54,10 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
   const [expandedSec, setExpandedSec] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [showUploadForm, setShowUploadForm] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysisErr, setAnalysisErr] = useState<string | null>(null);
+  const [openDisc, setOpenDisc] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const canUpload = isGip || isAdmin;
@@ -110,7 +114,23 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
     }
   };
 
-  // Group sections by discipline, then "Без дисциплины"
+  const runAnalyze = async () => {
+    if (!assignment) return;
+    setAnalyzing(true); setAnalysisErr(null); setAnalysis(null);
+    try {
+      const r = await fetch(`${API}/api/assignment/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ assignment_id: assignment.id }),
+      });
+      const j = await r.json();
+      if (!r.ok) { setAnalysisErr(j.error || 'Ошибка анализа'); return; }
+      if (j.warning) { setAnalysisErr(j.warning); return; }
+      setAnalysis(j);
+    } catch (e: any) { setAnalysisErr(e.message); }
+    finally { setAnalyzing(false); }
+  };
+
   const grouped = React.useMemo(() => {
     const map: Record<string, Section[]> = {};
     for (const s of sections) {
@@ -118,7 +138,6 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
       if (!map[key]) map[key] = [];
       map[key].push(s);
     }
-    // Sort keys by DISC_ORDER then alpha
     return Object.entries(map).sort(([a], [b]) => {
       const ia = DISC_ORDER.indexOf(a), ib = DISC_ORDER.indexOf(b);
       if (ia !== -1 && ib !== -1) return ia - ib;
@@ -160,6 +179,16 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
               onClick={() => setShowPdf(!showPdf)}
             >
               {showPdf ? '✕ Закрыть PDF' : '📄 Открыть PDF'}
+            </button>
+          )}
+          {assignment && sections.length > 0 && (
+            <button
+              className="btn btn-primary"
+              style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, background: '#7c3aed' }}
+              onClick={runAnalyze}
+              disabled={analyzing}
+            >
+              {analyzing ? '⏳ Анализирую…' : '🤖 Анализ ТЗ'}
             </button>
           )}
           {canUpload && (
@@ -234,6 +263,46 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
             </div>
           )}
 
+          {/* ── Analysis error ── */}
+          {analysisErr && (
+            <div style={{ color: C.red, fontSize: 13, marginBottom: 12 }}>⚠ {analysisErr}</div>
+          )}
+
+          {/* ── Analysis results ── */}
+          {analysis && analysis.analyses.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 12 }}>
+                🤖 Анализ ТЗ — применимые нормы
+              </div>
+              {analysis.analyses.map((a: any) => (
+                <div key={a.discipline} style={{ marginBottom: 8, border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: C.surface, cursor: 'pointer' }}
+                    onClick={() => setOpenDisc(openDisc === a.discipline ? null : a.discipline)}
+                  >
+                    <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{a.discipline}</span>
+                    <span style={{ fontSize: 12, color: C.textMuted }}>{a.citations.length} норм</span>
+                    {a.error && <span style={{ fontSize: 12, color: C.red }}>⚠ ошибка</span>}
+                    <span style={{ marginLeft: 'auto', color: C.textMuted }}>{openDisc === a.discipline ? '▲' : '▼'}</span>
+                  </div>
+                  {openDisc === a.discipline && (
+                    <div style={{ padding: '12px 14px', borderTop: `1px solid ${C.border}` }}>
+                      {a.summary && <div style={{ fontSize: 13, color: C.text, marginBottom: 10, lineHeight: 1.6 }}>{a.summary}</div>}
+                      {a.citations.map((c: any, i: number) => (
+                        <div key={i} style={{ fontSize: 12, color: C.textMuted, marginBottom: 4, paddingLeft: 8, borderLeft: `2px solid ${C.border}` }}>
+                          <b>{c.standard}</b>{c.section ? ` · ${c.section}` : ''}{c.page ? ` · стр.${c.page}` : ''}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 8 }}>
+                ⚠ Сгенерировано AI. Проверяйте цитаты по оригинальным источникам.
+              </div>
+            </div>
+          )}
+
           {/* ── Inline PDF viewer ── */}
           {showPdf && assignment.signed_url && (
             <div style={{ marginBottom: 16, borderRadius: 8, overflow: 'hidden', border: `1px solid ${C.border}` }}>
@@ -257,7 +326,6 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
             const isOpen = expandedDisc === disc;
             return (
               <div key={disc} style={{ marginBottom: 8 }}>
-                {/* Discipline header */}
                 <div
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
@@ -280,7 +348,6 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
                   </div>
                 </div>
 
-                {/* Sections list */}
                 {isOpen && (
                   <div style={{ border: `1px solid ${C.border}`, borderTop: 'none', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
                     {secs.map(sec => {

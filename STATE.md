@@ -4,6 +4,15 @@
 
 ## Последние изменения (новые сверху)
 
+### 2026-05-11 22:50 — feat(assignment): pdf-parse + analyze endpoint + UI кнопка
+
+- feat(assignment): pdf-parse вместо latin1 — русский текст PDF читается корректно
+- feat(api): POST /api/assignment/analyze — discipline mapping + AGSK hybrid search + GPT-4o синтез
+- feat(ui): кнопка "🤖 Анализ ТЗ" в AssignmentTab + collapsible cards по дисциплинам
+- lib: services/api-server/src/lib/disciplines.ts — RU→EN маппинг дисциплин
+- fix: embedQuery деструктуризация { embedding } (возвращает объект, не массив)
+- deps: pdf-parse ^1.1.1 добавлен в package.json
+
 ### 2026-05-10 — 🔧 STORAGE: добавлены endpoint-ы для файлового хранилища
 
 - **Добавлен** `POST /api/storage-sign-url` — создаёт подписанный URL для файла из приватного bucket (service_role)
@@ -4246,6 +4255,15 @@ The Railway service at `api-server-production-8157.up.railway.app` is running **
 **Коммит:** `perf: API latency optimization — cache + SQL select + parallelization`
 
 ## Последние изменения (новые сверху)
+
+### 2026-05-11 22:50 — feat(assignment): pdf-parse + analyze endpoint + UI кнопка
+
+- feat(assignment): pdf-parse вместо latin1 — русский текст PDF читается корректно
+- feat(api): POST /api/assignment/analyze — discipline mapping + AGSK hybrid search + GPT-4o синтез
+- feat(ui): кнопка "🤖 Анализ ТЗ" в AssignmentTab + collapsible cards по дисциплинам
+- lib: services/api-server/src/lib/disciplines.ts — RU→EN маппинг дисциплин
+- fix: embedQuery деструктуризация { embedding } (возвращает объект, не массив)
+- deps: pdf-parse ^1.1.1 добавлен в package.json
 
 ### 2026-05-10 14:00 UTC — ✅ РЕДИЗАЙН: хэндофф реализован
 

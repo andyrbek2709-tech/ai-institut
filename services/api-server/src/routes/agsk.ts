@@ -31,7 +31,7 @@ function getOpenAI(): OpenAI {
 
 // ── Embed query with cache ────────────────────────────────────────────────
 
-async function embedQuery(query: string): Promise<{ embedding: number[]; cache_hit: boolean }> {
+export async function embedQuery(query: string): Promise<{ embedding: number[]; cache_hit: boolean }> {
   const sb   = getSupabaseAdmin();
   const hash = createHash('sha256').update(query, 'utf8').digest('hex');
 
