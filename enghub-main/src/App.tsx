@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions, transmittalStatusMap } from './constants';
 import { NavIcon, IconFolder, IconCheckSquare, IconActivity, IconArchive } from './components/icons';
-import { get, post, patch, del, SURL, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory, listTaskAttachmentsByTaskIds } from './api/supabase';
+import { get, post, patch, del, SURL, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory, listTaskAttachmentsByTaskIds, uploadTaskAttachment } from './api/supabase';
 import { apiPost, apiGet } from './api/http';
 import { publishTaskCreated, publishTaskSubmittedForReview, publishTaskApproved, publishTaskReturned, publishReviewCommentAdded } from './lib/events/publisher';
 import { getSupabaseAnonClient } from './api/supabaseClient';
@@ -241,6 +241,8 @@ export default function App() {
   const [taskHistory, setTaskHistory] = useState<any[]>([]);
   const [showTaskHistory, setShowTaskHistory] = useState(false);
   const [newTask, setNewTask] = useState({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" });
+  const [taskFile, setTaskFile] = useState<File | null>(null);
+  const taskFileInputRef = React.useRef<HTMLInputElement>(null);
   const [taskSuggest, setTaskSuggest] = useState<{ deadline: string | null; reason: string | null } | null>(null);
   const [taskSuggestLoading, setTaskSuggestLoading] = useState(false);
   const [showTaskDetail, setShowTaskDetail] = useState(false);
@@ -1150,6 +1152,15 @@ export default function App() {
           entity_type: 'task',
         }).catch(() => {});
       }
+      // Upload task file if selected
+      if (taskFile && result && result.id) {
+        try {
+          await uploadTaskAttachment(activeProject.id, result.id, taskFile, currentUserData!.id, token!);
+        } catch (fe: any) {
+          addNotification(`Файл не загружен: ${fe.message || 'ошибка'}`, 'warning');
+        }
+      }
+      setTaskFile(null);
       setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setShowNewTask(false); loadTasks(activeProject.id);
     } catch (err: any) {
       addNotification(`Ошибка создания задачи: ${err.message || 'Ошибка сервера'}`, 'warning');
@@ -1642,7 +1653,7 @@ export default function App() {
         />
       )}
       {showNewTask && (
-        <Modal title="Новая задача" onClose={() => { setShowNewTask(false); setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setTaskSuggest(null); }} C={C}>
+        <Modal title="Новая задача" onClose={() => { setShowNewTask(false); setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setTaskSuggest(null); setTaskFile(null); }} C={C}>
           <div className="form-stack">
             <button
               type="button"
@@ -1662,6 +1673,33 @@ export default function App() {
             </Field>
             <Field label="ПРИОРИТЕТ" C={C}><select value={newTask.priority} onChange={e => setNewTask({ ...newTask, priority: e.target.value })} style={getInp(C)}><option value="high">🔴 Высокий</option><option value="medium">🟡 Средний</option><option value="low">⚪ Низкий</option></select></Field>
             <Field label="ДЕДЛАЙН" C={C}><RuDateInput value={newTask.deadline} onChange={v => setNewTask({ ...newTask, deadline: v })} C={C} /></Field>
+            <Field label="ВЛОЖЕНИЕ (ОПЦИОНАЛЬНО)" C={C}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  ref={taskFileInputRef}
+                  type="file"
+                  accept=".pdf,.dwg,.dxf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip"
+                  style={{ display: 'none' }}
+                  onChange={e => { setTaskFile(e.target.files?.[0] || null); e.target.value = ''; }}
+                />
+                {taskFile ? (
+                  <>
+                    <span style={{ fontSize: 12, color: C.text, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      📎 {taskFile.name}
+                    </span>
+                    <button type="button" onClick={() => setTaskFile(null)}
+                      style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: `1px solid ${C.danger || '#e53e3e'}`, background: 'transparent', color: C.danger || '#e53e3e', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      ✕
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" onClick={() => taskFileInputRef.current?.click()}
+                    style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: `1px dashed ${C.textMuted}`, background: 'transparent', color: C.textMuted, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    📎 Прикрепить файл
+                  </button>
+                )}
+              </div>
+            </Field>
             {taskSuggestLoading && (
               <div style={{ fontSize: 12, color: C.accent, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', border: `2px solid ${C.accent}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
