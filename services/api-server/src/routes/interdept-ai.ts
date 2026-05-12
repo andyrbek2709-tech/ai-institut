@@ -15,13 +15,15 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { createRequire } from 'module';
 import { authMiddleware } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 import { env } from '../config/environment.js';
 import { getSupabaseAdmin } from '../config/supabase.js';
 import OpenAI from 'openai';
-// @ts-ignore — pdf-parse lacks proper ESM types
-import pdfParse from 'pdf-parse';
+
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
 
 const router = Router();
 
