@@ -1,9 +1,9 @@
 {
   "status": "scraping",
-  "current_step": "Источник 5/9: IndieHackers",
-  "progress_pct": 44,
+  "current_step": "Источник 6/9: StackOverflow x4",
+  "progress_pct": 55,
   "items_processed": 676,
   "items_total": 0,
-  "updated_at": "2026-05-12T08:30:19Z",
+  "updated_at": "2026-05-12T08:30:22Z",
   "started_at": "2026-05-12T08:29:42Z"
 }
