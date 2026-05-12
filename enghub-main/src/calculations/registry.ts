@@ -1928,5 +1928,192 @@ export const calcRegistry: Record<string, CalcTemplate> = {
         ]
       };
     }
+  },
+
+  ov_heat_loss_building: {
+    id: "ov_heat_loss_building",
+    cat: "ОВ",
+    name: "Теплопотери здания",
+    desc: "Расчёт теплопотерь через ограждающие конструкции (стены, окна, кровля)",
+    normativeReference: "СП 50.13330.2012, СП 60.13330.2020",
+    inputs: [
+      { id: "A_walls", name: "Площадь стен (A_walls)", unit: "м²", defaultValue: 500, min: 1, max: 50000, hint: "Суммарная площадь наружных стен" },
+      { id: "R_walls", name: "Сопротивление теплопередаче стен (R_walls)", unit: "м²·°C/Вт", defaultValue: 3.0, min: 0.1, max: 20, hint: "Нормируется по СП 50" },
+      { id: "A_windows", name: "Площадь окон (A_windows)", unit: "м²", defaultValue: 80, min: 0, max: 5000, hint: "Суммарная площадь остекления" },
+      { id: "R_windows", name: "Сопротивление теплопередаче окон (R_windows)", unit: "м²·°C/Вт", defaultValue: 0.6, min: 0.1, max: 5, hint: "Для двойного стеклопакета ~0.6" },
+      { id: "A_roof", name: "Площадь кровли (A_roof)", unit: "м²", defaultValue: 300, min: 1, max: 20000, hint: "Площадь покрытия (чердачного перекрытия)" },
+      { id: "R_roof", name: "Сопротивление теплопередаче кровли (R_roof)", unit: "м²·°C/Вт", defaultValue: 5.0, min: 0.1, max: 20, hint: "Нормируется по СП 50" },
+      { id: "T_int", name: "Расчётная температура внутри (T_int)", unit: "°C", defaultValue: 20, min: 10, max: 30, hint: "Как правило +20°C" },
+      { id: "T_ext", name: "Расчётная температура снаружи (T_ext)", unit: "°C", defaultValue: -28, min: -60, max: 15, hint: "Наиболее холодная пятидневка по СП 131" },
+      { id: "k_inf", name: "Коэффициент инфильтрации (k_inf)", unit: "б/р", defaultValue: 1.1, min: 1.0, max: 1.5, hint: "Учёт инфильтрации ~1.05…1.15" }
+    ],
+    calculate: (inputs: Record<string, number>) => {
+      const { A_walls, R_walls, A_windows, R_windows, A_roof, R_roof, T_int, T_ext, k_inf } = inputs;
+      const dT = T_int - T_ext;
+      const Q_walls = (A_walls / R_walls) * dT;
+      const Q_windows = (A_windows / R_windows) * dT;
+      const Q_roof = (A_roof / R_roof) * dT;
+      const Q_total_W = (Q_walls + Q_windows + Q_roof) * k_inf;
+      const Q_total_kW = Q_total_W / 1000;
+      return {
+        results: {
+          Q_walls: { value: (Q_walls / 1000).toFixed(2), unit: "кВт", label: "Теплопотери через стены" },
+          Q_windows: { value: (Q_windows / 1000).toFixed(2), unit: "кВт", label: "Теплопотери через окна" },
+          Q_roof: { value: (Q_roof / 1000).toFixed(2), unit: "кВт", label: "Теплопотери через кровлю" },
+          Q_total: { value: Q_total_kW.toFixed(2), unit: "кВт", label: "Суммарные теплопотери (с инфильтрацией)" }
+        },
+        report: [
+          { title: "1. Расчётная формула", text: "Теплопотери через ограждающую конструкцию: Q = (A/R)·ΔT, суммарные с учётом инфильтрации умножаются на k_inf.", formulaLatex: "Q_{total} = \\left(\\frac{A_w}{R_w}+\\frac{A_{wn}}{R_{wn}}+\\frac{A_r}{R_r}\\right)\\cdot\\Delta T \\cdot k_{inf}" },
+          { title: "2. Ход вычислений", text: `ΔT = ${T_int} − (${T_ext}) = ${dT} °C\nQ_стены = (${A_walls}/${R_walls})·${dT} = ${(Q_walls/1000).toFixed(2)} кВт\nQ_окна = (${A_windows}/${R_windows})·${dT} = ${(Q_windows/1000).toFixed(2)} кВт\nQ_кровля = (${A_roof}/${R_roof})·${dT} = ${(Q_roof/1000).toFixed(2)} кВт\nQ_total = ${Q_total_kW.toFixed(2)} кВт`, formulaSubstitutedLatex: `Q_{total} = ${Q_total_kW.toFixed(2)} \\text{ кВт}` }
+        ]
+      };
+    }
+  },
+
+  ov_radiator_heat_transfer: {
+    id: "ov_radiator_heat_transfer",
+    cat: "ОВ",
+    name: "Теплоотдача радиатора / подбор секций",
+    desc: "Расчёт числа секций радиатора по требуемой тепловой мощности",
+    normativeReference: "СП 60.13330.2020, ГОСТ 31311-2005",
+    inputs: [
+      { id: "Q_req", name: "Требуемая мощность помещения (Q_req)", unit: "Вт", defaultValue: 1500, min: 100, max: 50000, hint: "Теплопотери помещения" },
+      { id: "T_sup", name: "Температура подачи (T_sup)", unit: "°C", defaultValue: 90, min: 40, max: 130, hint: "Температура теплоносителя на подаче" },
+      { id: "T_ret", name: "Температура обратки (T_ret)", unit: "°C", defaultValue: 70, min: 30, max: 100, hint: "Температура теплоносителя на обратке" },
+      { id: "T_room", name: "Температура помещения (T_room)", unit: "°C", defaultValue: 20, min: 10, max: 30, hint: "Расчётная температура воздуха" },
+      { id: "q_sec", name: "Номин. мощность 1 секции при Δt=70°C (q_sec)", unit: "Вт", defaultValue: 140, min: 50, max: 500, hint: "Паспортная мощность секции при стандартных условиях" },
+      { id: "n_exp", name: "Показатель степени n (n_exp)", unit: "б/р", defaultValue: 1.3, min: 1.0, max: 1.5, hint: "Обычно 1.3 для чугунных, 1.35 для стальных" }
+    ],
+    calculate: (inputs: Record<string, number>) => {
+      const { Q_req, T_sup, T_ret, T_room, q_sec, n_exp } = inputs;
+      const dT_avg = (T_sup + T_ret) / 2 - T_room;
+      const beta = Math.pow(dT_avg / 70, n_exp);
+      const q_actual = q_sec * beta;
+      const n_sections = Math.ceil(Q_req / q_actual);
+      return {
+        results: {
+          dT_avg: { value: dT_avg.toFixed(1), unit: "°C", label: "Среднелогарифмический ΔT" },
+          beta: { value: beta.toFixed(3), unit: "б/р", label: "Поправочный коэффициент β" },
+          q_actual: { value: q_actual.toFixed(1), unit: "Вт", label: "Фактическая мощность 1 секции" },
+          n_sections: { value: String(n_sections), unit: "шт", label: "Число секций (округлено вверх)" }
+        },
+        report: [
+          { title: "1. Расчётная формула", text: "Поправочный коэффициент β учитывает отличие фактических условий от стандартных (Δt_ст=70°C).", formulaLatex: "\\beta=\\left(\\frac{\\Delta t_{ср}}{70}\\right)^n,\\quad n_{\\text{секций}}=\\left\\lceil\\frac{Q_{req}}{q_{sec}\\cdot\\beta}\\right\\rceil" },
+          { title: "2. Ход вычислений", text: `ΔT_ср = (${T_sup}+${T_ret})/2 − ${T_room} = ${dT_avg.toFixed(1)} °C\nβ = (${dT_avg.toFixed(1)}/70)^${n_exp} = ${beta.toFixed(3)}\nq_факт = ${q_sec}·${beta.toFixed(3)} = ${q_actual.toFixed(1)} Вт\nn = ⌈${Q_req}/${q_actual.toFixed(1)}⌉ = ${n_sections} шт`, formulaSubstitutedLatex: `n = ${n_sections} \\text{ секц.}` }
+        ]
+      };
+    }
+  },
+
+  ov_temperature_schedule: {
+    id: "ov_temperature_schedule",
+    cat: "ОВ",
+    name: "Температурный график теплоснабжения",
+    desc: "Расчёт температур теплоносителя подачи/обратки при текущей наружной температуре",
+    normativeReference: "МДК 4-02.2001, СП 124.13330.2012",
+    inputs: [
+      { id: "T_des_sup", name: "Расч. температура подачи (T_des_sup)", unit: "°C", defaultValue: 95, min: 60, max: 150, hint: "График 95/70, 105/70 и т.д." },
+      { id: "T_des_ret", name: "Расч. температура обратки (T_des_ret)", unit: "°C", defaultValue: 70, min: 40, max: 100, hint: "Обратная линия при расчётных условиях" },
+      { id: "T_int", name: "Температура воздуха в помещении (T_int)", unit: "°C", defaultValue: 20, min: 10, max: 30, hint: "+20 °C — стандарт" },
+      { id: "T_des", name: "Расч. наружная температура (T_des)", unit: "°C", defaultValue: -28, min: -60, max: 0, hint: "Наиболее холодная пятидневка" },
+      { id: "T_cur", name: "Текущая наружная температура (T_cur)", unit: "°C", defaultValue: -10, min: -60, max: 20, hint: "Фактическая температура нар. воздуха" }
+    ],
+    calculate: (inputs: Record<string, number>) => {
+      const { T_des_sup, T_des_ret, T_int, T_des, T_cur } = inputs;
+      const Q_ratio = (T_int - T_cur) / (T_int - T_des);
+      const tau1 = T_int + (T_des_sup - T_int) * Math.pow(Q_ratio, 0.8);
+      const tau2 = T_int + (T_des_ret - T_int) * Q_ratio;
+      return {
+        results: {
+          Q_ratio: { value: (Q_ratio * 100).toFixed(1), unit: "%", label: "Относительная тепловая нагрузка" },
+          tau1: { value: tau1.toFixed(1), unit: "°C", label: "Температура подачи при T_cur" },
+          tau2: { value: tau2.toFixed(1), unit: "°C", label: "Температура обратки при T_cur" }
+        },
+        report: [
+          { title: "1. Расчётная формула", text: "Температурный график строится по относительной тепловой нагрузке с учётом нелинейного характера теплоотдачи отопительных приборов.", formulaLatex: "Q_{rel}=\\frac{t_v-t_n}{t_v-t_{nd}},\\quad \\tau_1=t_v+(\\tau_{1d}-t_v)\\cdot Q_{rel}^{0.8}" },
+          { title: "2. Ход вычислений", text: `Q_rel = (${T_int}−${T_cur})/(${T_int}−${T_des}) = ${Q_ratio.toFixed(3)}\nτ₁ = ${tau1.toFixed(1)} °C\nτ₂ = ${tau2.toFixed(1)} °C`, formulaSubstitutedLatex: `\\tau_1=${tau1.toFixed(1)}°C,\\;\\tau_2=${tau2.toFixed(1)}°C` }
+        ]
+      };
+    }
+  },
+
+  ov_building_heating_load: {
+    id: "ov_building_heating_load",
+    cat: "ОВ",
+    name: "Нагрузка на теплоснабжение здания",
+    desc: "Укрупнённый расчёт тепловой нагрузки на отопление, вентиляцию и ГВС",
+    normativeReference: "СП 60.13330.2020, МДК 4-02.2001",
+    inputs: [
+      { id: "A_total", name: "Общая отапливаемая площадь (A_total)", unit: "м²", defaultValue: 2000, min: 50, max: 500000, hint: "Суммарная площадь всех отапливаемых помещений" },
+      { id: "q_sp", name: "Удельная тепловая характеристика (q_sp)", unit: "Вт/(м²·°C)", defaultValue: 0.4, min: 0.1, max: 2.0, hint: "Для жилых зданий ~0.3-0.5, производственных ~0.5-1.0" },
+      { id: "T_int", name: "Расч. температура внутри (T_int)", unit: "°C", defaultValue: 20, min: 10, max: 30 },
+      { id: "T_ext", name: "Расч. наружная температура (T_ext)", unit: "°C", defaultValue: -28, min: -60, max: 15 },
+      { id: "k_vent", name: "Доля вентиляции (k_vent)", unit: "б/р", defaultValue: 0.25, min: 0, max: 1.0, hint: "Нагрузка на вентиляцию как доля от отопительной" },
+      { id: "k_hwt", name: "Доля ГВС (k_hwt)", unit: "б/р", defaultValue: 0.15, min: 0, max: 1.0, hint: "Нагрузка на ГВС как доля от отопительной" }
+    ],
+    calculate: (inputs: Record<string, number>) => {
+      const { A_total, q_sp, T_int, T_ext, k_vent, k_hwt } = inputs;
+      const dT = T_int - T_ext;
+      const Q_heat = A_total * q_sp * dT;
+      const Q_vent = Q_heat * k_vent;
+      const Q_hwt = Q_heat * k_hwt;
+      const Q_total = Q_heat + Q_vent + Q_hwt;
+      return {
+        results: {
+          Q_heat: { value: (Q_heat / 1000).toFixed(1), unit: "кВт", label: "Нагрузка на отопление" },
+          Q_vent: { value: (Q_vent / 1000).toFixed(1), unit: "кВт", label: "Нагрузка на вентиляцию" },
+          Q_hwt: { value: (Q_hwt / 1000).toFixed(1), unit: "кВт", label: "Нагрузка на ГВС" },
+          Q_total: { value: (Q_total / 1000).toFixed(1), unit: "кВт", label: "Суммарная тепловая нагрузка" }
+        },
+        report: [
+          { title: "1. Расчётная формула", text: "Укрупнённая формула тепловой нагрузки на отопление, вентиляцию и ГВС.", formulaLatex: "Q_o=A\\cdot q_{уд}\\cdot\\Delta T,\\quad Q_{total}=Q_o\\cdot(1+k_v+k_{гвс})" },
+          { title: "2. Ход вычислений", text: `ΔT = ${T_int}−(${T_ext}) = ${dT} °C\nQ_о = ${A_total}·${q_sp}·${dT} = ${(Q_heat/1000).toFixed(1)} кВт\nQ_vent = ${(Q_vent/1000).toFixed(1)} кВт\nQ_гвс = ${(Q_hwt/1000).toFixed(1)} кВт\nQ_total = ${(Q_total/1000).toFixed(1)} кВт`, formulaSubstitutedLatex: `Q_{total}=${(Q_total/1000).toFixed(1)}\\text{ кВт}` }
+        ]
+      };
+    }
+  },
+
+  ov_heating_hydraulics: {
+    id: "ov_heating_hydraulics",
+    cat: "ОВ",
+    name: "Гидравлика системы отопления",
+    desc: "Подбор диаметра трубопровода и расчёт потерь давления по Дарси–Вейсбаху",
+    normativeReference: "СП 60.13330.2020, СП 41-102-98",
+    inputs: [
+      { id: "Q_sec", name: "Тепловая нагрузка участка (Q_sec)", unit: "кВт", defaultValue: 50, min: 0.1, max: 10000, hint: "Тепловая мощность, передаваемая на участке" },
+      { id: "T_sup", name: "Температура подачи (T_sup)", unit: "°C", defaultValue: 95, min: 40, max: 150 },
+      { id: "T_ret", name: "Температура обратки (T_ret)", unit: "°C", defaultValue: 70, min: 30, max: 100 },
+      { id: "L", name: "Длина участка (L)", unit: "м", defaultValue: 50, min: 0.5, max: 5000, hint: "Длина расчётного участка трубопровода" },
+      { id: "v_max", name: "Допустимая скорость (v_max)", unit: "м/с", defaultValue: 1.0, min: 0.1, max: 3.0, hint: "Рекомендуется 0.5–1.5 м/с" },
+      { id: "lambda", name: "Коэффициент гидравлического трения λ", unit: "б/р", defaultValue: 0.025, min: 0.01, max: 0.1, hint: "Для стальных труб ~0.02–0.03" },
+      { id: "k_loc", name: "Коэффициент местных потерь (k_loc)", unit: "б/р", defaultValue: 0.3, min: 0, max: 2.0, hint: "Доля местных сопротивлений от линейных (~0.2–0.5)" }
+    ],
+    calculate: (inputs: Record<string, number>) => {
+      const { Q_sec, T_sup, T_ret, L, v_max, lambda, k_loc } = inputs;
+      const c_water = 4.18;
+      const rho = 980;
+      const dT = T_sup - T_ret;
+      const G_kg_s = (Q_sec * 1000) / (c_water * 1000 * dT);
+      const G_kg_h = G_kg_s * 3600;
+      const A_min = G_kg_s / (rho * v_max);
+      const d_m = Math.sqrt(4 * A_min / Math.PI);
+      const d_mm = d_m * 1000;
+      const v_actual = G_kg_s / (rho * Math.PI * d_m * d_m / 4);
+      const dP_linear = lambda * (L / d_m) * (rho * v_actual * v_actual / 2);
+      const dP_total = dP_linear * (1 + k_loc);
+      const dP_kPa = dP_total / 1000;
+      return {
+        results: {
+          G_kg_h: { value: G_kg_h.toFixed(1), unit: "кг/ч", label: "Расход теплоносителя" },
+          d_mm: { value: d_mm.toFixed(1), unit: "мм", label: "Минимальный диаметр трубы" },
+          v_actual: { value: v_actual.toFixed(2), unit: "м/с", label: "Фактическая скорость" },
+          dP_kPa: { value: dP_kPa.toFixed(2), unit: "кПа", label: "Потери давления на участке (с местными)" }
+        },
+        report: [
+          { title: "1. Расчётные формулы", text: "Расход теплоносителя по балансу мощности; диаметр из условия скорости; потери по Дарси–Вейсбаху.", formulaLatex: "G=\\frac{Q}{c\\cdot\\Delta T},\\quad d=\\sqrt{\\frac{4G}{\\rho\\pi v_{max}}},\\quad\\Delta P=\\lambda\\frac{L}{d}\\frac{\\rho v^2}{2}\\cdot(1+k_{loc})" },
+          { title: "2. Ход вычислений", text: `G = ${G_kg_s.toFixed(4)} кг/с = ${G_kg_h.toFixed(1)} кг/ч\nd_мин = ${d_mm.toFixed(1)} мм\nv_факт = ${v_actual.toFixed(2)} м/с\nΔP = ${dP_kPa.toFixed(2)} кПа`, formulaSubstitutedLatex: `\\Delta P=${dP_kPa.toFixed(2)}\\text{ кПа}` }
+        ]
+      };
+    }
   }
 };

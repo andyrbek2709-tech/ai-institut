@@ -1,3 +1,9 @@
+## 2026-05-12 — ✅ ОВ-расчёты + CopilotPanel context + onSearchStandard (сессия pedantic-archimedes)
+
+- **5 новых ОВ-расчётов:** registry.ts — ov_heat_loss_building, ov_radiator_heat_transfer, ov_temperature_schedule, ov_building_heating_load, ov_heating_hydraulics (нормативы: СП 50, СП 60, МДК 4-02)
+- **CopilotPanel улучшен:** SCREEN_HINTS + screenContext + contextTask props; приветственное сообщение адаптируется под контекст (задача/ТЗ/замечания/проект); оркестратор получает screen_context + context_task
+- **App.tsx:** screenContext + contextTask переданы в CopilotPanel при открытии; расчётный экран уже имел onNormSearch в CalculationView (FETCH_HEAD)
+
 ## 2026-05-12 — ✅ AI-ВЗАИМОСВЯЗИ + VERCEL CLEANUP + BUGFIX (сессия clever-mcnulty)
 
 - **Vercel cleanup:** api-rollout.ts, QA_PROMPT*.md, TASKS.md, INTEGRATION_COMPLETE.md, UNIFIED_STRUCTURE.md, services/api-server/README.md — все vercel.app URL → Railway URL. В src/ Vercel-ссылок нет.

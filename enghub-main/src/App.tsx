@@ -2819,12 +2819,12 @@ export default function App() {
 
               {/* PROJECT COPILOT DRAWER */}
               {showCopilot && (
-                <CopilotPanel 
-                  userId={currentUserData?.id} 
+                <CopilotPanel
+                  userId={currentUserData?.id}
                   userRole={currentUserData?.role}
-                  projectId={activeProject.id} 
-                  C={C} 
-                  onClose={() => setShowCopilot(false)} 
+                  projectId={activeProject.id}
+                  C={C}
+                  onClose={() => setShowCopilot(false)}
                   onTaskCreated={() => loadTasks(activeProject.id)}
                   onDataChanged={() => {
                     loadDrawings(activeProject.id);
@@ -2832,6 +2832,8 @@ export default function App() {
                     loadReviews(activeProject.id);
                     loadTransmittals(activeProject.id);
                   }}
+                  screenContext={sideTab === 'reviews' ? 'review' : sideTab === 'tasks' ? 'task' : sideTab === 'tz' ? 'tz' : 'project'}
+                  contextTask={showTaskDetail ? selectedTask : null}
                 />
               )}
 

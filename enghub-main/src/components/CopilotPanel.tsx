@@ -71,17 +71,29 @@ const agentLabelMap: Record<string, string> = {
   drawing_vision_agent: '🖼️ AI-анализ чертежа',
 };
 
-export function CopilotPanel({ 
-  projectId, 
-  userId, 
+const SCREEN_HINTS: Record<string, string> = {
+  review: '📝 Контекст: проверка замечаний. Могу помочь с разбором ошибок, поиском нормативов и ответами на замечания.',
+  task: '⊙ Контекст: работа над задачей. Могу найти нормативы, дать рекомендации по выполнению или сформировать подзадачи.',
+  tz: '📋 Контекст: задание на проектирование. Могу проанализировать требования ТЗ и найти связанные нормативы.',
+  project: '🏗 Контекст: карточка проекта. Могу проанализировать прогресс, риски и статус задач.',
+};
+
+export function CopilotPanel({
+  projectId,
+  userId,
   userRole,
-  C, 
+  C,
   onClose,
-  onTaskCreated, // Callback to refresh Kanban when AI creates tasks
-  onDataChanged // Callback to refresh drawings/reviews/revisions/transmittals
+  onTaskCreated,
+  onDataChanged,
+  screenContext,
+  contextTask,
 }: any) {
+  const contextHint = SCREEN_HINTS[screenContext] || '';
+  const taskHint = contextTask ? `\n📌 Активная задача: "${contextTask.name}" [${contextTask.status || ''}]` : '';
+  const welcomeText = `Привет! Я ChatGPT 4.0 — помощник по нормативной базе и проектной работе.${contextHint ? `\n\n${contextHint}` : ''}${taskHint}\n\nСпросите про ГОСТ, СНиП, EN или попросите помочь с задачами и расчётами.`;
   const [messages, setMessages] = useState<ChatMsg[]>([
-    { role: 'ai', text: 'Привет! Я ChatGPT 4.0 — помощник по нормативной базе и проектной работе. Спросите про ГОСТ, СНиП, EN или попросите помочь с задачами и расчётами.' }
+    { role: 'ai', text: welcomeText }
   ]);
   const [input, setInput] = useState('');
   const [actions, setActions] = useState<AIAction[]>([]);
@@ -136,7 +148,9 @@ export function CopilotPanel({
           project_id: projectId,
           message: userText,
           use_rag: useKB,
-          role: userRole || 'engineer'
+          role: userRole || 'engineer',
+          screen_context: screenContext || 'project',
+          context_task: contextTask || null,
         })
       });
 
