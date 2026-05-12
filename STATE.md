@@ -1,3 +1,9 @@
+## 2026-05-12 — ✅ INTERDEPT AI INTEGRATION: финальный деплой (сессия vibrant-poincare, продолжение)
+
+- **API routes live:** все 4 POST /api/interdept-ai/* возвращают 401 (auth middleware) — подтверждены живыми на Railway
+- **Frontend fix:** enghub-main/package-lock.json обновлён (missing @types/dom-mediacapture-record@1.0.22) → коммит 265f044 → Railway rebuild успешен, фронтенд вернул 200
+- **⚠️ Миграция 030 НЕ применена к БД:** SUPABASE_SERVICE_KEY в Railway не даёт права DDL через REST API; нужно вручную выполнить `supabase/migrations/030_interdept_ai.sql` через Supabase SQL Editor (project inachjylaqelysiwtsux)
+
 ## 2026-05-12 — ✅ INTERDEPT AI INTEGRATION: Scout Council + #1–6 реализованы (сессия vibrant-poincare)
 
 - **Миграция 030_interdept_ai.sql:** ADD COLUMN к task_dependencies (attachment_url, ai_summary, ai_summary_at, ai_check, ai_check_at), tasks (awaiting_since, sla_hours DEFAULT 24), transmittals (ai_diff, ai_diff_at, prev_transmittal_id, recipient_dept_id), revisions (ai_diff, ai_diff_at), reviews (location)
