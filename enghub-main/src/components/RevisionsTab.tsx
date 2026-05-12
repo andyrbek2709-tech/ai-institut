@@ -11,16 +11,11 @@ type Props = {
 };
 
 export function RevisionsTab({
-  C,
-  isLead,
-  isGip,
-  drawings,
-  revisions,
-  appUsers,
-  issueDrawingRevision,
+  C, isLead, isGip, drawings, revisions, appUsers, issueDrawingRevision,
 }: Props) {
   const [pendingDrawing, setPendingDrawing] = useState<any>(null);
   const [revComment, setRevComment] = useState('');
+  const [expandedDiff, setExpandedDiff] = useState<Record<string, boolean>>({});
 
   const confirmRevision = () => {
     if (!pendingDrawing) return;
@@ -41,7 +36,7 @@ export function RevisionsTab({
             <textarea
               value={revComment}
               onChange={e => setRevComment(e.target.value)}
-              placeholder="Причина/комментарий (необязательно)"
+              placeholder="Причина/комментарий — AI использует для описания ревизии"
               rows={3}
               style={{ width: '100%', resize: 'vertical', borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface2, color: C.text, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box', fontFamily: 'inherit', outline: 'none', marginBottom: 16 }}
             />
@@ -54,9 +49,7 @@ export function RevisionsTab({
       )}
       <div className="task-list-header">
         <div className="task-list-title">История ревизий</div>
-        <div style={{ fontSize: 12, color: C.textMuted }}>
-          Всего записей: {revisions.length}
-        </div>
+        <div style={{ fontSize: 12, color: C.textMuted }}>Всего записей: {revisions.length}</div>
       </div>
       <div className="task-list" style={{ marginBottom: 16 }}>
         {drawings.map((d) => (
@@ -74,15 +67,35 @@ export function RevisionsTab({
       </div>
       <div className="panel-surface" style={{ padding: 14 }}>
         <div className="page-label" style={{ marginBottom: 10 }}>Журнал</div>
-        {revisions.length === 0 ? <div className="empty-state">Записей ревизий пока нет</div> : revisions.map((r) => {
+        {revisions.length === 0 ? (
+          <div className="empty-state">Записей ревизий пока нет</div>
+        ) : revisions.map((r) => {
           const d = drawings.find((dr) => String(dr.id) === String(r.drawing_id));
           const issuer = appUsers.find((u) => String(u.id) === String(r.issued_by));
+          const showDiff = expandedDiff[r.id];
           return (
-            <div key={r.id} className="task-row">
-              <span style={{ color: C.text }}>{d?.code || '—'}</span>
-              <span style={{ color: C.textMuted }}>{r.from_revision} → {r.to_revision}</span>
-              <span style={{ color: C.textMuted }}>{issuer?.full_name || 'Система'}</span>
-              <span style={{ marginLeft: 'auto', fontSize: 12, color: C.textMuted }}>{new Date(r.created_at).toLocaleString('ru-RU')}</span>
+            <div key={r.id} style={{ marginBottom: 8 }}>
+              <div className="task-row">
+                <span style={{ color: C.text }}>{d?.code || '—'}</span>
+                <span style={{ color: C.textMuted }}>{r.from_revision} → {r.to_revision}</span>
+                <span style={{ color: C.textMuted }}>{issuer?.full_name || 'Система'}</span>
+                {r.ai_diff && (
+                  <button
+                    onClick={() => setExpandedDiff(prev => ({ ...prev, [r.id]: !showDiff }))}
+                    style={{ background: 'rgba(167,139,250,.1)', border: '1px solid rgba(167,139,250,.2)', color: '#a78bfa', borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    {showDiff ? '▲' : '🤖 AI'}
+                  </button>
+                )}
+                <span style={{ marginLeft: 'auto', fontSize: 12, color: C.textMuted }}>{new Date(r.created_at).toLocaleString('ru-RU')}</span>
+              </div>
+              {/* C5: AI diff / summary */}
+              {showDiff && r.ai_diff && (
+                <div style={{ marginTop: 4, background: 'rgba(167,139,250,.05)', border: '1px solid rgba(167,139,250,.15)', borderRadius: 8, padding: '8px 12px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#a78bfa', marginBottom: 4 }}>🤖 AI-резюме ревизии (ChatGPT 4.0)</div>
+                  <div style={{ fontSize: 12, color: '#c4b5fd', lineHeight: 1.6 }}>{r.ai_diff}</div>
+                </div>
+              )}
             </div>
           );
         })}

@@ -254,7 +254,11 @@ export default function App() {
 
   const [showNewAssignment, setShowNewAssignment] = useState(false);
   const [newAssignment, setNewAssignment] = useState({ name: "", target_dept: "", priority: "high", deadline: "" });
-  const [newReview, setNewReview] = useState({ title: "", severity: "major", drawing_id: "" });
+  const [newReview, setNewReview] = useState({ title: "", severity: "major", drawing_id: "", location: "" });
+  // C2 SLA: task_dependencies lookup (child_task_id → dep) for AI summary display
+  const [taskDeps, setTaskDeps] = useState<Record<number, any>>({});
+  // C6: recipient dept for new transmittal
+  const [newTransmittalRecipientDeptId, setNewTransmittalRecipientDeptId] = useState("");
 
   // CONV Stage 4b: запрос данных у смежного отдела
   const [showDepRequest, setShowDepRequest] = useState(false);
@@ -518,6 +522,20 @@ export default function App() {
   };
   // Keep loadTasks as alias
   const loadTasks = loadAllTasks;
+
+  // C1/C2/C4: load task_dependencies for assignment tasks to get ai_summary, awaiting_since, ai_check
+  const loadTaskDeps = async (taskIds: number[]) => {
+    if (!taskIds.length || !token) return;
+    try {
+      const idList = taskIds.join(',');
+      const deps = await get(`task_dependencies?select=*&or=(parent_task_id.in.(${idList}),child_task_id.in.(${idList}))`, token);
+      if (Array.isArray(deps)) {
+        const map: Record<number, any> = {};
+        deps.forEach((d: any) => { map[d.child_task_id] = d; });
+        setTaskDeps(map);
+      }
+    } catch { /* non-critical, ignore */ }
+  };
   // B4: multi-project тасков для Lead/Engineer dashboard'ов. Lead → задачи отдела, Engineer → свои.
   const loadDashboardTasks = async () => {
     if (!token || !currentUserData) return;
@@ -1250,7 +1268,7 @@ export default function App() {
       }, token!);
       const childId = Array.isArray(childTask) ? childTask[0]?.id : childTask?.id;
       if (childId) {
-        await post('task_dependencies', {
+        const dep: any = await post('task_dependencies', {
           parent_task_id: selectedTask.id,
           child_task_id: childId,
           what_needed: depRequest.what_needed.trim(),
@@ -1258,6 +1276,15 @@ export default function App() {
           status: 'pending',
           created_by: currentUserData?.id,
         }, token!);
+        // C1: запустить AI-summary в фоне (fire-and-forget)
+        const depId = Array.isArray(dep) ? dep[0]?.id : dep?.id;
+        if (depId) {
+          apiPost('/api/interdept-ai/stage4b-summary', {
+            dependency_id: depId,
+            what_needed: depRequest.what_needed.trim(),
+            project_id: activeProject.id,
+          }).then(() => loadTaskDeps([childId, selectedTask.id])).catch(() => {});
+        }
       }
       // Перевести текущую задачу в awaiting_input
       await patch(`tasks?id=eq.${selectedTask.id}`, { status: 'awaiting_input' }, token!);
@@ -1412,9 +1439,10 @@ export default function App() {
       title: newReview.title.trim(),
       severity: newReview.severity,
       status: 'open',
-      author_id: currentUserData?.id
+      author_id: currentUserData?.id,
+      ...(newReview.location.trim() ? { location: newReview.location.trim() } : {}),
     }, token!);
-    setNewReview({ title: "", severity: "major", drawing_id: "" });
+    setNewReview({ title: "", severity: "major", drawing_id: "", location: "" });
     addNotification('Замечание добавлено', 'success');
     loadReviews(activeProject.id);
   };
@@ -1424,17 +1452,28 @@ export default function App() {
     addNotification(`Статус замечания изменён: ${status}`, 'info');
     loadReviews(activeProject.id);
   };
-  const issueDrawingRevision = async (drawing: any) => {
+  const issueDrawingRevision = async (drawing: any, comment?: string) => {
     if (!activeProject || !drawing) return;
     const revNum = Number(String(drawing.revision || 'R0').replace('R', '')) + 1;
     const nextRevision = `R${Number.isFinite(revNum) ? revNum : 1}`;
-    await createRevisionRecord({
+    const rev: any = await createRevisionRecord({
       project_id: activeProject.id,
       drawing_id: drawing.id,
       from_revision: drawing.revision || 'R0',
       to_revision: nextRevision,
       issued_by: currentUserData?.id
     }, token!);
+    // C5: AI-diff ревизии (fire-and-forget)
+    const revId = Array.isArray(rev) ? rev[0]?.id : rev?.id;
+    if (revId) {
+      apiPost('/api/interdept-ai/revision-diff', {
+        revision_id: revId,
+        drawing_code: drawing.code,
+        from_revision: drawing.revision || 'R0',
+        to_revision: nextRevision,
+        comment: comment || '',
+      }).then(() => loadRevisions(activeProject.id)).catch(() => {});
+    }
     await updateProjectDrawing(drawing.id, { revision: nextRevision, status: 'in_work' });
     loadRevisions(activeProject.id);
   };
@@ -1445,8 +1484,10 @@ export default function App() {
       project_id: activeProject.id,
       number: draftNo,
       status: 'draft',
-      issued_by: currentUserData?.id
+      issued_by: currentUserData?.id,
+      ...(newTransmittalRecipientDeptId ? { recipient_dept_id: Number(newTransmittalRecipientDeptId) } : {}),
     }, token!);
+    setNewTransmittalRecipientDeptId('');
     addNotification('Трансмиттал создан', 'success');
     loadTransmittals(activeProject.id);
   };
@@ -1484,6 +1525,18 @@ export default function App() {
       }
     }
     await updateTransmittalStatus(transmittalId, status, token!);
+    // C3: AI-diff при выпуске трансмиттала (fire-and-forget)
+    if (status === 'issued') {
+      const t = transmittals.find((x: any) => String(x.id) === String(transmittalId));
+      const drawingCodes = (transmittalItems[transmittalId] || [])
+        .map((it: any) => drawings.find((d: any) => String(d.id) === String(it.drawing_id))?.code)
+        .filter(Boolean);
+      apiPost('/api/interdept-ai/transmittal-diff', {
+        transmittal_id: transmittalId,
+        note: t?.note || '',
+        drawing_codes: drawingCodes,
+      }).then(() => loadTransmittals(activeProject.id)).catch(() => {});
+    }
     addNotification(`Статус трансмиттала изменён: ${transmittalStatusMap[status] || status}`, 'info');
     loadTransmittals(activeProject.id);
   };
@@ -3032,6 +3085,9 @@ export default function App() {
                   transmittalItems={transmittalItems}
                   drawings={drawings}
                   revisions={revisions}
+                  depts={depts}
+                  recipientDeptId={newTransmittalRecipientDeptId}
+                  setRecipientDeptId={setNewTransmittalRecipientDeptId}
                   transmittalDraftLinks={transmittalDraftLinks}
                   setTransmittalDraftLinks={setTransmittalDraftLinks}
                   createProjectTransmittal={createProjectTransmittal}
@@ -3049,10 +3105,14 @@ export default function App() {
                   activeProject={activeProject}
                   currentUserData={currentUserData}
                   tasks={tasks}
+                  taskDeps={taskDeps}
+                  loadTaskDeps={loadTaskDeps}
                   setShowNewAssignment={setShowNewAssignment}
                   getDeptNameById={getDeptNameById}
                   getDeptName={getDeptName}
                   handleAssignmentResponse={handleAssignmentResponse}
+                  apiPost={apiPost}
+                  projectId={activeProject?.id}
                 />
               )}
 

@@ -1,3 +1,17 @@
+## 2026-05-12 — ✅ INTERDEPT AI INTEGRATION: Scout Council + #1–6 реализованы (сессия vibrant-poincare)
+
+- **Миграция 030_interdept_ai.sql:** ADD COLUMN к task_dependencies (attachment_url, ai_summary, ai_summary_at, ai_check, ai_check_at), tasks (awaiting_since, sla_hours DEFAULT 24), transmittals (ai_diff, ai_diff_at, prev_transmittal_id, recipient_dept_id), revisions (ai_diff, ai_diff_at), reviews (location)
+- **Триггеры БД:** tasks_set_awaiting_since (BEFORE UPDATE/INSERT — устанавливает awaiting_since при assignment_status='pending_accept')
+- **Новый API:** services/api-server/src/routes/interdept-ai.ts — 4 endpoints: POST /api/interdept-ai/stage4b-summary (C1), /assignment-check (C4), /transmittal-diff (C3), /revision-diff (C5)
+- **C1 Stage 4b AI-summary:** requestDependencyData() → fire-and-forget AI summary → task_dependencies.ai_summary; панель "💡 Краткое содержание" на входящих заданиях
+- **C2 SLA-таймеры:** SlaIndicator компонент (live ⏱ Nч без ответа, цвет зелёный/жёлтый/красный); ГИП-вид: секция "Просроченные обмены"
+- **C3 Трансмитталы AI-diff:** changeTransmittalStatus('issued') → AI-diff; кнопка "🤖 Что изменилось" в TransmittalsTab.tsx
+- **C4 Увязка AI-check:** кнопка "🔍 Проверить по ТЗ и нормативке" в AssignmentsTab → /api/interdept-ai/assignment-check → показывает ссылки ТЗ + ГОСТ
+- **C5 Revision AI-diff:** issueDrawingRevision() → AI-diff; кнопка "🤖 AI" в журнале RevisionTab
+- **C6 T16 recipient_dept + location:** transmittals.recipient_dept_id FK → departments; reviews.location TEXT; форма TransmittalsTab с dropdown отделов; поле "Место в чертеже" в ReviewsTab
+- **Mockup HTML:** enghub-main/public/interdept-ui-mockups.html → https://enghub-frontend-production.up.railway.app/interdept-ui-mockups.html
+- **TODO (выходит за scope):** Cross-disc BIM clash detection (требует IFC-ядра); file read для attachment_url в orchestrator (нужен read_task_attachment tool + PDF текст из Storage)
+
 ## 2026-05-12 — ✅ ОВ-расчёты + CopilotPanel context + onSearchStandard (сессия pedantic-archimedes)
 
 - **5 новых ОВ-расчётов:** registry.ts — ov_heat_loss_building, ov_radiator_heat_transfer, ov_temperature_schedule, ov_building_heating_load, ov_heating_hydraulics (нормативы: СП 50, СП 60, МДК 4-02)

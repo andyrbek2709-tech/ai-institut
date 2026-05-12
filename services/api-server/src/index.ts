@@ -20,6 +20,7 @@ import normativeDocsRouter from './routes/normative-docs.js';
 import storageRouter from './routes/storage.js';
 import assignmentRouter from './routes/assignment.js';
 import taskFileCheckRouter from './routes/task-file-check.js';
+import interdeptAiRouter from './routes/interdept-ai.js';
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use('/api', normativeDocsRouter);
 app.use('/api', storageRouter);
 app.use('/api', assignmentRouter);
 app.use('/api', taskFileCheckRouter);
+app.use('/api', interdeptAiRouter);
 app.use('/api/telemetry', telemetryRouter);
 app.use('/', diagnosticsRouter);
 

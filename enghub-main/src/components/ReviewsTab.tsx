@@ -6,8 +6,8 @@ type Props = {
   C: any;
   isLead: boolean;
   isGip: boolean;
-  newReview: { title: string; severity: string; drawing_id: string };
-  setNewReview: React.Dispatch<React.SetStateAction<{ title: string; severity: string; drawing_id: string }>>;
+  newReview: { title: string; severity: string; drawing_id: string; location: string };
+  setNewReview: React.Dispatch<React.SetStateAction<{ title: string; severity: string; drawing_id: string; location: string }>>;
   drawings: any[];
   reviews: any[];
   appUsers: any[];
@@ -19,19 +19,9 @@ type Props = {
 };
 
 export function ReviewsTab({
-  C,
-  isLead,
-  isGip,
-  newReview,
-  setNewReview,
-  drawings,
-  reviews,
-  appUsers,
-  currentUser,
-  token,
-  submitReview,
-  changeReviewStatus,
-  projectId,
+  C, isLead, isGip, newReview, setNewReview,
+  drawings, reviews, appUsers, currentUser, token,
+  submitReview, changeReviewStatus, projectId,
 }: Props) {
   return (
     <div className="screen-fade">
@@ -40,6 +30,8 @@ export function ReviewsTab({
           {/* FIX: changed from 4-column grid (button was cut off) to flex-wrap so button always visible */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
             <input value={newReview.title} onChange={(e) => setNewReview({ ...newReview, title: e.target.value })} placeholder="Текст замечания" style={{ ...getInp(C), flex: '2 1 200px', minWidth: 0 }} />
+            {/* C6: место в чертеже */}
+            <input value={newReview.location} onChange={(e) => setNewReview({ ...newReview, location: e.target.value })} placeholder="Место: лист/узел/ось" style={{ ...getInp(C), flex: '1 1 150px', minWidth: 0 }} />
             <select value={newReview.severity} onChange={(e) => setNewReview({ ...newReview, severity: e.target.value })} style={{ ...getInp(C), flex: '1 1 140px', minWidth: 0 }}>
               <option value="minor">Незначительное</option>
               <option value="major">Существенное</option>
@@ -63,7 +55,11 @@ export function ReviewsTab({
             <div key={r.id} className="task-row" style={{ borderLeft: `4px solid ${r.severity === 'critical' ? C.red : r.severity === 'major' ? C.orange : C.blue}` }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, color: C.text }}>{r.title}</div>
-                <div style={{ fontSize: 12, color: C.textMuted }}>{d ? `${d.code} — ${d.title}` : 'Без чертежа'}</div>
+                <div style={{ fontSize: 12, color: C.textMuted }}>
+                  {d ? `${d.code} — ${d.title}` : 'Без чертежа'}
+                  {/* C6: показываем место в чертеже */}
+                  {r.location && <span style={{ marginLeft: 8, color: C.accent, fontWeight: 500 }}>📍 {r.location}</span>}
+                </div>
                 {(author || createdDate) && (
                   <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
                     {author && <span>{author.full_name}</span>}
