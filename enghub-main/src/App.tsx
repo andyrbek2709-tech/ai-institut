@@ -260,6 +260,10 @@ export default function App() {
   const [showDepRequest, setShowDepRequest] = useState(false);
   const [depRequest, setDepRequest] = useState({ target_dept_id: "", what_needed: "", deadline_hint: "" });
 
+  // 2a: TZ-контекст в карточке задачи
+  const [taskTzSections, setTaskTzSections] = useState<Array<{section_title: string; section_text: string; discipline: string}>>([]);
+  const [taskTzLoading, setTaskTzLoading] = useState(false);
+
   // Поиск и фильтры
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -938,6 +942,35 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [newTask.name, showNewTask]); // eslint-disable-line
 
+  // 2a: TZ-контекст — загружаем разделы ТЗ, релевантные задаче по отделу
+  useEffect(() => {
+    if (!selectedTask || !activeProject || !showTaskDetail) {
+      setTaskTzSections([]);
+      return;
+    }
+    let cancelled = false;
+    setTaskTzLoading(true);
+    const apiBase = process.env.REACT_APP_RAILWAY_API_URL || 'https://api-server-production-8157.up.railway.app';
+    fetch(`${apiBase}/api/assignment?project_id=${encodeURIComponent(String(activeProject.id))}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled || !data?.sections) return;
+        const dept = (selectedTask.dept || '').toLowerCase();
+        const relevant = (data.sections as any[]).filter(s => {
+          if (!s.discipline) return false;
+          const disc = s.discipline.toLowerCase();
+          return dept.includes(disc) || disc.includes(dept) ||
+            (dept.includes('электр') && disc.includes('эс')) ||
+            (dept.includes('теплос') && disc.includes('тх')) ||
+            (dept.includes('пожар') && disc.includes('пб'));
+        }).slice(0, 4);
+        setTaskTzSections(relevant);
+        setTaskTzLoading(false);
+      })
+      .catch(() => { if (!cancelled) setTaskTzLoading(false); });
+    return () => { cancelled = true; };
+  }, [selectedTask?.id, showTaskDetail, activeProject?.id]); // eslint-disable-line
+
   // ── Presence: управление присутствием в зале совещания ──
   const joinConference = async (initialMic = false, initialScreen = false) => {
     if (!activeProject?.id || !currentUserData) return;
@@ -1229,6 +1262,26 @@ export default function App() {
       // Перевести текущую задачу в awaiting_input
       await patch(`tasks?id=eq.${selectedTask.id}`, { status: 'awaiting_input' }, token!);
       setSelectedTask({ ...selectedTask, status: 'awaiting_input' });
+
+      // 2e: Уведомить лидов целевого отдела через in-app notifications
+      const targetLeads = appUsers.filter(u =>
+        u.dept_id === Number(depRequest.target_dept_id) && (u.role === 'lead' || u.role === 'gip')
+      );
+      const apiBase = process.env.REACT_APP_RAILWAY_API_URL || 'https://api-server-production-8157.up.railway.app';
+      await Promise.allSettled(targetLeads.map(lead =>
+        fetch(`${apiBase}/api/notifications-create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            user_id: lead.id,
+            project_id: activeProject.id,
+            action_type: 'cross_dept_request',
+            target_id: childId,
+            message: `🔗 Запрос от ${currentUserData?.full_name || 'коллеги'} (${selectedTask.dept}): «${depRequest.what_needed.slice(0, 80)}»`,
+          }),
+        }).catch(() => {})
+      ));
+
       addNotification(`Запрос отправлен в отдел ${targetDeptName}. Задача переведена в "Ждёт данных"`, 'success');
       setShowDepRequest(false);
       setDepRequest({ target_dept_id: '', what_needed: '', deadline_hint: '' });
@@ -1451,9 +1504,15 @@ export default function App() {
   };
   const assignTask = async (taskId: number, assignedTo: string) => {
     const eng = getUserById(assignedTo);
-    await patch(`tasks?id=eq.${taskId}`, { assigned_to: assignedTo, status: "todo" }, token!);
-    addNotification(`Задача назначена → ${eng?.full_name || 'инженер'}`, 'info');
-    setShowTaskDetail(false); if (activeProject) loadTasks(activeProject.id);
+    try {
+      const result = await patch(`tasks?id=eq.${taskId}`, { assigned_to: assignedTo, status: "todo" }, token!);
+      if (Array.isArray(result) && result.length === 0) throw new Error('Нет прав на назначение (RLS)');
+      addNotification(`Задача назначена → ${eng?.full_name || 'инженер'}`, 'success');
+      setShowTaskDetail(false);
+      if (activeProject) loadTasks(activeProject.id);
+    } catch (err: any) {
+      addNotification(`Ошибка назначения: ${err?.message || 'проверьте права доступа'}`, 'warning');
+    }
   };
   const issueRevision = async (task: any) => {
     if (!task || !activeProject) return;
@@ -1585,6 +1644,7 @@ export default function App() {
 
 
   // ШАГ 2: Авто-обновление нормативки если есть документы в обработке
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (screen !== 'normative') return;
     const hasPending = normativeDocs.some((d: any) => d.status === 'processing' || d.status === 'pending');
@@ -1855,6 +1915,20 @@ export default function App() {
                 </div>
               ) : null;
             })()}
+            {/* 2a: Контекст из ТЗ — релевантные разделы по дисциплине задачи */}
+            {(taskTzSections.length > 0) && (
+              <div style={{ background: '#0ea5e910', border: '1px solid #0ea5e930', borderRadius: 10, padding: 12 }}>
+                <div style={{ fontSize: 10, color: '#0ea5e9', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>📋 Контекст из ТЗ</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {taskTzSections.map((s, i) => (
+                    <div key={i} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 7, padding: '8px 10px' }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#0ea5e9', marginBottom: 3 }}>{s.section_title}</div>
+                      <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.5, maxHeight: 60, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.section_text?.slice(0, 200)}{(s.section_text?.length || 0) > 200 ? '…' : ''}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {selectedTask.description && (<div style={{ background: C.surface2, borderRadius: 10, padding: 14 }}><div style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Описание</div><div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>{selectedTask.description}</div></div>)}
             {selectedTask.comment && (<div style={{ background: C.red + "10", border: `1px solid ${C.red}25`, borderRadius: 10, padding: 14 }}><div style={{ fontSize: 10, color: C.red, fontWeight: 600, marginBottom: 4 }}>КОММЕНТАРИЙ К ДОРАБОТКЕ</div><div style={{ fontSize: 13, color: C.textDim }}>{selectedTask.comment}</div></div>)}
             {workflowBlockInfo && (
@@ -3534,7 +3608,7 @@ export default function App() {
               {/* Right panel: CalculationView detail */}
               {activeCalc && (
                 <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                  <CalculationView calcId={activeCalc} C={C} />
+                  <CalculationView calcId={activeCalc} C={C} onNormSearch={q => { setNormSearchQuery(q); setScreen('normative'); }} />
                 </div>
               )}
             </div>

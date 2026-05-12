@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import { apiGet } from '../api/http';
 
 // DD-07: Лента активности проекта
-// Читает activity_log + Realtime подписка на новые события
+// Читает activity_log + фильтры по типу события и участнику (2f)
 
 const ACTION_LABELS: Record<string, { emoji: string; verb: string; color: string }> = {
   task_created: { emoji: '➕', verb: 'создал задачу', color: '#4a9eff' },
   task_status_changed: { emoji: '🔄', verb: 'изменил статус', color: '#a855f7' },
   document_uploaded: { emoji: '📄', verb: 'загрузил документ', color: '#2ac769' },
   task_attachment_added: { emoji: '📎', verb: 'прикрепил файл', color: '#06b6d4' },
+  review_created: { emoji: '📝', verb: 'добавил замечание', color: '#f59e0b' },
+  cross_dept_request: { emoji: '🔗', verb: 'запросил данные', color: '#8b5cf6' },
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -20,6 +22,16 @@ const STATUS_LABELS: Record<string, string> = {
   revision: 'На доработку',
   done: 'Готово',
 };
+
+const FILTER_TYPES: { value: string; label: string }[] = [
+  { value: '', label: 'Все события' },
+  { value: 'task_status_changed', label: '🔄 Статусы' },
+  { value: 'task_created', label: '➕ Создание задач' },
+  { value: 'document_uploaded', label: '📄 Файлы' },
+  { value: 'task_attachment_added', label: '📎 Вложения' },
+  { value: 'review_created', label: '📝 Замечания' },
+  { value: 'cross_dept_request', label: '🔗 Смежники' },
+];
 
 function fmtRelTime(iso: string): string {
   if (!iso) return '';
@@ -33,9 +45,11 @@ function fmtRelTime(iso: string): string {
   return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
 }
 
-export default function ActivityFeed({ projectId, appUsers, C, limit = 30 }: any) {
+export default function ActivityFeed({ projectId, appUsers, C, limit = 50 }: any) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState('');
+  const [filterActor, setFilterActor] = useState('');
 
   useEffect(() => {
     if (!projectId) { setItems([]); setLoading(false); return; }
@@ -53,12 +67,51 @@ export default function ActivityFeed({ projectId, appUsers, C, limit = 30 }: any
     return u?.full_name || `#${id}`;
   };
 
+  const uniqueActors = Array.isArray(appUsers)
+    ? (appUsers as any[]).filter(u => items.some(it => Number(it.actor_id) === Number(u.id)))
+    : [];
+
+  const filtered = items.filter(it => {
+    if (filterType && it.action_type !== filterType) return false;
+    if (filterActor && String(it.actor_id) !== filterActor) return false;
+    return true;
+  });
+
+  const selStyle: React.CSSProperties = {
+    background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6,
+    color: C.text, fontSize: 11, padding: '4px 8px', cursor: 'pointer', outline: 'none',
+  };
+
   if (loading) return <div style={{ color: C.textMuted, fontSize: 12, padding: 12 }}>Загрузка ленты...</div>;
-  if (!items.length) return <div style={{ color: C.textMuted, fontSize: 13, padding: 18, textAlign: 'center' }}>📭 Событий пока нет. Создавайте задачи, загружайте документы — лента наполнится.</div>;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {items.map(it => {
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* 2f: Фильтры по типу события и участнику */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingBottom: 6 }}>
+        <select value={filterType} onChange={e => setFilterType(e.target.value)} style={selStyle}>
+          {FILTER_TYPES.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+        </select>
+        <select value={filterActor} onChange={e => setFilterActor(e.target.value)} style={selStyle}>
+          <option value="">Все участники</option>
+          {uniqueActors.map((u: any) => (
+            <option key={u.id} value={String(u.id)}>{u.full_name}</option>
+          ))}
+        </select>
+        {(filterType || filterActor) && (
+          <button
+            onClick={() => { setFilterType(''); setFilterActor(''); }}
+            style={{ background: 'transparent', border: 'none', color: C.textMuted, fontSize: 11, cursor: 'pointer' }}
+          >✕ Сброс</button>
+        )}
+      </div>
+
+      {!filtered.length && (
+        <div style={{ color: C.textMuted, fontSize: 13, padding: 18, textAlign: 'center' }}>
+          {items.length ? '🔍 Нет событий под выбранный фильтр' : '📭 Событий пока нет. Создавайте задачи, загружайте документы — лента наполнится.'}
+        </div>
+      )}
+
+      {filtered.map(it => {
         const meta = ACTION_LABELS[it.action_type] || { emoji: '•', verb: it.action_type, color: C.textMuted };
         const actor = getUserName(it.actor_id);
         const payload = it.payload || {};

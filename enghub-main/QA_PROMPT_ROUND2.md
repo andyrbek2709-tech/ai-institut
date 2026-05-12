@@ -8,7 +8,7 @@
 Проведи повторный QA-прогон EngHub. Это второй раунд — после фиксов из первого отчёта.
 
 КОНТЕКСТ:
-- Prod: https://enghub-three.vercel.app
+- Prod: https://enghub-frontend-production.up.railway.app
 - Тестовые юзеры (единый пароль 123456 для всех кроме admin):
   - admin@enghub.com / admin123
   - skorokhod.a@nipicer.kz (gip) / 123456
@@ -72,21 +72,21 @@ PROCESSY КОТОРЫЕ НУЖНО ПРОВЕРИТЬ:
 - ✅/❌
 
 ШАГ 7 — /parsing.html:
-- Открыть https://enghub-three.vercel.app/parsing.html (без логина — публичная)
+- Открыть https://enghub-frontend-production.up.railway.app/parsing.html (без логина — публичная)
 - Должна загружаться без редиректа на /login
 - AI-результаты парсинга болей: список карточек с проблема→идея решения→инструменты→сложность→ценность
 - Фильтры по тегам/категориям — клик меняет отображение
 - ✅/❌
 
 ШАГ 8 — /voice-bot.html:
-- Открыть https://enghub-three.vercel.app/voice-bot.html
+- Открыть https://enghub-frontend-production.up.railway.app/voice-bot.html
 - Три карточки путей решения, у пути D зелёный бейдж "ВЫБРАН"
 - Блок "Статус сборки APK" с бейджем "⏳ ожидает первой сборки в CI" (или живой APK если уже собран)
 - Nav-меню сверху со ссылками на 6 досок
 - ✅/❌
 
 ШАГ 9 — /agenda.html (доска повестки):
-- Открыть https://enghub-three.vercel.app/agenda.html
+- Открыть https://enghub-frontend-production.up.railway.app/agenda.html
 - Колонки: Идеи / Триаж / Уточнить / Решено / В работе / Сделано / Не делаем
 - Счётчик "Решено" = 0 (всё реализованное в "Сделано")
 - Hero-блок "🛡 Security cutover завершён"

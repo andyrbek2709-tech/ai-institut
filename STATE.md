@@ -1,3 +1,16 @@
+## 2026-05-12 — ✅ AI-ВЗАИМОСВЯЗИ + VERCEL CLEANUP + BUGFIX (сессия clever-mcnulty)
+
+- **Vercel cleanup:** api-rollout.ts, QA_PROMPT*.md, TASKS.md, INTEGRATION_COMPLETE.md, UNIFIED_STRUCTURE.md, services/api-server/README.md — все vercel.app URL → Railway URL. В src/ Vercel-ссылок нет.
+- **Bug fix assignTask():** App.tsx — добавлен try/catch вокруг patch(), при ошибке RLS показывает toast warning пользователю вместо молчаливого закрытия модалки.
+- **2a TZ-контекст в задаче:** App.tsx — state `taskTzSections`, useEffect загружает разделы assignment_sections по дисциплине задачи при открытии, карточка «📋 Контекст из ТЗ» отображается в модалке задачи над описанием.
+- **2c Нормативные ссылки:** CalculationView.tsx — normativeReference парсится на отдельные документы, каждый отображается как кликабельный `📖 тег`. Клик → переключает на экран нормативки с поисковым запросом.
+- **2e Кросс-отдельный запрос:** App.tsx requestDependencyData() — после создания задачи-запроса отправляет in-app уведомления всем лидам/ГИПам целевого отдела через /api/notifications-create.
+- **2f Фильтры в ActivityFeed:** ActivityFeed.tsx — добавлены select-фильтры по типу события (статус/создание/файлы/замечания/смежники) и по участнику. Кнопка «✕ Сброс».
+- **Build:** ✅ Compiled successfully (542 KB gzip)
+- **Коммит:** (готовится) feat(ai-interconnect): TZ context card, norm refs, activity filters, assignTask fix, Vercel cleanup [notify-tg]
+
+---
+
 ## 2026-05-12 (AI-контекст + Нормативка шаги 1-9)
 - **ШАГ 1** ✅ orchestrator.ts: fetchProjectContext() из project_assignments.full_text + inject в finalSystemPrompt + инструмент get_project_tz
 - **ШАГ 2** ✅ App.tsx: авто-обновление normativeDocs каждые 5с если есть pending/processing

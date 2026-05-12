@@ -118,13 +118,13 @@ cable-calc.html (921 строка)
    ```
 
 2. **Статический контент:**
-   - `public/cable-calc.html` → https://enghub-three.vercel.app/cable-calc.html
+   - `public/cable-calc.html` → https://enghub-frontend-production.up.railway.app/cable-calc.html
 
 3. **API endpoints:**
-   - `POST https://api-enghub.vercel.app/api/cable-calc/parse`
-   - `POST https://api-enghub.vercel.app/api/cable-calc/calc`
-   - `POST https://api-enghub.vercel.app/api/cable-calc/reverse`
-   - `POST https://api-enghub.vercel.app/api/cable-calc/report-xlsx`
+   - `POST https://enghub-frontend-production.up.railway.app/api/cable-calc/parse`
+   - `POST https://enghub-frontend-production.up.railway.app/api/cable-calc/calc`
+   - `POST https://enghub-frontend-production.up.railway.app/api/cable-calc/reverse`
+   - `POST https://enghub-frontend-production.up.railway.app/api/cable-calc/report-xlsx`
 
 ### Localy (для разработки)
 ```bash
@@ -211,7 +211,7 @@ python3 -m pytest test_phase3.py
 https://github.com/andyrbek2709-tech/ai-institut/tree/main/enghub-main
 
 **Live сервис:**  
-https://enghub-three.vercel.app/cable-calc.html
+https://enghub-frontend-production.up.railway.app/cable-calc.html
 
 **Документация:**  
 - [PHASE_2_3_4_COMPLETE.md](PHASE_2_3_4_COMPLETE.md) — Полное описание архитектуры

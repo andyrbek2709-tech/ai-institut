@@ -4,6 +4,11 @@ import Latex from 'react-latex-next';
 import { calcRegistry } from './registry';
 import { exportToDocx } from './DocxExporter';
 
+// 2c: Разбираем normativeReference на отдельные документы для кликабельных тегов
+function parseNormRefs(s: string): string[] {
+  return s.split(/[,;]+/).map(p => p.trim()).filter(Boolean);
+}
+
 // =====================================================================
 // Реестр конвертеров единиц
 // keywords — подстроки unit'а, при совпадении показываем этот конвертер
@@ -148,7 +153,7 @@ function detectConverters(units: string[]): string[] {
 
 // =====================================================================
 
-export const CalculationView = ({ calcId, C }: { calcId: string, C: any }) => {
+export const CalculationView = ({ calcId, C, onNormSearch }: { calcId: string, C: any, onNormSearch?: (query: string) => void }) => {
   const template = calcRegistry[calcId];
   const [inputs, setInputs] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
@@ -204,7 +209,29 @@ export const CalculationView = ({ calcId, C }: { calcId: string, C: any }) => {
               whiteSpace: "nowrap"
             }}>🚧 В разработке</span>
           </div>
-          <div style={{ fontSize: 13, color: C.textMuted, marginTop: 4 }}>{template.desc} | {template.normativeReference}</div>
+          <div style={{ fontSize: 13, color: C.textMuted, marginTop: 4 }}>{template.desc}</div>
+          {template.normativeReference && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
+              {parseNormRefs(template.normativeReference).map(ref => (
+                <span
+                  key={ref}
+                  title={onNormSearch ? `Открыть в поиске нормативки: ${ref}` : ref}
+                  onClick={() => onNormSearch && onNormSearch(ref)}
+                  style={{
+                    fontSize: 10, padding: '3px 8px', borderRadius: 999, border: `1px solid ${C.border}`,
+                    background: C.surface, color: C.textMuted, fontFamily: 'monospace', letterSpacing: 0.3,
+                    cursor: onNormSearch ? 'pointer' : 'default',
+                    transition: 'background 0.15s',
+                    userSelect: 'none',
+                  }}
+                  onMouseEnter={e => { if (onNormSearch) (e.currentTarget as HTMLElement).style.background = C.surface2; }}
+                  onMouseLeave={e => { if (onNormSearch) (e.currentTarget as HTMLElement).style.background = C.surface; }}
+                >
+                  📖 {ref}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         {applicableConverters.length > 0 && (
           <button className="btn btn-ghost" onClick={() => setShowConverter(!showConverter)}

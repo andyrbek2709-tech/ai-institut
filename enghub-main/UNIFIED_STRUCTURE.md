@@ -121,7 +121,7 @@ git push origin main
 # Vercel автоматически развёртывает:
 # - HTML (public/cable-calc.html)
 # - Python endpoints (api/cable-calc/*.py)
-# - Результат: https://enghub-three.vercel.app/cable-calc.html
+# - Результат: https://enghub-frontend-production.up.railway.app/cable-calc.html
 ```
 
 ---
@@ -194,7 +194,7 @@ python3 test_phase3.py  # 7/7 ✓
 1. **Редактируйте** файлы в `/d/ai-institut/enghub-main/`
 2. **Тестируйте** локально (`python3 app.py`)
 3. **Git push** → автоматический deploy на Vercel
-4. **Результат** здесь: https://enghub-three.vercel.app/cable-calc.html
+4. **Результат** здесь: https://enghub-frontend-production.up.railway.app/cable-calc.html
 
 ---
 
