@@ -1,525 +1,584 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>EngHub — Interdept AI Integration: UI Mockups #1–6</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EngHub · Межотдельский обмен — UI Мокапы (C1–C6)</title>
 <style>
-  :root {
-    --bg: #0f1117; --surface: #181c27; --card: #1e2333; --border: #2a3047;
-    --accent: #06b6d4; --accent2: #818cf8; --green: #22c55e; --yellow: #f59e0b;
-    --red: #ef4444; --text: #e2e8f0; --muted: #94a3b8; --ai: #a78bfa;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; }
-  .page { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
-  h1 { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
-  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 48px; }
-  .feature { margin-bottom: 72px; }
-  .feature-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px; border-left: 3px solid var(--accent); padding-left: 16px; }
-  .feature-num { background: var(--accent); color: #000; font-weight: 700; font-size: 12px; border-radius: 6px; padding: 3px 9px; flex-shrink: 0; margin-top: 2px; }
-  .feature-title { font-size: 18px; font-weight: 600; color: var(--text); }
-  .feature-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
-  .screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-  .screen { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  .screen-label { background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
-  .screen-body { padding: 14px; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
-  .card:last-child { margin-bottom: 0; }
-  .card-title { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
-  .badge-cyan { background: rgba(6,182,212,.15); color: var(--accent); }
-  .badge-green { background: rgba(34,197,94,.15); color: var(--green); }
-  .badge-yellow { background: rgba(245,158,11,.15); color: var(--yellow); }
-  .badge-red { background: rgba(239,68,68,.15); color: var(--red); }
-  .badge-purple { background: rgba(167,139,250,.15); color: var(--ai); }
-  .badge-gray { background: rgba(148,163,184,.1); color: var(--muted); }
-  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .row:last-child { margin-bottom: 0; }
-  .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
-  .ai-panel { background: rgba(167,139,250,.06); border: 1px solid rgba(167,139,250,.25); border-radius: 8px; padding: 12px; margin-top: 10px; }
-  .ai-panel-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 11px; font-weight: 600; color: var(--ai); }
-  .ai-panel-text { font-size: 12px; color: #c4b5fd; line-height: 1.6; }
-  .ai-ref { display: inline-block; background: rgba(6,182,212,.1); border: 1px solid rgba(6,182,212,.2); border-radius: 5px; padding: 2px 7px; font-size: 11px; color: var(--accent); margin: 2px 3px 2px 0; }
-  .sla-good { color: var(--green); font-weight: 600; font-size: 12px; }
-  .sla-warn { color: var(--yellow); font-weight: 600; font-size: 12px; }
-  .sla-over { color: var(--red); font-weight: 600; font-size: 12px; }
-  .sla-bar-track { height: 4px; border-radius: 2px; background: rgba(255,255,255,.08); margin-top: 6px; }
-  .sla-bar { height: 4px; border-radius: 2px; }
-  .tab-row { display: flex; gap: 2px; margin-bottom: 12px; }
-  .tab { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; }
-  .tab-active { background: rgba(6,182,212,.15); color: var(--accent); }
-  .tab-inactive { background: transparent; color: var(--muted); }
-  .divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
-  .input-mock { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; font-size: 12px; color: var(--text); width: 100%; margin-bottom: 6px; }
-  .btn { padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
-  .btn-cyan { background: rgba(6,182,212,.15); color: var(--accent); border: 1px solid rgba(6,182,212,.3); }
-  .btn-green { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
-  .btn-ai { background: rgba(167,139,250,.15); color: var(--ai); border: 1px solid rgba(167,139,250,.3); }
-  .db-chip { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px; font-size: 10px; color: var(--muted); margin: 2px; }
-  .db-section { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; }
-  .db-section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; }
-  .flow-arrow { text-align: center; color: var(--muted); font-size: 18px; padding: 4px; }
-  .notify-box { background: rgba(34,197,94,.06); border: 1px solid rgba(34,197,94,.2); border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: 12px; color: #86efac; }
-  .diff-add { background: rgba(34,197,94,.08); border-left: 2px solid var(--green); padding: 4px 8px; font-size: 12px; color: #86efac; margin-bottom: 3px; border-radius: 0 4px 4px 0; }
-  .diff-del { background: rgba(239,68,68,.08); border-left: 2px solid var(--red); padding: 4px 8px; font-size: 12px; color: #fca5a5; margin-bottom: 3px; border-radius: 0 4px 4px 0; }
-  .conflict-chip { display: inline-flex; align-items: center; gap: 5px; background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.25); border-radius: 6px; padding: 4px 10px; font-size: 11px; color: var(--yellow); margin: 2px; }
-  .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); margin-bottom: 8px; }
+:root{--bg:#0b1020;--panel:#121933;--panel2:#182040;--border:#232a4a;--text:#e9ecf3;--muted:#8d96b3;--dim:#5a6380;--accent:#4f8cff;--accent2:#8b5cf6;--green:#22c55e;--yellow:#f59e0b;--orange:#f97316;--red:#ef4444;--gray:#64748b;--cyan:#06b6d4;--teal:#14b8a6}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 20px 80px}
+header{padding:0 0 20px;border-bottom:1px solid var(--border);margin-bottom:28px}
+header h1{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+header .sub{color:var(--muted);font-size:13px}
+.toc{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 28px}
+.toc a{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;transition:.15s}
+.toc a:hover{border-color:var(--accent);background:rgba(79,140,255,.08)}
+.feature{background:var(--panel);border:1px solid var(--border);border-radius:14px;margin-bottom:24px;overflow:hidden}
+.feature-header{background:var(--panel2);padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.feature-id{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 10px;border-radius:20px;border:1px solid}
+.feature-id.c1{color:var(--accent);border-color:rgba(79,140,255,.4);background:rgba(79,140,255,.08)}
+.feature-id.c2{color:var(--yellow);border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08)}
+.feature-id.c3{color:var(--cyan);border-color:rgba(6,182,212,.4);background:rgba(6,182,212,.08)}
+.feature-id.c4{color:var(--accent2);border-color:rgba(139,92,246,.4);background:rgba(139,92,246,.08)}
+.feature-id.c5{color:var(--teal);border-color:rgba(20,184,166,.4);background:rgba(20,184,166,.08)}
+.feature-id.c6{color:var(--green);border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.08)}
+.feature-title{font-size:16px;font-weight:700}
+.feature-desc{font-size:12px;color:var(--muted);margin-left:auto}
+.feature-body{padding:20px}
+/* --- layout helpers --- */
+.row{display:flex;gap:16px;flex-wrap:wrap}
+.col{flex:1;min-width:260px}
+.panel{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px}
+.panel.accent-border{border-color:var(--accent)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.badge.green{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.badge.yellow{background:rgba(245,158,11,.12);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+.badge.red{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.badge.blue{background:rgba(79,140,255,.12);color:var(--accent);border:1px solid rgba(79,140,255,.3)}
+.badge.cyan{background:rgba(6,182,212,.12);color:var(--cyan);border:1px solid rgba(6,182,212,.3)}
+.badge.purple{background:rgba(139,92,246,.12);color:var(--accent2);border:1px solid rgba(139,92,246,.3)}
+.badge.gray{background:rgba(100,116,139,.12);color:var(--gray);border:1px solid rgba(100,116,139,.3)}
+.field-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+.inp{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;width:100%}
+.inp:focus{outline:none;border-color:var(--accent)}
+.btn{padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--border)}
+.btn-success{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.btn-cyan{background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.4);color:var(--cyan)}
+.btn-sm{padding:5px 11px;font-size:12px;border-radius:7px}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin-bottom:10px}
+.ai-panel{background:rgba(79,140,255,.06);border:1px solid rgba(79,140,255,.25);border-radius:10px;padding:14px}
+.ai-panel .ai-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ai-panel .ai-icon{font-size:16px}
+.ai-panel .ai-title{font-size:12px;font-weight:700;color:var(--accent)}
+.ai-panel .ai-body{font-size:13px;color:var(--text);line-height:1.65}
+.ai-panel .ai-body .kv{display:flex;gap:8px;margin-bottom:4px}
+.ai-panel .ai-body .kv .k{color:var(--muted);min-width:120px;font-size:12px}
+.ai-panel .ai-body .kv .v{color:var(--text);font-size:12px}
+/* C1 specific */
+.modal-overlay{background:var(--bg);border:2px solid var(--border);border-radius:14px;padding:20px;max-width:420px}
+.modal-overlay h3{font-size:15px;font-weight:700;margin-bottom:14px}
+.task-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+.task-card.awaiting{border-left:3px solid var(--yellow)}
+.task-card.child{border-left:3px solid var(--cyan)}
+.task-card .tc-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.task-card .tc-meta{font-size:11px;color:var(--muted)}
+/* C2 specific */
+.exchange-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
+.sla-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
+.sla-chip.green{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.sla-chip.yellow{background:rgba(245,158,11,.12);color:var(--yellow);border:1px solid rgba(245,158,11,.25)}
+.sla-chip.red{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+.sla-bar{height:4px;border-radius:2px;background:var(--border);margin-top:6px;overflow:hidden}
+.sla-bar-fill{height:100%;border-radius:2px;transition:.3s}
+/* C3 specific */
+.diff-section{background:rgba(6,182,212,.05);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:14px}
+.diff-row{display:flex;gap:12px;margin-bottom:10px}
+.diff-old{flex:1;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:10px;font-size:12px}
+.diff-new{flex:1;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:6px;padding:10px;font-size:12px}
+.diff-label{font-size:10px;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.diff-old .diff-label{color:var(--red)}
+.diff-new .diff-label{color:var(--green)}
+.diff-line{padding:2px 0;line-height:1.5}
+.diff-line.del{color:var(--red);text-decoration:line-through;opacity:.7}
+.diff-line.add{color:var(--green)}
+.diff-line.unchanged{color:var(--muted)}
+/* C4 specific */
+.match-item{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:8px}
+.match-item .mi-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.match-item .mi-text{font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.55}
+.match-item .mi-review{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:6px;padding:8px;font-size:12px;color:var(--accent2)}
+/* C5 specific */
+.revision-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.revision-row:last-child{border-bottom:none}
+.rev-badge{min-width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;background:rgba(79,140,255,.1);color:var(--accent);border:1px solid rgba(79,140,255,.2)}
+.rev-info{flex:1}
+.rev-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.rev-meta{font-size:11px;color:var(--muted)}
+.diff-btn{padding:4px 12px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid rgba(20,184,166,.3);background:rgba(20,184,166,.08);color:var(--teal);cursor:pointer}
+/* C6 specific */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.location-group{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media(max-width:500px){.location-group{grid-template-columns:1fr}}
+/* status colors */
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.status-dot.green{background:var(--green)}
+.status-dot.yellow{background:var(--yellow)}
+.status-dot.red{background:var(--red)}
+/* annotations */
+.annotation{background:rgba(249,115,22,.08);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:var(--text);margin-top:10px;line-height:1.55}
+.annotation .ann-label{font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
 </style>
 </head>
 <body>
-<div class="page">
-  <h1>EngHub — Interdept AI Integration</h1>
-  <p class="subtitle">UI Preview · Features #1–6 · Сгенерировано Scout Council · 2026-05-12</p>
+<div class="wrap">
 
-  <!-- ═══════════════════════════════════════════════════════════ FEATURE 1 -->
-  <div class="feature">
-    <div class="feature-header">
-      <span class="feature-num">#1</span>
-      <div>
-        <div class="feature-title">Stage 4b + AI-Summary при запросе данных у смежника</div>
-        <div class="feature-desc">При создании запроса данных — AI читает вложение и пишет краткое summary для получателя (3-4 предложения), привязывает к ТЗ</div>
-      </div>
-    </div>
-    <div class="screens">
-      <div class="screen">
-        <div class="screen-label">До: форма запроса данных (Stage 4b)</div>
-        <div class="screen-body">
-          <div class="card">
-            <div class="card-title">🔗 Запросить данные у смежного отдела</div>
-            <div class="label" style="margin-bottom:4px">Что нужно</div>
-            <div class="input-mock">Нагрузки от оборудования на перекрытие ОС-204</div>
-            <div class="label" style="margin-bottom:4px">Целевой отдел</div>
-            <div class="input-mock">КЖ — Конструктивные решения</div>
-            <div class="label" style="margin-bottom:4px">Дедлайн</div>
-            <div class="input-mock">2026-05-20</div>
-            <div class="label" style="margin-bottom:4px">Вложение (опционально)</div>
-            <div class="input-mock">📎 Схема расположения оборудования.pdf</div>
-            <button class="btn btn-cyan" style="margin-top:8px">✓ Отправить запрос</button>
-          </div>
-        </div>
-      </div>
-      <div class="screen">
-        <div class="screen-label">После: AI анализирует вложение</div>
-        <div class="screen-body">
-          <div class="flow-arrow">⬇ AI-обработка вложения</div>
-          <div class="card" style="border-color:rgba(167,139,250,.3)">
-            <div class="row">
-              <span class="card-title">📥 Запрос данных: Нагрузки от оборудования...</span>
-            </div>
-            <div class="row">
-              <span class="badge badge-cyan">Stage 4b</span>
-              <span class="badge badge-purple">🤖 AI-резюме готово</span>
-              <span class="badge badge-yellow">⏳ Ожидает ответа</span>
-            </div>
-            <div class="ai-panel">
-              <div class="ai-panel-header">💡 Краткое содержание от AI (ChatGPT 4.0)</div>
-              <div class="ai-panel-text">
-                Схема расположения оборудования в зоне ОС-204 (3 этаж). Указаны 4 единицы оборудования общей массой ~12 т. Нагрузка распределена по осям A-B, 3-5. По ТЗ раздел 4.2 «Нагрузки и воздействия» требует согласования с КЖ до начала рабочей документации.
-              </div>
-              <div style="margin-top:8px">
-                <span class="ai-ref">ТЗ §4.2 Нагрузки</span>
-                <span class="ai-ref">СП 20.13330.2017</span>
-              </div>
-            </div>
-          </div>
-          <div class="notify-box">📲 Уведомление отправлено в Telegram отдела КЖ</div>
-        </div>
-      </div>
-      <div class="screen">
-        <div class="screen-label">БД и поток данных</div>
-        <div class="screen-body">
-          <div class="label">Поток данных</div>
-          <div class="card" style="font-size:12px;line-height:1.7">
-            1. POST tasks (is_assignment=true) → child task создан<br>
-            2. POST task_dependencies (+ attachment_url)<br>
-            3. → api/orchestrator: "прочитай файл, напиши summary, привяжи к ТЗ"<br>
-            4. ← ai_summary сохранён в task_dependencies<br>
-            5. GET tasks → child task показывает панель AI
-          </div>
-          <div class="db-section">
-            <div class="db-section-title">Затронутые таблицы</div>
-            <span class="db-chip">📋 task_dependencies.attachment_url</span>
-            <span class="db-chip">📋 task_dependencies.ai_summary</span>
-            <span class="db-chip">📋 task_dependencies.ai_summary_at</span>
-            <span class="db-chip">📦 bucket: project-files</span>
-          </div>
-          <div class="db-section">
-            <div class="db-section-title">Новый API</div>
-            <span class="db-chip">POST /api/ai-stage4b-summary</span>
-          </div>
-        </div>
-      </div>
-    </div>
+<header>
+  <h1>EngHub · Межотдельский обмен — UI Мокапы</h1>
+  <div class="sub">6 фич: C1 Stage 4b AI-summary · C2 SLA-таймеры · C3 Трансмитталы + AI-diff · C4 Увязка + AI-сверка · C5 Diff ревизий · C6 Поля форм</div>
+</header>
+
+<div class="toc">
+  <a href="#c1">C1 · Stage 4b + AI-summary</a>
+  <a href="#c2">C2 · SLA-таймеры</a>
+  <a href="#c3">C3 · Трансмитталы + AI-diff</a>
+  <a href="#c4">C4 · Увязка ↔ ТЗ ↔ Нормативка</a>
+  <a href="#c5">C5 · Diff ревизий чертежей</a>
+  <a href="#c6">C6 · Поля форм</a>
+</div>
+
+<!-- ===== C1 ===== -->
+<div class="feature" id="c1">
+  <div class="feature-header">
+    <span class="feature-id c1">C1</span>
+    <span class="feature-title">Stage 4b — Запрос данных у смежного отдела + AI-summary</span>
+    <span class="feature-desc">Инженер → запрос → child-task у смежников → AI-панель на карточке</span>
   </div>
+  <div class="feature-body">
+    <div class="row">
 
-  <!-- ═══════════════════════════════════════════════════════════ FEATURE 2 -->
-  <div class="feature">
-    <div class="feature-header">
-      <span class="feature-num" style="background:var(--yellow);color:#000">#2</span>
-      <div>
-        <div class="feature-title">SLA-таймеры на обменах</div>
-        <div class="feature-desc">На карточках обмена показывает время без ответа — зелёный / жёлтый / красный. Дашборд ГИП: секция «Просроченные обмены»</div>
-      </div>
-    </div>
-    <div class="screens">
-      <div class="screen">
-        <div class="screen-label">Карточки задач-запросов с SLA</div>
-        <div class="screen-body">
-          <div class="card" style="border-left:3px solid var(--green)">
-            <div class="row">
-              <span class="badge badge-cyan">Stage 4b</span>
-              <span class="badge badge-gray">КЖ → ОВ</span>
-            </div>
-            <div class="card-title">📥 Нагрузки от оборудования</div>
-            <div class="row"><span class="sla-good">⏱ 4 часа без ответа</span></div>
-            <div class="sla-bar-track"><div class="sla-bar" style="width:17%;background:var(--green)"></div></div>
-          </div>
-          <div class="card" style="border-left:3px solid var(--yellow)">
-            <div class="row">
-              <span class="badge badge-cyan">Stage 4b</span>
-              <span class="badge badge-gray">ЭО → КЖ</span>
-            </div>
-            <div class="card-title">📥 Кабельные трассы у колонн</div>
-            <div class="row"><span class="sla-warn">⏱ 20 часов без ответа</span></div>
-            <div class="sla-bar-track"><div class="sla-bar" style="width:83%;background:var(--yellow)"></div></div>
-          </div>
-          <div class="card" style="border-left:3px solid var(--red)">
-            <div class="row">
-              <span class="badge badge-cyan">Stage 4b</span>
-              <span class="badge badge-red">Просрочен</span>
-            </div>
-            <div class="card-title">📥 Разрезы по ТХ-оборудованию</div>
-            <div class="row"><span class="sla-over">⏱ 31 час — SLA нарушен (норма 24ч)</span></div>
-            <div class="sla-bar-track"><div class="sla-bar" style="width:100%;background:var(--red)"></div></div>
-          </div>
+      <!-- Левая: карточка задачи с кнопкой и модал -->
+      <div class="col">
+        <div class="section-title">Инициатор (Электрика / engineer1)</div>
+        <div class="task-card awaiting">
+          <div class="tc-title">📐 Раздел ЭО: Электроснабжение корп. А</div>
+          <div class="tc-meta" style="margin-bottom:8px">Статус: <span class="badge yellow">🔗 Ждёт данных</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Ожидает ответа от отдела <strong style="color:var(--text)">КЖ (Конструкции)</strong> · с 2026-05-13 09:41</div>
+          <button class="btn btn-cyan btn-sm">🔗 Запросить данные у смежного отдела</button>
         </div>
-      </div>
-      <div class="screen">
-        <div class="screen-label">Дашборд ГИП: просроченные обмены</div>
-        <div class="screen-body">
-          <div class="section-label">Просроченные обмены (SLA &gt; 24ч)</div>
-          <div class="card" style="border-color:rgba(239,68,68,.3)">
-            <div class="row">
-              <span class="sla-over">🔴 3 просрочено</span>
-              <span style="color:var(--muted);font-size:11px">из 12 активных</span>
-            </div>
-            <hr class="divider"/>
-            <div style="font-size:12px">
-              <div class="row"><span style="color:var(--red)">▸</span> <span>ЭО → КЖ: Кабельные трассы (31ч)</span></div>
-              <div class="row"><span style="color:var(--red)">▸</span> <span>ОВ → ВК: Дренаж помещений (29ч)</span></div>
-              <div class="row"><span style="color:var(--red)">▸</span> <span>АР → КЖ: Оси колонн (26ч)</span></div>
-            </div>
-          </div>
-          <div class="db-section">
-            <div class="db-section-title">Затронутые таблицы</div>
-            <span class="db-chip">📋 tasks.awaiting_since</span>
-            <span class="db-chip">📋 tasks.sla_hours (default 24)</span>
-          </div>
-        </div>
-      </div>
-      <div class="screen">
-        <div class="screen-label">Логика SLA расчёта</div>
-        <div class="screen-body">
-          <div class="card" style="font-size:12px;line-height:1.8">
-            <div><strong>awaiting_since</strong> — устанавливается когда<br>assignment_status = 'pending_accept'</div>
-            <hr class="divider"/>
-            <div>⏱ elapsed = now() − awaiting_since</div>
-            <div style="color:var(--green)">Зелёный: elapsed &lt; sla_hours × 0.5</div>
-            <div style="color:var(--yellow)">Жёлтый: elapsed &lt; sla_hours</div>
-            <div style="color:var(--red)">Красный: elapsed ≥ sla_hours</div>
-            <hr class="divider"/>
-            <div style="color:var(--muted)">Расчёт на клиенте через useMemo<br>на основе awaiting_since из API</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ═══════════════════════════════════════════════════════════ FEATURE 3 -->
-  <div class="feature">
-    <div class="feature-header">
-      <span class="feature-num" style="background:var(--accent2)">#3</span>
-      <div>
-        <div class="feature-title">Трансмитталы + AI-diff ревизий</div>
-        <div class="feature-desc">При выпуске новой ревизии: AI сравнивает с предыдущей и показывает что изменилось + кто из смежников затронут</div>
-      </div>
-    </div>
-    <div class="screens">
-      <div class="screen">
-        <div class="screen-label">Карточка трансмиттала (основная)</div>
-        <div class="screen-body">
-          <div class="card">
-            <div class="row">
-              <span class="badge badge-green">Выдан</span>
-              <span style="font-size:11px;color:var(--muted)">TR-2026-014</span>
-            </div>
-            <div class="card-title">Трубопроводы технологической обвязки. Рев. C → D</div>
-            <div class="row">
-              <span style="font-size:11px;color:var(--muted)">АТХ → КЖ, ЭО, ОВ</span>
-            </div>
-            <div class="tab-row" style="margin-top:10px">
-              <div class="tab tab-inactive">Основное</div>
-              <div class="tab tab-active">Что изменилось 🤖</div>
-              <div class="tab tab-inactive">Файлы</div>
-            </div>
-            <div class="ai-panel">
-              <div class="ai-panel-header">🤖 AI-анализ изменений (ChatGPT 4.0)</div>
-              <div class="ai-panel-text" style="margin-bottom:8px">Ревизия D: добавлен обвод трубопровода Ду150 у оси D-7, перенос запорной арматуры на 1.2м к западу, изменение отметки перехода с +3.400 на +3.100.</div>
-              <div class="diff-add">+ Обвод Ду150 у оси D-7 (новый узел N-42)</div>
-              <div class="diff-del">- Запорная арматура: было на D-7+0.5м, стало D-7-0.7м</div>
-              <div class="diff-add">+ Отметка перехода −0.300м (было +3.400, стало +3.100)</div>
-            </div>
+        <div class="modal-overlay" style="margin-top:14px">
+          <h3>📤 Запрос данных у смежного отдела</h3>
+          <div style="margin-bottom:10px">
+            <div class="field-label">ЦЕЛЕВОЙ ОТДЕЛ *</div>
+            <select class="inp">
+              <option>— выбрать отдел —</option>
+              <option selected>КЖ (Конструкции железобетонные)</option>
+              <option>АС (Архитектурные решения)</option>
+              <option>ОВ (Отопление и вентиляция)</option>
+            </select>
           </div>
-          <div class="card" style="border-color:rgba(245,158,11,.3)">
-            <div class="section-label">⚠ Потенциально затронуты смежники</div>
-            <span class="conflict-chip">🔧 КЖ — Изменение нагрузок у D-7</span>
-            <span class="conflict-chip">⚡ ЭО — Кабельная трасса у отм. +3.1</span>
-            <span class="conflict-chip">🌊 ОВ — Обводная линия пересекает коридор</span>
+          <div style="margin-bottom:10px">
+            <div class="field-label">ЧТО НУЖНО *</div>
+            <textarea class="inp" rows="3" style="resize:vertical">Нагрузки на перекрытия по осям А-В / 1-5. Уточнить несущую способность для кабельных лотков 600×200 мм.</textarea>
           </div>
+          <div style="margin-bottom:14px">
+            <div class="field-label">ЖЕЛАЕМЫЙ СРОК (необязательно)</div>
+            <input class="inp" type="text" value="2026-05-20" />
+          </div>
+          <button class="btn btn-primary" style="width:100%">🔗 Отправить запрос</button>
         </div>
       </div>
-      <div class="screen">
-        <div class="screen-label">БД и поток данных</div>
-        <div class="screen-body">
-          <div class="card" style="font-size:12px;line-height:1.7">
-            1. POST /api/transmittals (новая ревизия, prev_transmittal_id)<br>
-            2. Если есть prev → скачиваем оба PDF из Storage<br>
-            3. → api/orchestrator: "сравни документы, напиши diff"<br>
-            4. ← ai_diff сохранён в transmittals<br>
-            5. AI анализирует дисциплины затронутых смежников<br>
-            6. Показываем вкладку «Что изменилось»
-          </div>
-          <div class="db-section">
-            <div class="db-section-title">Затронутые таблицы</div>
-            <span class="db-chip">📋 transmittals.ai_diff</span>
-            <span class="db-chip">📋 transmittals.ai_diff_at</span>
-            <span class="db-chip">📋 transmittals.prev_transmittal_id</span>
-          </div>
-          <div class="db-section">
-            <div class="db-section-title">Ограничение MVP</div>
-            <div style="font-size:12px;color:var(--muted)">Diff на основе text-extraction из PDF (pdf-parse). Полноценный BIM-diff (IFC/3D) — выходит за scope MVP (TODO-stub)</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ═══════════════════════════════════════════════════════════ FEATURE 4 -->
-  <div class="feature">
-    <div class="feature-header">
-      <span class="feature-num" style="background:#34d399;color:#000">#4</span>
-      <div>
-        <div class="feature-title">Увязка ↔ ТЗ ↔ Нормативка: AI-сверка</div>
-        <div class="feature-desc">При сохранении требования в увязке: AI ищет релевантные разделы ТЗ + нормативную базу, сохраняет ссылки в ai_check</div>
-      </div>
-    </div>
-    <div class="screens">
-      <div class="screen">
-        <div class="screen-label">До: карточка увязки (assignment)</div>
-        <div class="screen-body">
-          <div class="card">
-            <div class="row">
-              <span class="badge badge-yellow">В работе</span>
-              <span class="badge badge-gray">КЖ ↔ ОВ</span>
-            </div>
-            <div class="card-title">Увязка: проходки трубопроводов ОВ через перекрытия</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Требование: диаметр проходки = Ду трубы + 50мм с обоих сторон. Уплотнение — огнестойкое.</div>
-            <button class="btn btn-ai" style="width:100%">🔍 Проверить по ТЗ и нормативке</button>
+      <!-- Правая: child-task у получателя + AI-summary -->
+      <div class="col">
+        <div class="section-title">Получатель (КЖ / sidorov)</div>
+        <div class="task-card child">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+            <div class="tc-title">📥 Запрос данных: Нагрузки на перекрытия по осям А-В / 1-5</div>
+            <span class="badge cyan">Входящий</span>
           </div>
-        </div>
-      </div>
-      <div class="screen">
-        <div class="screen-label">После: AI-сверка</div>
-        <div class="screen-body">
-          <div class="card" style="border-color:rgba(52,211,153,.25)">
-            <div class="row">
-              <span class="badge badge-yellow">В работе</span>
-              <span class="badge badge-green">🔍 AI-сверка выполнена</span>
+          <div class="tc-meta" style="margin-bottom:10px">От: Электрика (engineer1) · Приоритет: 🔴 Высокий · Срок: 2026-05-20</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button class="btn btn-success btn-sm">✓ Принять</button>
+            <button class="btn btn-ghost btn-sm">↩ Отклонить</button>
+          </div>
+
+          <div class="ai-panel">
+            <div class="ai-header">
+              <span class="ai-icon">💡</span>
+              <span class="ai-title">AI-summary запроса</span>
+              <span class="badge blue" style="margin-left:auto;font-size:10px">GPT-4o</span>
             </div>
-            <div class="card-title">Увязка: проходки трубопроводов ОВ</div>
-            <div class="ai-panel">
-              <div class="ai-panel-header">🔍 AI-сверка с ТЗ и нормативной базой</div>
-              <div class="ai-panel-text">Требование о допуске +50 мм подтверждено. В ТЗ проекта раздел 5.3 «Пожарная безопасность» прямо указано требование огнестойкого уплотнения для проходок через противопожарные перекрытия REI 120.</div>
-              <div style="margin-top:10px">
-                <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Найдено в ТЗ проекта:</div>
-                <span class="ai-ref">ТЗ §5.3 Пожарная безопасность</span>
-                <div style="font-size:11px;color:var(--muted);margin:8px 0 4px">Найдено в нормативной базе:</div>
-                <span class="ai-ref">СП 56.13330.2021 п.6.4</span>
-                <span class="ai-ref">ГОСТ Р 53309-2009</span>
-                <span class="ai-ref">СП 4.13130.2013 п.5.2.3</span>
+            <div class="ai-body">
+              <div class="kv"><span class="k">Что запрошено:</span><span class="v">Нагрузки на перекрытия, оси А-В/1-5, для кабельных лотков</span></div>
+              <div class="kv"><span class="k">Размер лотков:</span><span class="v">600×200 мм (требуется несущая способность)</span></div>
+              <div class="kv"><span class="k">Задача-источник:</span><span class="v">ЭО: Электроснабжение корп. А</span></div>
+              <div class="kv"><span class="k">Срочность:</span><span class="v" style="color:var(--yellow)">⚠ Умеренная (5 рабочих дней)</span></div>
+              <div style="border-top:1px solid rgba(79,140,255,.2);margin-top:8px;padding-top:8px;font-size:12px;color:var(--muted)">
+                Рекомендация: предоставить нагрузочную схему перекрытий и расчёт допускаемой нагрузки по зонам.
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="screen">
-        <div class="screen-label">БД и поток данных</div>
-        <div class="screen-body">
-          <div class="card" style="font-size:12px;line-height:1.7">
-            1. Клик «Проверить по ТЗ и нормативке»<br>
-            2. POST /api/ai-assignment-check<br>
-            3. → GET /api/assignment (ТЗ проекта, разделы)<br>
-            4. → orchestrator: search_normativka(требование)<br>
-            5. ← ai_check + цитаты сохранены в task_dependencies<br>
-            6. Панель «AI-сверка» появляется на карточке
-          </div>
-          <div class="db-section">
-            <div class="db-section-title">Затронутые таблицы</div>
-            <span class="db-chip">📋 task_dependencies.ai_check</span>
-            <span class="db-chip">📋 task_dependencies.ai_check_at</span>
-            <span class="db-chip">📋 project_assignments (ТЗ)</span>
-            <span class="db-chip">📋 normative_chunks (RAG)</span>
-          </div>
+        <div class="annotation">
+          <div class="ann-label">Примечание</div>
+          AI-summary генерируется при создании child-task через <code>/api/interdept-ai/summarize-request</code>. Кэшируется в поле <code>ai_summary</code> таблицы <code>task_dependencies</code>.
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- ═══════════════════════════════════════════════════════════ FEATURE 5 -->
-  <div class="feature">
-    <div class="feature-header">
-      <span class="feature-num" style="background:#f472b6;color:#000">#5</span>
-      <div>
-        <div class="feature-title">Diff ревизий чертежей + Cross-disc конфликты (MVP stub)</div>
-        <div class="feature-desc">При смене ревизии: AI summary изменений из текста PDF. Cross-disc BIM-clash — TODO-stub (выходит за scope)</div>
-      </div>
     </div>
-    <div class="screens">
-      <div class="screen">
-        <div class="screen-label">Карточка ревизии с AI-summary</div>
-        <div class="screen-body">
-          <div class="card">
-            <div class="row">
-              <span class="badge badge-green">Выдан</span>
-              <span style="font-size:11px;color:var(--muted)">ОВ-205 · Рев. B → C</span>
-            </div>
-            <div class="card-title">Вентиляция производственного корпуса</div>
-            <div class="ai-panel">
-              <div class="ai-panel-header">🤖 AI-summary изменений (ChatGPT 4.0)</div>
-              <div class="ai-panel-text">Ревизия C: увеличен диаметр воздуховода на участке А4-А7 с Ду315 до Ду400. Добавлен дополнительный клапан КМ-2 у оси Б-6. Схема воздухораспределения скорректирована по расчёту тепловыделений от нового оборудования.</div>
-              <div style="margin-top:6px">
-                <span class="ai-ref">2 изменения геометрии</span>
-                <span class="ai-ref">1 новый элемент</span>
-              </div>
-            </div>
-          </div>
-          <div class="card" style="border-color:rgba(245,158,11,.2)">
-            <div class="row">
-              <span style="font-size:11px;font-weight:600;color:var(--yellow)">⚠ Cross-disc BIM clash: TODO</span>
-            </div>
-            <div style="font-size:12px;color:var(--muted)">
-              Clash-detection требует BIM-ядра (IFC-парсер, spatial index). Выходит за scope MVP. Реализация в Phase 2 при наличии IFC-файлов.
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="screen">
-        <div class="screen-label">БД и поток данных</div>
-        <div class="screen-body">
-          <div class="card" style="font-size:12px;line-height:1.7">
-            1. POST /api/revisions (новая ревизия)<br>
-            2. Если есть prev drawing → скачиваем PDF из drawings.file_url<br>
-            3. → orchestrator: "сравни текст чертежей, краткий diff"<br>
-            4. ← ai_diff сохранён в revisions<br>
-            5. На карточке ревизии: панель AI-summary<br>
-            <br>
-            <span style="color:var(--muted)">Cross-disc: TODO-stub с объяснением ограничения</span>
-          </div>
-          <div class="db-section">
-            <div class="db-section-title">Затронутые таблицы</div>
-            <span class="db-chip">📋 revisions.ai_diff</span>
-            <span class="db-chip">📋 revisions.ai_diff_at</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════ FEATURE 6 -->
-  <div class="feature">
-    <div class="feature-header">
-      <span class="feature-num" style="background:#fb923c;color:#000">#6</span>
-      <div>
-        <div class="feature-title">T16: «Получатель» + место в чертеже</div>
-        <div class="feature-desc">Миграция: transmittals.recipient_dept_id, reviews.location (лист/узел/ось). Формы обновлены.</div>
-      </div>
-    </div>
-    <div class="screens">
-      <div class="screen">
-        <div class="screen-label">Форма трансмиттала: поле Получатель</div>
-        <div class="screen-body">
-          <div class="card">
-            <div class="card-title">Новый трансмиттал</div>
-            <div class="label" style="margin-bottom:4px">Номер</div>
-            <div class="input-mock">TR-2026-015</div>
-            <div class="label" style="margin-bottom:4px">Получатель (отдел)</div>
-            <div class="input-mock" style="border-color:rgba(6,182,212,.4);color:var(--accent)">КЖ — Конструктивные решения ▾</div>
-            <div class="label" style="margin-bottom:4px">Старый recipient (текст, deprecated)</div>
-            <div class="input-mock" style="opacity:.4">Иванов А.А.</div>
-            <div class="label" style="margin-bottom:4px">Примечание</div>
-            <div class="input-mock">Ревизия D — учесть смещение трубопровода</div>
-            <button class="btn btn-green" style="margin-top:8px">Выдать трансмиттал</button>
-          </div>
-        </div>
-      </div>
-      <div class="screen">
-        <div class="screen-label">Форма замечания: поле Место в чертеже</div>
-        <div class="screen-body">
-          <div class="card">
-            <div class="card-title">Новое замечание</div>
-            <div class="label" style="margin-bottom:4px">Заголовок</div>
-            <div class="input-mock">Не совпадает отметка перехода</div>
-            <div class="label" style="margin-bottom:4px">Место в чертеже (лист / узел / ось)</div>
-            <div class="input-mock" style="border-color:rgba(6,182,212,.4);color:var(--accent)">Лист 3, Узел 12, Ось D-7</div>
-            <div class="label" style="margin-bottom:4px">Серьёзность</div>
-            <div class="input-mock">Существенное ▾</div>
-            <div class="label" style="margin-bottom:4px">Чертёж</div>
-            <div class="input-mock">АТХ-001 Технологическая обвязка ▾</div>
-            <button class="btn btn-cyan" style="margin-top:8px">Добавить замечание</button>
-          </div>
-        </div>
-      </div>
-      <div class="screen">
-        <div class="screen-label">БД и поток данных</div>
-        <div class="screen-body">
-          <div class="db-section">
-            <div class="db-section-title">Новые поля в миграции 030</div>
-            <div class="card" style="font-size:12px;line-height:1.8">
-              <strong>transmittals:</strong><br>
-              + recipient_dept_id BIGINT REFERENCES departments(id)<br>
-              <span style="color:var(--muted)">(recipient TEXT остаётся для совместимости)</span><br><br>
-              <strong>reviews:</strong><br>
-              + location TEXT
-              <span style="color:var(--muted)">(свободный текст — лист/узел/ось)</span>
-            </div>
-          </div>
-          <div class="db-section">
-            <div class="db-section-title">UI изменения</div>
-            <div style="font-size:12px;color:var(--muted)">
-              TransmittalsTab.tsx — dropdown depts вместо текстового поля recipient<br>
-              ReviewsTab.tsx — добавить поле location в форму
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div style="border-top:1px solid var(--border);padding-top:24px;color:var(--muted);font-size:12px">
-    <div style="margin-bottom:6px"><strong style="color:var(--text)">Scout Council Synthesis</strong> — ключевые факты перед реализацией:</div>
-    <ul style="padding-left:18px;line-height:2">
-      <li>Orchestrator: 3 инструмента (search_normativka, create_task, list_drawings) — нет чтения файлов → нужен новый endpoint</li>
-      <li>Buckets: project-files, project-assignments, normative-docs — RLS через сервисный ключ для server-side чтения</li>
-      <li>task_dependencies существует (000_core_schema_init) — нужно ADD COLUMN (ai_summary, attachment_url, ai_check)</li>
-      <li>transmittals — нет ai_diff, нет recipient_dept_id → миграция 030_interdept_ai</li>
-      <li>revisions — нет ai_diff → тоже в миграцию 030</li>
-      <li>reviews — нет location → тоже в миграцию 030</li>
-      <li>PLM-паттерны (Aveva/BIMcollab): Transmittal+Approval, SLA Turnover, Normative Linking — все реалистичны для MVP</li>
-      <li>Cross-disc BIM clash: требует IFC-ядра → TODO-stub в C5</li>
-    </ul>
   </div>
 </div>
+
+<!-- ===== C2 ===== -->
+<div class="feature" id="c2">
+  <div class="feature-header">
+    <span class="feature-id c2">C2</span>
+    <span class="feature-title">SLA-таймеры на карточках обмена</span>
+    <span class="feature-desc">⏱ N часов без ответа · зелёный / жёлтый / красный</span>
+  </div>
+  <div class="feature-body">
+    <div class="section-title">Реестр запросов между отделами — проект «Корпус А»</div>
+
+    <!-- Зелёный: <24ч -->
+    <div class="exchange-card">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span class="badge cyan">📤 Исходящий</span>
+          <span style="font-size:13px;font-weight:600">Нагрузки на перекрытия (КЖ)</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Отправлен: 2026-05-13 09:41 · Ожидает принятия</div>
+        <div class="sla-bar"><div class="sla-bar-fill" style="width:18%;background:var(--green)"></div></div>
+      </div>
+      <div style="flex:0 0 auto;text-align:right">
+        <div class="sla-chip green">⏱ 4 ч без ответа</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Норма: 24 ч</div>
+      </div>
+    </div>
+
+    <!-- Жёлтый: 24–48ч -->
+    <div class="exchange-card">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span class="badge blue">📥 Входящий</span>
+          <span style="font-size:13px;font-weight:600">Согласование трассы ВК (ОВ → КЖ)</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Получен: 2026-05-12 14:20 · Принят, в работе</div>
+        <div class="sla-bar"><div class="sla-bar-fill" style="width:58%;background:var(--yellow)"></div></div>
+      </div>
+      <div style="flex:0 0 auto;text-align:right">
+        <div class="sla-chip yellow">⏱ 33 ч без ответа</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Норма: 48 ч · осталось 15 ч</div>
+      </div>
+    </div>
+
+    <!-- Красный: >48ч -->
+    <div class="exchange-card">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span class="badge red">🚨 Просрочен</span>
+          <span style="font-size:13px;font-weight:600">Спецификация воздуховодов (ОВ → ЭО)</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Отправлен: 2026-05-11 10:00 · Принятие не подтверждено</div>
+        <div class="sla-bar"><div class="sla-bar-fill" style="width:100%;background:var(--red)"></div></div>
+      </div>
+      <div style="flex:0 0 auto;text-align:right">
+        <div class="sla-chip red">⏱ 62 ч без ответа</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">SLA нарушен на 14 ч</div>
+      </div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-label">Логика SLA</div>
+      Поля <code>sla_deadline</code> + <code>sla_hours_elapsed</code> вычисляются на клиенте из <code>created_at</code> записи в <code>task_dependencies</code>. Цвет: зелёный &lt;50%, жёлтый 50–99%, красный ≥100% от лимита. Лимит по умолчанию — 48 ч.
+    </div>
+  </div>
+</div>
+
+<!-- ===== C3 ===== -->
+<div class="feature" id="c3">
+  <div class="feature-header">
+    <span class="feature-id c3">C3</span>
+    <span class="feature-title">Трансмитталы + AI-diff ревизий</span>
+    <span class="feature-desc">Вкладка «Что изменилось» с автогенерируемым AI-diff при ≥1 ревизии</span>
+  </div>
+  <div class="feature-body">
+    <div class="row">
+      <div class="col">
+        <div class="section-title">Трансмиттал T-2026-003 · Выпущен</div>
+        <div class="panel" style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div>
+              <div style="font-size:14px;font-weight:600">T-2026-003</div>
+              <div style="font-size:11px;color:var(--muted)">Отправитель: КЖ → Получатель: ЭО · 13.05.2026</div>
+            </div>
+            <span class="badge blue">Выпущен</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Позиции: 3 чертежа (R0→R1)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" style="opacity:.6">📋 Состав</button>
+            <button class="btn btn-cyan btn-sm">✨ Что изменилось</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="section-title">Вкладка «Что изменилось» (AI-diff)</div>
+        <div class="diff-section">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="font-size:15px">✨</span>
+            <span style="font-size:13px;font-weight:700;color:var(--cyan)">AI-анализ изменений · R0 → R1</span>
+            <span class="badge gray" style="margin-left:auto;font-size:10px">GPT-4o</span>
+          </div>
+
+          <div style="margin-bottom:12px">
+            <div class="field-label" style="margin-bottom:6px">Чертёж: КЖ-101 «План фундамента»</div>
+            <div class="diff-row">
+              <div class="diff-old">
+                <div class="diff-label">R0 (исходная)</div>
+                <div class="diff-line unchanged">Армирование фундамента Ф1</div>
+                <div class="diff-line del">∅12 A400 — шаг 200×200</div>
+                <div class="diff-line unchanged">Бетон В20</div>
+              </div>
+              <div class="diff-new">
+                <div class="diff-label">R1 (текущая)</div>
+                <div class="diff-line unchanged">Армирование фундамента Ф1</div>
+                <div class="diff-line add">∅16 A500 — шаг 150×150</div>
+                <div class="diff-line unchanged">Бетон В25</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-panel" style="background:rgba(6,182,212,.04);border-color:rgba(6,182,212,.2)">
+            <div class="ai-header">
+              <span class="ai-icon">💡</span>
+              <span class="ai-title" style="color:var(--cyan)">Итог изменений (AI)</span>
+            </div>
+            <div class="ai-body" style="font-size:12px">
+              Усилено армирование фундамента: диаметр стержней +4 мм, шаг уменьшен 200→150 мм, класс бетона повышен В20→В25. Изменения вызваны увеличением нагрузки от оборудования (+18%) по данным запроса ЭО от 10.05.2026.
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <div class="ann-label">API</div>
+          <code>POST /api/interdept-ai/transmittal-diff</code> — принимает <code>transmittal_id</code>, сравнивает тексты R0 vs R1 (Supabase Storage), возвращает структурированный diff + summary.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== C4 ===== -->
+<div class="feature" id="c4">
+  <div class="feature-header">
+    <span class="feature-id c4">C4</span>
+    <span class="feature-title">Увязка ↔ ТЗ ↔ Нормативка · AI-сверка</span>
+    <span class="feature-desc">Панель «🔍 AI-сверка» на пунктах раздела «✉ Увязка»</span>
+  </div>
+  <div class="feature-body">
+    <div class="section-title">Раздел «✉ Увязка» — Проект «Корпус А» / КЖ</div>
+
+    <div class="match-item">
+      <div class="mi-head">
+        <span style="font-size:13px;font-weight:600">§3.2 Нагрузки от технологического оборудования</span>
+        <span class="badge yellow">⚠ Требует проверки</span>
+      </div>
+      <div class="mi-text">По ТЗ (п.4.3): нагрузки от оборудования 8 кН/м². Смежный раздел ЭО указывает расчётную нагрузку 9.6 кН/м² (с учётом кабельных лотков).</div>
+      <div class="mi-review">
+        🔍 <strong>AI-сверка:</strong> Расхождение +20%. ТЗ п.4.3 устарело. Требуется согласование с ГИПом и актуализация задания на проектирование. Ссылка: СП 20.13330.2017 п.8.2.4.
+      </div>
+    </div>
+
+    <div class="match-item">
+      <div class="mi-head">
+        <span style="font-size:13px;font-weight:600">§5.1 Защитный слой бетона</span>
+        <span class="badge green">✓ Соответствует</span>
+      </div>
+      <div class="mi-text">По ТЗ (п.6.1): защитный слой ≥30 мм для фундаментов. Раздел КЖ: 35 мм (Ф1), 40 мм (Ф2).</div>
+      <div class="mi-review" style="background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2);color:var(--green)">
+        ✅ <strong>AI-сверка:</strong> Требования ТЗ выполнены. Соответствие ГОСТ 31384-2017 п.7.3.2. Дополнительных согласований не требуется.
+      </div>
+    </div>
+
+    <div class="match-item">
+      <div class="mi-head">
+        <span style="font-size:13px;font-weight:600">§7.3 Вводы инженерных сетей</span>
+        <span class="badge red">❌ Конфликт</span>
+      </div>
+      <div class="mi-text">По ТЗ: вводы ВК и ЭО — северная стена. Раздел АС: окно запроектировано на северной стене ось 1/А-В, перекрывает зону ввода.</div>
+      <div class="mi-review" style="background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2);color:var(--red)">
+        🚨 <strong>AI-сверка:</strong> Конфликт позиции ввода и проёма. Необходима координация АС + ВК + ЭО. Рекомендация: перенести ввод на ось 2 или пересмотреть положение окна в АС.
+      </div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-label">API</div>
+      <code>POST /api/interdept-ai/cross-check</code> — принимает <code>project_id</code> + <code>section_id</code>, сравнивает текст ТЗ, данные смежных разделов и нормативную базу (AGSK), возвращает вердикт по каждому пункту.
+    </div>
+  </div>
+</div>
+
+<!-- ===== C5 ===== -->
+<div class="feature" id="c5">
+  <div class="feature-header">
+    <span class="feature-id c5">C5</span>
+    <span class="feature-title">Diff ревизий чертежей (MVP)</span>
+    <span class="feature-desc">У чертежа с &gt;1 ревизией — секция «Что изменилось» (AI-diff или ручная аннотация)</span>
+  </div>
+  <div class="feature-body">
+    <div class="row">
+      <div class="col">
+        <div class="section-title">🧾 Ревизии чертежа КЖ-101 «План фундамента»</div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px">
+
+          <div class="revision-row">
+            <div class="rev-badge">R0</div>
+            <div class="rev-info">
+              <div class="rev-title">Начальный выпуск</div>
+              <div class="rev-meta">05.05.2026 · Иванов И.И. · PDF 1.2 МБ</div>
+            </div>
+            <button class="diff-btn" style="opacity:.4;cursor:default">— базовая</button>
+          </div>
+
+          <div class="revision-row">
+            <div class="rev-badge" style="background:rgba(6,182,212,.1);color:var(--cyan);border-color:rgba(6,182,212,.2)">R1</div>
+            <div class="rev-info">
+              <div class="rev-title">По замечаниям ЭО (нагрузки)</div>
+              <div class="rev-meta">13.05.2026 · Иванов И.И. · PDF 1.4 МБ</div>
+            </div>
+            <button class="diff-btn">✨ Что изменилось</button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="section-title">Секция «Что изменилось» R0→R1</div>
+        <div class="diff-section" style="border-color:rgba(20,184,166,.25);background:rgba(20,184,166,.04)">
+          <div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:10px">✨ Изменения R0 → R1</div>
+
+          <div style="margin-bottom:10px">
+            <div class="field-label" style="color:var(--teal)">Ключевые изменения (AI)</div>
+            <ul style="font-size:13px;color:var(--text);padding-left:18px;line-height:1.75">
+              <li>Арматура Ф1: ∅12→∅16, шаг 200→150 мм</li>
+              <li>Бетон: В20→В25 по всем фундаментам</li>
+              <li>Добавлена выноска нагрузок по осям А-В</li>
+              <li>Обновлена таблица армирования (лист 2)</li>
+            </ul>
+          </div>
+
+          <div style="font-size:12px;color:var(--muted);border-top:1px solid rgba(20,184,166,.2);padding-top:8px">
+            Причина: замечание ЭО от 10.05.2026 — нагрузка от кабельных лотков увеличена до 9.6 кН/м²
+          </div>
+
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm">📥 Скачать R0</button>
+            <button class="btn btn-ghost btn-sm">📥 Скачать R1</button>
+          </div>
+        </div>
+        <div class="annotation">
+          <div class="ann-label">MVP-вариант</div>
+          MVP: поле <code>change_description</code> на <code>revisions</code> заполняется вручную автором. Полный вариант: <code>POST /api/interdept-ai/revision-diff</code> сравнивает тексты двух PDF.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== C6 ===== -->
+<div class="feature" id="c6">
+  <div class="feature-header">
+    <span class="feature-id c6">C6</span>
+    <span class="feature-title">Поля форм: получатель трансмиттала + локация замечания</span>
+    <span class="feature-desc">«Получатель» dropdown в трансмиттале · поле «лист/узел/ось» в форме замечания</span>
+  </div>
+  <div class="feature-body">
+    <div class="row">
+
+      <!-- Форма создания трансмиттала -->
+      <div class="col">
+        <div class="section-title">📦 Форма: Новый трансмиттал</div>
+        <div class="panel">
+          <div class="form-grid" style="margin-bottom:12px">
+            <div>
+              <div class="field-label">НОМЕР</div>
+              <input class="inp" value="T-2026-004" readonly />
+            </div>
+            <div>
+              <div class="field-label">ДАТА ВЫПУСКА</div>
+              <input class="inp" type="text" value="13.05.2026" />
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <div class="field-label">ПОЛУЧАТЕЛЬ * <span style="color:var(--green);font-size:10px">[C6: новое поле]</span></div>
+            <select class="inp" style="border-color:rgba(34,197,94,.4)">
+              <option value="">— выбрать отдел-получатель —</option>
+              <option selected>ЭО (Электрооборудование)</option>
+              <option>ОВ (Отопление и вентиляция)</option>
+              <option>ВК (Водоснабжение и канализация)</option>
+              <option>АС (Архитектурные решения)</option>
+              <option>ТХ (Технологический)</option>
+            </select>
+          </div>
+          <div style="margin-bottom:12px">
+            <div class="field-label">ТЕМА / ПРИМЕЧАНИЕ</div>
+            <input class="inp" type="text" placeholder="Тема трансмиттала..." />
+          </div>
+          <div style="margin-bottom:14px">
+            <div class="field-label">СТАТУС</div>
+            <select class="inp">
+              <option>Черновик</option>
+              <option selected>Выпущен</option>
+              <option>Доставлен</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%">+ Создать трансмиттал</button>
+        </div>
+      </div>
+
+      <!-- Форма замечания -->
+      <div class="col">
+        <div class="section-title">📝 Форма: Новое замечание</div>
+        <div class="panel">
+          <div style="margin-bottom:12px">
+            <div class="field-label">ЗАДАЧА</div>
+            <select class="inp">
+              <option>КЖ-101: Раздел КЖ — Фундаменты</option>
+            </select>
+          </div>
+          <div style="margin-bottom:12px">
+            <div class="field-label">ТИП ЗАМЕЧАНИЯ</div>
+            <select class="inp">
+              <option>Замечание</option>
+              <option selected>Вопрос</option>
+              <option>Предложение</option>
+            </select>
+          </div>
+          <div style="margin-bottom:12px">
+            <div class="field-label">ЛОКАЦИЯ (лист / узел / ось) * <span style="color:var(--green);font-size:10px">[C6: новое поле]</span></div>
+            <div class="location-group">
+              <div>
+                <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Лист</div>
+                <input class="inp" type="text" placeholder="Лист 2" style="border-color:rgba(34,197,94,.4)" />
+              </div>
+              <div>
+                <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Узел</div>
+                <input class="inp" type="text" placeholder="Узел 5/1" style="border-color:rgba(34,197,94,.4)" />
+              </div>
+              <div>
+                <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Ось</div>
+                <input class="inp" type="text" placeholder="А-Б/2" style="border-color:rgba(34,197,94,.4)" />
+              </div>
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <div class="field-label">ТЕКСТ ЗАМЕЧАНИЯ *</div>
+            <textarea class="inp" rows="3" style="resize:vertical">Уточнить привязку фундамента Ф3 по оси Б/2 — на чертеже КЖ-101 л.2 нет размерной цепочки.</textarea>
+          </div>
+          <div style="margin-bottom:14px">
+            <div class="field-label">СРОК ОТВЕТА</div>
+            <input class="inp" type="text" value="2026-05-18" />
+          </div>
+          <button class="btn btn-primary" style="width:100%">📝 Создать замечание</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="annotation">
+      <div class="ann-label">Изменения в БД (C6)</div>
+      Трансмитталы: добавить колонку <code>receiver_dept_id integer REFERENCES departments(id)</code> в таблицу <code>transmittals</code>.<br>
+      Замечания: добавить колонку <code>location text</code> (формат «лист/узел/ось») в таблицу <code>task_messages</code> или отдельную таблицу <code>task_remarks</code>.
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
 </body>
 </html>
