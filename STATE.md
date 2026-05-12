@@ -1,3 +1,16 @@
+## 2026-05-12 (AI-контекст + Нормативка шаги 1-9)
+- **ШАГ 1** ✅ orchestrator.ts: fetchProjectContext() из project_assignments.full_text + inject в finalSystemPrompt + инструмент get_project_tz
+- **ШАГ 2** ✅ App.tsx: авто-обновление normativeDocs каждые 5с если есть pending/processing
+- **ШАГ 3** ✅ App.tsx: кнопка «🚀 Запустить обработку» → POST /api/normative-docs retry_pending
+- **ШАГ 4** ✅ App.tsx: кнопка «🤖 Проверить файл по ТЗ» в панели задачи + aiCheckLoading/aiCheckResult
+- **ШАГ 5** ✅ Новый файл task-file-check.ts: скачивает вложение задачи, сравнивает с ТЗ через GPT-4o
+- **ШАГ 6** ✅ orchestrator.ts: инструмент search_normative_kb — векторный поиск по normative_chunks
+- **ШАГ 7** ✅ AssignmentTab.tsx: кнопка «🧠 Разбить на задачи» → orchestrator get_project_tz + декомпозиция
+- **ШАГ 8** ✅ orchestrator.ts: инструмент check_discipline_collisions — GPT-4o анализ коллизий в ТЗ
+- **ШАГ 9** ✅ task-file-check.ts: уведомление notifications → created_by проекта при расхождении
+- index.ts: зарегистрирован taskFileCheckRouter
+- TypeScript: tsc --noEmit — чистый
+
 # STATE — EngHub
 
 > Живой журнал. Обновляется при каждом значимом изменении. Источник правды между сессиями Claude.

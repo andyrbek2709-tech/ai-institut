@@ -158,6 +158,37 @@ const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'get_project_tz',
+      description: 'Получить полный текст технического задания текущего проекта. Используй когда спрашивают про требования проекта, что сказано в ТЗ, отступления от ТЗ.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'search_normative_kb',
+      description: 'Поиск по локальной базе знаний (загруженные ГОСТы, СНиПы, СП, внутренние регламенты организации). Используй когда нужно найти конкретные требования из загруженных документов.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Поисковый запрос' },
+          limit: { type: 'number', description: 'Количество результатов (1-8, default 5)' },
+        },
+        required: ['query'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'check_discipline_collisions',
+      description: 'Проверить коллизии и противоречия между разделами ТЗ разных дисциплин. Используй когда спрашивают про коллизии, противоречия, несоответствия между дисциплинами.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
 ];
 
 // ── Helper: получить org_id юзера ──────────────────────────────────────────
@@ -288,6 +319,25 @@ async function execListDrawings(args: { discipline?: string; status?: string }, 
   }
 }
 
+
+// ── TOOL: fetchProjectContext ─────────────────────────────────────────────
+
+async function fetchProjectContext(projectId: string | number | undefined): Promise<string> {
+  if (!projectId) return '';
+  try {
+    const sb = getSupabaseAdmin();
+    const { data } = await sb
+      .from('project_assignments')
+      .select('file_name, full_text')
+      .eq('project_id', Number(projectId))
+      .eq('is_current', true)
+      .maybeSingle();
+    if (!data?.full_text) return '';
+    const text = (data.full_text as string).slice(0, 3000);
+    return `\n\n---\nТЕХНИЧЕСКОЕ ЗАДАНИЕ ПРОЕКТА: "${data.file_name || ''}"\n${text}\n---`;
+  } catch { return ''; }
+}
+
 // ── POST /api/orchestrator ────────────────────────────────────────────────
 
 router.post('/orchestrator', authMiddleware, async (req: Request, res: Response) => {
@@ -299,13 +349,15 @@ router.post('/orchestrator', authMiddleware, async (req: Request, res: Response)
   if (!callerId) throw new ApiError(401, 'Authenticated user required');
 
   const systemPrompt = ROLE_SYSTEM_PROMPTS[role as string] || DEFAULT_SYSTEM_PROMPT;
+  const projectContext = await fetchProjectContext(project_id);
+  const finalSystemPrompt = systemPrompt + projectContext;
   const orgId = await getOrgIdForUser(callerId);
   const token = req.headers.authorization?.replace('Bearer ', '');
 
   try {
     const openai = getOpenAI();
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: finalSystemPrompt },
       { role: 'user', content: message.trim() },
     ];
 
@@ -357,6 +409,53 @@ router.post('/orchestrator', authMiddleware, async (req: Request, res: Response)
             if (toolResult?.success) collectedActions.push({ type: 'task_created', task_id: toolResult.task_id, name: toolResult.name });
           } else if (tc.function.name === 'list_drawings') {
             toolResult = await execListDrawings(args, project_id, token);
+          } else if (tc.function.name === 'get_project_tz') {
+            const ctx = await fetchProjectContext(project_id);
+            toolResult = ctx || 'ТЗ для проекта не найдено';
+          } else if (tc.function.name === 'search_normative_kb') {
+            try {
+              const sb = getSupabaseAdmin();
+              const query = args.query as string;
+              const limit = Math.min(Number(args.limit) || 5, 8);
+              const embedResp = await getOpenAI().embeddings.create({ model: 'text-embedding-3-small', input: query });
+              const embedding = embedResp.data[0].embedding;
+              const { data: chunks } = await sb.rpc('search_normative_chunks', {
+                query_embedding: JSON.stringify(embedding),
+                match_count: limit,
+                min_similarity: 0.25,
+              });
+              if (!chunks?.length) {
+                toolResult = { results: [], message: 'Ничего не найдено в локальной базе знаний' };
+              } else {
+                toolResult = {
+                  results: (chunks as any[]).map((c: any) => ({
+                    document: c.doc_name,
+                    text: c.content,
+                    similarity: Math.round(c.similarity * 100) + '%',
+                  })),
+                };
+              }
+            } catch (e: any) {
+              toolResult = { error: e?.message };
+            }
+          } else if (tc.function.name === 'check_discipline_collisions') {
+            try {
+              const ctx = await fetchProjectContext(project_id);
+              if (!ctx) {
+                toolResult = { error: 'ТЗ проекта не найдено' };
+              } else {
+                const completion = await getOpenAI().chat.completions.create({
+                  model: 'gpt-4o', temperature: 0.2, max_tokens: 1000,
+                  messages: [
+                    { role: 'system', content: 'Ты — инженер-координатор. Найди противоречия и коллизии между разными разделами ТЗ. Выдай список: Коллизия N: [раздел А] vs [раздел Б] — описание проблемы.' },
+                    { role: 'user', content: ctx },
+                  ],
+                });
+                toolResult = { analysis: completion.choices[0]?.message?.content || '' };
+              }
+            } catch (e: any) {
+              toolResult = { error: e?.message };
+            }
           } else {
             toolResult = { error: `Unknown tool: ${tc.function.name}` };
           }

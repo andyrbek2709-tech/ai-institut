@@ -55,6 +55,8 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
   const [notes, setNotes] = useState('');
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [decomposing, setDecomposing] = useState(false);
+  const [decomposeResult, setDecomposeResult] = useState('');
   const [analysis, setAnalysis] = useState<any>(null);
   const [analysisErr, setAnalysisErr] = useState<string | null>(null);
   const [openDisc, setOpenDisc] = useState<string | null>(null);
@@ -131,6 +133,29 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
     finally { setAnalyzing(false); }
   };
 
+  const runDecompose = async () => {
+    setDecomposing(true);
+    setDecomposeResult('');
+    try {
+      const r = await fetch(`${API}/api/orchestrator`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          project_id: project.id,
+          role: 'gip',
+          message: 'На основе технического задания проекта создай список задач по дисциплинам. Для каждой задачи: название, ответственный отдел, приоритет (high/medium/low), примерный срок в днях. Используй инструмент get_project_tz.',
+        }),
+      });
+      const data = await r.json();
+      setDecomposeResult(data.message || 'Нет ответа');
+    } catch (e: any) {
+      setDecomposeResult('Ошибка: ' + e.message);
+    } finally {
+      setDecomposing(false);
+    }
+  };
+
+
   const grouped = React.useMemo(() => {
     const map: Record<string, Section[]> = {};
     for (const s of sections) {
@@ -182,14 +207,21 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
             </button>
           )}
           {assignment && sections.length > 0 && (
-            <button
-              className="btn btn-primary"
-              style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, background: '#7c3aed' }}
-              onClick={runAnalyze}
-              disabled={analyzing}
-            >
-              {analyzing ? '⏳ Анализирую…' : '🤖 Анализ ТЗ'}
-            </button>
+            <>
+              <button
+                className="btn btn-primary"
+                style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, background: '#7c3aed' }}
+                onClick={runAnalyze}
+                disabled={analyzing}
+              >
+                {analyzing ? '⏳ Анализирую…' : '🤖 Анализ ТЗ'}
+              </button>
+              <button
+                style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #667eea', background: 'transparent', color: '#667eea', fontSize: 13, cursor: decomposing ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+                disabled={decomposing}
+                onClick={runDecompose}
+              >{decomposing ? '⏳ Декомпозиция...' : '🧠 Разбить на задачи'}</button>
+            </>
           )}
           {canUpload && (
             <button
@@ -269,6 +301,14 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
           )}
 
           {/* ── Analysis results ── */}
+          
+          {decomposeResult && (
+            <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, border: '1px solid #667eea', background: '#f0f0ff', fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+              <div style={{ fontWeight: 600, marginBottom: 6, color: '#667eea' }}>🧠 Декомпозиция задач:</div>
+              {decomposeResult}
+              <button onClick={() => setDecomposeResult('')} style={{ marginTop: 8, fontSize: 11, background: 'none', border: 'none', cursor: 'pointer', color: '#999' }}>✕ Закрыть</button>
+            </div>
+          )}
           {analysis && analysis.analyses.length > 0 && (
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 12 }}>

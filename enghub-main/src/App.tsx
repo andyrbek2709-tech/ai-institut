@@ -247,6 +247,8 @@ export default function App() {
   const [taskSuggestLoading, setTaskSuggestLoading] = useState(false);
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [aiCheckLoading, setAiCheckLoading] = useState(false);
+  const [aiCheckResult, setAiCheckResult] = useState('');
   const [taskComment, setTaskComment] = useState("");
   const [workflowBlockInfo, setWorkflowBlockInfo] = useState<string>("");
 
@@ -1581,6 +1583,16 @@ export default function App() {
     { id: "calculations", icon: "∑", label: "Расчёты" }
   ];
 
+
+  // ШАГ 2: Авто-обновление нормативки если есть документы в обработке
+  useEffect(() => {
+    if (screen !== 'normative') return;
+    const hasPending = normativeDocs.some((d: any) => d.status === 'processing' || d.status === 'pending');
+    if (!hasPending) return;
+    const timer = setInterval(() => loadNormativeDocs(), 5000);
+    return () => clearInterval(timer);
+  }, [screen, normativeDocs]);
+
   const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", standards: "Поиск Стандартов", specifications: "Спецификации", normative: "База знаний (Нормативка)", calculations: "Расчёты" };
 
   const calcTemplates = Object.values(calcRegistry);
@@ -1748,6 +1760,35 @@ export default function App() {
           </div>
         </Modal>
       )}
+
+                  {/* ШАГ 4: Кнопка проверки по ТЗ */}
+                  {selectedTask?.has_attachments && (
+                    <div style={{ padding: '8px 16px', borderTop: `1px solid ${C.border}` }}>
+                      <button
+                        onClick={async () => {
+                          setAiCheckLoading(true);
+                          setAiCheckResult('');
+                          try {
+                            const res = await apiPost('/api/task-file-check', {
+                              task_id: selectedTask.id,
+                              project_id: activeProject?.id,
+                            });
+                            setAiCheckResult((res as any).result || 'Проверка завершена');
+                          } catch (e: any) {
+                            setAiCheckResult('Ошибка: ' + (e.message || 'unknown'));
+                          } finally { setAiCheckLoading(false); }
+                        }}
+                        disabled={aiCheckLoading}
+                        style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '1px solid #667eea', background: 'transparent', color: '#667eea', cursor: 'pointer', fontFamily: 'inherit' }}
+                      >{aiCheckLoading ? '⏳ Проверка...' : '🤖 Проверить файл по ТЗ'}</button>
+                      {aiCheckResult && (
+                        <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: C.surface2, border: `1px solid ${C.border}`, fontSize: 12, whiteSpace: 'pre-wrap', position: 'relative' }}>
+                          {aiCheckResult}
+                          <button onClick={() => setAiCheckResult('')} style={{ position: 'absolute', top: 4, right: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.textMuted }}>✕</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
       {showDepRequest && selectedTask && (
         <Modal title="Запрос данных у смежного отдела" onClose={() => setShowDepRequest(false)} C={C} topmost>
           <div className="form-stack">
@@ -3254,6 +3295,13 @@ export default function App() {
                       }
                       addNotification(`Обновление завершено. Успешно: ${done}, Ошибок: ${errors}`, errors > 0 ? 'warning' : 'success');
                     }}>🔄 Обновить поиск по документам</button>
+                    <button className="btn btn-secondary" onClick={async () => {
+                      try {
+                        await apiPost('/api/normative-docs', { action: 'retry_pending' });
+                        addNotification('Векторизация запущена для необработанных документов', 'success');
+                        setTimeout(() => loadNormativeDocs(), 2000);
+                      } catch { addNotification('Ошибка запуска обработки', 'warning'); }
+                    }}>🚀 Запустить обработку</button>
                   </div>
                 )}
               </div>
