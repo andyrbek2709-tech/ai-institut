@@ -1,3 +1,10 @@
+## 2026-05-13 — ✅ FEAT: чат с памятью сессии, история для AI, умный скролл (cf3b1c8)
+
+- **CopilotPanel:** история чата сохраняется в `localStorage` (`enghub_chat_{projectId}`) — последние 60 сообщений, переживает закрытие/переоткрытие панели
+- **CopilotPanel:** при отправке сообщения последние 8 сообщений передаются как `history[]` в тело запроса к оркестратору
+- **orchestrator.ts:** принимает `history[]`, валидирует (role user/assistant, content string, ≤2000 символов), вставляет между system prompt и текущим user message
+- **CopilotPanel (scroll):** авто-прокрутка вниз только если пользователь не прокручивал вверх; при отправке сообщения скролл сбрасывается вниз
+
 ## 2026-05-13 — ✅ FIX: оркестратор читает ТЗ из project_documents (не project_assignments)
 
 - **Корень бага:** `fetchProjectContext` читал из `project_assignments` — старый механизм загрузки через вкладку ТЗ. Реальные загрузки идут через DocumentsPanel → `project_documents` (bucket `project-files`, `doc_type='tz'`).
