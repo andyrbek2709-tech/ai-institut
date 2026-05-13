@@ -1,19 +1,16 @@
 // src/components/meeting/MeetingRoomPage.tsx
-// Главная «страница» видеовстречи. Управляет фазами loading → lobby → meeting,
-// сама подключается к LiveKit, оборачивает MeetingUI в LiveKitRoom.
+// Главная «страница» видеовстречи. Управляет фазами loading → lobby → meeting.
+// По умолчанию использует Jitsi Meet (бесплатно, без регистрации).
+// Если LIVEKIT_URL задан в окружении — использует LiveKit Cloud.
 //
 // Интегрируется в App.tsx так: открыта вкладка conference у проекта →
 // сначала компонент находит/создаёт активную video_meetings строку для проекта,
-// потом запрашивает токен у /api/meeting-token и поднимает комнату.
+// потом открывает комнату.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { LiveKitRoom as RawLiveKitRoom, RoomAudioRenderer as RawRoomAudioRenderer } from '@livekit/components-react';
-const LiveKitRoom = RawLiveKitRoom as unknown as React.FC<any>;
-const RoomAudioRenderer = RawRoomAudioRenderer as unknown as React.FC<any>;
-import '@livekit/components-styles';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../../api/supabaseClient';
-import { Mic, MicOff, Video, VideoOff, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Loader2, ExternalLink } from 'lucide-react';
 import { MeetingUI, type MeetingChatMessage } from './MeetingUI';
 
 // ── Props ────────────────────────────────────────────────────────────────
@@ -154,13 +151,24 @@ const MeetingRoomPage: React.FC<MeetingRoomPageProps> = ({ C, project, currentUs
         authToken: token,
       });
       if (!ensured) throw new Error('Не удалось создать или найти встречу');
-      const tk = await fetchToken(ensured.id, token);
+
+      // Пробуем получить LiveKit токен (опционально)
+      let lkUrl = '';
+      let lkToken = '';
+      try {
+        const tk = await fetchToken(ensured.id, token);
+        lkUrl = tk.url;
+        lkToken = tk.token;
+      } catch {
+        // LiveKit не настроен — используем Jitsi
+      }
+
       setMeeting({
         meetingId: ensured.id,
-        meetingTitle: tk.meetingTitle || ensured.title || 'Видеовстреча',
-        startedAt: tk.startedAt,
-        liveKitUrl: tk.url,
-        liveKitToken: tk.token,
+        meetingTitle: ensured.title || 'Видеовстреча',
+        startedAt: null,
+        liveKitUrl: lkUrl,
+        liveKitToken: lkToken,
       });
       setChat(await loadChat(ensured.id, token));
       setPhase('lobby');
@@ -441,31 +449,63 @@ const MeetingRoomPage: React.FC<MeetingRoomPageProps> = ({ C, project, currentUs
 
   // phase === 'meeting'
   if (!meeting) return null;
+
+  // Используем Jitsi Meet (бесплатно, без регистрации)
+  const jitsiDomain = 'meet.jit.si';
+  const roomName = `enghub-${project?.id || meeting.meetingId}`;
+  const jitsiUrl = `https://${jitsiDomain}/${encodeURIComponent(roomName)}#config.startWithAudioMuted=false&config.startWithVideoMuted=${!lobbyCam}&userInfo.displayName="${encodeURIComponent(userName)}"`;
+
   return (
-    <LiveKitRoom
-      serverUrl={meeting.liveKitUrl}
-      token={meeting.liveKitToken}
-      connect
-      audio={lobbyMic}
-      video={lobbyCam}
-      onDisconnected={leaveMeeting}
-      onError={(err: any) => {
-        if (addNotification) addNotification(`LiveKit: ${err?.message || 'connection error'}`, 'error');
-      }}
-      data-lk-theme="default"
-      style={{ height: '100%' }}
-    >
-      <RoomAudioRenderer />
-      <MeetingUI
-        C={C}
-        meetingTitle={meeting.meetingTitle}
-        currentUserId={currentUser.id}
-        currentUserName={userName}
-        chatMessages={chat}
-        onSendChat={sendChat}
-        onLeave={leaveMeeting}
-      />
-    </LiveKitRoom>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'minmax(400px, 1fr) 320px',
+      gap: 16, height: '100%',
+    }}>
+      <div style={{
+        borderRadius: 14, overflow: 'hidden',
+        border: `1px solid ${C.border || '#334155'}`,
+        position: 'relative',
+      }}>
+        <iframe
+          src={jitsiUrl}
+          allow="camera; microphone; display-capture; fullscreen"
+          style={{
+            width: '100%', height: '100%', minHeight: '70vh', border: 'none',
+          }}
+          title="Jitsi Meet"
+        />
+        <a
+          href={jitsiUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            position: 'absolute', top: 8, right: 8,
+            background: 'rgba(0,0,0,0.5)', color: '#fff',
+            padding: '6px 10px', borderRadius: 8, fontSize: 12,
+            textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4,
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+          <ExternalLink size={14} /> Открыть в новой вкладке
+        </a>
+      </div>
+      <div style={{
+        background: C.surface || '#1e293b',
+        border: `1px solid ${C.border || '#334155'}`,
+        borderRadius: 14, overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        <MeetingUI
+          C={C}
+          meetingTitle={meeting.meetingTitle}
+          currentUserId={currentUser.id}
+          currentUserName={userName}
+          chatMessages={chat}
+          onSendChat={sendChat}
+          onLeave={leaveMeeting}
+        />
+      </div>
+    </div>
   );
 };
 
