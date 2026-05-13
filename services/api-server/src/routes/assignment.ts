@@ -136,7 +136,32 @@ router.get('/assignment', async (req: Request, res: Response, next: NextFunction
       .select('id, version, file_name, storage_path, notes, uploaded_at')
       .eq('project_id', projectId).eq('is_current', true).maybeSingle();
     if (aErr) throw new ApiError(500, aErr.message);
-    if (!assignment) return res.status(404).json({ error: 'No assignment' });
+    if (!assignment) {
+      // Fallback: check project_documents with doc_type='tz' (DocumentsPanel upload path)
+      const { data: doc } = await supabase
+        .from('project_documents')
+        .select('id, name, created_at, storage_path')
+        .eq('project_id', projectId)
+        .eq('doc_type', 'tz')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (doc) {
+        const { data: urlData } = await supabase.storage
+          .from('project-files').createSignedUrl(doc.storage_path, 3600);
+        return res.json({
+          assignment: {
+            id: doc.id, version: 1, file_name: doc.name,
+            storage_path: doc.storage_path,
+            notes: 'Загружено через раздел «Документы»',
+            uploaded_at: doc.created_at,
+            signed_url: urlData?.signedUrl || null,
+          },
+          sections: [],
+        });
+      }
+      return res.status(404).json({ error: 'No assignment' });
+    }
     const { data: urlData } = await supabase.storage
       .from('project-assignments').createSignedUrl(assignment.storage_path, 3600);
     const { data: sections } = await supabase
