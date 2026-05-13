@@ -417,8 +417,9 @@ export default function App() {
     return () => { supa.removeChannel(ch); };
   }, [currentUserData?.id]); // eslint-disable-line
 
-  // Перезагружаем задачи когда currentUserData загрузился
-  useEffect(() => { if (activeProject && token && currentUserData) { loadAllTasks(activeProject.id); } }, [currentUserData?.id]);
+  // Перезагружаем задачи когда currentUserData загрузился ИЛИ когда appUsers загрузился
+  // (нужно для Lead: myEngIds требует appUsers для корректной фильтрации tasks)
+  useEffect(() => { if (activeProject && token && currentUserData) { loadAllTasks(activeProject.id); } }, [currentUserData?.id, appUsers.length]); // eslint-disable-line
 
   // B4: грузим multi-project tasks для дашбордов Lead/Engineer
   useEffect(() => {

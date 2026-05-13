@@ -64,6 +64,8 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
 
   const canUpload = isGip || isAdmin;
 
+  const SUPABASE_URL = 'https://inachjylaqelysiwtsux.supabase.co';
+
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -71,11 +73,36 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
       const r = await fetch(`${API}/api/assignment?project_id=${project.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (r.status === 404) { setAssignment(null); setSections([]); return; }
-      if (!r.ok) { const j = await r.json(); setError(j.error || 'Ошибка загрузки'); return; }
-      const j = await r.json();
-      setAssignment(j.assignment);
-      setSections(j.sections || []);
+      if (!r.ok && r.status !== 404) { const j = await r.json(); setError(j.error || 'Ошибка загрузки'); return; }
+      const j = r.ok ? await r.json() : {};
+      if (j.assignment) {
+        setAssignment(j.assignment);
+        setSections(j.sections || []);
+        return;
+      }
+      // Fallback: check project_documents with doc_type='tz' (DocumentsPanel upload path)
+      const docR = await fetch(
+        `${SUPABASE_URL}/rest/v1/project_documents?project_id=eq.${project.id}&doc_type=eq.tz&order=created_at.desc&limit=1`,
+        { headers: { Authorization: `Bearer ${token}`, apikey: token } },
+      );
+      if (docR.ok) {
+        const docs: any[] = await docR.json();
+        if (docs && docs.length > 0) {
+          const doc = docs[0];
+          setAssignment({
+            id: doc.id,
+            version: 1,
+            file_name: doc.name || 'ТЗ',
+            signed_url: null,
+            notes: 'Загружено через раздел «Документы»',
+            uploaded_at: doc.created_at,
+          });
+          setSections([]);
+          return;
+        }
+      }
+      setAssignment(null);
+      setSections([]);
     } catch (e: any) {
       setError(e.message);
     } finally {

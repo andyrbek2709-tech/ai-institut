@@ -143,7 +143,7 @@ const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
           },
           deadline: {
             type: 'string',
-            description: 'Дедлайн в формате YYYY-MM-DD. Опционально.',
+            description: 'Дедлайн в формате YYYY-MM-DD. Если не указан явно — используй дату через 30 дней от сегодня.',
           },
           description: {
             type: 'string',
@@ -279,7 +279,12 @@ async function execCreateTask(args: { name: string; priority?: string; deadline?
     dept: args.dept || 'Общие',
     assigned_to: null, // AI не имеет права назначать (см. validateApplyAction)
   };
-  if (args.deadline) payload.deadline = args.deadline;
+  if (args.deadline) {
+    payload.deadline = args.deadline;
+  } else {
+    // DB deadline NOT NULL — default to +30 days when AI omits it
+    payload.deadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  }
   if (args.description) payload.description = args.description;
 
   try {
