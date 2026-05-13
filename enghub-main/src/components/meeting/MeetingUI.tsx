@@ -1,5 +1,5 @@
 // src/components/meeting/MeetingUI.tsx
-// Р§Р°С‚ РІРёРґРµРѕРІСЃС‚СЂРµС‡Рё (Jitsi). Р§РёСЃС‚С‹Р№ React + Supabase С‡Р°С‚.
+// Чат видеовстречи (Jitsi). Чистый React + Supabase чат.
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -24,7 +24,7 @@ export interface MeetingUIProps {
   onLeave: () => void;
 }
 
-const MeetingUI: React.FC<MeetingUIProps> = ({
+export const MeetingUI: React.FC<MeetingUIProps> = ({
   C, meetingTitle, currentUserId, currentUserName,
   chatMessages, onSendChat, onLeave,
 }) => {
@@ -62,7 +62,7 @@ const MeetingUI: React.FC<MeetingUIProps> = ({
         </div>
         <button
           onClick={onLeave}
-          title="РџРѕРєРёРЅСѓС‚СЊ РІСЃС‚СЂРµС‡Сѓ"
+          title="Покинуть встречу"
           style={{
             background: 'transparent', border: 'none', cursor: 'pointer',
             color: '#ef4444', padding: 4, borderRadius: 6,
@@ -79,7 +79,7 @@ const MeetingUI: React.FC<MeetingUIProps> = ({
       }}>
         {chatMessages.length === 0 && (
           <div style={{ color: C.textMuted || '#94a3b8', fontSize: 12, textAlign: 'center', padding: 20 }}>
-            Р§Р°С‚ РїРѕРєР° РїСѓСЃС‚. РќР°РїРёС€РёС‚Рµ РїРµСЂРІРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ!
+            Чат пока пуст. Напишите первое сообщение!
           </div>
         )}
         {chatMessages.map((m) => {
@@ -117,7 +117,7 @@ const MeetingUI: React.FC<MeetingUIProps> = ({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKey}
-          placeholder="РќР°РїРёСЃР°С‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ..."
+          placeholder="Написать сообщение..."
           rows={1}
           style={{
             flex: 1, resize: 'none', borderRadius: 10,
