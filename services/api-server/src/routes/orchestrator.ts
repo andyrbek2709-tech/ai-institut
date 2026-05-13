@@ -13,6 +13,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { createRequire } from 'module';
 import { authMiddleware } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 import { ApiError } from '../middleware/errorHandler.js';
@@ -22,6 +23,8 @@ import { getRedisClient } from '../config/redis.js';
 import { createRecord, listRecords } from '../services/supabase-proxy.js';
 import OpenAI from 'openai';
 import { createHash } from 'crypto';
+
+const _require = createRequire(import.meta.url);
 
 const router = Router();
 
@@ -327,20 +330,74 @@ async function execListDrawings(args: { discipline?: string; status?: string }, 
 
 
 // ── TOOL: fetchProjectContext ─────────────────────────────────────────────
+// Reads the project's TZ (technical specification) from project_documents
+// where doc_type = 'tz' (uploaded via DocumentsPanel), with Redis cache.
 
 async function fetchProjectContext(projectId: string | number | undefined): Promise<string> {
   if (!projectId) return '';
+  const cacheKey = `tz_ctx:${projectId}`;
+  try {
+    const redis = getRedisClient();
+    const cached = await redis.get(cacheKey);
+    if (cached) return cached;
+  } catch {}
+
   try {
     const sb = getSupabaseAdmin();
-    const { data } = await sb
-      .from('project_assignments')
-      .select('file_name, full_text')
+
+    // Primary: project_documents with doc_type='tz' (DocumentsPanel upload path)
+    const { data: tzDoc } = await sb
+      .from('project_documents')
+      .select('name, storage_path, mime_type')
       .eq('project_id', Number(projectId))
-      .eq('is_current', true)
+      .eq('doc_type', 'tz')
+      .order('uploaded_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
-    if (!data?.full_text) return '';
-    const text = (data.full_text as string).slice(0, 3000);
-    return `\n\n---\nТЕХНИЧЕСКОЕ ЗАДАНИЕ ПРОЕКТА: "${data.file_name || ''}"\n${text}\n---`;
+
+    let contextText = '';
+    let fileName = '';
+
+    if (tzDoc?.storage_path) {
+      const { data: fileData } = await sb.storage.from('project-files').download(tzDoc.storage_path);
+      if (fileData) {
+        const buf = Buffer.from(await fileData.arrayBuffer());
+        try {
+          const pdfParse = _require('pdf-parse');
+          const parsed = await pdfParse(buf);
+          contextText = (parsed.text || '').trim();
+        } catch (e: any) {
+          logger.warn({ err: e?.message }, 'pdf-parse failed in fetchProjectContext');
+        }
+        fileName = tzDoc.name;
+      }
+    }
+
+    // Fallback: project_assignments (old upload path, if full_text was saved)
+    if (!contextText) {
+      const { data: pa } = await sb
+        .from('project_assignments')
+        .select('file_name, full_text')
+        .eq('project_id', Number(projectId))
+        .eq('is_current', true)
+        .maybeSingle();
+      if (pa?.full_text) {
+        contextText = pa.full_text as string;
+        fileName = pa.file_name || '';
+      }
+    }
+
+    if (!contextText || contextText.length < 30) return '';
+
+    const result = `\n\n---\nТЕХНИЧЕСКОЕ ЗАДАНИЕ ПРОЕКТА: "${fileName}"\n${contextText.slice(0, 4000)}\n---`;
+
+    // Cache for 30 min so repeated chat messages don't re-download the PDF
+    try {
+      const redis = getRedisClient();
+      await redis.setex(cacheKey, 1800, result);
+    } catch {}
+
+    return result;
   } catch { return ''; }
 }
 

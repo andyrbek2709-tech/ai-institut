@@ -1,3 +1,10 @@
+## 2026-05-13 — ✅ FIX: оркестратор читает ТЗ из project_documents (не project_assignments)
+
+- **Корень бага:** `fetchProjectContext` читал из `project_assignments` — старый механизм загрузки через вкладку ТЗ. Реальные загрузки идут через DocumentsPanel → `project_documents` (bucket `project-files`, `doc_type='tz'`).
+- **Fix:** `orchestrator.ts fetchProjectContext` теперь запрашивает `project_documents?doc_type=tz`, скачивает PDF из `project-files` bucket, извлекает текст через `pdf-parse`, кеширует в Redis на 30 мин.
+- **Fallback:** если не найдено в `project_documents` — проверяет `project_assignments.full_text` (старый путь).
+- **Эффект:** AI автоматически читает содержимое последнего загруженного ТЗ в начале каждого разговора, без необходимости перезагружать файл.
+
 ## 2026-05-13 — ✅ FEAT: Tesseract OCR для скан-PDF нормативных документов
 
 - **Dockerfile:** добавлены `tesseract-ocr`, `tesseract-ocr-data-rus`, `tesseract-ocr-data-eng`, `poppler-utils` в runtime-образ (Alpine apk)
