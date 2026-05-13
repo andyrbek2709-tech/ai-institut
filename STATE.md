@@ -1,3 +1,12 @@
+## 2026-05-13 — 🔴→✅ HOTFIX: React error #310 (белый экран для неадмин-пользователей)
+
+- **Корень бага:** App.tsx — `useEffect` авто-обновления нормативки (ШАГ 2 из сессии 2026-05-12) был размещён ПОСЛЕ условных ранних возвратов (`if (!authReady)` / `if (!token)` / `if (isAdmin)`), что нарушало правила хуков React
+- **Симптом:** React error #310 «Rendered more hooks than during the previous render» → белый экран при входе неадмин-пользователей; администратор `admin@enghub.com` заходил нормально (уходил через ранний возврат до проблемного хука)
+- **Диагностика:** bundle `main.a704670d.js` → `Dm` (= App) → `t.useEffect` at offset 337472 (= `React.useEffect`) → позиция 1608590 находится ПОСЛЕ navItems-массива, т.е. за ранними возвратами
+- **Fix:** переместили проблемный `useEffect` в App.tsx на 30+ строк выше (до ранних возвратов), удалили `// eslint-disable-next-line react-hooks/rules-of-hooks`
+- **Коммит:** `95a0a2f` — push через GitHub Contents API; Railway ребилд запущен автоматически
+- **Сессия:** ecstatic-mirzakhani-113d8a (continuation)
+
 ## 2026-05-12 — ✅ INTERDEPT AI INTEGRATION: финальный деплой (сессия vibrant-poincare, продолжение)
 
 - **API routes live:** все 4 POST /api/interdept-ai/* возвращают 401 (auth middleware) — подтверждены живыми на Railway
