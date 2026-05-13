@@ -479,7 +479,7 @@ export default function App() {
         setTasks(data);
       } else if (myRole === "lead") {
         const myEngIds = appUsers.filter(u => u.dept_id === myDeptId && u.role?.toLowerCase() === "engineer").map(u => String(u.id));
-        setTasks(data.filter((t: any) => String(t.assigned_to) === String(myId) || myEngIds.includes(String(t.assigned_to))));
+        setTasks(data.filter((t: any) => !t.assigned_to || String(t.assigned_to) === String(myId) || myEngIds.includes(String(t.assigned_to))));
       } else {
         setTasks(data.filter((t: any) => String(t.assigned_to) === String(myId)));
       }

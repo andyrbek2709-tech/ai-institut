@@ -1,3 +1,8 @@
+## 2026-05-14 — ✅ FIX: Bug #4 семантика — Lead видит задачи без исполнителя
+
+- `App.tsx loadAllTasks` lead-фильтр: добавлен `!t.assigned_to` — Lead теперь видит задачи без назначенного исполнителя (чтобы назначать их инженерам). ГИП создаёт задачи через AI без указания исполнителя → раньше Lead не видел их вообще.
+- **Migration 030** — уже применена (STATE.md был устаревшим: все колонки + триггеры в БД есть)
+
 ## 2026-05-14 — 🔧 HOTFIX: Bug #3 — `project_documents.created_at` → `uploaded_at`
 
 - `assignment.ts` fallback-запрос использовал несуществующий столбец `created_at`; таблица `project_documents` имеет `uploaded_at`. Supabase silent-fail → `doc = null` → 404. Исправлено: `.select('id, name, uploaded_at, storage_path')` + `.order('uploaded_at', ...)`.
