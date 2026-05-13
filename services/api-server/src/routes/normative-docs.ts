@@ -130,15 +130,30 @@ async function runVectorize(docId: string, sb: any) {
 }
 
 // ── GET /api/normative-docs?ilike=query ──────────────────────────────────
+// When ilike provided: search normative_chunks.content (App.tsx expects {doc_id, doc_name, content})
+// When no ilike: return normative_docs list
 router.get('/normative-docs', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const sb = getSupabaseAdmin();
     const q = (req.query.ilike as string || '').trim();
-    let query = sb.from('normative_docs')
+
+    if (q) {
+      // Full-text chunk search — App.tsx searchNormativeIlike expects doc_id field
+      const { data, error } = await sb
+        .from('normative_chunks')
+        .select('id,doc_id,doc_name,content')
+        .ilike('content', `%${q}%`)
+        .limit(100);
+      if (error) throw new ApiError(500, error.message);
+      res.json(data || []);
+      return;
+    }
+
+    // No query — return document list
+    const { data, error } = await sb
+      .from('normative_docs')
       .select('id,name,file_type,file_path,status,chunks_count,error_text,created_at')
       .order('name');
-    if (q) query = query.ilike('name', `%${q}%`);
-    const { data, error } = await query;
     if (error) throw new ApiError(500, error.message);
     res.json(data || []);
   } catch (e) { next(e); }

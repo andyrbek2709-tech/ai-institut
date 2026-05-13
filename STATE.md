@@ -1,3 +1,10 @@
+## 2026-05-13 — ✅ FIX: ilike-поиск нормативных документов (поиск по содержимому чанков)
+
+- **Проблема:** GET `/api/normative-docs?ilike=query` искал по `normative_docs.name` (название файла), а не по содержимому. App.tsx ожидал поля `doc_id, doc_name, content` из `normative_chunks`.
+- **Fix:** переписан GET-обработчик в `services/api-server/src/routes/normative-docs.ts` — при наличии `ilike` ищет по `normative_chunks.content`, возвращает `{id,doc_id,doc_name,content}`.
+- **Эффект:** ilike-поиск (запасной вариант при недоступности OpenAI) теперь работает корректно.
+- **⚠️ Всё ещё нужно:** обновить OPENAI_API_KEY в Railway → ENGHUB → api-server → Variables (для semantic search и ChatGPT 4.0 в проектах).
+
 ## 2026-05-13 — 🔴→✅ HOTFIX: React error #310 (белый экран для неадмин-пользователей)
 
 - **Корень бага:** App.tsx — `useEffect` авто-обновления нормативки (ШАГ 2 из сессии 2026-05-12) был размещён ПОСЛЕ условных ранних возвратов (`if (!authReady)` / `if (!token)` / `if (isAdmin)`), что нарушало правила хуков React
