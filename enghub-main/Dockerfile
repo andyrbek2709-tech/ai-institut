@@ -33,6 +33,5 @@ COPY --from=builder /app/build ./build
 # Expose port
 EXPOSE 3000
 
-# Serve the app: -s = SPA fallback for unknown paths; --config = disable cleanUrls
-# so that .html files like /interdept-ui-mockups.html are served directly, not stripped to /interdept-ui-mockups
-CMD sh -c "serve -s build --config build/serve.json -l ${PORT:-3000}"
+# Serve the app: -s = SPA fallback; serve.json in build/ is auto-detected (serve 14+)
+CMD sh -c "serve -s build -l ${PORT:-3000}"
