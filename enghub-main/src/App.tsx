@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions, transmittalStatusMap } from './constants';
 import { NavIcon, IconFolder, IconCheckSquare, IconActivity, IconArchive } from './components/icons';
 import { get, post, patch, del, SURL, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory, listTaskAttachmentsByTaskIds, uploadTaskAttachment } from './api/supabase';
-import { apiPost, apiGet } from './api/http';
+import { apiPost, apiGet, apiDelete } from './api/http';
 import { publishTaskCreated, publishTaskSubmittedForReview, publishTaskApproved, publishTaskReturned, publishReviewCommentAdded } from './lib/events/publisher';
 import { getSupabaseAnonClient } from './api/supabaseClient';
 import { ThemeToggle, Modal, Field, AvatarComp, BadgeComp, PriorityDot, getInp, RuDateInput, useCountUp } from './components/ui';
@@ -233,6 +233,11 @@ export default function App() {
   const [maxTasksPerEng, setMaxTasksPerEng] = useState(5);
 
   const [showNewProject, setShowNewProject] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<any>(null);
+  const [showRaci, setShowRaci] = useState<any>(null);
+  const [raciEntries, setRaciEntries] = useState<any[]>([]);
+  const [raciNewUser, setRaciNewUser] = useState('');
+  const [raciNewDisc, setRaciNewDisc] = useState('');
   const [newProject, setNewProject] = useState<any>({ name: "", code: "", deadline: "", status: "active", depts: [] });
   const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
@@ -442,7 +447,25 @@ export default function App() {
     } 
   };
   const loadDepts = async () => { const data = await get("departments?order=name", token!); if (Array.isArray(data)) setDepts(data); };
-  const loadProjects = async () => { const data = await get("projects?archived=eq.false&order=id", token!); if (Array.isArray(data)) { setProjects(data); if (data.length > 0) setActiveProject(data[0]); } setLoading(false); };
+  const loadProjects = async () => {
+    try {
+      const ids: number[] = await apiGet('/api/my-projects');
+      if (Array.isArray(ids) && ids.length > 0) {
+        const data = await get(`projects?archived=eq.false&id=in.(${ids.join(',')})&order=id`, token!);
+        if (Array.isArray(data)) { setProjects(data); if (data.length > 0) setActiveProject(data[0]); }
+      } else if (Array.isArray(ids) && ids.length === 0) {
+        setProjects([]);
+      } else {
+        // fallback if endpoint fails
+        const data = await get("projects?archived=eq.false&order=id", token!);
+        if (Array.isArray(data)) { setProjects(data); if (data.length > 0) setActiveProject(data[0]); }
+      }
+    } catch {
+      const data = await get("projects?archived=eq.false&order=id", token!);
+      if (Array.isArray(data)) { setProjects(data); if (data.length > 0) setActiveProject(data[0]); }
+    }
+    setLoading(false);
+  };
   const loadArchived = async () => { const data = await get("projects?archived=eq.true&order=id", token!); if (Array.isArray(data)) setArchivedProjects(data); };
 
   const signStorageUrl = async (bucket: string, path: string, expiresInSec: number = 60 * 60) => {
@@ -1153,6 +1176,41 @@ export default function App() {
   const promptArchiveProject = (p: any) => {
     setArchiveConfirm(p);
     setArchiveStep(0);
+  };
+
+  const deleteProject = async (id: number) => {
+    try {
+      await apiDelete(`/api/project/${id}`);
+      setShowDeleteConfirm(null);
+      setProjects(prev => prev.filter((p: any) => p.id !== id));
+      if (activeProject?.id === id) setActiveProject(null);
+      addNotification('Проект удалён', 'success');
+    } catch (e: any) {
+      addNotification(e.message || 'Ошибка удаления', 'error');
+    }
+  };
+
+  const loadRaci = async (projectId: number) => {
+    try {
+      const data = await apiGet(`/api/project/${projectId}/raci`);
+      setRaciEntries(Array.isArray(data) ? data : []);
+    } catch { setRaciEntries([]); }
+  };
+
+  const addRaci = async () => {
+    if (!showRaci || !raciNewUser || !raciNewDisc) return;
+    try {
+      await apiPost(`/api/project/${showRaci.id}/raci`, { user_id: Number(raciNewUser), discipline: raciNewDisc, role: 'R' });
+      setRaciNewUser(''); setRaciNewDisc('');
+      loadRaci(showRaci.id);
+    } catch (e: any) { addNotification(e.message || 'Ошибка', 'error'); }
+  };
+
+  const removeRaci = async (raciId: number) => {
+    try {
+      await apiDelete(`/api/raci/${raciId}`);
+      setRaciEntries(prev => prev.filter((r: any) => r.id !== raciId));
+    } catch (e: any) { addNotification(e.message || 'Ошибка', 'error'); }
   };
   const createTask = async () => {
     if (!newTask.name || !activeProject) return;
@@ -2215,6 +2273,68 @@ export default function App() {
         </div>
       )}
 
+      {/* DELETE PROJECT CONFIRM */}
+      {showDeleteConfirm && (
+        <div className="delete-overlay">
+          <div className="delete-box">
+            <div style={{ fontSize: 40, marginBottom: 16 }}>🗑️</div>
+            <div style={{ fontWeight: 800, fontSize: 17, marginBottom: 8, color: '#e53e3e' }}>Удалить проект навсегда?</div>
+            <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 24 }}>
+              «{showDeleteConfirm.name}» и все его задачи, документы, чертежи будут удалены без возможности восстановления.
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button className="btn btn-secondary" onClick={() => setShowDeleteConfirm(null)}>Отмена</button>
+              <button className="btn" style={{ background: '#e53e3e', color: '#fff' }} onClick={() => deleteProject(showDeleteConfirm.id)}>
+                Удалить навсегда
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RACI PANEL */}
+      {showRaci && (
+        <Modal title={`👥 Участники: ${showRaci.name}`} onClose={() => setShowRaci(null)} C={C}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Current participants */}
+            {raciEntries.length === 0
+              ? <div style={{ color: C.textMuted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Участники не назначены</div>
+              : raciEntries.map((r: any) => (
+                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: C.surface2, borderRadius: 8, padding: '10px 14px' }}>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontWeight: 600, color: C.text }}>{r.app_users?.full_name || `User #${r.user_id}`}</span>
+                    <span style={{ marginLeft: 10, fontSize: 12, color: C.textMuted }}>{r.discipline}</span>
+                    <span style={{ marginLeft: 8, fontSize: 11, background: C.accent + '22', color: C.accent, borderRadius: 4, padding: '2px 6px' }}>{r.role}</span>
+                  </div>
+                  <button className="btn btn-ghost btn-sm" style={{ color: '#e53e3e' }} onClick={() => removeRaci(r.id)}>✕</button>
+                </div>
+              ))
+            }
+            {/* Add participant */}
+            <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
+              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: C.text }}>Добавить участника</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <select value={raciNewUser} onChange={e => setRaciNewUser(e.target.value)} style={{ ...getInp(C), flex: 2, minWidth: 160 }}>
+                  <option value="">— Пользователь —</option>
+                  {appUsers.filter((u: any) => !['admin'].includes(u.role)).map((u: any) => (
+                    <option key={u.id} value={u.id}>{u.full_name} ({u.role})</option>
+                  ))}
+                </select>
+                <select value={raciNewDisc} onChange={e => setRaciNewDisc(e.target.value)} style={{ ...getInp(C), flex: 1, minWidth: 100 }}>
+                  <option value="">— Дисциплина —</option>
+                  {['АР','КР','ВК','ОВ','ЭС','ТМ','ПБ','КИПиА','ОПД','ПОС','ООС','Смета','Общ'].map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+                <button className="btn btn-primary" onClick={addRaci} disabled={!raciNewUser || !raciNewDisc}>
+                  Добавить
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* ===== SIDEBAR ===== */}
       <div className="sidebar">
         <div className="sidebar-logo">
@@ -2777,6 +2897,8 @@ export default function App() {
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <span style={{ fontSize: 12, color: _deadlineColor, fontWeight: _daysLeft !== null && _daysLeft < 30 ? 700 : 400 }}>до {p.deadline}</span>
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); promptArchiveProject(p); }}>→ Архив</button>}
+                          {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setShowRaci(p); loadRaci(p.id); setRaciNewUser(''); setRaciNewDisc(''); }} title="Участники проекта" style={{ padding: '4px 8px' }}>👥</button>}
+                          {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setShowDeleteConfirm(p); }} title="Удалить проект" style={{ color: '#e53e3e', padding: '4px 8px' }}>🗑</button>}
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -3207,6 +3329,8 @@ export default function App() {
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <span style={{ fontSize: 12, color: _deadlineColor, fontWeight: _daysLeft !== null && _daysLeft < 30 ? 700 : 400 }}>до {p.deadline}</span>
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); promptArchiveProject(p); }}>→ Архив</button>}
+                          {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setShowRaci(p); loadRaci(p.id); setRaciNewUser(''); setRaciNewDisc(''); }} title="Участники проекта" style={{ padding: '4px 8px' }}>👥</button>}
+                          {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setShowDeleteConfirm(p); }} title="Удалить проект" style={{ color: '#e53e3e', padding: '4px 8px' }}>🗑</button>}
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

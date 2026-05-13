@@ -1,3 +1,11 @@
+## 2026-05-14 — ✅ FEAT: Удаление проекта + RACI-панель участников + фильтр проектов
+
+- **Backend `projects.ts`** (новый роут): `DELETE /api/project/:id` (GIP only, каскад raci/meetings + DB CASCADE на tasks/docs/drawings); `GET/POST /api/project/:id/raci`; `DELETE /api/raci/:id`; `GET /api/my-projects` (возвращает ID проектов по RACI членству, GIP/admin = все)
+- **Unique constraint**: `raci(project_id, user_id, discipline)` добавлен в Supabase для upsert
+- **Frontend `loadProjects`**: теперь вызывает `/api/my-projects` — Lead/Engineer видят только проекты где они в RACI; GIP/admin видят все; fallback на полный список при ошибке
+- **Frontend RACI-панель**: кнопка 👥 на карточке проекта (GIP) → модал "Участники": список + добавить (юзер + дисциплина из фиксированного списка) + удалить
+- **Frontend удаление**: кнопка 🗑 на карточке (GIP) → confirm-модал → `DELETE /api/project/:id` → убирает из списка без перезагрузки
+
 ## 2026-05-14 — ✅ FIX: Bug #4 семантика — Lead видит задачи без исполнителя
 
 - `App.tsx loadAllTasks` lead-фильтр: добавлен `!t.assigned_to` — Lead теперь видит задачи без назначенного исполнителя (чтобы назначать их инженерам). ГИП создаёт задачи через AI без указания исполнителя → раньше Lead не видел их вообще.

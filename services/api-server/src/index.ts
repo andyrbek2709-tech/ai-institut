@@ -21,6 +21,7 @@ import storageRouter from './routes/storage.js';
 import assignmentRouter from './routes/assignment.js';
 import taskFileCheckRouter from './routes/task-file-check.js';
 import interdeptAiRouter from './routes/interdept-ai.js';
+import projectsRouter from './routes/projects.js';
 
 const app = express();
 
@@ -87,6 +88,7 @@ app.use('/api', storageRouter);
 app.use('/api', assignmentRouter);
 app.use('/api', taskFileCheckRouter);
 app.use('/api', interdeptAiRouter);
+app.use('/api', projectsRouter);
 app.use('/api/telemetry', telemetryRouter);
 app.use('/', diagnosticsRouter);
 
