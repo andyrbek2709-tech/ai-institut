@@ -384,45 +384,20 @@ export default function App() {
   const sessionChannelRef = useRef<any>(null);
 
   // ── Одна сессия на пользователя: при новом входе выбиваем старые сессии ──
+  // DISABLED 2026-05-13: race condition kicked out non-admin users on every login.
+  // Symptom: SIGNED_IN → /api/admin/org-public 200 → handleLogout → SIGNED_OUT loop.
+  // Root cause: ghost subscriptions / cross-tab supabase auth sync triggered phantom
+  // 'login' broadcasts that this useEffect interpreted as a foreign device login.
+  // Disabling until a reliable session-fence design lands.
   useEffect(() => {
-    if (!currentUserData?.id || !token) {
+    return () => {
       if (sessionChannelRef.current) {
         const { ch, supa } = sessionChannelRef.current;
         supa.removeChannel(ch);
         sessionChannelRef.current = null;
       }
-      return;
-    }
-    const supa = getSupabaseAnonClient();
-    const topic = `session:${currentUserData.id}`;
-    // Purge ghost subscriptions — Phoenix auto-reconnect revives removed channels;
-    // their SUBSCRIBED callback re-broadcasts a stale sessionId, kicking out fresh logins.
-    try {
-      (supa.getChannels() as any[])
-        .filter((c: any) => c.topic === `realtime:${topic}` || c.topic === topic)
-        .forEach((c: any) => { supa.removeChannel(c); });
-    } catch { /* older SDK */ }
-    const ch = supa.channel(topic, {
-      config: { broadcast: { self: false, ack: false } }
-    });
-    ch.on('broadcast', { event: 'login' }, ({ payload }: any) => {
-      const age = Date.now() - (payload?.timestamp ?? 0);
-      if (age > 10_000) { return; }
-      if (payload?.sessionId && payload.sessionId !== sessionId.current) {
-        // Другое устройство/вкладка вошло под этим аккаунтом — выходим
-        handleLogout();
-      }
-    }).subscribe((status: string) => {
-      if (status === 'SUBSCRIBED') {
-        ch.send({ type: 'broadcast', event: 'login', payload: { sessionId: sessionId.current, timestamp: Date.now() } });
-        sessionChannelRef.current = { ch, supa };
-      }
-    });
-    return () => {
-      supa.removeChannel(ch);
-      sessionChannelRef.current = null;
     };
-  }, [currentUserData?.id, token]); // eslint-disable-line
+  }, []);
 
   // ── Уведомления о входящих вызовах (bypass RLS через broadcast) ──
   useEffect(() => {
