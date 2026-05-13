@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DARK, LIGHT, statusMap, roleLabels, taskWorkflowTransitions, transmittalStatusMap } from './constants';
 import { NavIcon, IconFolder, IconCheckSquare, IconActivity, IconArchive } from './components/icons';
-import { get, post, patch, del, SURL, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory, listTaskAttachmentsByTaskIds, uploadTaskAttachment } from './api/supabase';
+import { get, post, patch, del, SURL, AuthError, listDrawings, createDrawing, updateDrawing, listReviews, createReview, createRevisionRecord, createTransmittal, listProjectTasks, createProjectTask, updateTaskDrawingLink, listRevisions, updateReviewStatus, updateTransmittalStatus, listTransmittalItems, createTransmittalItem, createNotification, listTaskHistory, listTaskAttachmentsByTaskIds } from './api/supabase';
 import { apiPost, apiGet } from './api/http';
 import { publishTaskCreated, publishTaskSubmittedForReview, publishTaskApproved, publishTaskReturned, publishReviewCommentAdded } from './lib/events/publisher';
 import { getSupabaseAnonClient } from './api/supabaseClient';
@@ -28,7 +28,6 @@ import { RevisionsTab } from './components/RevisionsTab';
 import { ReviewsTab } from './components/ReviewsTab';
 import { TransmittalsTab } from './components/TransmittalsTab';
 import { AssignmentsTab } from './components/AssignmentsTab';
-import { AssignmentTab } from './components/AssignmentTab';
 import { SpecificationsTab } from './components/SpecificationsTab';
 import { DocumentsPanel } from './components/DocumentsPanel';
 import { TaskAttachments } from './components/TaskAttachments';
@@ -207,8 +206,6 @@ export default function App() {
   const [normSearchQuery, setNormSearchQuery] = useState("");
   const [normSearchResults, setNormSearchResults] = useState<any[] | null>(null);
   const [normSearching, setNormSearching] = useState(false);
-  const [useKb, setUseKb] = useState(true);
-  const [calcActiveCat, setCalcActiveCat] = useState<string | null>(null);
   const [showDupModal, setShowDupModal] = useState(false);
   const [dupConflicts, setDupConflicts] = useState<{file: File, existing: any}[]>([]);
   const [dupDecisions, setDupDecisions] = useState<Record<string, 'overwrite' | 'skip'>>({});
@@ -241,32 +238,20 @@ export default function App() {
   const [taskHistory, setTaskHistory] = useState<any[]>([]);
   const [showTaskHistory, setShowTaskHistory] = useState(false);
   const [newTask, setNewTask] = useState({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" });
-  const [taskFile, setTaskFile] = useState<File | null>(null);
-  const taskFileInputRef = React.useRef<HTMLInputElement>(null);
   const [taskSuggest, setTaskSuggest] = useState<{ deadline: string | null; reason: string | null } | null>(null);
   const [taskSuggestLoading, setTaskSuggestLoading] = useState(false);
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
-  const [aiCheckLoading, setAiCheckLoading] = useState(false);
-  const [aiCheckResult, setAiCheckResult] = useState('');
   const [taskComment, setTaskComment] = useState("");
   const [workflowBlockInfo, setWorkflowBlockInfo] = useState<string>("");
 
   const [showNewAssignment, setShowNewAssignment] = useState(false);
   const [newAssignment, setNewAssignment] = useState({ name: "", target_dept: "", priority: "high", deadline: "" });
-  const [newReview, setNewReview] = useState({ title: "", severity: "major", drawing_id: "", location: "" });
-  // C2 SLA: task_dependencies lookup (child_task_id → dep) for AI summary display
-  const [taskDeps, setTaskDeps] = useState<Record<number, any>>({});
-  // C6: recipient dept for new transmittal
-  const [newTransmittalRecipientDeptId, setNewTransmittalRecipientDeptId] = useState("");
+  const [newReview, setNewReview] = useState({ title: "", severity: "major", drawing_id: "" });
 
   // CONV Stage 4b: запрос данных у смежного отдела
   const [showDepRequest, setShowDepRequest] = useState(false);
   const [depRequest, setDepRequest] = useState({ target_dept_id: "", what_needed: "", deadline_hint: "" });
-
-  // 2a: TZ-контекст в карточке задачи
-  const [taskTzSections, setTaskTzSections] = useState<Array<{section_title: string; section_text: string; discipline: string}>>([]);
-  const [taskTzLoading, setTaskTzLoading] = useState(false);
 
   // Поиск и фильтры
   const [searchQuery, setSearchQuery] = useState("");
@@ -302,13 +287,11 @@ export default function App() {
     });
     // Keep token fresh: fires on login, token refresh, and logout
     const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
-      console.log('[AUTH_CHANGE] event:', _event, 'hasSession:', !!session, 'email:', session?.user?.email ?? 'none');
       if (session) {
         setToken(session.access_token);
         setUserEmail(session.user.email ?? '');
         localStorage.setItem('enghub_email', session.user.email ?? '');
       } else {
-        console.warn('[AUTH_CHANGE] session is null → clearing token');
         setToken(null);
         setUserEmail('');
       }
@@ -319,18 +302,9 @@ export default function App() {
   useEffect(() => {
     if (token && !isAdmin) {
       Promise.all([loadAppUsers(), loadDepts(), loadProjects(), loadNormativeDocs(), loadBranding()])
-        .catch(async (e: any) => {
+        .catch((e: any) => {
           setLoading(false);
-          if (e instanceof AuthError) {
-            try {
-              const { data: sessionData } = await getSupabaseAnonClient().auth.getSession();
-              if (!sessionData?.session) {
-                handleLogout();
-              }
-            } catch {
-              handleLogout();
-            }
-          }
+          if (e instanceof AuthError) handleLogout();
         });
     }
   }, [token]);
@@ -381,6 +355,7 @@ export default function App() {
   // Track which user IDs are currently known in the conference — used to debounce join/leave notifications
   const knownParticipantIdsRef = useRef<Set<string>>(new Set());
   const sessionId = useRef<string>(Math.random().toString(36).slice(2) + Date.now().toString(36));
+  const sessionLoginTime = useRef<number>(Date.now());
   const sessionChannelRef = useRef<any>(null);
 
   // ── Одна сессия на пользователя: при новом входе выбиваем старые сессии ──
@@ -393,28 +368,27 @@ export default function App() {
       }
       return;
     }
+    // Reset login time on each (re)subscribe so we ignore stale broadcasts
+    sessionLoginTime.current = Date.now();
     const supa = getSupabaseAnonClient();
-    const topic = `session:${currentUserData.id}`;
-    // Purge ghost subscriptions — Phoenix auto-reconnect revives removed channels;
-    // their SUBSCRIBED callback re-broadcasts a stale sessionId, kicking out fresh logins.
-    try {
-      (supa.getChannels() as any[])
-        .filter((c: any) => c.topic === `realtime:${topic}` || c.topic === topic)
-        .forEach((c: any) => { supa.removeChannel(c); });
-    } catch { /* older SDK */ }
-    const ch = supa.channel(topic, {
+    const ch = supa.channel(`session:${currentUserData.id}`, {
       config: { broadcast: { self: false, ack: false } }
     });
     ch.on('broadcast', { event: 'login' }, ({ payload }: any) => {
-      const age = Date.now() - (payload?.timestamp ?? 0);
-      if (age > 10_000) { return; }
-      if (payload?.sessionId && payload.sessionId !== sessionId.current) {
-        // Другое устройство/вкладка вошло под этим аккаунтом — выходим
-        handleLogout();
-      }
+      // Ignore our own broadcast (sessionId match)
+      if (!payload?.sessionId || payload.sessionId === sessionId.current) return;
+      // Ignore broadcasts that arrived within 3s of our subscribe — likely a race during our own login flow
+      if (Date.now() - sessionLoginTime.current < 3000) return;
+      // Only act on broadcasts NEWER than our session
+      if (payload.timestamp && payload.timestamp <= sessionLoginTime.current) return;
+      handleLogout();
     }).subscribe((status: string) => {
       if (status === 'SUBSCRIBED') {
-        ch.send({ type: 'broadcast', event: 'login', payload: { sessionId: sessionId.current, timestamp: Date.now() } });
+        ch.send({
+          type: 'broadcast',
+          event: 'login',
+          payload: { sessionId: sessionId.current, timestamp: sessionLoginTime.current },
+        });
         sessionChannelRef.current = { ch, supa };
       }
     });
@@ -422,7 +396,7 @@ export default function App() {
       supa.removeChannel(ch);
       sessionChannelRef.current = null;
     };
-  }, [currentUserData?.id, token]); // eslint-disable-line
+  }, [currentUserData?.id]); // eslint-disable-line
 
   // ── Уведомления о входящих вызовах (bypass RLS через broadcast) ──
   useEffect(() => {
@@ -522,20 +496,6 @@ export default function App() {
   };
   // Keep loadTasks as alias
   const loadTasks = loadAllTasks;
-
-  // C1/C2/C4: load task_dependencies for assignment tasks to get ai_summary, awaiting_since, ai_check
-  const loadTaskDeps = async (taskIds: number[]) => {
-    if (!taskIds.length || !token) return;
-    try {
-      const idList = taskIds.join(',');
-      const deps = await get(`task_dependencies?select=*&or=(parent_task_id.in.(${idList}),child_task_id.in.(${idList}))`, token);
-      if (Array.isArray(deps)) {
-        const map: Record<number, any> = {};
-        deps.forEach((d: any) => { map[d.child_task_id] = d; });
-        setTaskDeps(map);
-      }
-    } catch { /* non-critical, ignore */ }
-  };
   // B4: multi-project тасков для Lead/Engineer dashboard'ов. Lead → задачи отдела, Engineer → свои.
   const loadDashboardTasks = async () => {
     if (!token || !currentUserData) return;
@@ -768,7 +728,6 @@ export default function App() {
   const msgsRef = useRef<any[]>([]);
   const projectsRef = useRef<any[]>([]);
   const sideTabRef = useRef(sideTab);
-  const tzFileRef = useRef<HTMLInputElement>(null);
   useEffect(() => { activeProjectRef.current = activeProject; }, [activeProject]);
   useEffect(() => { currentUserDataRef.current = currentUserData; }, [currentUserData]);
   useEffect(() => { appUsersRef.current = appUsers; }, [appUsers]);
@@ -960,35 +919,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [newTask.name, showNewTask]); // eslint-disable-line
 
-  // 2a: TZ-контекст — загружаем разделы ТЗ, релевантные задаче по отделу
-  useEffect(() => {
-    if (!selectedTask || !activeProject || !showTaskDetail) {
-      setTaskTzSections([]);
-      return;
-    }
-    let cancelled = false;
-    setTaskTzLoading(true);
-    const apiBase = process.env.REACT_APP_RAILWAY_API_URL || 'https://api-server-production-8157.up.railway.app';
-    fetch(`${apiBase}/api/assignment?project_id=${encodeURIComponent(String(activeProject.id))}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (cancelled || !data?.sections) return;
-        const dept = (selectedTask.dept || '').toLowerCase();
-        const relevant = (data.sections as any[]).filter(s => {
-          if (!s.discipline) return false;
-          const disc = s.discipline.toLowerCase();
-          return dept.includes(disc) || disc.includes(dept) ||
-            (dept.includes('электр') && disc.includes('эс')) ||
-            (dept.includes('теплос') && disc.includes('тх')) ||
-            (dept.includes('пожар') && disc.includes('пб'));
-        }).slice(0, 4);
-        setTaskTzSections(relevant);
-        setTaskTzLoading(false);
-      })
-      .catch(() => { if (!cancelled) setTaskTzLoading(false); });
-    return () => { cancelled = true; };
-  }, [selectedTask?.id, showTaskDetail, activeProject?.id]); // eslint-disable-line
-
   // ── Presence: управление присутствием в зале совещания ──
   const joinConference = async (initialMic = false, initialScreen = false) => {
     if (!activeProject?.id || !currentUserData) return;
@@ -1135,22 +1065,7 @@ export default function App() {
     try {
       // B4: gip_id ставим текущим пользователем — он становится владельцем проекта.
       // RLS projects_insert требует, чтобы gip_id = auth_app_user_id() для роли gip.
-      const created = await post("projects", { ...newProject, gip_id: currentUserData?.id, progress: 0, archived: false }, token!);
-      // Загружаем ТЗ если выбран файл
-      const tzFile = tzFileRef.current?.files?.[0];
-      if (tzFile && created?.[0]?.id) {
-        try {
-          const fd = new FormData();
-          fd.append('project_id', String(created[0].id));
-          fd.append('file', tzFile, tzFile.name);
-          await fetch(`https://api-server-production-8157.up.railway.app/api/assignment`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-            body: fd,
-          });
-        } catch (_) { /* ТЗ не критично — проект уже создан */ }
-        if (tzFileRef.current) tzFileRef.current.value = '';
-      }
+      await post("projects", { ...newProject, gip_id: currentUserData?.id, progress: 0, archived: false }, token!);
       setNewProject({ name: "", code: "", deadline: "", status: "active", depts: [] });
       setShowNewProject(false);
       loadProjects();
@@ -1205,15 +1120,6 @@ export default function App() {
           entity_type: 'task',
         }).catch(() => {});
       }
-      // Upload task file if selected
-      if (taskFile && result && result.id) {
-        try {
-          await uploadTaskAttachment(activeProject.id, result.id, taskFile, currentUserData!.id, token!);
-        } catch (fe: any) {
-          addNotification(`Файл не загружен: ${fe.message || 'ошибка'}`, 'warning');
-        }
-      }
-      setTaskFile(null);
       setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setShowNewTask(false); loadTasks(activeProject.id);
     } catch (err: any) {
       addNotification(`Ошибка создания задачи: ${err.message || 'Ошибка сервера'}`, 'warning');
@@ -1268,7 +1174,7 @@ export default function App() {
       }, token!);
       const childId = Array.isArray(childTask) ? childTask[0]?.id : childTask?.id;
       if (childId) {
-        const dep: any = await post('task_dependencies', {
+        await post('task_dependencies', {
           parent_task_id: selectedTask.id,
           child_task_id: childId,
           what_needed: depRequest.what_needed.trim(),
@@ -1276,39 +1182,10 @@ export default function App() {
           status: 'pending',
           created_by: currentUserData?.id,
         }, token!);
-        // C1: запустить AI-summary в фоне (fire-and-forget)
-        const depId = Array.isArray(dep) ? dep[0]?.id : dep?.id;
-        if (depId) {
-          apiPost('/api/interdept-ai/stage4b-summary', {
-            dependency_id: depId,
-            what_needed: depRequest.what_needed.trim(),
-            project_id: activeProject.id,
-          }).then(() => loadTaskDeps([childId, selectedTask.id])).catch(() => {});
-        }
       }
       // Перевести текущую задачу в awaiting_input
       await patch(`tasks?id=eq.${selectedTask.id}`, { status: 'awaiting_input' }, token!);
       setSelectedTask({ ...selectedTask, status: 'awaiting_input' });
-
-      // 2e: Уведомить лидов целевого отдела через in-app notifications
-      const targetLeads = appUsers.filter(u =>
-        u.dept_id === Number(depRequest.target_dept_id) && (u.role === 'lead' || u.role === 'gip')
-      );
-      const apiBase = process.env.REACT_APP_RAILWAY_API_URL || 'https://api-server-production-8157.up.railway.app';
-      await Promise.allSettled(targetLeads.map(lead =>
-        fetch(`${apiBase}/api/notifications-create`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            user_id: lead.id,
-            project_id: activeProject.id,
-            action_type: 'cross_dept_request',
-            target_id: childId,
-            message: `🔗 Запрос от ${currentUserData?.full_name || 'коллеги'} (${selectedTask.dept}): «${depRequest.what_needed.slice(0, 80)}»`,
-          }),
-        }).catch(() => {})
-      ));
-
       addNotification(`Запрос отправлен в отдел ${targetDeptName}. Задача переведена в "Ждёт данных"`, 'success');
       setShowDepRequest(false);
       setDepRequest({ target_dept_id: '', what_needed: '', deadline_hint: '' });
@@ -1439,10 +1316,9 @@ export default function App() {
       title: newReview.title.trim(),
       severity: newReview.severity,
       status: 'open',
-      author_id: currentUserData?.id,
-      ...(newReview.location.trim() ? { location: newReview.location.trim() } : {}),
+      author_id: currentUserData?.id
     }, token!);
-    setNewReview({ title: "", severity: "major", drawing_id: "", location: "" });
+    setNewReview({ title: "", severity: "major", drawing_id: "" });
     addNotification('Замечание добавлено', 'success');
     loadReviews(activeProject.id);
   };
@@ -1452,28 +1328,17 @@ export default function App() {
     addNotification(`Статус замечания изменён: ${status}`, 'info');
     loadReviews(activeProject.id);
   };
-  const issueDrawingRevision = async (drawing: any, comment?: string) => {
+  const issueDrawingRevision = async (drawing: any) => {
     if (!activeProject || !drawing) return;
     const revNum = Number(String(drawing.revision || 'R0').replace('R', '')) + 1;
     const nextRevision = `R${Number.isFinite(revNum) ? revNum : 1}`;
-    const rev: any = await createRevisionRecord({
+    await createRevisionRecord({
       project_id: activeProject.id,
       drawing_id: drawing.id,
       from_revision: drawing.revision || 'R0',
       to_revision: nextRevision,
       issued_by: currentUserData?.id
     }, token!);
-    // C5: AI-diff ревизии (fire-and-forget)
-    const revId = Array.isArray(rev) ? rev[0]?.id : rev?.id;
-    if (revId) {
-      apiPost('/api/interdept-ai/revision-diff', {
-        revision_id: revId,
-        drawing_code: drawing.code,
-        from_revision: drawing.revision || 'R0',
-        to_revision: nextRevision,
-        comment: comment || '',
-      }).then(() => loadRevisions(activeProject.id)).catch(() => {});
-    }
     await updateProjectDrawing(drawing.id, { revision: nextRevision, status: 'in_work' });
     loadRevisions(activeProject.id);
   };
@@ -1484,10 +1349,8 @@ export default function App() {
       project_id: activeProject.id,
       number: draftNo,
       status: 'draft',
-      issued_by: currentUserData?.id,
-      ...(newTransmittalRecipientDeptId ? { recipient_dept_id: Number(newTransmittalRecipientDeptId) } : {}),
+      issued_by: currentUserData?.id
     }, token!);
-    setNewTransmittalRecipientDeptId('');
     addNotification('Трансмиттал создан', 'success');
     loadTransmittals(activeProject.id);
   };
@@ -1525,18 +1388,6 @@ export default function App() {
       }
     }
     await updateTransmittalStatus(transmittalId, status, token!);
-    // C3: AI-diff при выпуске трансмиттала (fire-and-forget)
-    if (status === 'issued') {
-      const t = transmittals.find((x: any) => String(x.id) === String(transmittalId));
-      const drawingCodes = (transmittalItems[transmittalId] || [])
-        .map((it: any) => drawings.find((d: any) => String(d.id) === String(it.drawing_id))?.code)
-        .filter(Boolean);
-      apiPost('/api/interdept-ai/transmittal-diff', {
-        transmittal_id: transmittalId,
-        note: t?.note || '',
-        drawing_codes: drawingCodes,
-      }).then(() => loadTransmittals(activeProject.id)).catch(() => {});
-    }
     addNotification(`Статус трансмиттала изменён: ${transmittalStatusMap[status] || status}`, 'info');
     loadTransmittals(activeProject.id);
   };
@@ -1557,15 +1408,9 @@ export default function App() {
   };
   const assignTask = async (taskId: number, assignedTo: string) => {
     const eng = getUserById(assignedTo);
-    try {
-      const result = await patch(`tasks?id=eq.${taskId}`, { assigned_to: assignedTo, status: "todo" }, token!);
-      if (Array.isArray(result) && result.length === 0) throw new Error('Нет прав на назначение (RLS)');
-      addNotification(`Задача назначена → ${eng?.full_name || 'инженер'}`, 'success');
-      setShowTaskDetail(false);
-      if (activeProject) loadTasks(activeProject.id);
-    } catch (err: any) {
-      addNotification(`Ошибка назначения: ${err?.message || 'проверьте права доступа'}`, 'warning');
-    }
+    await patch(`tasks?id=eq.${taskId}`, { assigned_to: assignedTo, status: "todo" }, token!);
+    addNotification(`Задача назначена → ${eng?.full_name || 'инженер'}`, 'info');
+    setShowTaskDetail(false); if (activeProject) loadTasks(activeProject.id);
   };
   const issueRevision = async (task: any) => {
     if (!task || !activeProject) return;
@@ -1602,10 +1447,9 @@ export default function App() {
   const handleLogout = () => {
     // Sign out from Supabase JS — onAuthStateChange will clear token + userEmail.
     // Clear token immediately too so UI switches to login without waiting for async signOut.
-    console.warn('[AUTH] handleLogout called', new Error().stack?.split('\n').slice(1, 4).join(' | '));
     setToken(null);
     setUserEmail('');
-    getSupabaseAnonClient().auth.signOut({ scope: 'local' }).catch(() => {});
+    getSupabaseAnonClient().auth.signOut().catch(() => {});
     setCurrentUserData(null); setProjects([]); setTasks([]); setAllTasks([]); setMsgs([]); setChatInput(""); setTaskComment("");
     setDrawings([]); setRevisions([]); setReviews([]); setTransmittals([]); setTransmittalItems({}); setArchivedProjects([]);
     setSearchQuery(""); setFilterStatus("all"); setFilterPriority("all"); setFilterAssigned("all");
@@ -1646,15 +1490,6 @@ export default function App() {
     return isNaN(dt.getTime()) ? null : dt;
   };
 
-
-  // ШАГ 2: Авто-обновление нормативки если есть документы в обработке
-  useEffect(() => {
-    if (screen !== 'normative') return;
-    const hasPending = normativeDocs.some((d: any) => d.status === 'processing' || d.status === 'pending');
-    if (!hasPending) return;
-    const timer = setInterval(() => loadNormativeDocs(), 5000);
-    return () => clearInterval(timer);
-  }, [screen, normativeDocs]);
   const formatDateRu = (d: string | null | undefined): string => {
     if (!d) return '';
     if (/^\d{2}\.\d{2}\.\d{4}$/.test(d)) return d;
@@ -1700,10 +1535,10 @@ export default function App() {
     { id: "tasks", icon: "≡", label: "Задачи" },
     { id: "standards", icon: "⚙", label: "Стандарты" },
     { id: "specifications", icon: "📋", label: "Спецификации" },
-    { id: "normative", icon: "📄", label: "Нормативка" },
-    { id: "calculations", icon: "∑", label: "Расчёты" }
+    { id: "normative", icon: "📄", label: "Нормативка" }
   ];
-  const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", standards: "Поиск Стандартов", specifications: "Спецификации", normative: "База знаний (Нормативка)", calculations: "Расчёты" };
+
+  const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", standards: "Поиск Стандартов", specifications: "Спецификации", normative: "База знаний (Нормативка)" };
 
   const calcTemplates = Object.values(calcRegistry);
   const calcCatLabels: Record<string, string> = { "ТХ": "ТХ — Технология", "ТТ": "ТТ — Теплотехника", "ЭО": "ЭО — Электрика", "ВК": "ВК — Водоснабжение", "ПБ": "ПБ — Пожарная безопасность", "Г": "Генплан", "КЖ / КМ": "КЖ / КМ — Конструктив", "КИПиА": "КИПиА", "ОВ": "ОВ — Отопление и вентиляция" };
@@ -1736,15 +1571,6 @@ export default function App() {
             </Field>
             <Field label="ДЕДЛАЙН" C={C}><RuDateInput value={newProject.deadline} onChange={v => setNewProject({ ...newProject, deadline: v })} C={C} /></Field>
             <Field label="СТАТУС" C={C}><select value={newProject.status} onChange={e => setNewProject({ ...newProject, status: e.target.value })} style={getInp(C)}><option value="active">В работе</option><option value="review">На проверке</option></select></Field>
-            <Field label="ЗАДАНИЕ НА ПРОЕКТИРОВАНИЕ (необязательно)" C={C}>
-              <input
-                ref={tzFileRef}
-                type="file"
-                accept=".pdf"
-                style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, color: C.text, padding: '6px 8px', fontSize: 13, width: '100%', boxSizing: 'border-box' as const }}
-              />
-              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>PDF — будет автоматически разобран на разделы</div>
-            </Field>
             <button className="btn btn-primary" onClick={createProject} disabled={saving || !newProject.name || !newProject.code} style={{ width: "100%", opacity: (!newProject.name || !newProject.code) ? 0.5 : 1 }}>{saving ? "Создаётся..." : "Создать проект"}</button>
           </div>
         </Modal>
@@ -1775,7 +1601,7 @@ export default function App() {
         />
       )}
       {showNewTask && (
-        <Modal title="Новая задача" onClose={() => { setShowNewTask(false); setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setTaskSuggest(null); setTaskFile(null); }} C={C}>
+        <Modal title="Новая задача" onClose={() => { setShowNewTask(false); setNewTask({ name: "", dept_id: "", priority: "medium", deadline: "", assigned_to: "", drawing_id: "", description: "" }); setTaskSuggest(null); }} C={C}>
           <div className="form-stack">
             <button
               type="button"
@@ -1795,33 +1621,6 @@ export default function App() {
             </Field>
             <Field label="ПРИОРИТЕТ" C={C}><select value={newTask.priority} onChange={e => setNewTask({ ...newTask, priority: e.target.value })} style={getInp(C)}><option value="high">🔴 Высокий</option><option value="medium">🟡 Средний</option><option value="low">⚪ Низкий</option></select></Field>
             <Field label="ДЕДЛАЙН" C={C}><RuDateInput value={newTask.deadline} onChange={v => setNewTask({ ...newTask, deadline: v })} C={C} /></Field>
-            <Field label="ВЛОЖЕНИЕ (ОПЦИОНАЛЬНО)" C={C}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  ref={taskFileInputRef}
-                  type="file"
-                  accept=".pdf,.dwg,.dxf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip"
-                  style={{ display: 'none' }}
-                  onChange={e => { setTaskFile(e.target.files?.[0] || null); e.target.value = ''; }}
-                />
-                {taskFile ? (
-                  <>
-                    <span style={{ fontSize: 12, color: C.text, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      📎 {taskFile.name}
-                    </span>
-                    <button type="button" onClick={() => setTaskFile(null)}
-                      style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '1px solid #e53e3e', background: 'transparent', color: '#e53e3e', cursor: 'pointer', fontFamily: 'inherit' }}>
-                      ✕
-                    </button>
-                  </>
-                ) : (
-                  <button type="button" onClick={() => taskFileInputRef.current?.click()}
-                    style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: `1px dashed ${C.textMuted}`, background: 'transparent', color: C.textMuted, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    📎 Прикрепить файл
-                  </button>
-                )}
-              </div>
-            </Field>
             {taskSuggestLoading && (
               <div style={{ fontSize: 12, color: C.accent, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', border: `2px solid ${C.accent}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
@@ -1870,35 +1669,6 @@ export default function App() {
           </div>
         </Modal>
       )}
-
-                  {/* ШАГ 4: Кнопка проверки по ТЗ */}
-                  {selectedTask?.has_attachments && (
-                    <div style={{ padding: '8px 16px', borderTop: `1px solid ${C.border}` }}>
-                      <button
-                        onClick={async () => {
-                          setAiCheckLoading(true);
-                          setAiCheckResult('');
-                          try {
-                            const res = await apiPost('/api/task-file-check', {
-                              task_id: selectedTask.id,
-                              project_id: activeProject?.id,
-                            });
-                            setAiCheckResult((res as any).result || 'Проверка завершена');
-                          } catch (e: any) {
-                            setAiCheckResult('Ошибка: ' + (e.message || 'unknown'));
-                          } finally { setAiCheckLoading(false); }
-                        }}
-                        disabled={aiCheckLoading}
-                        style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '1px solid #667eea', background: 'transparent', color: '#667eea', cursor: 'pointer', fontFamily: 'inherit' }}
-                      >{aiCheckLoading ? '⏳ Проверка...' : '🤖 Проверить файл по ТЗ'}</button>
-                      {aiCheckResult && (
-                        <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: C.surface2, border: `1px solid ${C.border}`, fontSize: 12, whiteSpace: 'pre-wrap', position: 'relative' }}>
-                          {aiCheckResult}
-                          <button onClick={() => setAiCheckResult('')} style={{ position: 'absolute', top: 4, right: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.textMuted }}>✕</button>
-                        </div>
-                      )}
-                    </div>
-                  )}
       {showDepRequest && selectedTask && (
         <Modal title="Запрос данных у смежного отдела" onClose={() => setShowDepRequest(false)} C={C} topmost>
           <div className="form-stack">
@@ -1965,20 +1735,6 @@ export default function App() {
                 </div>
               ) : null;
             })()}
-            {/* 2a: Контекст из ТЗ — релевантные разделы по дисциплине задачи */}
-            {(taskTzSections.length > 0) && (
-              <div style={{ background: '#0ea5e910', border: '1px solid #0ea5e930', borderRadius: 10, padding: 12 }}>
-                <div style={{ fontSize: 10, color: '#0ea5e9', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>📋 Контекст из ТЗ</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {taskTzSections.map((s, i) => (
-                    <div key={i} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 7, padding: '8px 10px' }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#0ea5e9', marginBottom: 3 }}>{s.section_title}</div>
-                      <div style={{ fontSize: 11, color: C.textDim, lineHeight: 1.5, maxHeight: 60, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.section_text?.slice(0, 200)}{(s.section_text?.length || 0) > 200 ? '…' : ''}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
             {selectedTask.description && (<div style={{ background: C.surface2, borderRadius: 10, padding: 14 }}><div style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Описание</div><div style={{ fontSize: 13, color: C.textDim, lineHeight: 1.6 }}>{selectedTask.description}</div></div>)}
             {selectedTask.comment && (<div style={{ background: C.red + "10", border: `1px solid ${C.red}25`, borderRadius: 10, padding: 14 }}><div style={{ fontSize: 10, color: C.red, fontWeight: 600, marginBottom: 4 }}>КОММЕНТАРИЙ К ДОРАБОТКЕ</div><div style={{ fontSize: 13, color: C.textDim }}>{selectedTask.comment}</div></div>)}
             {workflowBlockInfo && (
@@ -2342,11 +2098,6 @@ export default function App() {
         </div>
 
         <div className="sidebar-bottom">
-          <div style={{ padding: "10px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 5, flexShrink: 0 }}>
-            <button className="sidebar-btn" style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.04)", color: "#8896a8", fontSize: 12, fontFamily: "inherit", cursor: "pointer" }}>
-              ⚙ Настройки
-            </button>
-          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px" }}>
             <AvatarComp user={currentUserData} size={34} C={C} />
             <div style={{ flex: 1, overflow: "hidden" }}>
@@ -2786,20 +2537,15 @@ export default function App() {
                 )}
                 {projects.filter(p => { if (!searchQuery) return true; const sq = searchQuery.toLowerCase(); return p.name.toLowerCase().includes(sq) || p.code.toLowerCase().includes(sq); }).map(p => {
                   const progress = getAutoProgress(p.id);
-                  const _dl = parseDeadline(p.deadline);
-                  const _daysLeft = _dl ? Math.ceil((_dl.getTime() - Date.now()) / 86400000) : null;
-                  const _isDoneOrArchived = p.status === 'done' || p.archived;
-                  const _deadlineColor = _daysLeft === null ? C.textMuted : (_daysLeft < 0 && !_isDoneOrArchived) ? C.red : _daysLeft < 30 ? C.red : _daysLeft < 90 ? C.orange : C.green;
                   return (
-                    <div key={p.id} className={`project-card ${activeProject?.id === p.id ? "active" : ""}`} onClick={() => { setActiveProject(p); setScreen("project"); setSideTab("tasks"); }}
-                      style={{ borderLeft: `3px solid ${_deadlineColor}` }}>
+                    <div key={p.id} className={`project-card ${activeProject?.id === p.id ? "active" : ""}`} onClick={() => { setActiveProject(p); setScreen("project"); setSideTab("tasks"); }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, alignItems: "center" }}>
                         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                           <span style={{ fontWeight: 600, fontSize: 15, color: C.text }}>{p.name}</span>
                           <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: "3px 10px", borderRadius: 6 }}>{p.code}</span>
                         </div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <span style={{ fontSize: 12, color: _deadlineColor, fontWeight: _daysLeft !== null && _daysLeft < 30 ? 700 : 400 }}>до {p.deadline}</span>
+                          <span style={{ fontSize: 12, color: (() => { const dl = parseDeadline(p.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {p.deadline}</span>
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); promptArchiveProject(p); }}>→ Архив</button>}
                         </div>
                       </div>
@@ -2869,12 +2615,12 @@ export default function App() {
 
               {/* PROJECT COPILOT DRAWER */}
               {showCopilot && (
-                <CopilotPanel
-                  userId={currentUserData?.id}
+                <CopilotPanel 
+                  userId={currentUserData?.id} 
                   userRole={currentUserData?.role}
-                  projectId={activeProject.id}
-                  C={C}
-                  onClose={() => setShowCopilot(false)}
+                  projectId={activeProject.id} 
+                  C={C} 
+                  onClose={() => setShowCopilot(false)} 
                   onTaskCreated={() => loadTasks(activeProject.id)}
                   onDataChanged={() => {
                     loadDrawings(activeProject.id);
@@ -2882,8 +2628,6 @@ export default function App() {
                     loadReviews(activeProject.id);
                     loadTransmittals(activeProject.id);
                   }}
-                  screenContext={sideTab === 'reviews' ? 'review' : sideTab === 'tasks' ? 'task' : sideTab === 'tz' ? 'tz' : 'project'}
-                  contextTask={showTaskDetail ? selectedTask : null}
                 />
               )}
 
@@ -2925,9 +2669,9 @@ export default function App() {
               <div style={{ display: conferenceScreenActive ? 'none' : 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
                 <div className="tab-strip-wrap" style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                   <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch', flex: 1, marginBottom: 0 } as React.CSSProperties}>
-                    {["conference","tasks","documents","activity","drawings","revisions","reviews","transmittals","assignments","tz","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
+                    {["conference","tasks","documents","activity","drawings","revisions","reviews","transmittals","assignments","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
                       <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        {t === "tasks" ? "⊙ Задачи" : t === "documents" ? "📁 Документы" : t === "activity" ? "📰 Активность" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "tz" ? "📋 ТЗ" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
+                        {t === "tasks" ? "⊙ Задачи" : t === "documents" ? "📁 Документы" : t === "activity" ? "📰 Активность" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
                       </button>
                     ))}
                   </div>
@@ -3082,9 +2826,6 @@ export default function App() {
                   transmittalItems={transmittalItems}
                   drawings={drawings}
                   revisions={revisions}
-                  depts={depts}
-                  recipientDeptId={newTransmittalRecipientDeptId}
-                  setRecipientDeptId={setNewTransmittalRecipientDeptId}
                   transmittalDraftLinks={transmittalDraftLinks}
                   setTransmittalDraftLinks={setTransmittalDraftLinks}
                   createProjectTransmittal={createProjectTransmittal}
@@ -3102,24 +2843,10 @@ export default function App() {
                   activeProject={activeProject}
                   currentUserData={currentUserData}
                   tasks={tasks}
-                  taskDeps={taskDeps}
-                  loadTaskDeps={loadTaskDeps}
                   setShowNewAssignment={setShowNewAssignment}
                   getDeptNameById={getDeptNameById}
                   getDeptName={getDeptName}
                   handleAssignmentResponse={handleAssignmentResponse}
-                  apiPost={apiPost}
-                  projectId={activeProject?.id}
-                />
-              )}
-
-              {sideTab === "tz" && (
-                <AssignmentTab
-                  C={C}
-                  token={token!}
-                  project={activeProject}
-                  isGip={isGip}
-                  isAdmin={currentUserData?.role === 'admin'}
                 />
               )}
 
@@ -3216,20 +2943,15 @@ export default function App() {
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {projects.filter(p => { if (!searchQuery) return true; const sq = searchQuery.toLowerCase(); return p.name.toLowerCase().includes(sq) || p.code.toLowerCase().includes(sq); }).map(p => {
                   const progress = getAutoProgress(p.id);
-                  const _dl = parseDeadline(p.deadline);
-                  const _daysLeft = _dl ? Math.ceil((_dl.getTime() - Date.now()) / 86400000) : null;
-                  const _isDoneOrArchived = p.status === 'done' || p.archived;
-                  const _deadlineColor = _daysLeft === null ? C.textMuted : (_daysLeft < 0 && !_isDoneOrArchived) ? C.red : _daysLeft < 30 ? C.red : _daysLeft < 90 ? C.orange : C.green;
                   return (
-                    <div key={p.id} className={`project-card ${activeProject?.id === p.id ? "active" : ""}`} onClick={() => { setActiveProject(p); setScreen("project"); setSideTab("tasks"); }}
-                      style={{ borderLeft: `3px solid ${_deadlineColor}` }}>
+                    <div key={p.id} className={`project-card ${activeProject?.id === p.id ? "active" : ""}`} onClick={() => { setActiveProject(p); setScreen("project"); setSideTab("tasks"); }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, alignItems: "center" }}>
                         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                           <span style={{ fontWeight: 600, fontSize: 15, color: C.text }}>{p.name}</span>
                           <span style={{ fontSize: 11, color: C.textMuted, background: C.surface2, padding: "3px 10px", borderRadius: 6 }}>{p.code}</span>
                         </div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <span style={{ fontSize: 12, color: _deadlineColor, fontWeight: _daysLeft !== null && _daysLeft < 30 ? 700 : 400 }}>до {p.deadline}</span>
+                          <span style={{ fontSize: 12, color: (() => { const dl = parseDeadline(p.deadline); return dl && dl < new Date() ? C.red : C.textMuted; })() }}>до {p.deadline}</span>
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); promptArchiveProject(p); }}>→ Архив</button>}
                         </div>
                       </div>
@@ -3428,13 +3150,6 @@ export default function App() {
                       }
                       addNotification(`Обновление завершено. Успешно: ${done}, Ошибок: ${errors}`, errors > 0 ? 'warning' : 'success');
                     }}>🔄 Обновить поиск по документам</button>
-                    <button className="btn btn-secondary" onClick={async () => {
-                      try {
-                        await apiPost('/api/normative-docs', { action: 'retry_pending' });
-                        addNotification('Векторизация запущена для необработанных документов', 'success');
-                        setTimeout(() => loadNormativeDocs(), 2000);
-                      } catch { addNotification('Ошибка запуска обработки', 'warning'); }
-                    }}>🚀 Запустить обработку</button>
                   </div>
                 )}
               </div>
@@ -3579,95 +3294,6 @@ export default function App() {
                       ))}
                     </>
                   )}
-                </div>
-              )}
-            </div>
-          )}
-
-
-          {/* ===== CALCULATIONS SCREEN ===== */}
-          {screen === "calculations" && (
-            <div className="screen-fade" style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
-              {/* Left sidebar: category filter + card grid */}
-              <div style={{ width: activeCalc ? 380 : '100%', minWidth: 280, borderRight: activeCalc ? `1px solid ${C.border}` : 'none', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'width 0.25s' }}>
-                {/* Search + filters */}
-                <div style={{ padding: '18px 18px 12px', borderBottom: `1px solid ${C.border}`, background: C.surface }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12, fontFamily: "'Manrope',sans-serif" }}>Библиотека расчётов</div>
-                  <input
-                    placeholder="Поиск расчёта..."
-                    value={calcSearch}
-                    onChange={e => setCalcSearch(e.target.value)}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface2, color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
-                  />
-                  {/* Category pills */}
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
-                    <button
-                      onClick={() => setCalcActiveCat(null)}
-                      style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: calcActiveCat === null ? C.accent : C.surface2, color: calcActiveCat === null ? '#fff' : C.textMuted, transition: 'all 0.15s' }}
-                    >Все</button>
-                    {calcAllCats.filter(cat => calcTemplates.some(t => t.cat === cat)).map(cat => {
-                      const CALC_CAT_COLORS: Record<string,string> = { 'ТХ': '#2b5bb5', 'ТТ': '#2f9e62', 'ОВ': '#2f9e62', 'ЭО': '#f5a623', 'ВК': '#06b6d4', 'КЖ / КМ': '#a855f7', 'КЖ': '#a855f7', 'КМ': '#a855f7', 'ПБ': '#ef4444', 'Г': '#22c55e', 'КИПиА': '#8b5cf6' };
-                      const cc = CALC_CAT_COLORS[cat] || C.accent;
-                      const isActive = calcActiveCat === cat;
-                      return (
-                        <button key={cat} onClick={() => setCalcActiveCat(isActive ? null : cat)}
-                          style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: isActive ? cc : cc + '20', color: isActive ? '#fff' : cc, transition: 'all 0.15s' }}>
-                          {cat}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Cards grid */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: 14 }}>
-                  {(() => {
-                    const CALC_CAT_COLORS: Record<string,string> = { 'ТХ': '#2b5bb5', 'ТТ': '#2f9e62', 'ОВ': '#2f9e62', 'ЭО': '#f5a623', 'ВК': '#06b6d4', 'КЖ / КМ': '#a855f7', 'КЖ': '#a855f7', 'КМ': '#a855f7', 'ПБ': '#ef4444', 'Г': '#22c55e', 'КИПиА': '#8b5cf6' };
-                    const filtered = calcTemplates.filter(t => {
-                      const matchCat = !calcActiveCat || t.cat === calcActiveCat;
-                      const q = calcSearch.toLowerCase().trim();
-                      const matchQ = !q || t.name.toLowerCase().includes(q) || (t.desc || '').toLowerCase().includes(q) || t.cat.toLowerCase().includes(q);
-                      return matchCat && matchQ;
-                    });
-                    if (filtered.length === 0) return (
-                      <div style={{ padding: 40, textAlign: 'center', color: C.textMuted, fontSize: 13 }}>Расчётов не найдено</div>
-                    );
-                    return (
-                      <div style={{ display: 'grid', gridTemplateColumns: activeCalc ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-                        {filtered.map(calc => {
-                          const catColor = CALC_CAT_COLORS[calc.cat] || C.accent;
-                          const isActive = activeCalc === calc.id;
-                          return (
-                            <div key={calc.id}
-                              onClick={() => setActiveCalc(isActive ? null : calc.id)}
-                              style={{
-                                background: isActive ? (catColor + '10') : C.surface,
-                                border: isActive ? `1px solid ${catColor}60` : `1px solid ${C.border}`,
-                                borderRadius: 12, padding: '16px 18px', cursor: 'pointer',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
-                                transition: 'all 0.22s', borderTop: `3px solid ${catColor}`,
-                                position: 'relative', overflow: 'hidden'
-                              }}>
-                              {/* Badge + standard */}
-                              <div style={{ display: 'flex', gap: 7, alignItems: 'center', marginBottom: 9 }}>
-                                <span style={{ fontSize: 10, fontWeight: 700, background: catColor + '20', color: catColor, padding: '2px 8px', borderRadius: 20 }}>{calc.cat}</span>
-                                <span style={{ fontSize: 9, color: C.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{calc.normativeReference}</span>
-                              </div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 5, lineHeight: 1.3, fontFamily: "'Manrope',sans-serif" }}>{calc.name}</div>
-                              <div style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.5 }}>{calc.desc}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              {/* Right panel: CalculationView detail */}
-              {activeCalc && (
-                <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                  <CalculationView calcId={activeCalc} C={C} onNormSearch={q => { setNormSearchQuery(q); setScreen('normative'); }} />
                 </div>
               )}
             </div>
