@@ -1,3 +1,7 @@
+## 2026-05-14 — 🔧 HOTFIX: Bug #3 — `project_documents.created_at` → `uploaded_at`
+
+- `assignment.ts` fallback-запрос использовал несуществующий столбец `created_at`; таблица `project_documents` имеет `uploaded_at`. Supabase silent-fail → `doc = null` → 404. Исправлено: `.select('id, name, uploaded_at, storage_path')` + `.order('uploaded_at', ...)`.
+
 ## 2026-05-14 — ✅ FIX: 4 бага из аудита (баги #2/#3/#4/#5)
 
 - **Баг #2 fix (orchestrator.ts):** `create_task` — при отсутствии `deadline` в ответе AI теперь проставляется дата +30 дней; это предотвращает DB NOT NULL violation. Описание поля в tool schema обновлено.

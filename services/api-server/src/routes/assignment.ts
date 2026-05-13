@@ -140,10 +140,10 @@ router.get('/assignment', async (req: Request, res: Response, next: NextFunction
       // Fallback: check project_documents with doc_type='tz' (DocumentsPanel upload path)
       const { data: doc } = await supabase
         .from('project_documents')
-        .select('id, name, created_at, storage_path')
+        .select('id, name, uploaded_at, storage_path')
         .eq('project_id', projectId)
         .eq('doc_type', 'tz')
-        .order('created_at', { ascending: false })
+        .order('uploaded_at', { ascending: false })
         .limit(1)
         .maybeSingle();
       if (doc) {
@@ -154,7 +154,7 @@ router.get('/assignment', async (req: Request, res: Response, next: NextFunction
             id: doc.id, version: 1, file_name: doc.name,
             storage_path: doc.storage_path,
             notes: 'Загружено через раздел «Документы»',
-            uploaded_at: doc.created_at,
+            uploaded_at: doc.uploaded_at,
             signed_url: urlData?.signedUrl || null,
           },
           sections: [],
