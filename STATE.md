@@ -1,3 +1,9 @@
+## 2026-05-14 — ✅ FEAT: Двухуровневый доступ к проектам (project_depts + project_members)
+
+- **DB**: созданы таблицы `project_depts` (GIP назначает отделы) и `project_members` (Lead назначает инженеров своего отдела); каскадное удаление с projects
+- **Backend `projects.ts`** переписан на новую модель: `GET/POST /api/project/:id/depts`; `DELETE /api/project-dept/:id`; `GET/POST /api/project/:id/members`; `DELETE /api/project-member/:id`; `/api/my-projects`: GIP→все, Lead→через dept в project_depts, Engineer→через user в project_members
+- **Frontend**: RACI-панель заменена на "Access panel" с двумя секциями — GIP видит/управляет отделами (🏢), Lead/GIP видит/управляет инженерами (👤); кнопка 👥 доступна GIP и Lead; Lead видит только инженеров своего отдела
+
 ## 2026-05-14 — ✅ FEAT: Удаление проекта + RACI-панель участников + фильтр проектов
 
 - **Backend `projects.ts`** (новый роут): `DELETE /api/project/:id` (GIP only, каскад raci/meetings + DB CASCADE на tasks/docs/drawings); `GET/POST /api/project/:id/raci`; `DELETE /api/raci/:id`; `GET /api/my-projects` (возвращает ID проектов по RACI членству, GIP/admin = все)

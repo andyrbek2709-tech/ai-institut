@@ -235,9 +235,10 @@ export default function App() {
   const [showNewProject, setShowNewProject] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<any>(null);
   const [showRaci, setShowRaci] = useState<any>(null);
-  const [raciEntries, setRaciEntries] = useState<any[]>([]);
-  const [raciNewUser, setRaciNewUser] = useState('');
-  const [raciNewDisc, setRaciNewDisc] = useState('');
+  const [accessDepts, setAccessDepts] = useState<any[]>([]);
+  const [accessMembers, setAccessMembers] = useState<any[]>([]);
+  const [accessNewDeptId, setAccessNewDeptId] = useState('');
+  const [accessNewMemberId, setAccessNewMemberId] = useState('');
   const [newProject, setNewProject] = useState<any>({ name: "", code: "", deadline: "", status: "active", depts: [] });
   const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
@@ -1190,26 +1191,46 @@ export default function App() {
     }
   };
 
-  const loadRaci = async (projectId: number) => {
+  const loadAccess = async (projectId: number) => {
     try {
-      const data = await apiGet(`/api/project/${projectId}/raci`);
-      setRaciEntries(Array.isArray(data) ? data : []);
-    } catch { setRaciEntries([]); }
+      const [deptData, memberData] = await Promise.all([
+        apiGet(`/api/project/${projectId}/depts`),
+        apiGet(`/api/project/${projectId}/members`),
+      ]);
+      setAccessDepts(Array.isArray(deptData) ? deptData : []);
+      setAccessMembers(Array.isArray(memberData) ? memberData : []);
+    } catch { setAccessDepts([]); setAccessMembers([]); }
   };
 
-  const addRaci = async () => {
-    if (!showRaci || !raciNewUser || !raciNewDisc) return;
+  const addAccessDept = async () => {
+    if (!showRaci || !accessNewDeptId) return;
     try {
-      await apiPost(`/api/project/${showRaci.id}/raci`, { user_id: Number(raciNewUser), discipline: raciNewDisc, role: 'R' });
-      setRaciNewUser(''); setRaciNewDisc('');
-      loadRaci(showRaci.id);
+      await apiPost(`/api/project/${showRaci.id}/depts`, { dept_id: Number(accessNewDeptId) });
+      setAccessNewDeptId('');
+      loadAccess(showRaci.id);
     } catch (e: any) { addNotification(e.message || 'Ошибка', 'error'); }
   };
 
-  const removeRaci = async (raciId: number) => {
+  const addAccessMember = async () => {
+    if (!showRaci || !accessNewMemberId) return;
     try {
-      await apiDelete(`/api/raci/${raciId}`);
-      setRaciEntries(prev => prev.filter((r: any) => r.id !== raciId));
+      await apiPost(`/api/project/${showRaci.id}/members`, { user_id: Number(accessNewMemberId) });
+      setAccessNewMemberId('');
+      loadAccess(showRaci.id);
+    } catch (e: any) { addNotification(e.message || 'Ошибка', 'error'); }
+  };
+
+  const removeAccessDept = async (id: number) => {
+    try {
+      await apiDelete(`/api/project-dept/${id}`);
+      setAccessDepts(prev => prev.filter((r: any) => r.id !== id));
+    } catch (e: any) { addNotification(e.message || 'Ошибка', 'error'); }
+  };
+
+  const removeAccessMember = async (id: number) => {
+    try {
+      await apiDelete(`/api/project-member/${id}`);
+      setAccessMembers(prev => prev.filter((r: any) => r.id !== id));
     } catch (e: any) { addNotification(e.message || 'Ошибка', 'error'); }
   };
   const createTask = async () => {
@@ -2292,45 +2313,69 @@ export default function App() {
         </div>
       )}
 
-      {/* RACI PANEL */}
+      {/* ACCESS PANEL */}
       {showRaci && (
-        <Modal title={`👥 Участники: ${showRaci.name}`} onClose={() => setShowRaci(null)} C={C}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Current participants */}
-            {raciEntries.length === 0
-              ? <div style={{ color: C.textMuted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Участники не назначены</div>
-              : raciEntries.map((r: any) => (
-                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: C.surface2, borderRadius: 8, padding: '10px 14px' }}>
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontWeight: 600, color: C.text }}>{r.app_users?.full_name || `User #${r.user_id}`}</span>
-                    <span style={{ marginLeft: 10, fontSize: 12, color: C.textMuted }}>{r.discipline}</span>
-                    <span style={{ marginLeft: 8, fontSize: 11, background: C.accent + '22', color: C.accent, borderRadius: 4, padding: '2px 6px' }}>{r.role}</span>
-                  </div>
-                  <button className="btn btn-ghost btn-sm" style={{ color: '#e53e3e' }} onClick={() => removeRaci(r.id)}>✕</button>
+        <Modal title={`👥 Доступ: ${showRaci.name}`} onClose={() => setShowRaci(null)} C={C}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+            {/* GIP: Department management */}
+            {(isGip || isAdmin) && (
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: C.text }}>🏢 Отделы с доступом</div>
+                {accessDepts.length === 0
+                  ? <div style={{ color: C.textMuted, fontSize: 13, padding: '8px 0' }}>Отделы не назначены — проект виден только ГИП/Администратору</div>
+                  : accessDepts.map((d: any) => (
+                    <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: C.surface2, borderRadius: 8, padding: '9px 13px', marginBottom: 6 }}>
+                      <span style={{ flex: 1, fontWeight: 600, color: C.text }}>{(d.departments as any)?.name || `Отдел #${d.dept_id}`}</span>
+                      <button className="btn btn-ghost btn-sm" style={{ color: '#e53e3e' }} onClick={() => removeAccessDept(d.id)}>✕</button>
+                    </div>
+                  ))
+                }
+                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                  <select value={accessNewDeptId} onChange={e => setAccessNewDeptId(e.target.value)} style={{ ...getInp(C), flex: 1 }}>
+                    <option value="">— Добавить отдел —</option>
+                    {depts.filter(d => !accessDepts.some((ad: any) => ad.dept_id === d.id)).map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                  <button className="btn btn-primary" onClick={addAccessDept} disabled={!accessNewDeptId}>+ Добавить</button>
                 </div>
-              ))
-            }
-            {/* Add participant */}
-            <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
-              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: C.text }}>Добавить участника</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <select value={raciNewUser} onChange={e => setRaciNewUser(e.target.value)} style={{ ...getInp(C), flex: 2, minWidth: 160 }}>
-                  <option value="">— Пользователь —</option>
-                  {appUsers.filter((u: any) => !['admin'].includes(u.role)).map((u: any) => (
-                    <option key={u.id} value={u.id}>{u.full_name} ({u.role})</option>
-                  ))}
-                </select>
-                <select value={raciNewDisc} onChange={e => setRaciNewDisc(e.target.value)} style={{ ...getInp(C), flex: 1, minWidth: 100 }}>
-                  <option value="">— Дисциплина —</option>
-                  {['АР','КР','ВК','ОВ','ЭС','ТМ','ПБ','КИПиА','ОПД','ПОС','ООС','Смета','Общ'].map(d => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
-                <button className="btn btn-primary" onClick={addRaci} disabled={!raciNewUser || !raciNewDisc}>
-                  Добавить
-                </button>
               </div>
-            </div>
+            )}
+
+            {/* Lead / GIP: Engineer member management */}
+            {(isGip || isAdmin || isLead) && (
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: C.text }}>👤 Инженеры на проекте</div>
+                {accessMembers.length === 0
+                  ? <div style={{ color: C.textMuted, fontSize: 13, padding: '8px 0' }}>Инженеры не назначены</div>
+                  : accessMembers.map((m: any) => (
+                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: C.surface2, borderRadius: 8, padding: '9px 13px', marginBottom: 6 }}>
+                      <span style={{ flex: 1, fontWeight: 600, color: C.text }}>{(m.app_users as any)?.full_name || `User #${m.user_id}`}</span>
+                      <span style={{ fontSize: 11, color: C.textMuted }}>{getDeptName(m.dept_id)}</span>
+                      <button className="btn btn-ghost btn-sm" style={{ color: '#e53e3e' }} onClick={() => removeAccessMember(m.id)}>✕</button>
+                    </div>
+                  ))
+                }
+                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                  <select value={accessNewMemberId} onChange={e => setAccessNewMemberId(e.target.value)} style={{ ...getInp(C), flex: 1 }}>
+                    <option value="">— Добавить инженера —</option>
+                    {appUsers
+                      .filter((u: any) => {
+                        if (isGip || isAdmin) return ['engineer', 'lead'].includes(u.role);
+                        return u.dept_id === currentUserData?.dept_id && u.role === 'engineer';
+                      })
+                      .filter((u: any) => !accessMembers.some((m: any) => m.user_id === u.id))
+                      .map((u: any) => (
+                        <option key={u.id} value={u.id}>{u.full_name} ({u.role})</option>
+                      ))
+                    }
+                  </select>
+                  <button className="btn btn-primary" onClick={addAccessMember} disabled={!accessNewMemberId}>+ Добавить</button>
+                </div>
+              </div>
+            )}
+
           </div>
         </Modal>
       )}
@@ -2897,7 +2942,7 @@ export default function App() {
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <span style={{ fontSize: 12, color: _deadlineColor, fontWeight: _daysLeft !== null && _daysLeft < 30 ? 700 : 400 }}>до {p.deadline}</span>
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); promptArchiveProject(p); }}>→ Архив</button>}
-                          {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setShowRaci(p); loadRaci(p.id); setRaciNewUser(''); setRaciNewDisc(''); }} title="Участники проекта" style={{ padding: '4px 8px' }}>👥</button>}
+                          {(isGip || isLead) && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setShowRaci(p); loadAccess(p.id); setAccessNewDeptId(''); setAccessNewMemberId(''); }} title="Доступ к проекту" style={{ padding: '4px 8px' }}>👥</button>}
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setShowDeleteConfirm(p); }} title="Удалить проект" style={{ color: '#e53e3e', padding: '4px 8px' }}>🗑</button>}
                         </div>
                       </div>
@@ -3329,7 +3374,7 @@ export default function App() {
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <span style={{ fontSize: 12, color: _deadlineColor, fontWeight: _daysLeft !== null && _daysLeft < 30 ? 700 : 400 }}>до {p.deadline}</span>
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); promptArchiveProject(p); }}>→ Архив</button>}
-                          {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setShowRaci(p); loadRaci(p.id); setRaciNewUser(''); setRaciNewDisc(''); }} title="Участники проекта" style={{ padding: '4px 8px' }}>👥</button>}
+                          {(isGip || isLead) && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setShowRaci(p); loadAccess(p.id); setAccessNewDeptId(''); setAccessNewMemberId(''); }} title="Доступ к проекту" style={{ padding: '4px 8px' }}>👥</button>}
                           {isGip && <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setShowDeleteConfirm(p); }} title="Удалить проект" style={{ color: '#e53e3e', padding: '4px 8px' }}>🗑</button>}
                         </div>
                       </div>
