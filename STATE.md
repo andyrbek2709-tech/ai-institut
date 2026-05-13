@@ -1,3 +1,10 @@
+## 2026-05-13 — ✅ FEAT: Tesseract OCR для скан-PDF нормативных документов
+
+- **Dockerfile:** добавлены `tesseract-ocr`, `tesseract-ocr-data-rus`, `tesseract-ocr-data-eng`, `poppler-utils` в runtime-образ (Alpine apk)
+- **normative-docs.ts:** `extractText` теперь при pdf-parse < 50 символов переключается на OCR: `pdftoppm -r 300 -png` → `tesseract stdout -l rus+eng --psm 1` по каждой странице
+- **Эффект:** все 5 скан-PDF (нормы времени, СН-527-80 и др.) можно нажать «Запустить обработку» и они пропарсятся через OCR (~30-60 сек/страница)
+- **Railway:** нужно дождаться rebuild с новым Dockerfile (~3-5 мин)
+
 ## 2026-05-13 — ✅ FIX: AI читает ТЗ проекта (full_text не сохранялся при загрузке)
 
 - **Проблема:** POST `/api/assignment` не сохранял `full_text` в `project_assignments` → `fetchProjectContext` всегда возвращал пустую строку → AI говорил "ТЗ не найдено"

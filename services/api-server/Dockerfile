@@ -12,6 +12,13 @@ RUN npm run build
 
 FROM node:22-alpine
 
+# Tesseract OCR (Russian + English) + Poppler (pdftoppm — PDF page → PNG)
+RUN apk add --no-cache \
+    tesseract-ocr \
+    tesseract-ocr-data-rus \
+    tesseract-ocr-data-eng \
+    poppler-utils
+
 WORKDIR /app
 
 COPY package*.json ./

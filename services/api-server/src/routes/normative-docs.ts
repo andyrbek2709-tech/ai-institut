@@ -8,6 +8,11 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import { execFile as _execFile } from 'child_process';
+import { promisify } from 'util';
+import { writeFile, readdir, mkdir, rm } from 'fs/promises';
+import { join } from 'path';
+import { randomBytes } from 'crypto';
 import { authMiddleware } from '../middleware/auth.js';
 import { getSupabaseAdmin } from '../config/supabase.js';
 import { logger } from '../utils/logger.js';
@@ -16,6 +21,8 @@ import { env } from '../config/environment.js';
 import OpenAI from 'openai';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
+
+const execFile = promisify(_execFile);
 
 const router = Router();
 
@@ -42,6 +49,38 @@ function chunkText(text: string, maxChars = 1500): string[] {
   return chunks.filter(c => c.length > 30);
 }
 
+// ── OCR fallback: Tesseract via pdftoppm (scanned PDFs) ──────────────────
+async function ocrPdfBuffer(buf: Buffer): Promise<string> {
+  const tmpDir = join('/tmp', `ocr_${randomBytes(6).toString('hex')}`);
+  await mkdir(tmpDir, { recursive: true });
+  const pdfPath = join(tmpDir, 'in.pdf');
+  const pageBase = join(tmpDir, 'pg');
+  try {
+    await writeFile(pdfPath, buf);
+    // Convert all PDF pages to PNG at 300 DPI
+    await execFile('pdftoppm', ['-r', '300', '-png', pdfPath, pageBase], { timeout: 120_000 });
+    const pages = (await readdir(tmpDir))
+      .filter(f => f.startsWith('pg') && f.endsWith('.png'))
+      .sort();
+    const parts: string[] = [];
+    for (const pg of pages) {
+      try {
+        const { stdout } = await execFile(
+          'tesseract',
+          [join(tmpDir, pg), 'stdout', '-l', 'rus+eng', '--psm', '1'],
+          { timeout: 60_000, maxBuffer: 10 * 1024 * 1024 },
+        );
+        if (stdout.trim()) parts.push(stdout.trim());
+      } catch (pageErr: any) {
+        logger.warn({ err: pageErr?.message, pg }, 'OCR page failed, skipping');
+      }
+    }
+    return parts.join('\n\n');
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
 // ── Extract text from storage ─────────────────────────────────────────────
 async function extractText(filePath: string, fileType: string): Promise<string> {
   const sb = getSupabaseAdmin();
@@ -53,8 +92,17 @@ async function extractText(filePath: string, fileType: string): Promise<string> 
   const lowerPath = filePath.toLowerCase();
 
   if (lowerType.includes('pdf') || lowerPath.endsWith('.pdf')) {
-    const parsed = await pdfParse(buf);
-    return parsed.text || '';
+    // Try text-layer extraction first (fast)
+    try {
+      const parsed = await pdfParse(buf);
+      const text = (parsed.text || '').trim();
+      if (text.length >= 50) return text;
+    } catch (e: any) {
+      logger.warn({ err: e?.message }, 'pdf-parse failed, falling back to OCR');
+    }
+    // Scanned PDF — fall back to Tesseract OCR
+    logger.info({ filePath }, 'PDF appears to be a scan, starting Tesseract OCR');
+    return ocrPdfBuffer(buf);
   }
 
   if (lowerType.includes('wordprocessingml') || lowerPath.endsWith('.docx')) {
