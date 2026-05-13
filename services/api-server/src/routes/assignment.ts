@@ -179,6 +179,18 @@ router.post('/assignment', async (req: Request, res: Response, next: NextFunctio
       await supabase.storage.from('project-assignments').remove([storagePath]);
       throw new ApiError(500, insertErr.message);
     }
+    // Extract and save full text so AI orchestrator can read it via project context
+    let fullText: string | null = null;
+    try {
+      const pdfData = await pdfParse(file.buffer);
+      fullText = (pdfData.text || '').trim().slice(0, 60000) || null;
+      if (fullText) {
+        await supabase.from('project_assignments').update({ full_text: fullText }).eq('id', newA.id);
+      }
+    } catch (e: any) {
+      logger.warn({ err: e?.message }, 'PDF full_text extraction failed — sections still saved');
+    }
+
     const sections = await parseSectionsFromPdf(file.buffer, newA.id);
     if (sections.length > 0) await supabase.from('assignment_sections').insert(sections);
     const { data: urlData } = await supabase.storage
