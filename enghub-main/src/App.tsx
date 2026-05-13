@@ -1646,6 +1646,15 @@ export default function App() {
     return isNaN(dt.getTime()) ? null : dt;
   };
 
+
+  // ШАГ 2: Авто-обновление нормативки если есть документы в обработке
+  useEffect(() => {
+    if (screen !== 'normative') return;
+    const hasPending = normativeDocs.some((d: any) => d.status === 'processing' || d.status === 'pending');
+    if (!hasPending) return;
+    const timer = setInterval(() => loadNormativeDocs(), 5000);
+    return () => clearInterval(timer);
+  }, [screen, normativeDocs]);
   const formatDateRu = (d: string | null | undefined): string => {
     if (!d) return '';
     if (/^\d{2}\.\d{2}\.\d{4}$/.test(d)) return d;
@@ -1694,18 +1703,6 @@ export default function App() {
     { id: "normative", icon: "📄", label: "Нормативка" },
     { id: "calculations", icon: "∑", label: "Расчёты" }
   ];
-
-
-  // ШАГ 2: Авто-обновление нормативки если есть документы в обработке
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (screen !== 'normative') return;
-    const hasPending = normativeDocs.some((d: any) => d.status === 'processing' || d.status === 'pending');
-    if (!hasPending) return;
-    const timer = setInterval(() => loadNormativeDocs(), 5000);
-    return () => clearInterval(timer);
-  }, [screen, normativeDocs]);
-
   const screenTitles: Record<string, string> = { dashboard: "Рабочий стол", project: "Карточка проекта", projects_list: "Реестр проектов", tasks: "Мои задачи", standards: "Поиск Стандартов", specifications: "Спецификации", normative: "База знаний (Нормативка)", calculations: "Расчёты" };
 
   const calcTemplates = Object.values(calcRegistry);
