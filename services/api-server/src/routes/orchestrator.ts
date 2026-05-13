@@ -416,7 +416,7 @@ async function fetchProjectContext(projectId: string | number | undefined): Prom
 // ── POST /api/orchestrator ────────────────────────────────────────────────
 
 router.post('/orchestrator', authMiddleware, async (req: Request, res: Response) => {
-  const { project_id, message, role } = req.body || {};
+  const { project_id, message, role, history } = req.body || {};
   if (!message || typeof message !== 'string' || !message.trim()) {
     throw new ApiError(400, 'message is required');
   }
@@ -429,10 +429,19 @@ router.post('/orchestrator', authMiddleware, async (req: Request, res: Response)
   const orgId = await getOrgIdForUser(callerId);
   const token = req.headers.authorization?.replace('Bearer ', '');
 
+  // Build history messages (last 8, validated shape)
+  const historyMsgs: OpenAI.Chat.ChatCompletionMessageParam[] = Array.isArray(history)
+    ? history
+        .filter((h: any) => h && (h.role === 'user' || h.role === 'assistant') && typeof h.content === 'string')
+        .slice(-8)
+        .map((h: any) => ({ role: h.role, content: h.content.slice(0, 2000) }))
+    : [];
+
   try {
     const openai = getOpenAI();
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { role: 'system', content: finalSystemPrompt },
+      ...historyMsgs,
       { role: 'user', content: message.trim() },
     ];
 

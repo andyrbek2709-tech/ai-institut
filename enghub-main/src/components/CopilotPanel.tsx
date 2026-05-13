@@ -71,36 +71,38 @@ const agentLabelMap: Record<string, string> = {
   drawing_vision_agent: '🖼️ AI-анализ чертежа',
 };
 
-const SCREEN_HINTS: Record<string, string> = {
-  review: '📝 Контекст: проверка замечаний. Могу помочь с разбором ошибок, поиском нормативов и ответами на замечания.',
-  task: '⊙ Контекст: работа над задачей. Могу найти нормативы, дать рекомендации по выполнению или сформировать подзадачи.',
-  tz: '📋 Контекст: задание на проектирование. Могу проанализировать требования ТЗ и найти связанные нормативы.',
-  project: '🏗 Контекст: карточка проекта. Могу проанализировать прогресс, риски и статус задач.',
-};
-
-export function CopilotPanel({
-  projectId,
-  userId,
+export function CopilotPanel({ 
+  projectId, 
+  userId, 
   userRole,
-  C,
+  C, 
   onClose,
-  onTaskCreated,
-  onDataChanged,
-  screenContext,
-  contextTask,
+  onTaskCreated, // Callback to refresh Kanban when AI creates tasks
+  onDataChanged // Callback to refresh drawings/reviews/revisions/transmittals
 }: any) {
-  const contextHint = SCREEN_HINTS[screenContext] || '';
-  const taskHint = contextTask ? `\n📌 Активная задача: "${contextTask.name}" [${contextTask.status || ''}]` : '';
-  const welcomeText = `Привет! Я ChatGPT 4.0 — помощник по нормативной базе и проектной работе.${contextHint ? `\n\n${contextHint}` : ''}${taskHint}\n\nСпросите про ГОСТ, СНиП, EN или попросите помочь с задачами и расчётами.`;
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    { role: 'ai', text: welcomeText }
-  ]);
+  const WELCOME = 'Привет! Я ChatGPT 4.0 — помощник по нормативной базе и проектной работе.\n\n⊙ Контекст: работа над задачей. Могу найти нормативы, дать рекомендации по выполнению или сформировать подзадачи.\n\nСпросите про ГОСТ, СНиП, EN или попросите помочь с задачами и расчётами.';
+
+  const storageKey = `enghub_chat_${projectId}`;
+
+  const [messages, setMessages] = useState<ChatMsg[]>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [{ role: 'ai', text: WELCOME }];
+  });
   const [input, setInput] = useState('');
   const [actions, setActions] = useState<AIAction[]>([]);
   const [loading, setLoading] = useState(false);
   const [useKB, setUseKB] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const userScrolledUp = useRef(false);
   const applyInFlightRef = useRef<Set<string>>(new Set());
+
+  // Persist chat history to localStorage (keep last 60 messages)
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify(messages.slice(-60))); } catch {}
+  }, [messages, storageKey]);
 
   // Polling ai_actions
   const fetchActions = async () => {
@@ -121,12 +123,21 @@ export function CopilotPanel({
   }, [projectId]);
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (!userScrolledUp.current && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages, actions]);
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    userScrolledUp.current = el.scrollHeight - el.scrollTop - el.clientHeight > 50;
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
     const userText = input.trim();
+    userScrolledUp.current = false;
     setMessages(prev => [...prev, { role: 'user', text: userText }]);
     setInput('');
     setLoading(true);
@@ -149,8 +160,7 @@ export function CopilotPanel({
           message: userText,
           use_rag: useKB,
           role: userRole || 'engineer',
-          screen_context: screenContext || 'project',
-          context_task: contextTask || null,
+          history: messages.slice(-8).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }))
         })
       });
 
@@ -366,7 +376,7 @@ export function CopilotPanel({
       </div>
 
       {/* Action Feed & Chat Area */}
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div ref={scrollRef} onScroll={handleScroll} style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
         {messages.map((m, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
             <div style={{
