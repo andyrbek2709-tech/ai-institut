@@ -402,6 +402,26 @@ async function execListDrawings(args: { discipline?: string; status?: string }, 
   }
 }
 
+// ── Helper: Auto-corrector (Normative Validator) ─────────────────────────────
+
+async function validateNormatives(content: string): Promise<{ isValid: boolean; warnings: string[] }> {
+  // Mock data: In a real system, query a 'normative_versions' table
+  const mockDeprecated = ['ГОСТ 12.1.004-91', 'СНиП 2.04.01-85', 'ГОСТ 32569-2013'];
+  // Regex to find common normative patterns
+  const normativeRegex = /(?:ГОСТ|СНиП|СП РК|ГОСТ Р|EN|ISO|ASME) [\d.-]+/gi;
+  const found = content.match(normativeRegex) || [];
+  const warnings: string[] = [];
+
+  found.forEach(ref => {
+    const cleanRef = ref.trim();
+    if (mockDeprecated.includes(cleanRef)) {
+      warnings.push(`ВНИМАНИЕ: Норматив ${cleanRef} помечен как устаревший. Пожалуйста, замените на актуальную версию.`);
+    }
+  });
+
+  return { isValid: warnings.length === 0, warnings };
+}
+
 // ── TOOL: generate_report ────────────────────────────────────────────────────
 
 async function execGenerateReport(
@@ -414,6 +434,16 @@ async function execGenerateReport(
     return { error: 'project_id не передан в сессии — отчет создать нельзя' };
   }
   try {
+    // Step 2.1: Validate normatives (Auto-corrector)
+    const validation = await validateNormatives(args.content);
+    let finalContent = args.content;
+
+    if (!validation.isValid) {
+      const warningBlock = '\n\n---\n### ⚠️ АВТО-КОРРЕКТОР: Обнаружены устаревшие нормативы\n' + validation.warnings.map(w => `- ${w}`).join('\n') + '\n---';
+      finalContent += warningBlock;
+      logger.warn({ warnings: validation.warnings }, 'Normative validator flagged deprecated standards in report.');
+    }
+
     // Stage 2: Capture Context Snapshot для воспроизводимости
     const tzCtx = await fetchProjectContext(projectId);
     const tzVersion = tzCtx ? 'v1.0.0' : 'unknown'; // TODO: Заменить на реальную версию документа
@@ -422,7 +452,7 @@ async function execGenerateReport(
     const reportData = {
       projectId: Number(projectId),
       discipline: args.discipline,
-      content: args.content,
+      content: finalContent,
       userId,
       contextSnapshot: {
         tzVersion,
@@ -436,7 +466,8 @@ async function execGenerateReport(
       discipline: created.discipline,
       checksum: created.checksum,
       status: created.status,
-      message: `Отчет #${created.id} создан и сохранен в БД с checksum ${created.checksum}.`,
+      validation_warnings: validation.warnings,
+      message: `Отчет #${created.id} создан и сохранен в БД с checksum ${created.checksum}.` + (validation.isValid ? '' : ' Обнаружены предупреждения по нормативам.'),
     };
   } catch (e: any) {
     logger.error({ err: e?.message }, 'generate_report tool failed');
