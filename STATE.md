@@ -1,3 +1,9 @@
+## 2026-05-14 — ✅ FIX: Критические баги #2, #3, #4 (Bug #3 ранее был ложноположительным в STATE.md)
+
+- **Bug #2 (deadline):** Уже исправлен в orchestrator.ts — при отсутствии deadline AI подставляет +30 дней.
+- **Bug #4 (метрики задач):** Уже исправлен в App.tsx — `appUsers.length` добавлен в useEffect deps.
+- **Bug #3 (ТЗ дублирование):** ✅ ИСПРАВЛЕНО — `AssignmentTab.tsx` теперь при 404 от `/api/assignment` делает fallback-запрос к `project_documents WHERE doc_type='tz'`. Пользователи видят ТЗ загруженное через раздел «Документы» без необходимости загружать дважды. Добавлена константа `SURL` для прямого доступа к Supabase REST API.
+
 ## 2026-05-14 — ✅ FEAT: Двухуровневый доступ к проектам (project_depts + project_members)
 
 - **DB**: созданы таблицы `project_depts` (GIP назначает отделы) и `project_members` (Lead назначает инженеров своего отдела); каскадное удаление с projects

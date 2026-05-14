@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 const API = 'https://api-server-production-8157.up.railway.app';
+const SURL = process.env.REACT_APP_SUPABASE_URL || 'https://inachjylaqelysiwtsux.supabase.co';
 
 type Section = {
   id: string;
@@ -71,7 +72,36 @@ export function AssignmentTab({ C, token, project, isGip, isAdmin }: Props) {
       const r = await fetch(`${API}/api/assignment?project_id=${project.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (r.status === 404) { setAssignment(null); setSections([]); return; }
+      if (r.status === 404) {
+        // Fallback: пробуем найти ТЗ в project_documents
+        try {
+          const docsResp = await fetch(
+            `${SURL}/rest/v1/project_documents?project_id=eq.${project.id}&doc_type=eq.tz&order=uploaded_at.desc&limit=1`,
+            { headers: { Authorization: `Bearer ${token}`, apikey: process.env.REACT_APP_SUPABASE_ANON_KEY || '' } }
+          );
+          if (docsResp.ok) {
+            const docs = await docsResp.json();
+            if (docs && docs.length > 0) {
+              const doc = docs[0];
+              setAssignment({
+                id: doc.id,
+                version: 1,
+                file_name: doc.name,
+                signed_url: doc.storage_path ? `${SURL}/storage/v1/object/project-files/${doc.storage_path}` : null,
+                notes: null,
+                uploaded_at: doc.uploaded_at,
+              } as Assignment);
+              setSections([]);
+              return;
+            }
+          }
+        } catch (fallbackErr) {
+          console.error('Fallback to project_documents failed:', fallbackErr);
+        }
+        setAssignment(null);
+        setSections([]);
+        return;
+      }
       if (!r.ok) { const j = await r.json(); setError(j.error || 'Ошибка загрузки'); return; }
       const j = await r.json();
       setAssignment(j.assignment);
