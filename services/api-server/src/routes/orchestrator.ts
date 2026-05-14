@@ -16,6 +16,7 @@ import { Router, Request, Response } from 'express';
 import { createRequire } from 'module';
 import { authMiddleware } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
+import { execDiffReports, execApproveReport } from '../services/reportTools.js';
 import { ApiError } from '../middleware/errorHandler.js';
 import { env } from '../config/environment.js';
 import { getSupabaseAdmin } from '../config/supabase.js';
@@ -215,22 +216,56 @@ const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'generate_report',
-      description: 'Создать инженерный отчет по проекту (промышленная безопасность, геодезия, расчетная записка и т.п.). Используй когда пользователь просит создать отчет, сформировать документ, подготовить расчетную записку. Отчет сохраняется в БД и получает checksum для целостности.',
+      description: 'Сформировать официальный инженерный отчет по заданной дисциплине. Статус сохранения в БД, checksum для целостности. В контент ОБЯЗАТЕЛЬНО включай раздел «Нормативная база» со ссылками на использованные документы и конкретные пункты (номер раздела/пункта).',
       parameters: {
         type: 'object',
         properties: {
           discipline: {
             type: 'string',
-            description: 'Дисциплина отчета (ОВ, ВК, КЖ, КМ, ЭО, АТХ, Промбезопасность, Геодезия и т.п.)',
+            description: 'Дисциплина отчета (например, «Промбезопасность», «Геодезия», «Архитектура»).'
           },
           content: {
             type: 'string',
-            description: 'Содержание отчета (markdown или plain text). Должен включать ключевые формулы, ссылки на нормативы, выводы и рекомендации.',
-          },
+            description: 'Полный текст отчета в структурированном виде: Введение → Расчеты → Выводы → Нормативная база. В разделе «Нормативная база» указывай конкретные документы и пункты (например, ГОСТ 12.1.004-91, раздел 4.2).'
+          }
         },
-        required: ['discipline', 'content'],
-      },
-    },
+        required: ['discipline', 'content']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'diff_reports',
+      description: 'Сравнить текущую версию отчета с предыдущей ревизией и показать изменения.',
+      parameters: {
+        type: 'object',
+        properties: {
+          discipline: {
+            type: 'string',
+            description: 'Дисциплина отчета для сравнения.'
+          }
+        },
+        required: ['discipline']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'approve_report',
+      description: 'Подписать и утвердить отчет (сменит статус на approved и запишется в ауди-лог).',
+      parameters: {
+        type: 'object',
+        properties: {
+          discipline: {
+            type: 'string',
+            description: 'Дисциплина отчета для утверждения.'
+          }
+        },
+        required: ['discipline']
+      }
+    }
   },
 ];
 
@@ -612,6 +647,12 @@ router.post('/orchestrator', authMiddleware, async (req: Request, res: Response)
           } else if (tc.function.name === 'generate_report') {
             toolResult = await execGenerateReport(args, project_id, callerId, collectedCitations);
             if (toolResult?.success) collectedActions.push({ type: 'report_generated', report_id: toolResult.report_id, discipline: toolResult.discipline });
+          } else if (tc.function.name === 'diff_reports') {
+            toolResult = await execDiffReports(args, project_id);
+            if (toolResult?.message) collectedActions.push({ type: 'report_diffed', discipline: args.discipline });
+          } else if (tc.function.name === 'approve_report') {
+            toolResult = await execApproveReport(args, project_id, callerId);
+            if (toolResult?.success) collectedActions.push({ type: 'report_approved', report_id: toolResult.report_id });
           } else {
             toolResult = { error: `Unknown tool: ${tc.function.name}` };
           }
