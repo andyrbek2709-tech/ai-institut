@@ -1,9 +1,9 @@
 {
-  "status": "clustering",
-  "current_step": "Группировка по кластерам",
-  "progress_pct": 92,
+  "status": "done",
+  "current_step": "Готово: 18 болей в 1 кластерах",
+  "progress_pct": 100,
   "items_processed": 953,
   "items_total": 953,
-  "updated_at": "2026-05-14T08:31:36Z",
+  "updated_at": "2026-05-14T08:31:37Z",
   "started_at": "2026-05-14T08:31:26Z"
 }
