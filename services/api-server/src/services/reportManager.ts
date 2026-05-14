@@ -3,10 +3,14 @@ import { logger } from '../utils/logger.js';
 import { createHash } from 'crypto';
 
 export interface ReportData {
-  projectId: string;
+  projectId: number;
   discipline: string;
-  content: string; // В перспективе — JSON-структура
-  authorId: string;
+  content: string;
+  userId: string;
+  contextSnapshot?: {
+    tzVersion: string;
+    normativeReferences: string[];
+  };
 }
 
 export class ReportLifecycleManager {
@@ -16,8 +20,19 @@ export class ReportLifecycleManager {
   async generateReport(data: ReportData) {
     const sb = getSupabaseAdmin();
     
-    // Создаем хеш-сумму контента для обеспечения целостности (Stage 7)
-    const checksum = createHash('sha256').update(data.content, 'utf8').digest('hex');
+    // Stage 2: Normalization & Deterministic Hashing
+    // Нормализуем данные: сортируем ссылки на нормативы, убираем лишние пробелы
+    const normalizedContent = JSON.stringify({
+      content: data.content.trim(),
+      discipline: data.discipline,
+      context: data.contextSnapshot ? {
+        tz: data.contextSnapshot.tzVersion,
+        refs: [...data.contextSnapshot.normativeReferences].sort()
+      } : null
+    });
+    
+    // Считаем хеш от нормализованного JSON для детерминизма
+    const checksum = createHash('sha256').update(normalizedContent, 'utf8').digest('hex');
     
     const { data: report, error } = await sb.from('reports').insert({
       project_id: data.projectId,
@@ -25,7 +40,7 @@ export class ReportLifecycleManager {
       content: data.content,
       checksum: checksum,
       status: 'generated',
-      created_by: data.authorId
+      created_by: data.userId
     }).select().single();
 
     if (error) {

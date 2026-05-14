@@ -369,16 +369,30 @@ async function execListDrawings(args: { discipline?: string; status?: string }, 
 
 // ── TOOL: generate_report ────────────────────────────────────────────────────
 
-async function execGenerateReport(args: { discipline: string; content: string }, projectId: string | number, userId: string) {
+async function execGenerateReport(
+  args: { discipline: string; content: string },
+  projectId: string | number,
+  userId: string,
+  citations: any[] // Список цитат из текущего диалога (нормативы)
+) {
   if (!projectId) {
     return { error: 'project_id не передан в сессии — отчет создать нельзя' };
   }
   try {
+    // Stage 2: Capture Context Snapshot для воспроизводимости
+    const tzCtx = await fetchProjectContext(projectId);
+    const tzVersion = tzCtx ? 'v1.0.0' : 'unknown'; // TODO: Заменить на реальную версию документа
+    const normativeReferences = citations.map(c => `${c.standard}::${c.section}::${c.page}`);
+
     const reportData = {
       projectId: Number(projectId),
       discipline: args.discipline,
       content: args.content,
       userId,
+      contextSnapshot: {
+        tzVersion,
+        normativeReferences
+      }
     };
     const created = await reportManager.generateReport(reportData);
     return {
@@ -596,7 +610,7 @@ router.post('/orchestrator', authMiddleware, async (req: Request, res: Response)
               toolResult = { error: e?.message };
             }
           } else if (tc.function.name === 'generate_report') {
-            toolResult = await execGenerateReport(args, project_id, callerId);
+            toolResult = await execGenerateReport(args, project_id, callerId, collectedCitations);
             if (toolResult?.success) collectedActions.push({ type: 'report_generated', report_id: toolResult.report_id, discipline: toolResult.discipline });
           } else {
             toolResult = { error: `Unknown tool: ${tc.function.name}` };
