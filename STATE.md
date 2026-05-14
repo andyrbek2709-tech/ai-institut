@@ -1,3 +1,9 @@
+## 2026-05-14 — ✅ FEAT: Интеграция ReportLifecycleManager в orchestrator.ts (Stage 1)
+- Добавлен инструмент `generate_report` в TOOLS для создания инженерных отчетов.
+- Реализована функция `execGenerateReport` с автоматическим расчетом checksum.
+- Интеграция с `reportManager.generateReport()` для сохранения отчетов в БД.
+- Отчеты теперь создаются через AI и сохраняются в таблице `reports` (митрация 033).
+
 ## 2026-05-14 — ✅ FIX: Критические баги #2, #3, #4 (Bug #3 ранее был ложноположительным в STATE.md)
 
 - **Bug #2 (deadline):** Уже исправлен в orchestrator.ts — при отсутствии deadline AI подставляет +30 дней.

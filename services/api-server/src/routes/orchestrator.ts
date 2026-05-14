@@ -21,6 +21,7 @@ import { env } from '../config/environment.js';
 import { getSupabaseAdmin } from '../config/supabase.js';
 import { getRedisClient } from '../config/redis.js';
 import { createRecord, listRecords } from '../services/supabase-proxy.js';
+import { reportManager } from '../services/reportManager.js';
 import OpenAI from 'openai';
 import { createHash } from 'crypto';
 
@@ -210,6 +211,27 @@ const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
       parameters: { type: 'object', properties: {}, required: [] },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'generate_report',
+      description: 'Создать инженерный отчет по проекту (промышленная безопасность, геодезия, расчетная записка и т.п.). Используй когда пользователь просит создать отчет, сформировать документ, подготовить расчетную записку. Отчет сохраняется в БД и получает checksum для целостности.',
+      parameters: {
+        type: 'object',
+        properties: {
+          discipline: {
+            type: 'string',
+            description: 'Дисциплина отчета (ОВ, ВК, КЖ, КМ, ЭО, АТХ, Промбезопасность, Геодезия и т.п.)',
+          },
+          content: {
+            type: 'string',
+            description: 'Содержание отчета (markdown или plain text). Должен включать ключевые формулы, ссылки на нормативы, выводы и рекомендации.',
+          },
+        },
+        required: ['discipline', 'content'],
+      },
+    },
+  },
 ];
 
 // ── Helper: получить org_id юзера ──────────────────────────────────────────
@@ -342,6 +364,34 @@ async function execListDrawings(args: { discipline?: string; status?: string }, 
   } catch (e: any) {
     logger.error({ err: e?.message }, 'list_drawings tool failed');
     return { error: 'Не удалось получить чертежи: ' + (e?.message || 'unknown') };
+  }
+}
+
+// ── TOOL: generate_report ────────────────────────────────────────────────────
+
+async function execGenerateReport(args: { discipline: string; content: string }, projectId: string | number, userId: string) {
+  if (!projectId) {
+    return { error: 'project_id не передан в сессии — отчет создать нельзя' };
+  }
+  try {
+    const reportData = {
+      projectId: Number(projectId),
+      discipline: args.discipline,
+      content: args.content,
+      userId,
+    };
+    const created = await reportManager.generateReport(reportData);
+    return {
+      success: true,
+      report_id: created.id,
+      discipline: created.discipline,
+      checksum: created.checksum,
+      status: created.status,
+      message: `Отчет #${created.id} создан и сохранен в БД с checksum ${created.checksum}.`,
+    };
+  } catch (e: any) {
+    logger.error({ err: e?.message }, 'generate_report tool failed');
+    return { error: 'Не удалось создать отчет: ' + (e?.message || 'unknown') };
   }
 }
 
@@ -545,6 +595,9 @@ router.post('/orchestrator', authMiddleware, async (req: Request, res: Response)
             } catch (e: any) {
               toolResult = { error: e?.message };
             }
+          } else if (tc.function.name === 'generate_report') {
+            toolResult = await execGenerateReport(args, project_id, callerId);
+            if (toolResult?.success) collectedActions.push({ type: 'report_generated', report_id: toolResult.report_id, discipline: toolResult.discipline });
           } else {
             toolResult = { error: `Unknown tool: ${tc.function.name}` };
           }
