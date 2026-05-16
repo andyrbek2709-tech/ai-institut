@@ -1,9 +1,9 @@
 {
-  "status": "done",
-  "current_step": "Готово: 18 болей в 1 кластерах",
-  "progress_pct": 100,
-  "items_processed": 939,
-  "items_total": 939,
-  "updated_at": "2026-05-15T08:42:17Z",
+  "status": "scraping",
+  "current_step": "Запуск пайплайна",
+  "progress_pct": 0,
+  "items_processed": 0,
+  "items_total": 0,
+  "updated_at": "2026-05-16T07:53:12Z",
   "started_at": "2026-05-15T08:42:03Z"
 }
