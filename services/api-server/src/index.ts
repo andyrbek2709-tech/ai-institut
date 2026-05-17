@@ -22,6 +22,7 @@ import assignmentRouter from './routes/assignment.js';
 import taskFileCheckRouter from './routes/task-file-check.js';
 import interdeptAiRouter from './routes/interdept-ai.js';
 import projectsRouter from './routes/projects.js';
+import transcribeRouter from './routes/transcribe.js';
 
 const app = express();
 
@@ -88,6 +89,7 @@ app.use('/api', storageRouter);
 app.use('/api', assignmentRouter);
 app.use('/api', taskFileCheckRouter);
 app.use('/api', interdeptAiRouter);
+app.use('/api', transcribeRouter);
 app.use('/api', projectsRouter);
 app.use('/api/telemetry', telemetryRouter);
 app.use('/', diagnosticsRouter);
