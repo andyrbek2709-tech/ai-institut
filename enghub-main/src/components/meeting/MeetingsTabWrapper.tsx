@@ -23,6 +23,10 @@ export interface MeetingsTabWrapperProps {
   C: any;
   token: string;
   addNotification: (msg: string, type?: any) => void;
+  // Плавающее окно — вызывается при входе в совещание
+  onJoinMeeting?: (roomName: string, projectName: string) => void;
+  onEndMeeting?: () => void;
+  floatingActive?: boolean; // совещание уже открыто в плавающем окне
 }
 
 function formatTimer(sec: number): string {
@@ -46,6 +50,7 @@ function supaHeaders(token: string) {
 const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
   project, currentUser, projectId, projectName, isGip, isLead,
   userId, appUsers, C, token, addNotification,
+  onJoinMeeting, onEndMeeting, floatingActive,
 }) => {
   const [subTab, setSubTab] = useState<'meeting' | 'protocols'>('meeting');
   const [meetPhase, setMeetPhase] = useState<MeetPhase>('loading');
@@ -124,6 +129,8 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
       if (Array.isArray(arr) && arr[0]) {
         setActiveMeeting(arr[0]);
         setMeetPhase('meeting');
+        const rn = `eh${arr[0].id.replace(/-/g, '')}`;
+        onJoinMeeting?.(rn, projectName);
       } else {
         addNotification('Не удалось создать совещание', 'error');
       }
@@ -145,6 +152,7 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
       setActiveMeeting(null);
       setMeetPhase('lobby');
       addNotification('Совещание завершено', 'info');
+      onEndMeeting?.();
     } catch (e: any) {
       addNotification(e.message || 'Ошибка', 'error');
     }
@@ -390,10 +398,13 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
                   <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button
                       className="btn btn-primary"
-                      onClick={() => setMeetPhase('meeting')}
+                      onClick={() => {
+                        setMeetPhase('meeting');
+                        onJoinMeeting?.(jitsiRoomName, projectName);
+                      }}
                       style={{ padding: '12px 28px', fontSize: 15, fontWeight: 700 }}
                     >
-                      Присоединиться к совещанию
+                      {floatingActive ? '↗ Вернуться в окно совещания' : 'Присоединиться к совещанию'}
                     </button>
                     {isOrganizer && (
                       <button
@@ -427,14 +438,39 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
             </div>
           )}
 
-          {/* Активная комната */}
+          {/* Активная комната — открыта в плавающем окне */}
           {meetPhase === 'meeting' && activeMeeting && (
-            <ConferenceRoom
-              roomName={jitsiRoomName}
-              projectName={projectName}
-              currentUser={currentUser}
-              C={C}
-            />
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', minHeight: 320, gap: 16, padding: 32,
+              background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444', flexShrink: 0 }} />
+                <span style={{ fontWeight: 700, fontSize: 16, color: C.text }}>Совещание идёт в плавающем окне</span>
+              </div>
+              <div style={{ fontSize: 13, color: C.textMuted, textAlign: 'center', maxWidth: 360 }}>
+                Окно совещания работает поверх всего приложения.<br/>
+                Вы можете переходить по разделам — звонок не прервётся.
+              </div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => onJoinMeeting?.(jitsiRoomName, projectName)}
+                  style={{ padding: '10px 24px' }}
+                >
+                  Открыть окно совещания
+                </button>
+                {isOrganizer && (
+                  <button onClick={endMeeting} style={{ padding: '10px 20px', borderRadius: 10, border: '1px solid #ef4444', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>
+                    ⏹ Завершить совещание
+                  </button>
+                )}
+                <button onClick={() => { setMeetPhase('lobby'); }} style={{ padding: '10px 20px', borderRadius: 10, border: `1px solid ${C.border}`, background: 'transparent', color: C.textMuted, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>
+                  ↩ Покинуть
+                </button>
+              </div>
+            </div>
           )}
         </>
       )}

@@ -20,6 +20,7 @@ const StatNumber: React.FC<{ value: number; color: string }> = ({ value, color }
 };
 
 import MeetingsTabWrapper from './components/meeting/MeetingsTabWrapper';
+import FloatingMeeting from './components/meeting/FloatingMeeting';
 import { CopilotPanel } from './components/CopilotPanel';
 import { DrawingsPanel } from './components/DrawingsPanel';
 import { RevisionsTab } from './components/RevisionsTab';
@@ -223,6 +224,7 @@ export default function App() {
   const [showNewProject, setShowNewProject] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<any>(null);
   const [showRaci, setShowRaci] = useState<any>(null);
+  const [floatingMeeting, setFloatingMeeting] = useState<{ roomName: string; projectName: string } | null>(null);
   const [accessDepts, setAccessDepts] = useState<any[]>([]);
   const [accessMembers, setAccessMembers] = useState<any[]>([]);
   const [accessNewDeptId, setAccessNewDeptId] = useState('');
@@ -3316,6 +3318,9 @@ export default function App() {
                   userId={currentUserData?.id}
                   appUsers={appUsers}
                   addNotification={addNotification}
+                  onJoinMeeting={(roomName, pName) => setFloatingMeeting({ roomName, projectName: pName })}
+                  onEndMeeting={() => setFloatingMeeting(null)}
+                  floatingActive={!!floatingMeeting}
                 />
               )}
             </div>
@@ -3838,6 +3843,17 @@ export default function App() {
           <span>Выйти</span>
         </button>
       </nav>
+
+      {/* ── Плавающее окно совещания — живёт независимо от навигации ── */}
+      {floatingMeeting && currentUserData && (
+        <FloatingMeeting
+          roomName={floatingMeeting.roomName}
+          projectName={floatingMeeting.projectName}
+          currentUser={currentUserData}
+          C={C}
+          onClose={() => setFloatingMeeting(null)}
+        />
+      )}
     </div>
   );
 }
