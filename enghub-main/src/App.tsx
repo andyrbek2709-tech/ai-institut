@@ -2515,6 +2515,14 @@ export default function App() {
                   if (entityType === 'task') { setScreen('tasks'); }
                   else if (entityType === 'drawing') { setScreen('drawings'); }
                   else if (entityType === 'review') { setScreen('drawings'); }
+                  else if (entityType === 'meeting_invite') {
+                    const targetProject = projects.find((p: any) => String(p.id) === String(entityId));
+                    if (targetProject) {
+                      setActiveProject(targetProject);
+                      setScreen('project');
+                      setSideTab('conference');
+                    }
+                  }
                 }}
               />
             )}

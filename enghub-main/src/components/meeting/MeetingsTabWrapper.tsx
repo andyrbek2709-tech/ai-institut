@@ -67,6 +67,12 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
   const [protocolsKey, setProtocolsKey] = useState(0);
   const [showRecord, setShowRecord] = useState(false);
 
+  // ── Приглашение участника ──
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState('');
+  const [inviteSending, setInviteSending] = useState<string | null>(null); // user id being sent
+  const inviteRef = useRef<HTMLDivElement>(null);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -275,6 +281,44 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
     setShowRecord(false);
   };
 
+  // ── Закрыть invite-dropdown при клике вне ──
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (inviteRef.current && !inviteRef.current.contains(e.target as Node)) setShowInvite(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // ── Отправить приглашение пользователю ──
+  const sendInvite = async (targetUser: any) => {
+    if (!SURL || !ANON) return;
+    setInviteSending(String(targetUser.id));
+    const fromName = (currentUser as any)?.full_name || 'Участник';
+    try {
+      await fetch(`${SURL}/rest/v1/notifications`, {
+        method: 'POST',
+        headers: { ...supaHeaders(token), Prefer: 'return=minimal' } as any,
+        body: JSON.stringify([{
+          user_id: Number(targetUser.id),
+          project_id: projectId,
+          type: 'meeting_invite',
+          title: 'Приглашение на совещание',
+          body: `${fromName} зовёт вас на совещание: «${projectName}»`,
+          entity_type: 'meeting_invite',
+          entity_id: String(projectId),
+          is_read: false,
+        }]),
+      });
+      addNotification(`Приглашение отправлено: ${targetUser.full_name}`, 'success');
+    } catch {
+      addNotification('Не удалось отправить приглашение', 'error');
+    }
+    setInviteSending(null);
+    setShowInvite(false);
+    setInviteSearch('');
+  };
+
   const tabBtnStyle = (active: boolean) => ({
     padding: '7px 18px', borderRadius: 8,
     border: `1px solid ${active ? C.accent : C.border}`,
@@ -401,6 +445,40 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               minHeight: 400, gap: 20, padding: 32,
             }}>
+              {/* Dropdown вызова участника — общий для обоих состояний лобби */}
+              {showInvite && (
+                <div ref={inviteRef} style={{ position: 'absolute', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', zIndex: 300, minWidth: 280, padding: 12 }}>
+                  <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 8, fontWeight: 600 }}>Позвать на совещание:</div>
+                  <input
+                    autoFocus
+                    value={inviteSearch}
+                    onChange={e => setInviteSearch(e.target.value)}
+                    placeholder="Поиск по имени…"
+                    style={{ width: '100%', background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: '6px 10px', color: C.text, fontSize: 12, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 8 }}
+                  />
+                  <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                    {appUsers
+                      .filter(u => String(u.id) !== String(currentUser.id) && (!inviteSearch || u.full_name?.toLowerCase().includes(inviteSearch.toLowerCase())))
+                      .map(u => (
+                        <div key={u.id}
+                          onClick={() => inviteSending !== String(u.id) && sendInvite(u)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', borderRadius: 8, cursor: inviteSending === String(u.id) ? 'default' : 'pointer', transition: 'background 0.12s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = C.surface2; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                        >
+                          <span style={{ fontSize: 13, flex: 1, color: C.text }}>{u.full_name}</span>
+                          <span style={{ fontSize: 11, color: inviteSending === String(u.id) ? C.accent : '#4ade80' }}>
+                            {inviteSending === String(u.id) ? 'Отправляю…' : '📞 Позвать'}
+                          </span>
+                        </div>
+                      ))}
+                    {appUsers.filter(u => String(u.id) !== String(currentUser.id) && (!inviteSearch || u.full_name?.toLowerCase().includes(inviteSearch.toLowerCase()))).length === 0 && (
+                      <div style={{ fontSize: 12, color: C.textMuted, padding: '8px 4px' }}>Никого не найдено</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {activeMeeting ? (
                 /* Совещание уже идёт */
                 <div style={{ textAlign: 'center', maxWidth: 420 }}>
@@ -414,13 +492,16 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
                   <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button
                       className="btn btn-primary"
-                      onClick={() => {
-                        setMeetPhase('meeting');
-                        onJoinMeeting?.(jitsiRoomName, projectName);
-                      }}
+                      onClick={() => { setMeetPhase('meeting'); onJoinMeeting?.(jitsiRoomName, projectName); }}
                       style={{ padding: '12px 28px', fontSize: 15, fontWeight: 700 }}
                     >
                       {floatingActive ? '↗ Вернуться в окно совещания' : 'Присоединиться к совещанию'}
+                    </button>
+                    <button
+                      onClick={() => setShowInvite(v => !v)}
+                      style={{ padding: '12px 20px', fontSize: 14, borderRadius: 10, border: `1px solid ${C.border}`, background: showInvite ? C.surface2 : 'transparent', color: C.text, cursor: 'pointer', fontFamily: 'inherit' }}
+                    >
+                      📞 Позвать участника
                     </button>
                     {isOrganizer && (
                       <button
@@ -469,7 +550,7 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
                 Окно совещания работает поверх всего приложения.<br/>
                 Вы можете переходить по разделам — звонок не прервётся.
               </div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', position: 'relative' }}>
                 <button
                   className="btn btn-primary"
                   onClick={() => onJoinMeeting?.(jitsiRoomName, projectName)}
@@ -477,6 +558,31 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
                 >
                   Открыть окно совещания
                 </button>
+                <div ref={inviteRef} style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setShowInvite(v => !v)}
+                    style={{ padding: '10px 20px', borderRadius: 10, border: `1px solid ${C.border}`, background: showInvite ? C.surface2 : 'transparent', color: C.text, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}
+                  >
+                    📞 Позвать участника
+                  </button>
+                  {showInvite && (
+                    <div style={{ position: 'absolute', bottom: '110%', left: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', zIndex: 300, minWidth: 280, padding: 12 }}>
+                      <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 8, fontWeight: 600 }}>Позвать на совещание:</div>
+                      <input autoFocus value={inviteSearch} onChange={e => setInviteSearch(e.target.value)} placeholder="Поиск по имени…"
+                        style={{ width: '100%', background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: '6px 10px', color: C.text, fontSize: 12, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 8 }} />
+                      <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                        {appUsers.filter(u => String(u.id) !== String(currentUser.id) && (!inviteSearch || u.full_name?.toLowerCase().includes(inviteSearch.toLowerCase()))).map(u => (
+                          <div key={u.id} onClick={() => inviteSending !== String(u.id) && sendInvite(u)}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', borderRadius: 8, cursor: 'pointer', transition: 'background 0.12s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = C.surface2; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
+                            <span style={{ fontSize: 13, flex: 1, color: C.text }}>{u.full_name}</span>
+                            <span style={{ fontSize: 11, color: inviteSending === String(u.id) ? C.accent : '#4ade80' }}>{inviteSending === String(u.id) ? 'Отправляю…' : '📞 Позвать'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {isOrganizer && (
                   <button onClick={endMeeting} style={{ padding: '10px 20px', borderRadius: 10, border: '1px solid #ef4444', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>
                     ⏹ Завершить совещание
