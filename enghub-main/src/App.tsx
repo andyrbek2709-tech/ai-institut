@@ -3439,7 +3439,16 @@ export default function App() {
                   isLead={isLead}
                 />
               ) : (
-                <div className="empty-state" style={{ padding: 40 }}>Нет активного проекта для спецификации</div>
+                <div style={{ padding: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
+                  <div style={{ fontSize: 40 }}>📋</div>
+                  <div style={{ fontWeight: 700, color: C.text }}>Нет активного проекта</div>
+                  <div style={{ fontSize: 13, color: C.textMuted, maxWidth: 280 }}>
+                    Откройте карточку проекта и перейдите во вкладку «Спецификации» внутри проекта
+                  </div>
+                  <button className="btn btn-primary" onClick={() => setScreen('projects_list')}>
+                    Перейти к проектам
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -3646,7 +3655,8 @@ export default function App() {
                 </div>
               ) : (
                 /* All docs list — compact rows */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 0, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+                <div className="norm-table-scroll" style={{ border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                   {normativeDocs.length === 0 ? (
                     <div style={{ padding: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
                       <div style={{ fontSize: 40 }}>📚</div>
@@ -3703,6 +3713,7 @@ export default function App() {
                       ))}
                     </>
                   )}
+                </div>
                 </div>
               )}
             </div>

@@ -1127,34 +1127,76 @@ select.input option { background: var(--surface); color: var(--text); }
   display: none;
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: 56px;
+  height: 58px;
   background: var(--surface);
   border-top: 1px solid var(--border);
   z-index: 200;
   align-items: center;
-  justify-content: space-around;
-  padding: 0 4px;
+  /* горизонтальный скролл — чтобы 8 кнопок не сжимались */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0;
+  gap: 0;
 }
+.mobile-nav::-webkit-scrollbar { display: none; }
 .mobile-nav-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
-  flex: 1;
+  /* фиксированная ширина — не сжимается */
+  flex: 0 0 64px;
+  min-width: 64px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px 4px;
+  padding: 6px 2px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 9px;
   font-family: inherit;
   transition: color 0.15s;
-  border-radius: 8px;
+  border-radius: 0;
+  height: 100%;
+  white-space: nowrap;
 }
-.mobile-nav-btn.active { color: var(--accent); }
+.mobile-nav-btn.active {
+  color: var(--accent);
+  background: var(--accent-muted, rgba(59,130,246,0.08));
+}
 .mnav-icon { font-size: 20px; line-height: 1.2; display: block; }
 @media (max-width: 480px) {
   .mobile-nav { display: flex; }
+}
+/* Нормативка — горизонтальный скролл таблицы на мобиле */
+@media (max-width: 480px) {
+  .norm-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .norm-table-scroll > div { min-width: 560px; }
+}
+
+/* Задачи — фильтры горизонтальный скролл на мобиле */
+@media (max-width: 480px) {
+  .filters-bar {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .filters-bar::-webkit-scrollbar { display: none; }
+  .filters-bar .search-wrap { min-width: 160px; flex: 0 0 160px; }
+  .filters-bar .filter-chip { flex-shrink: 0; min-width: 130px !important; }
+  /* Скрываем заголовок страницы задач — дублирует навигацию */
+  .screen-fade > .page-header:first-child { display: none; }
+}
+
+/* Спецификации — подсказка на мобиле */
+@media (max-width: 480px) {
+  .specs-empty-hint { display: block; }
 }
 
 /* ===== MOBILE EXTRA FIXES ===== */
