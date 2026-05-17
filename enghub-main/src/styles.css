@@ -1120,6 +1120,9 @@ select.input option { background: var(--surface); color: var(--text); }
   .project-meta-bar { flex-wrap: wrap; gap: 8px; }
   .project-stats-bar { display: none; }
   .topbar-title { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Avatar always visible — скрываем только текст, оставляем кнопку с выходом */
+  .topbar-user-info { display: none; }
+  .topbar-user { padding: 4px; border-radius: 50%; }
 }
 
 /* ===== MOBILE BOTTOM NAV ===== */

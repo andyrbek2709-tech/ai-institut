@@ -1,5 +1,5 @@
-// ConferenceRoom.tsx — простой iframe с roomName из БД
-import React from 'react';
+// ConferenceRoom.tsx — Jitsi External API (no iframe promo overlays)
+import React, { useEffect, useRef } from 'react';
 
 interface ConferenceRoomProps {
   roomName: string;
@@ -8,25 +8,61 @@ interface ConferenceRoomProps {
   C: any;
 }
 
+declare global {
+  interface Window { JitsiMeetExternalAPI: any; }
+}
+
 const JITSI_DOMAIN = 'meet.jit.si';
 
 const ConferenceRoom: React.FC<ConferenceRoomProps> = ({ roomName, projectName, currentUser, C }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const apiRef = useRef<any>(null);
   const userName = (currentUser as any)?.full_name || (currentUser as any)?.email || 'Участник';
 
-  const jitsiUrl =
-    `https://${JITSI_DOMAIN}/${encodeURIComponent(roomName)}` +
-    `#config.prejoinPageEnabled=false` +
-    `&config.startWithAudioMuted=false` +
-    `&config.startWithVideoMuted=false` +
-    `&config.disableDeepLinking=true` +
-    `&config.defaultLanguage=ru` +
-    `&config.subject=${encodeURIComponent(projectName)}` +
-    `&config.disableInviteFunctions=true` +
-    `&config.toolbarButtons=["microphone","camera","desktop","chat","participants-pane","tileview","fullscreen","hangup"]` +
-    `&interfaceConfig.SHOW_JITSI_WATERMARK=false` +
-    `&interfaceConfig.SHOW_POWERED_BY=false` +
-    `&userInfo.displayName=${encodeURIComponent(userName)}` +
-    ((currentUser as any)?.email ? `&userInfo.email=${encodeURIComponent((currentUser as any).email)}` : '');
+  useEffect(() => {
+    const init = () => {
+      if (!containerRef.current) return;
+      if (apiRef.current) { try { apiRef.current.dispose(); } catch {} }
+      apiRef.current = new window.JitsiMeetExternalAPI(JITSI_DOMAIN, {
+        roomName,
+        parentNode: containerRef.current,
+        width: '100%',
+        height: '100%',
+        configOverwrite: {
+          prejoinPageEnabled: false,
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          disableDeepLinking: true,
+          defaultLanguage: 'ru',
+          subject: projectName,
+          disableInviteFunctions: true,
+          toolbarButtons: ['microphone', 'camera', 'desktop', 'chat', 'participants-pane', 'tileview', 'fullscreen', 'hangup'],
+        },
+        interfaceConfigOverwrite: {
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_POWERED_BY: false,
+          HIDE_INVITE_MORE_HEADER: true,
+        },
+        userInfo: {
+          displayName: userName,
+          email: (currentUser as any)?.email || '',
+        },
+      });
+    };
+
+    if (window.JitsiMeetExternalAPI) {
+      init();
+    } else {
+      const s = document.createElement('script');
+      s.src = `https://${JITSI_DOMAIN}/external_api.js`;
+      s.onload = init;
+      document.head.appendChild(s);
+    }
+
+    return () => {
+      if (apiRef.current) { try { apiRef.current.dispose(); } catch {} apiRef.current = null; }
+    };
+  }, [roomName, projectName, userName]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(`https://${JITSI_DOMAIN}/${encodeURIComponent(roomName)}`);
@@ -49,13 +85,7 @@ const ConferenceRoom: React.FC<ConferenceRoomProps> = ({ roomName, projectName, 
           ↗ Новая вкладка
         </a>
       </div>
-      <iframe
-        key={roomName}
-        src={jitsiUrl}
-        allow="camera; microphone; display-capture; fullscreen; autoplay"
-        style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }}
-        title={`Совещание: ${projectName}`}
-      />
+      <div ref={containerRef} style={{ flex: 1, minHeight: 0 }} />
     </div>
   );
 };

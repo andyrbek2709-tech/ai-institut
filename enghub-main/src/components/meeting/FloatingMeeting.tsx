@@ -1,6 +1,7 @@
 // FloatingMeeting.tsx
 // Плавающее окно совещания — живёт поверх всего приложения,
 // не прерывается при навигации по разделам.
+// Использует Jitsi External API вместо iframe — без рекламных оверлеев.
 
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -10,6 +11,10 @@ interface FloatingMeetingProps {
   currentUser: { id: number | string; full_name?: string; email?: string };
   C: any;
   onClose: () => void;
+}
+
+declare global {
+  interface Window { JitsiMeetExternalAPI: any; }
 }
 
 const JITSI_DOMAIN = 'meet.jit.si';
@@ -28,21 +33,53 @@ const FloatingMeeting: React.FC<FloatingMeetingProps> = ({
 
   const dragging = useRef(false);
   const dragOrigin = useRef({ mx: 0, my: 0, px: 0, py: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const apiRef = useRef<any>(null);
 
-  const jitsiUrl =
-    `https://${JITSI_DOMAIN}/${encodeURIComponent(roomName)}` +
-    `#config.prejoinPageEnabled=false` +
-    `&config.startWithAudioMuted=false` +
-    `&config.startWithVideoMuted=false` +
-    `&config.disableDeepLinking=true` +
-    `&config.defaultLanguage=ru` +
-    `&config.subject=${encodeURIComponent(projectName)}` +
-    `&config.disableInviteFunctions=true` +
-    `&config.toolbarButtons=["microphone","camera","desktop","chat","tileview","fullscreen","hangup"]` +
-    `&interfaceConfig.SHOW_JITSI_WATERMARK=false` +
-    `&interfaceConfig.SHOW_POWERED_BY=false` +
-    `&userInfo.displayName=${encodeURIComponent(userName)}` +
-    ((currentUser as any)?.email ? `&userInfo.email=${encodeURIComponent((currentUser as any).email)}` : '');
+  useEffect(() => {
+    const init = () => {
+      if (!containerRef.current) return;
+      if (apiRef.current) { try { apiRef.current.dispose(); } catch {} }
+      apiRef.current = new window.JitsiMeetExternalAPI(JITSI_DOMAIN, {
+        roomName,
+        parentNode: containerRef.current,
+        width: W,
+        height: H,
+        configOverwrite: {
+          prejoinPageEnabled: false,
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          disableDeepLinking: true,
+          defaultLanguage: 'ru',
+          subject: projectName,
+          disableInviteFunctions: true,
+          toolbarButtons: ['microphone', 'camera', 'desktop', 'chat', 'tileview', 'fullscreen', 'hangup'],
+        },
+        interfaceConfigOverwrite: {
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_POWERED_BY: false,
+          HIDE_INVITE_MORE_HEADER: true,
+        },
+        userInfo: {
+          displayName: userName,
+          email: (currentUser as any)?.email || '',
+        },
+      });
+    };
+
+    if (window.JitsiMeetExternalAPI) {
+      init();
+    } else {
+      const s = document.createElement('script');
+      s.src = `https://${JITSI_DOMAIN}/external_api.js`;
+      s.onload = init;
+      document.head.appendChild(s);
+    }
+
+    return () => {
+      if (apiRef.current) { try { apiRef.current.dispose(); } catch {} apiRef.current = null; }
+    };
+  }, [roomName]);
 
   // Drag handlers
   const onHeaderMouseDown = (e: React.MouseEvent) => {
@@ -86,7 +123,7 @@ const FloatingMeeting: React.FC<FloatingMeetingProps> = ({
         borderRadius: 14,
         overflow: 'hidden',
         boxShadow: '0 8px 40px rgba(0,0,0,0.45)',
-        border: `1px solid rgba(255,255,255,0.12)`,
+        border: '1px solid rgba(255,255,255,0.12)',
         background: '#0f172a',
         userSelect: 'none',
         transition: 'box-shadow 0.15s',
@@ -103,7 +140,6 @@ const FloatingMeeting: React.FC<FloatingMeetingProps> = ({
           borderBottom: minimized ? 'none' : '1px solid rgba(255,255,255,0.08)',
         }}
       >
-        {/* Красная точка — индикатор активного звонка */}
         <span style={{
           width: 9, height: 9, borderRadius: '50%',
           background: '#ef4444',
@@ -130,17 +166,12 @@ const FloatingMeeting: React.FC<FloatingMeetingProps> = ({
         </button>
       </div>
 
-      {/* ── Jitsi iframe ── */}
-      {!minimized && (
-        <div style={{ height: H, position: 'relative' }}>
-          <iframe
-            src={jitsiUrl}
-            allow="camera; microphone; display-capture; fullscreen; autoplay"
-            style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-            title={`Совещание: ${projectName}`}
-          />
-        </div>
-      )}
+      {/* ── Jitsi External API container ── */}
+      {/* Высота 0 при сворачивании — API продолжает работать (аудио не прерывается) */}
+      <div
+        ref={containerRef}
+        style={{ height: minimized ? 0 : H, overflow: 'hidden', transition: 'height 0.2s ease' }}
+      />
 
       <style>{`
         @keyframes float-pulse {
