@@ -1,0 +1,16 @@
+{
+  "name": "cleanup-meeting-audio",
+  "version": "1.0.0",
+  "description": "Cron job to delete meeting audio older than 7 days",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
