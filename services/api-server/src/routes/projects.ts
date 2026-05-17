@@ -244,21 +244,28 @@ router.get('/my-projects', async (req: Request, res: Response, next: NextFunctio
 
     const supabase = getSupabaseAdmin();
 
-    if (['gip', 'admin'].includes(role)) {
-      // GIP/admin see all non-archived projects
+    // Admin (system) — видит все проекты для управления пользователями
+    if (role === 'admin') {
       const { data } = await supabase.from('projects').select('id').eq('archived', false);
       return res.json((data || []).map((p: any) => p.id));
     }
 
+    // GIP — видит только свои проекты (где он является ГИПом)
+    if (role === 'gip') {
+      const { data } = await supabase
+        .from('projects').select('id').eq('gip_id', appUserId).eq('archived', false);
+      return res.json((data || []).map((p: any) => p.id));
+    }
+
+    // Начальник отдела — видит проекты куда его отдел добавил ГИП
     if (role === 'lead' && deptId) {
-      // Lead sees projects where their department is assigned
       const { data } = await supabase
         .from('project_depts').select('project_id').eq('dept_id', deptId);
       const ids = [...new Set((data || []).map((r: any) => r.project_id))];
       return res.json(ids);
     }
 
-    // Engineer/observer: sees projects where explicitly added as member
+    // Инженер/observer — видит проекты куда его добавил начальник отдела
     const { data } = await supabase
       .from('project_members').select('project_id').eq('user_id', appUserId);
     const ids = [...new Set((data || []).map((r: any) => r.project_id))];
