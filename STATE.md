@@ -1,3 +1,12 @@
+## 2026-05-17 — ✅ FEAT: Вкладка «Совещание» — голосовая запись + AI-протокол
+
+- **Новый компонент** `MeetingsTabWrapper.tsx`: объединяет «Совещание» (запись) и «Протоколы» в одну вкладку с переключателем
+- **Запись голоса**: кнопка 🔴 «Начать запись» → MediaRecorder (браузер, микрофон) → таймер → «Стоп и создать протокол»
+- **Пайплайн**: аудио → `/api/transcribe` (Whisper) → `/api/generate-protocol` (GPT-4o-mini) → `meetings` таблица (Supabase)
+- **Новый API** `generate-protocol.js`: принимает транскрипт + проект + участники → возвращает `{title, agenda, decisions, participants_str}` через GPT
+- **App.tsx**: убраны `MeetingRoomPage` и `MeetingsPanel` как прямые импорты; вкладка `meetings` убрана из таббара; `conference` теперь рендерит `MeetingsTabWrapper`
+- **Статус**: TypeScript OK, нет ошибок; требует `OPENAI_API_KEY` в Railway (уже есть)
+
 ## 2026-05-14 — 🛠️ FIX: CI/CD build failures on Railway
 - **Backend:** Снижено требование Node.js с >=22.0.0 до >=18.0.0 (совместимость с Railway)
 - **Frontend:** Обновлен @types/node с 18.0.0 на ^20.11.0, добавлено engines: { node: 18.x }
