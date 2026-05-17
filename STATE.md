@@ -71,7 +71,7 @@
 ## 2026-05-14 — 🔍 АУДИТ ПРОДА: 3 роли через браузер, фикс + 4 находки
 
 ### Использованные тестовые юзеры (актуальные)
-- Admin: `admin@enghub.com` / `EngAdmin2026!`
+- Admin: `admin@enghub.com` / `123456`
 - GIP: `skorokhod.a@nipicer.kz` / `123456`
 - Lead: `sidorov@enghub.com` / `123456`
 - Engineer: `engineer1@enghub.com` / `123456`
