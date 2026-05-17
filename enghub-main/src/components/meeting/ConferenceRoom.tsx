@@ -52,6 +52,7 @@ const ConferenceRoom: React.FC<ConferenceRoomProps> = ({
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
+  const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const userName = (currentUser as any)?.full_name || (currentUser as any)?.email || 'Участник';
   // Ежедневная ротация комнаты — чтобы не попадать в старые rooms с lobby
@@ -113,6 +114,10 @@ const ConferenceRoom: React.FC<ConferenceRoomProps> = ({
 
       apiRef.current = api;
 
+      // Показываем iframe через 5 сек независимо от событий —
+      // meet.jit.si может показать лобби внутри iframe, блокировать нельзя
+      loadTimerRef.current = setTimeout(() => setLoaded(true), 5000);
+
       // Участники
       api.on('participantJoined', (e: any) => {
         setParticipants(prev => {
@@ -137,8 +142,8 @@ const ConferenceRoom: React.FC<ConferenceRoomProps> = ({
       });
 
       api.on('videoConferenceJoined', (e: any) => {
+        if (loadTimerRef.current) { clearTimeout(loadTimerRef.current); loadTimerRef.current = null; }
         setLoaded(true);
-        // Добавляем себя в список
         setParticipants([{ id: 'local', displayName: userName }]);
       });
 
@@ -180,7 +185,7 @@ const ConferenceRoom: React.FC<ConferenceRoomProps> = ({
     document.head.appendChild(script);
 
     return () => {
-      // cleanup при размонтировании
+      if (loadTimerRef.current) { clearTimeout(loadTimerRef.current); loadTimerRef.current = null; }
       if (apiRef.current) {
         try { apiRef.current.dispose(); } catch {}
         apiRef.current = null;
