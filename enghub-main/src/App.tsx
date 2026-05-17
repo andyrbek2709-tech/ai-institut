@@ -1195,8 +1195,10 @@ export default function App() {
     try {
       await apiPost(`/api/project/${showRaci.id}/depts`, { dept_id: Number(accessNewDeptId) });
       setAccessNewDeptId('');
-      loadAccess(showRaci.id);
-    } catch (e: any) { addNotification(e.message || 'Ошибка', 'error'); }
+      await loadAccess(showRaci.id);
+      const deptName = depts.find((d: any) => d.id === Number(accessNewDeptId))?.name || 'Отдел';
+      addNotification(`✅ Отдел "${deptName}" добавлен к проекту`, 'success');
+    } catch (e: any) { addNotification(e.message || 'Ошибка добавления отдела', 'error'); }
   };
 
   const addAccessMember = async () => {
@@ -1204,8 +1206,10 @@ export default function App() {
     try {
       await apiPost(`/api/project/${showRaci.id}/members`, { user_id: Number(accessNewMemberId) });
       setAccessNewMemberId('');
-      loadAccess(showRaci.id);
-    } catch (e: any) { addNotification(e.message || 'Ошибка', 'error'); }
+      await loadAccess(showRaci.id);
+      const memberName = appUsers.find((u: any) => u.id === Number(accessNewMemberId))?.full_name || 'Пользователь';
+      addNotification(`✅ ${memberName} добавлен на проект`, 'success');
+    } catch (e: any) { addNotification(e.message || 'Ошибка добавления участника', 'error'); }
   };
 
   const removeAccessDept = async (id: number) => {
