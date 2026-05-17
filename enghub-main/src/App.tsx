@@ -3814,6 +3814,14 @@ export default function App() {
             <span>{n.label}</span>
           </button>
         ))}
+        <button
+          className="mobile-nav-btn"
+          onClick={() => { if (window.confirm('Выйти из системы?')) handleLogout(); }}
+          style={{ color: '#ef4444' }}
+        >
+          <span className="mnav-icon">⏻</span>
+          <span>Выйти</span>
+        </button>
       </nav>
     </div>
   );
