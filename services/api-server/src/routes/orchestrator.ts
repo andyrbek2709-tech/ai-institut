@@ -61,41 +61,50 @@ const ROLE_SYSTEM_PROMPTS: Record<string, string> = {
   gip: `Ты — ChatGPT 4.0, AI-помощник для Главного инженера проекта (ГИП) в проектном институте EngHub (Caspian Engineering & Research).
 Задачи: помощь с нормативной базой (ГОСТ, СНиП, СП, EN, ASME, АГСК), сроками, междисциплинарными коллизиями, контролем выдачи документации.
 
+В системном промпте ты уже получил СНАПШОТ ПРОЕКТА с актуальными задачами, чертежами и совещаниями — используй его для ответов без вызова инструментов, если данных достаточно.
+
 ПРАВИЛА:
 1. По вопросам про нормативку → ОБЯЗАТЕЛЬНО вызывай search_normativka. Не выдумывай номера пунктов.
 2. Когда цитируешь — ВСЕГДА давай 1-2 ключевые фразы из найденного текста + источник: документ, раздел, стр.
 3. Если просят создать задачу → используй create_task.
-4. Если просят посмотреть чертежи → list_drawings.
-5. Если спрашивают про ТЗ, задание на проектирование, требования проекта — НЕМЕДЛЕННО вызывай get_project_tz.
-6. Если спрашивают про загруженные документы организации → search_normative_kb.
-7. Отвечай кратко, по-русски. Без воды.
+4. Если просят посмотреть задачи / прогресс / статус → list_tasks (если снапшота недостаточно).
+5. Если просят посмотреть чертежи → list_drawings.
+6. Если спрашивают про ТЗ, задание на проектирование, требования проекта — НЕМЕДЛЕННО вызывай get_project_tz.
+7. Если спрашивают про загруженные документы организации → search_normative_kb.
+8. Отвечай кратко, по-русски. Без воды.
 ${NORMATIVE_SEARCH_RULES}
 КЛЮЧЕВОЕ ПРАВИЛО: НЕ задавай уточняющих вопросов до того как вызвал нужный инструмент.`,
 
   lead: `Ты — ChatGPT 4.0, AI-помощник Руководителя отдела в EngHub.
 Фокус: загрузка инженеров, проверки, нормативная база (ГОСТ/СНиП/EN/АГСК), задачи.
 
+В системном промпте ты уже получил СНАПШОТ ПРОЕКТА с актуальными задачами, чертежами и совещаниями — используй его для ответов без вызова инструментов, если данных достаточно.
+
 ПРАВИЛА:
 1. По нормативке → search_normativka. Цитируй текст + источник.
 2. Создание задач → create_task.
-3. Чертежи → list_drawings.
-4. ТЗ / задание на проектирование → get_project_tz (сразу).
-5. Загруженные документы организации → search_normative_kb.
-6. Кратко, по-русски.
+3. Задачи / прогресс → list_tasks (если снапшота недостаточно).
+4. Чертежи → list_drawings.
+5. ТЗ / задание на проектирование → get_project_tz (сразу).
+6. Загруженные документы организации → search_normative_kb.
+7. Кратко, по-русски.
 ${NORMATIVE_SEARCH_RULES}
 КЛЮЧЕВОЕ ПРАВИЛО: НЕ задавай уточняющих вопросов до того как вызвал нужный инструмент.`,
 
   engineer: `Ты — ChatGPT 4.0, AI-помощник инженера в EngHub.
 Фокус: задачи, нормативка (ГОСТ/СНиП/СП/EN/АГСК), расчёты, чертежи.
 
+В системном промпте ты уже получил СНАПШОТ ПРОЕКТА с актуальными задачами, чертежами и совещаниями — используй его для ответов без вызова инструментов, если данных достаточно.
+
 ПРАВИЛА:
 1. По нормативке → ОБЯЗАТЕЛЬНО search_normativka. Не выдумывай ГОСТы.
 2. Когда цитируешь — 1-2 фразы из текста + ссылка (документ, раздел, стр.).
 3. Создать задачу → create_task.
-4. Список чертежей → list_drawings.
-5. ТЗ / задание на проектирование → get_project_tz (сразу).
-6. Загруженные файлы организации → search_normative_kb.
-7. Кратко, по-русски.
+4. Задачи / прогресс → list_tasks (если снапшота недостаточно).
+5. Список чертежей → list_drawings.
+6. ТЗ / задание на проектирование → get_project_tz (сразу).
+7. Загруженные файлы организации → search_normative_kb.
+8. Кратко, по-русски.
 ${NORMATIVE_SEARCH_RULES}
 КЛЮЧЕВОЕ ПРАВИЛО: НЕ задавай уточняющих вопросов до того как вызвал нужный инструмент.`,
 };
@@ -187,6 +196,28 @@ const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
       name: 'get_project_tz',
       description: 'Получить полный текст технического задания текущего проекта. Используй когда спрашивают про требования проекта, что сказано в ТЗ, отступления от ТЗ.',
       parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_tasks',
+      description: 'Получить список задач текущего проекта с их статусами, приоритетами, сроками и исполнителями. Используй когда спрашивают про задачи, что сделано, что в работе, какие задачи открыты, прогресс по проекту.',
+      parameters: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['todo', 'in_progress', 'review', 'done'],
+            description: 'Фильтр по статусу. Опционально.',
+          },
+          priority: {
+            type: 'string',
+            enum: ['low', 'normal', 'high', 'urgent'],
+            description: 'Фильтр по приоритету. Опционально.',
+          },
+        },
+      },
     },
   },
   {
@@ -402,6 +433,88 @@ async function execListDrawings(args: { discipline?: string; status?: string }, 
   }
 }
 
+// ── TOOL: list_tasks ──────────────────────────────────────────────────────────
+
+async function execListTasks(args: { status?: string; priority?: string }, projectId: string | number, token: string | undefined) {
+  if (!projectId) {
+    return { error: 'project_id не передан — задачи получить нельзя' };
+  }
+  try {
+    const filters: Record<string, string> = { project_id: `eq.${projectId}` };
+    if (args.status) filters.status = `eq.${args.status}`;
+    if (args.priority) filters.priority = `eq.${args.priority}`;
+    const tasks = await listRecords<any>('tasks', {
+      filters, order: 'created_at.desc', limit: 50, token,
+      select: 'id,name,status,priority,deadline,dept,description,assigned_to',
+    });
+    return {
+      found: tasks.length,
+      tasks: tasks.map((t: any) => ({
+        id: t.id, name: t.name, status: t.status,
+        priority: t.priority, deadline: t.deadline,
+        dept: t.dept, description: t.description,
+        assigned_to: t.assigned_to,
+      })),
+    };
+  } catch (e: any) {
+    logger.error({ err: e?.message }, 'list_tasks tool failed');
+    return { error: 'Не удалось получить задачи: ' + (e?.message || 'unknown') };
+  }
+}
+
+// ── fetchProjectSummary — auto-inject project snapshot into system prompt ──────
+
+async function fetchProjectSummary(projectId: string | number | undefined): Promise<string> {
+  if (!projectId) return '';
+  try {
+    const sb = getSupabaseAdmin();
+
+    const [tasksRes, drawingsRes, meetingsRes] = await Promise.allSettled([
+      sb.from('tasks').select('id,name,status,priority,deadline,dept').eq('project_id', Number(projectId)).order('created_at', { ascending: false }).limit(30),
+      sb.from('drawings').select('id,code,title,discipline,status,revision').eq('project_id', Number(projectId)).order('created_at', { ascending: false }).limit(20),
+      sb.from('meetings').select('id,title,meeting_date,participants').eq('project_id', Number(projectId)).order('meeting_date', { ascending: false }).limit(5),
+    ]);
+
+    const tasks = tasksRes.status === 'fulfilled' ? (tasksRes.value.data || []) : [];
+    const drawings = drawingsRes.status === 'fulfilled' ? (drawingsRes.value.data || []) : [];
+    const meetings = meetingsRes.status === 'fulfilled' ? (meetingsRes.value.data || []) : [];
+
+    if (tasks.length === 0 && drawings.length === 0 && meetings.length === 0) return '';
+
+    const todoTasks = tasks.filter((t: any) => t.status === 'todo');
+    const inProgressTasks = tasks.filter((t: any) => t.status === 'in_progress');
+    const doneTasks = tasks.filter((t: any) => t.status === 'done');
+
+    let summary = '\n\n---\nСНАПШОТ ПРОЕКТА (актуально):\n';
+
+    if (tasks.length > 0) {
+      summary += `\nЗАДАЧИ (всего: ${tasks.length}, к выполнению: ${todoTasks.length}, в работе: ${inProgressTasks.length}, выполнено: ${doneTasks.length}):\n`;
+      tasks.slice(0, 20).forEach((t: any) => {
+        summary += `  • [${t.status}][${t.priority}] ${t.name}${t.dept ? ` (${t.dept})` : ''}${t.deadline ? ` — срок: ${t.deadline}` : ''}\n`;
+      });
+      if (tasks.length > 20) summary += `  ... и ещё ${tasks.length - 20} задач\n`;
+    }
+
+    if (drawings.length > 0) {
+      summary += `\nЧЕРТЕЖИ (всего: ${drawings.length}):\n`;
+      drawings.slice(0, 10).forEach((d: any) => {
+        summary += `  • ${d.code || '?'} — ${d.title} [${d.status}] ${d.revision || ''} ${d.discipline ? `(${d.discipline})` : ''}\n`;
+      });
+      if (drawings.length > 10) summary += `  ... и ещё ${drawings.length - 10} чертежей\n`;
+    }
+
+    if (meetings.length > 0) {
+      summary += `\nПОСЛЕДНИЕ СОВЕЩАНИЯ:\n`;
+      meetings.forEach((m: any) => {
+        summary += `  • ${m.meeting_date} — ${m.title}\n`;
+      });
+    }
+
+    summary += '---';
+    return summary;
+  } catch { return ''; }
+}
+
 // ── Helper: Auto-corrector (Normative Validator) ─────────────────────────────
 
 async function validateNormatives(content: string): Promise<{ isValid: boolean; warnings: string[] }> {
@@ -559,8 +672,11 @@ router.post('/orchestrator', authMiddleware, async (req: Request, res: Response)
   if (!callerId) throw new ApiError(401, 'Authenticated user required');
 
   const systemPrompt = ROLE_SYSTEM_PROMPTS[role as string] || DEFAULT_SYSTEM_PROMPT;
-  const projectContext = await fetchProjectContext(project_id);
-  const finalSystemPrompt = systemPrompt + projectContext;
+  const [projectContext, projectSummary] = await Promise.all([
+    fetchProjectContext(project_id),
+    fetchProjectSummary(project_id),
+  ]);
+  const finalSystemPrompt = systemPrompt + projectContext + projectSummary;
   const orgId = await getOrgIdForUser(callerId);
   const token = req.headers.authorization?.replace('Bearer ', '');
 
@@ -628,6 +744,8 @@ router.post('/orchestrator', authMiddleware, async (req: Request, res: Response)
             if (toolResult?.success) collectedActions.push({ type: 'task_created', task_id: toolResult.task_id, name: toolResult.name });
           } else if (tc.function.name === 'list_drawings') {
             toolResult = await execListDrawings(args, project_id, token);
+          } else if (tc.function.name === 'list_tasks') {
+            toolResult = await execListTasks(args, project_id, token);
           } else if (tc.function.name === 'get_project_tz') {
             const ctx = await fetchProjectContext(project_id);
             toolResult = ctx || 'ТЗ для проекта не найдено';
