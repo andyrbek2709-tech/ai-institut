@@ -224,6 +224,8 @@ const handleGenerateProtocol = async () => {
                               disabled={protocolGenerating || !newMeeting.decisions}
                               style={{ background: '#10b98120', border: '1px solid #10b98140', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#10b981', fontFamily: 'inherit', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
                             >
+
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                               {protocolGenerating ? '⏳ Генерация…' : '📝 Протокол'}
                             </button>
                             <button
@@ -242,6 +244,7 @@ const handleGenerateProtocol = async () => {
                             >
                               📄 DOCX
                             </button>
+              </div>
         addNotification('Не удалось получить ссылку', 'warning');
       }
     } catch (err) {
