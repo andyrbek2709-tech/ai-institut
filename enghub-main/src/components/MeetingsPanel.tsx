@@ -35,6 +35,11 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
   const participantRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [protocol, setProtocol] = useState<any>(null);
+  const [docxUrl, setDocxUrl] = useState<string | null>(null);
+  const [protocolGenerating, setProtocolGenerating] = useState(false);
+  const [currentMeetingId, setCurrentMeetingId] = useState<string | null>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -84,7 +89,7 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
     if (!file) return;
     e.target.value = '';
 
-    const MAX_SIZE = 25 * 1024 * 1024; // 25 MB Whisper limit
+    const MAX_SIZE = 25 * 1024 * 1024;
     if (file.size > MAX_SIZE) { addNotification('Файл слишком большой (макс. 25 МБ)', 'warning'); return; }
 
     setTranscribing(true);
@@ -95,6 +100,7 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
+      
       const apiUrl = `${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/transcribe`;
       const res = await fetch(apiUrl, {
         method: 'POST',
@@ -104,10 +110,36 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
         },
         body: JSON.stringify({ audio_base64: base64, media_type: file.type || 'audio/mpeg', filename: file.name }),
       });
+      
       const transcriptionData = await res.json();
       if (transcriptionData.text) {
         setNewMeeting(prev => ({ ...prev, decisions: prev.decisions ? prev.decisions + '\n\n' + transcriptionData.text : transcriptionData.text }));
         addNotification('Транскрипция завершена', 'success');
+        
+        // Загружаем аудио в Storage
+        try {
+          const uploadRes = await fetch(`${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/meetings/upload-audio`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({
+              meeting_id: crypto.randomUUID(),
+              audio_base64: base64,
+              filename: file.name,
+              project_id: projectId
+            })
+          });
+          const uploadData = await uploadRes.json();
+          if (uploadData.path) {
+            setAudioUrl(uploadData.url);
+            setCurrentMeetingId(uploadData.meeting_id || crypto.randomUUID());
+            addNotification('Аудио сохранено', 'success');
+          }
+        } catch (uploadErr) {
+          console.warn('Failed to upload audio:', uploadErr);
+        }
       } else {
         addNotification('Не удалось транскрибировать аудио', 'warning');
       }
