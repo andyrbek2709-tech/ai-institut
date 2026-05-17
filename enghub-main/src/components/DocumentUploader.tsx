@@ -3,7 +3,7 @@ import type { DocType } from '../api/supabase';
 import { FILE_SIZE_LIMIT, uploadProjectDocument } from '../api/supabase';
 import { Modal, Field, getInp } from './ui';
 
-const ACCEPT_DOCS = '.pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const ACCEPT_DOCS = '.pdf,.doc,.docx,.xls,.xlsx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain';
 
 type Props = {
   C: any;
@@ -13,11 +13,14 @@ type Props = {
   onClose: () => void;
   onUploaded: () => void;
   initialType?: DocType;
+  folders?: Array<{ id: string; name: string }>;
+  defaultFolderId?: string | null;
 };
 
-export function DocumentUploader({ C, projectId, uploadedBy, token, onClose, onUploaded, initialType = 'tz' }: Props) {
+export function DocumentUploader({ C, projectId, uploadedBy, token, onClose, onUploaded, initialType = 'other', folders = [], defaultFolderId }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [docType, setDocType] = useState<DocType>(initialType);
+  const [folderId, setFolderId] = useState<string>(defaultFolderId || '');
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -39,9 +42,8 @@ export function DocumentUploader({ C, projectId, uploadedBy, token, onClose, onU
     setError(null);
     setProgress(15);
     try {
-      // визуальная имитация прогресса (fetch без onprogress)
       const tick = setInterval(() => setProgress(p => (p < 85 ? p + 7 : p)), 250);
-      await uploadProjectDocument(projectId, docType, file, uploadedBy, token);
+      await uploadProjectDocument(projectId, docType, file, uploadedBy, token, folderId || null);
       clearInterval(tick);
       setProgress(100);
       onUploaded();
@@ -57,6 +59,17 @@ export function DocumentUploader({ C, projectId, uploadedBy, token, onClose, onU
   return (
     <Modal title="📥 Загрузка документа" onClose={onClose} C={C}>
       <div className="form-stack">
+        {folders.length > 0 && (
+          <Field label="ПАПКА" C={C}>
+            <select value={folderId} onChange={e => setFolderId(e.target.value)} style={getInp(C)} disabled={busy}>
+              <option value="">— Без папки (Общее) —</option>
+              {folders.map(f => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
+          </Field>
+        )}
+
         <Field label="ТИП ДОКУМЕНТА *" C={C}>
           <select value={docType} onChange={e => setDocType(e.target.value as DocType)} style={getInp(C)} disabled={busy}>
             <option value="tz">📄 Техническое задание (ТЗ)</option>
@@ -65,21 +78,15 @@ export function DocumentUploader({ C, projectId, uploadedBy, token, onClose, onU
           </select>
         </Field>
 
-        <Field label="ФАЙЛ * (PDF, Word, Excel — до 50 МБ)" C={C}>
+        <Field label="ФАЙЛ * (PDF, Word, Excel, TXT — до 50 МБ)" C={C}>
           <div
             onDragOver={e => { e.preventDefault(); }}
             onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) pickFile(f); }}
             onClick={() => inputRef.current?.click()}
             style={{
-              border: `2px dashed ${C.border}`,
-              borderRadius: 10,
-              padding: 18,
-              textAlign: 'center',
-              cursor: busy ? 'wait' : 'pointer',
-              background: C.surface2,
-              color: C.textMuted,
-              fontSize: 13,
-              transition: 'border-color 0.15s',
+              border: `2px dashed ${C.border}`, borderRadius: 10, padding: 18,
+              textAlign: 'center', cursor: busy ? 'wait' : 'pointer',
+              background: C.surface2, color: C.textMuted, fontSize: 13, transition: 'border-color 0.15s',
             }}
           >
             {file ? (
@@ -93,14 +100,8 @@ export function DocumentUploader({ C, projectId, uploadedBy, token, onClose, onU
                 <div>Кликните или перетащите файл сюда</div>
               </>
             )}
-            <input
-              ref={inputRef}
-              type="file"
-              accept={ACCEPT_DOCS}
-              style={{ display: 'none' }}
-              onChange={e => pickFile(e.target.files?.[0] || null)}
-              disabled={busy}
-            />
+            <input ref={inputRef} type="file" accept={ACCEPT_DOCS} style={{ display: 'none' }}
+              onChange={e => pickFile(e.target.files?.[0] || null)} disabled={busy} />
           </div>
         </Field>
 
@@ -116,12 +117,8 @@ export function DocumentUploader({ C, projectId, uploadedBy, token, onClose, onU
           </div>
         )}
 
-        <button
-          className="btn btn-primary"
-          onClick={submit}
-          disabled={!file || busy}
-          style={{ width: '100%', opacity: !file || busy ? 0.5 : 1 }}
-        >
+        <button className="btn btn-primary" onClick={submit} disabled={!file || busy}
+          style={{ width: '100%', opacity: !file || busy ? 0.5 : 1 }}>
           {busy ? 'Загрузка…' : '📤 Загрузить'}
         </button>
       </div>

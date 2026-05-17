@@ -303,6 +303,7 @@ export const uploadProjectDocument = async (
   file: File,
   uploadedBy: number,
   token: string,
+  folderId?: string | null,
 ): Promise<any> => {
   if (file.size > FILE_SIZE_LIMIT) {
     throw new Error(`Файл слишком большой (${(file.size / 1024 / 1024).toFixed(1)} МБ). Лимит — 50 МБ.`);
@@ -320,10 +321,10 @@ export const uploadProjectDocument = async (
       mime_type: file.type || null,
       size_bytes: file.size,
       uploaded_by: uploadedBy,
+      ...(folderId ? { folder_id: folderId } : {}),
     }, token);
     return Array.isArray(rows) ? rows[0] : rows;
   } catch (e) {
-    // откатываем загруженный файл если запись в БД не удалась
     await removeFromBucket(path);
     throw e;
   }
@@ -332,6 +333,60 @@ export const uploadProjectDocument = async (
 export const deleteProjectDocument = async (id: string, storagePath: string, token: string) => {
   await del(`project_documents?id=eq.${id}`, token);
   await removeFromBucket(storagePath);
+};
+
+// ----- Project folders -------------------------------------------------------
+
+export const listProjectFolders = (projectId: number, token?: string) =>
+  get(`project_folders?project_id=eq.${projectId}&order=position.asc,created_at.asc`, token);
+
+export const createProjectFolder = (projectId: number, name: string, createdBy: number, token: string) =>
+  post('project_folders', { project_id: projectId, name, created_by: createdBy, position: 0 }, token);
+
+export const deleteProjectFolder = (folderId: string, token: string) =>
+  del(`project_folders?id=eq.${folderId}`, token);
+
+// Сохраняет текстовый протокол совещания в хранилище проекта.
+// Если папки «Протоколы совещаний» нет — создаёт её автоматически.
+export const saveProtocolAsDocument = async (
+  projectId: number,
+  userId: number,
+  protocol: { title: string; date: string; participants: string; agenda: string; decisions: string },
+  token: string,
+): Promise<void> => {
+  try {
+    // 1. найти или создать папку
+    const foldersRaw = await listProjectFolders(projectId, token);
+    const folders = Array.isArray(foldersRaw) ? foldersRaw : [];
+    let folder = folders.find((f: any) => f.name === 'Протоколы совещаний');
+    if (!folder) {
+      const created = await createProjectFolder(projectId, 'Протоколы совещаний', userId, token);
+      folder = Array.isArray(created) ? created[0] : created;
+    }
+
+    // 2. сформировать текстовый файл
+    const lines = [
+      'ПРОТОКОЛ ТЕХНИЧЕСКОГО СОВЕЩАНИЯ',
+      '═══════════════════════════════════════',
+      `Дата: ${protocol.date}`,
+      `Участники: ${protocol.participants || 'не указаны'}`,
+      '',
+      'ПОВЕСТКА:',
+      protocol.agenda || '—',
+      '',
+      'РЕШЕНИЯ И ПОРУЧЕНИЯ:',
+      protocol.decisions || '—',
+    ];
+    const content = lines.join('\n');
+    const safeName = protocol.title.replace(/[^\wа-яёА-ЯЁ ]/g, '_').trim().slice(0, 40);
+    const filename = `Протокол_${protocol.date.replace(/\./g, '-')}_${safeName}.txt`;
+    const file = new File([new Blob([content], { type: 'text/plain;charset=utf-8' })], filename, { type: 'text/plain' });
+
+    // 3. загрузить — folder_id опционален, если создание папки не удалось
+    await uploadProjectDocument(projectId, 'other', file, userId, token, folder?.id ?? null);
+  } catch {
+    /* best-effort — не блокируем основной флоу сохранения протокола */
+  }
 };
 
 // ----- Task attachments --------------------------------------------------

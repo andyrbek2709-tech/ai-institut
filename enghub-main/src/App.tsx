@@ -3166,6 +3166,7 @@ export default function App() {
                   token={token!}
                   appUsers={appUsers}
                   canManage={isGip || isLead || currentUserData?.role === 'engineer'}
+                  isGip={isGip}
                 />
               )}
 

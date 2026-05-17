@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import MeetingsPanel from '../MeetingsPanel';
 import ConferenceRoom from './ConferenceRoom';
-import { createMeeting as apiCreateMeeting } from '../../api/supabase';
+import { createMeeting as apiCreateMeeting, saveProtocolAsDocument } from '../../api/supabase';
 
 type RecordPhase = 'idle' | 'requesting' | 'recording' | 'transcribing' | 'generating' | 'done' | 'error';
 type MeetPhase = 'loading' | 'lobby' | 'meeting';
@@ -303,6 +303,15 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
         ...(recordingUrl ? { recording_url: recordingUrl } : {}),
       }, token);
     } catch (err: any) { setPhase('error'); setErrorMsg(`Не сохранилось: ${err.message}`); return; }
+
+    // Автосохранение протокола в документы проекта (папка «Протоколы совещаний»)
+    saveProtocolAsDocument(projectId, Number(userId), {
+      title: protocol.title || 'Совещание',
+      date: new Date().toLocaleDateString('ru-RU'),
+      participants: protocol.participants_str || selectedParticipants.join(', '),
+      agenda: protocol.agenda || '',
+      decisions: protocol.decisions || '',
+    }, token);
 
     setPhase('done');
     addNotification('Протокол сохранён' + (recordingUrl ? ' · запись сохранена' : ''), 'success');
