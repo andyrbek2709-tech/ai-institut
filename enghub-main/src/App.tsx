@@ -19,9 +19,7 @@ const StatNumber: React.FC<{ value: number; color: string }> = ({ value, color }
   return <span style={{ color }}>{v}</span>;
 };
 
-// ConferenceRoom legacy импорт удалён 2026-04-27 — заменено на MeetingRoomPage.
-// Старая реализация лежит рядом как ConferenceRoom.legacy.tsx (DEPRECATED).
-import MeetingRoomPage from './components/meeting/MeetingRoomPage';
+import MeetingsTabWrapper from './components/meeting/MeetingsTabWrapper';
 import { CopilotPanel } from './components/CopilotPanel';
 import { DrawingsPanel } from './components/DrawingsPanel';
 import { RevisionsTab } from './components/RevisionsTab';
@@ -33,7 +31,6 @@ import { SpecificationsTab } from './components/SpecificationsTab';
 import { DocumentsPanel } from './components/DocumentsPanel';
 import { TaskAttachments } from './components/TaskAttachments';
 import GanttChart from './components/GanttChart';
-import MeetingsPanel from './components/MeetingsPanel';
 import TimelogPanel from './components/TimelogPanel';
 import { exportProjectXls, exportTransmittalPdf } from './utils/export';
 import { GlobalSearch } from './components/GlobalSearch';
@@ -53,10 +50,10 @@ const TAB_HELP: Record<string, { title: string; sections: { heading: string; tex
   conference: {
     title: "🗣 Совещание",
     sections: [
-      { heading: "Что это", text: "Голосовые совещания в реальном времени прямо внутри проекта. Все участники видят чат и историю переговоров." },
-      { heading: "Как войти", text: "Нажмите «Войти в совещание». Можно включить микрофон (🎙) и демонстрацию экрана (🖥)." },
-      { heading: "Пригласить участников", text: "Нажмите кнопку «Пригласить» → выберите сотрудников из списка → нажмите «Отправить». У них появится всплывающее уведомление." },
-      { heading: "Выход", text: "Кнопка «Покинуть» завершает ваше участие. Чат и история совещания сохраняются." },
+      { heading: "Запись и протокол", text: "Нажмите «🔴 Начать запись» — браузер запишет звук с вашего микрофона. После нажатия «Стоп» AI автоматически транскрибирует запись и составит официальный протокол." },
+      { heading: "Участники", text: "Перед записью выберите участников из списка — они попадут в протокол. Если не выбрать, AI попытается извлечь имена из речи." },
+      { heading: "Протоколы", text: "Переключитесь на вкладку «🗒 Протоколы» — там все сохранённые протоколы по проекту. Можно создать протокол вручную или экспортировать в PDF." },
+      { heading: "Удалённые совещания", text: "Для удалённых встреч включите запись на каждом компьютере, или подключитесь через колонки и записывайте с одного устройства." },
     ],
   },
   tasks: {
@@ -135,15 +132,6 @@ const TAB_HELP: Record<string, { title: string; sections: { heading: string; tex
       { heading: "Что это", text: "Временная шкала ключевых событий и вех проекта." },
       { heading: "Добавление вехи", text: "Нажмите «+ Веха» → укажите название, дату и тип события." },
       { heading: "Назначение", text: "Используйте Timeline для фиксации контрольных точек: сдача разделов, согласования, экспертиза." },
-    ],
-  },
-  meetings: {
-    title: "🗒 Протоколы",
-    sections: [
-      { heading: "Что это", text: "Журнал протоколов совещаний и рабочих встреч по проекту." },
-      { heading: "Создание протокола", text: "Нажмите «+ Протокол» → укажите дату, участников, повестку и принятые решения." },
-      { heading: "Поручения", text: "В каждом пункте протокола можно назначить ответственного и срок — они попадают в раздел задач." },
-      { heading: "История", text: "Все протоколы хранятся в хронологическом порядке. Можно экспортировать в PDF." },
     ],
   },
   timelog: {
@@ -3068,9 +3056,9 @@ export default function App() {
               <div style={{ display: conferenceScreenActive ? 'none' : 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
                 <div className="tab-strip-wrap" style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                   <div className="tab-strip" style={{ flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch', flex: 1, marginBottom: 0 } as React.CSSProperties}>
-                    {["conference","tasks","documents","activity","drawings","revisions","reviews","transmittals","assignments","tz","gantt","timeline","meetings","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
+                    {["conference","tasks","documents","activity","drawings","revisions","reviews","transmittals","assignments","tz","gantt","timeline","timelog",...(isGip ? ["gipdash"] : []),...((isGip || isLead) ? ["bim"] : [])].map(t => (
                       <button key={t} className={`tab-btn ${sideTab === t ? "active" : ""}`} onClick={() => setSideTab(t)} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        {t === "tasks" ? "⊙ Задачи" : t === "documents" ? "📁 Документы" : t === "activity" ? "📰 Активность" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "tz" ? "📋 ТЗ" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "meetings" ? "🗒 Протоколы" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
+                        {t === "tasks" ? "⊙ Задачи" : t === "documents" ? "📁 Документы" : t === "activity" ? "📰 Активность" : t === "drawings" ? "📐 Чертежи" : t === "revisions" ? "🧾 Ревизии" : t === "reviews" ? "📝 Замечания" : t === "transmittals" ? "📦 Трансмитталы" : t === "assignments" ? "✉ Увязка" : t === "tz" ? "📋 ТЗ" : t === "gantt" ? "📊 Диаграмма" : t === "timeline" ? "🗺 Timeline" : t === "timelog" ? "⏱ Табель" : t === "gipdash" ? "🏛 ГИП" : t === "bim" ? "🏗 BIM" : "🗣 Совещание"}
                       </button>
                     ))}
                   </div>
@@ -3275,21 +3263,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* ── MEETINGS ── */}
-              {sideTab === "meetings" && (
-                <MeetingsPanel
-                  projectId={activeProject.id}
-                  projectName={activeProject.name}
-                  isGip={isGip}
-                  isLead={isLead}
-                  C={C}
-                  token={token!}
-                  userId={currentUserData?.id}
-                  appUsers={appUsers}
-                  addNotification={addNotification}
-                />
-              )}
-
               {/* ── TIMELOG ── */}
               {sideTab === "timelog" && (
                 <TimelogPanel 
@@ -3327,11 +3300,17 @@ export default function App() {
               )}
 
               {sideTab === "conference" && (
-                <MeetingRoomPage
+                <MeetingsTabWrapper
                   C={C}
                   project={activeProject ? { id: activeProject.id, name: activeProject.name } : null}
                   currentUser={currentUserData}
+                  projectId={activeProject.id}
+                  projectName={activeProject.name}
+                  isGip={isGip}
+                  isLead={isLead}
                   token={token!}
+                  userId={currentUserData?.id}
+                  appUsers={appUsers}
                   addNotification={addNotification}
                 />
               )}
