@@ -55,9 +55,9 @@ const ConferenceRoom: React.FC<ConferenceRoomProps> = ({
   const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const userName = (currentUser as any)?.full_name || (currentUser as any)?.email || 'Участник';
-  // Ежедневная ротация комнаты — чтобы не попадать в старые rooms с lobby
+  // Ежедневная ротация + версия v2 — обход комнат с lobby на meet.jit.si
   const dayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const roomName = `enghub${projectId}x${dayStr}`;
+  const roomName = `enghub${projectId}x${dayStr}v2`;
 
   const initJitsi = useCallback(() => {
     if (!containerRef.current || !window.JitsiMeetExternalAPI) return;
