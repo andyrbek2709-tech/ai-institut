@@ -120,44 +120,52 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
 
   return (
     <div className="screen-fade">
-      {/* Banner: модуль в разработке */}
-      <div style={{
-        background: 'linear-gradient(90deg, #f5a62315, #d08a3815)',
-        border: `1px solid #d08a3850`,
-        borderRadius: 12,
-        padding: '10px 14px',
-        marginBottom: 14,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        fontSize: 13,
-        color: C.text,
-      }}>
-        <span style={{ fontSize: 18 }}>🚧</span>
-        <div>
-          <strong style={{ color: '#d08a38' }}>Модуль в разработке.</strong>{' '}
-          Совещания и транскрипция доступны частично — функционал дорабатывается.
-        </div>
-      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Протоколы совещаний</div>
         {(isGip || isLead) && <button className="btn btn-primary" onClick={() => setShowNewMeeting(true)}>+ Новый протокол</button>}
       </div>
-      
+
       {meetings.length === 0 && !showNewMeeting && <div className="empty-state" style={{ padding: 40 }}>Протоколов пока нет</div>}
-      
+
       {meetings.map(m => (
-        <div key={m.id} style={{ background: C.surface, borderRadius: 14, padding: 16, marginBottom: 10, border: `1px solid ${C.border}`, boxShadow: 'var(--card-shadow)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{m.title}</div>
-            <button onClick={() => exportMeetingPdf(m, projectName)} title="Экспорт в PDF" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.textMuted, padding: '0 4px' }}>🖨</button>
+        <div key={m.id} style={{ background: C.surface, borderRadius: 14, padding: 18, marginBottom: 12, border: `1px solid ${C.border}`, boxShadow: 'var(--card-shadow)' }}>
+          {/* Заголовок */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, flex: 1, marginRight: 8 }}>{m.title}</div>
+            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+              {m.recording_url && (
+                <a href={m.recording_url} download title="Скачать запись совещания"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.textMuted, padding: '0 4px', textDecoration: 'none' }}>
+                  🎙
+                </a>
+              )}
+              <button onClick={() => exportMeetingPdf(m, projectName)} title="Экспорт в PDF"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.textMuted, padding: '0 4px' }}>🖨</button>
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 8 }}>
-            {m.meeting_date ? `📅 ${new Date(m.meeting_date + 'T00:00:00').toLocaleDateString('ru-RU')}` : ''}
-            {m.participants ? ` · 👥 ${m.participants}` : ''}
+
+          {/* Мета: дата + участники */}
+          <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 10, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            {m.meeting_date && <span>📅 {new Date(m.meeting_date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
+            {m.participants && <span>👥 {m.participants}</span>}
+            {m.recording_url && <span style={{ color: '#4ade80' }}>🎙 Запись сохранена</span>}
           </div>
-          {m.agenda && <div style={{ fontSize: 13, color: C.text, marginBottom: 6 }}><span style={{ color: C.textMuted, fontWeight: 600 }}>Повестка:</span> {m.agenda}</div>}
-          {m.decisions && <div style={{ fontSize: 13, color: C.text }}><span style={{ color: C.textMuted, fontWeight: 600 }}>Решения:</span> {m.decisions}</div>}
+
+          {/* Повестка */}
+          {m.agenda && (
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Повестка</div>
+              <div style={{ fontSize: 13, color: C.text, whiteSpace: 'pre-line', lineHeight: 1.6 }}>{m.agenda}</div>
+            </div>
+          )}
+
+          {/* Решения и поручения */}
+          {m.decisions && (
+            <div style={{ background: C.accent + '0a', borderRadius: 8, padding: '10px 12px', borderLeft: `3px solid ${C.accent}` }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Решения и поручения</div>
+              <div style={{ fontSize: 13, color: C.text, whiteSpace: 'pre-line', lineHeight: 1.7 }}>{m.decisions}</div>
+            </div>
+          )}
         </div>
       ))}
 

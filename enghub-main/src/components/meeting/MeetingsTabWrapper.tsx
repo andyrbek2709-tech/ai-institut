@@ -229,7 +229,37 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
     const mimeType = chunksRef.current[0]?.type || 'audio/webm';
     const audioBlob = new Blob(chunksRef.current, { type: mimeType });
     if (audioBlob.size < 1000) { setPhase('error'); setErrorMsg('Запись пустая. Попробуйте снова.'); return; }
-    setPhase('transcribing'); setStatusMsg('Транскрибирую (Whisper)…');
+
+    setPhase('transcribing'); setStatusMsg('Сохраняю запись…');
+    const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+    const filename = `${projectId}/${Date.now()}.${ext}`;
+    let recordingUrl = '';
+    try {
+      const uploadRes = await fetch(`${SURL}/storage/v1/object/meeting-recordings/${filename}`, {
+        method: 'POST',
+        headers: {
+          apikey: ANON,
+          Authorization: `Bearer ${token}`,
+          'Content-Type': mimeType,
+          'x-upsert': 'true',
+        },
+        body: audioBlob,
+      });
+      if (uploadRes.ok) {
+        // Подписанный URL на 1 год для скачивания
+        const signRes = await fetch(`${SURL}/storage/v1/object/sign/meeting-recordings/${filename}`, {
+          method: 'POST',
+          headers: { apikey: ANON, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expiresIn: 31536000 }),
+        });
+        if (signRes.ok) {
+          const signData = await signRes.json();
+          recordingUrl = `${SURL}/storage/v1${signData.signedURL}`;
+        }
+      }
+    } catch { /* не блокирует — запись необязательна */ }
+
+    setStatusMsg('Транскрибирую (Whisper)…');
     let transcript = '';
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -238,7 +268,6 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
         reader.onerror = reject;
         reader.readAsDataURL(audioBlob);
       });
-      const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
       const res = await fetch(`${apiBase()}/api/transcribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -248,6 +277,7 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
       if (!data.text) throw new Error(data.error || 'Пустой результат');
       transcript = data.text;
     } catch (err: any) { setPhase('error'); setErrorMsg(`Ошибка транскрипции: ${err.message}`); return; }
+
     setPhase('generating'); setStatusMsg('Генерирую протокол (AI)…');
     let protocol: any;
     try {
@@ -260,6 +290,7 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
       if (!data.success) throw new Error(data.error || 'Ошибка');
       protocol = data;
     } catch (err: any) { setPhase('error'); setErrorMsg(`Ошибка генерации: ${err.message}`); return; }
+
     try {
       await apiCreateMeeting({
         project_id: projectId, created_by: userId,
@@ -268,12 +299,15 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
         participants: protocol.participants_str || selectedParticipants.join(', '),
         agenda: protocol.agenda || '',
         decisions: protocol.decisions || '',
+        transcript,
+        ...(recordingUrl ? { recording_url: recordingUrl } : {}),
       }, token);
     } catch (err: any) { setPhase('error'); setErrorMsg(`Не сохранилось: ${err.message}`); return; }
+
     setPhase('done');
-    addNotification('Протокол сохранён', 'success');
+    addNotification('Протокол сохранён' + (recordingUrl ? ' · запись сохранена' : ''), 'success');
     setProtocolsKey(k => k + 1);
-  }, [projectId, projectName, selectedParticipants, token, userId, addNotification]);
+  }, [projectId, projectName, selectedParticipants, token, userId, addNotification, SURL, ANON]);
 
   const resetRecorder = () => {
     setPhase('idle'); setElapsed(0); setErrorMsg(''); setStatusMsg('');
