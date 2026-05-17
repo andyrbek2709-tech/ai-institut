@@ -284,10 +284,13 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
     cursor: 'pointer', fontSize: 13, fontFamily: 'inherit',
   });
 
+  // Запись доступна в любой фазе (не только в активном Jitsi-совещании)
+  const canRecord = subTab === 'meeting' && meetPhase !== 'loading';
+
   return (
     <div className="screen-fade">
       {/* Sub-tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
         <button style={tabBtnStyle(subTab === 'meeting')} onClick={() => setSubTab('meeting')}>
           🗣 Совещание
         </button>
@@ -295,37 +298,50 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
           🗒 Протоколы
         </button>
 
-        {/* Кнопка записи */}
-        {subTab === 'meeting' && meetPhase === 'meeting' && phase === 'idle' && !showRecord && (
-          <button onClick={() => setShowRecord(true)} style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'transparent', color: C.textMuted, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
-            🔴 Записать совещание
+        {/* Кнопка записи — доступна всегда (в т.ч. без Jitsi-сессии) */}
+        {canRecord && phase === 'idle' && !showRecord && (
+          <button onClick={() => setShowRecord(true)} style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 8, border: `1px solid #e53935`, background: 'rgba(229,57,53,0.08)', color: '#e53935', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+            🎙 Записать протокол
           </button>
         )}
-        {subTab === 'meeting' && meetPhase === 'meeting' && phase === 'recording' && (
+        {canRecord && phase === 'requesting' && (
+          <div style={{ marginLeft: 'auto', fontSize: 12, color: C.textMuted }}>⏳ Запрос микрофона…</div>
+        )}
+        {canRecord && phase === 'recording' && (
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#e53935', fontWeight: 600 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#e53935', display: 'inline-block' }} />
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#e53935', display: 'inline-block', animation: 'float-pulse 1.2s ease-in-out infinite' }} />
               {formatTimer(elapsed)}
             </span>
-            <button onClick={stopAndGenerate} style={{ padding: '6px 12px', borderRadius: 8, background: '#e53935', border: 'none', color: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button onClick={stopAndGenerate} style={{ padding: '6px 14px', borderRadius: 8, background: '#e53935', border: 'none', color: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
               ⬛ Стоп + Протокол
             </button>
           </div>
         )}
-        {subTab === 'meeting' && meetPhase === 'meeting' && (phase === 'transcribing' || phase === 'generating') && (
-          <div style={{ marginLeft: 'auto', fontSize: 12, color: C.textMuted }}>{statusMsg}</div>
+        {canRecord && (phase === 'transcribing' || phase === 'generating') && (
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: C.textMuted }}>
+            <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid', borderColor: `${C.accent} transparent`, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            {statusMsg}
+          </div>
         )}
-        {subTab === 'meeting' && meetPhase === 'meeting' && phase === 'done' && (
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <span style={{ fontSize: 12, color: '#2ac769' }}>✓ Протокол сохранён</span>
+        {canRecord && phase === 'done' && (
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: '#2ac769', fontWeight: 600 }}>✓ Протокол сохранён</span>
+            <button onClick={() => { resetRecorder(); setSubTab('protocols'); }} style={{ fontSize: 11, padding: '3px 8px', background: C.accent + '20', border: `1px solid ${C.accent}`, color: C.accent, borderRadius: 6, cursor: 'pointer' }}>Смотреть</button>
+            <button onClick={resetRecorder} style={{ fontSize: 11, color: C.textMuted, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+          </div>
+        )}
+        {canRecord && phase === 'error' && (
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: '#ef4444' }}>⚠ {errorMsg}</span>
             <button onClick={resetRecorder} style={{ fontSize: 11, color: C.textMuted, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
           </div>
         )}
         {/* Завершить / Покинуть совещание */}
-        {subTab === 'meeting' && meetPhase === 'meeting' && (
+        {subTab === 'meeting' && meetPhase === 'meeting' && phase !== 'recording' && (
           <button
             onClick={isOrganizer ? endMeeting : () => { setMeetPhase('lobby'); }}
-            style={{ marginLeft: phase === 'idle' && !showRecord ? 'auto' : 0, padding: '6px 14px', borderRadius: 8, border: '1px solid #ef4444', background: 'transparent', color: '#ef4444', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ marginLeft: (phase === 'idle' && !showRecord) ? 'auto' : 0, padding: '6px 14px', borderRadius: 8, border: '1px solid #ef4444', background: 'transparent', color: '#ef4444', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
           >
             {isOrganizer ? '⏹ Завершить совещание' : '↩ Покинуть'}
           </button>
@@ -333,7 +349,7 @@ const MeetingsTabWrapper: React.FC<MeetingsTabWrapperProps> = ({
       </div>
 
       {/* Панель записи */}
-      {subTab === 'meeting' && meetPhase === 'meeting' && showRecord && phase === 'idle' && (
+      {canRecord && showRecord && phase === 'idle' && (
         <div style={{ background: C.surface, borderRadius: 12, padding: '14px 16px', marginBottom: 12, border: `1px solid ${C.accent}30`, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <div ref={participantRef} style={{ position: 'relative', flex: 1, minWidth: 200 }}>
             <div style={{ background: C.input || C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, minHeight: 34, display: 'flex', flexWrap: 'wrap', gap: 4, cursor: 'text', padding: '3px 8px', alignItems: 'center' }}

@@ -1214,6 +1214,11 @@ select.input option { background: var(--surface); color: var(--text); }
   .tab-pill { white-space: nowrap; flex-shrink: 0; }
 }
 
+/* ===== SPINNER / RECORD ANIMATIONS ===== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ===== ANALYTICS GRID ===== */
 .analytics-grid-2 {
   display: grid;
