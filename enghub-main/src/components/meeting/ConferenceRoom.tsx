@@ -24,8 +24,7 @@ declare global {
   }
 }
 
-// Используем fsfe.org — без lobby-ограничений как на meet.jit.si
-const JITSI_DOMAIN = 'jitsi.fsfe.org';
+const JITSI_DOMAIN = 'meet.jit.si';
 
 const AVATAR_COLORS = [
   '#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6',
@@ -55,7 +54,9 @@ const ConferenceRoom: React.FC<ConferenceRoomProps> = ({
   const [error, setError] = useState('');
 
   const userName = (currentUser as any)?.full_name || (currentUser as any)?.email || 'Участник';
-  const roomName = `enghub-project-${projectId}`;
+  // Ежедневная ротация комнаты — чтобы не попадать в старые rooms с lobby
+  const dayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const roomName = `enghub${projectId}x${dayStr}`;
 
   const initJitsi = useCallback(() => {
     if (!containerRef.current || !window.JitsiMeetExternalAPI) return;
@@ -74,14 +75,12 @@ const ConferenceRoom: React.FC<ConferenceRoomProps> = ({
           disableDeepLinking: true,
           subject: projectName,
           defaultLanguage: 'ru',
-          // Отключаем lobby полностью
-          'lobby.enabled': false,
-          enableLobbyChat: false,
-          hiddenPremeetingButtons: ['invite'],
-          // Тайловый вид по умолчанию
           startWithTileView: true,
-          // Авто-переключение на презентацию при шеринге экрана
           desktopSharingEnabled: true,
+          enableClosePage: false,
+          // Скрываем лобби-кнопки чтобы никто не мог включить лобби
+          hiddenPremeetingButtons: ['invite', 'startWithVideoMuted'],
+          disableInviteFunctions: true,
         },
         interfaceConfigOverwrite: {
           SHOW_JITSI_WATERMARK: false,
