@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 export interface Notification {
   id: number;
   text: string;
-  type: 'info' | 'success' | 'warning';
+  type: 'info' | 'success' | 'warning' | 'error';
   timestamp: number;
 }
 
@@ -12,7 +12,7 @@ let notifId = 0;
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const addNotification = (text: string, type: 'info' | 'success' | 'warning' = 'info') => {
+  const addNotification = (text: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
     const id = ++notifId;
     setNotifications(prev => [...prev, { id, text, type, timestamp: Date.now() }]);
     // Автоудаление через 8 секунд
@@ -35,6 +35,7 @@ export function ToastContainer({ notifications, onRemove }: { notifications: Not
     info: { bg: '#4a9eff', icon: '📋' },
     success: { bg: '#2ac769', icon: '✓' },
     warning: { bg: '#f5a623', icon: '⚡' },
+    error: { bg: '#e53935', icon: '✕' },
   };
 
   return (
