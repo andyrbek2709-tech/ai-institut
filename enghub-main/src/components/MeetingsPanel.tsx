@@ -149,6 +149,114 @@ const MeetingsPanel: React.FC<MeetingsPanelProps> = ({
       setTranscribing(false);
     }
   };
+const handleGenerateProtocol = async () => {
+    if (!currentMeetingId || !newMeeting.decisions) {
+      addNotification('Сначала загрузите аудио', 'warning');
+      return;
+    }
+
+    setProtocolGenerating(true);
+    try {
+      const res = await fetch(`${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/generate-protocol`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          transcript: newMeeting.decisions,
+          project_name: projectName,
+          participants: selectedParticipants,
+          meeting_id: currentMeetingId,
+          project_id: projectId
+        })
+      });
+
+      const data = await res.json();
+      if (data.protocol) {
+        setProtocol(data.protocol);
+        setDocxUrl(data.docx_url);
+        
+        // Обновляем форму
+        setNewMeeting(prev => ({
+          ...prev,
+          title: data.protocol.title || prev.title,
+          agenda: Array.isArray(data.protocol.agenda) ? data.protocol.agenda.join('\n') : prev.agenda,
+          decisions: Array.isArray(data.protocol.decisions) ? data.protocol.decisions.join('\n') : prev.decisions
+        }));
+        
+        addNotification('Протокол сгенерирован', 'success');
+        
+        // Перезагружаем совещания
+        loadMeetings();
+      } else {
+        addNotification('Не удалось сгенерировать протокол', 'warning');
+      }
+    } catch (err) {
+      console.error('Protocol generation error:', err);
+      addNotification('Ошибка генерации протокола', 'error');
+    } finally {
+      setProtocolGenerating(false);
+    }
+  };
+
+  const handleDownloadAudio = async () => {
+    if (!currentMeetingId) {
+      addNotification('Совещание не найдено', 'warning');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${process.env.REACT_APP_RAILWAY_API_URL || ''}/api/meetings/${currentMeetingId}/download-audio`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+
+      const data = await res.json();
+      if (data.signed_url) {
+        window.open(data.signed_url, '_blank');
+      } else {
+
+              <button
+                              type="button"
+                              onClick={handleGenerateProtocol}
+                              disabled={protocolGenerating || !newMeeting.decisions}
+                              style={{ background: '#10b98120', border: '1px solid #10b98140', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#10b981', fontFamily: 'inherit', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+                            >
+                              {protocolGenerating ? '⏳ Генерация…' : '📝 Протокол'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleDownloadAudio}
+                              disabled={!audioUrl}
+                              style={{ background: '#f59e0b20', border: '1px solid #f59e0b40', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#f59e0b', fontFamily: 'inherit', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+                            >
+                              📥 Аудио
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleDownloadDocx}
+                              disabled={!docxUrl}
+                              style={{ background: '#8b5cf620', border: '1px solid #8b5cf640', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: '#8b5cf6', fontFamily: 'inherit', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
+                            >
+                              📄 DOCX
+                            </button>
+        addNotification('Не удалось получить ссылку', 'warning');
+      }
+    } catch (err) {
+      console.error('Download audio error:', err);
+      addNotification('Ошибка скачивания', 'error');
+    }
+  };
+
+  const handleDownloadDocx = () => {
+    if (docxUrl) {
+      window.open(docxUrl, '_blank');
+    } else {
+      addNotification('Сначала сгенерируйте протокол', 'warning');
+    }
+  };
 
   return (
     <div className="screen-fade">
